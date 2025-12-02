@@ -21,7 +21,7 @@ export default function MemberManagementSection({ budget, currentUserId, onMembe
         return;
     }
     
-    // Safety checks
+    // Checks de confirmation
     if (isSelf) {
         if (!confirm(`Voulez-vous vraiment quitter le budget "${budget.name}"?`)) {
             return;
@@ -38,12 +38,12 @@ export default function MemberManagementSection({ budget, currentUserId, onMembe
         await budgetAPI.removeMember(budgetId, memberUserId);
         
         if (isSelf) {
-            // Si l'utilisateur se retire lui-même, rediriger vers le tableau de bord
+            // Redirection après le retrait
             alert('Vous avez quitté le budget. Redirection...');
             window.location.href = '/'; 
         } else {
             alert(`${member.user.name} a été retiré.`);
-            onMemberChange(); // Recharger les données du budget pour mettre à jour la liste
+            onMemberChange(); // Recharger les données pour mettre à jour la liste
         }
 
     } catch (err) {
@@ -63,12 +63,10 @@ export default function MemberManagementSection({ budget, currentUserId, onMembe
       
       <div className="space-y-2">
         {members.map((member) => {
-            // Safety check for user data
             if (!member.user || !member.id) return null; 
             
             const isSelf = member.user.id === currentUserId;
             const isOwnerRole = member.role === 'owner';
-            // Only the owner can remove others. Anyone can remove themselves unless they are the owner.
             const canRemove = (isOwner && !isOwnerRole) || isSelf; 
 
             return (
