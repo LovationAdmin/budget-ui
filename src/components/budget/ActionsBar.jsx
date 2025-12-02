@@ -1,4 +1,8 @@
+import { useState } from 'react';
+
 export default function ActionsBar({ onSave, onExport, onImport, saving }) {
+  const [showExportMenu, setShowExportMenu] = useState(false);
+
   const handleImport = (e) => {
     const file = e.target.files[0];
     if (file) {
@@ -27,13 +31,39 @@ export default function ActionsBar({ onSave, onExport, onImport, saving }) {
           {saving ? 'Sauvegarde...' : 'Sauvegarder'}
         </button>
 
-        <button
-          onClick={onExport}
-          className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg font-medium transition flex items-center gap-2"
-        >
-          <span>📥</span>
-          Exporter JSON
-        </button>
+        {/* Export with format selection */}
+        <div className="relative">
+          <button
+            onClick={() => setShowExportMenu(!showExportMenu)}
+            className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg font-medium transition flex items-center gap-2"
+          >
+            <span>📥</span>
+            Exporter JSON
+          </button>
+          
+          {showExportMenu && (
+            <div className="absolute left-0 mt-2 bg-white border border-gray-200 rounded-lg shadow-lg p-2 z-10 min-w-[200px]">
+              <button
+                onClick={() => {
+                  onExport('new');
+                  setShowExportMenu(false);
+                }}
+                className="w-full text-left px-3 py-2 hover:bg-gray-100 rounded transition"
+              >
+                Format React (V2)
+              </button>
+              <button
+                onClick={() => {
+                  onExport('old');
+                  setShowExportMenu(false);
+                }}
+                className="w-full text-left px-3 py-2 hover:bg-gray-100 rounded transition"
+              >
+                Format HTML (V1)
+              </button>
+            </div>
+          )}
+        </div>
 
         <label className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium transition cursor-pointer flex items-center gap-2">
           <span>📤</span>
@@ -48,8 +78,9 @@ export default function ActionsBar({ onSave, onExport, onImport, saving }) {
 
         <div className="flex-1"></div>
 
-        <div className="text-sm text-gray-500">
-          Auto-sauvegarde toutes les 30 secondes
+        <div className="text-sm text-gray-500 flex items-center gap-2">
+          <span className="inline-block w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+          Auto-sauvegarde 30s
         </div>
       </div>
     </div>

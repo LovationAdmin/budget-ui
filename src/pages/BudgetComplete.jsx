@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { budgetAPI } from '../services/api';
+import { convertOldFormatToNew, convertNewFormatToOld } from '../utils/importConverter';
 import Navbar from '../components/Navbar';
 import InviteModal from '../components/InviteModal';
 
-// New components
+// Components
 import BudgetHeader from '../components/budget/BudgetHeader';
 import PeopleSection from '../components/budget/PeopleSection';
 import ChargesSection from '../components/budget/ChargesSection';
@@ -30,6 +31,8 @@ export default function BudgetComplete() {
   const [projects, setProjects] = useState([]);
   const [yearlyData, setYearlyData] = useState({});
   const [oneTimeIncomes, setOneTimeIncomes] = useState({});
+  const [monthComments, setMonthComments] = useState({});
+  const [lockedMonths, setLockedMonths] = useState({});
 
   useEffect(() => {
     loadBudget();
@@ -42,7 +45,7 @@ export default function BudgetComplete() {
     }, 30000);
 
     return () => clearInterval(interval);
-  }, [budgetTitle, currentYear, people, charges, projects, yearlyData, oneTimeIncomes]);
+  }, [budgetTitle, currentYear, people, charges, projects, yearlyData, oneTimeIncomes, monthComments, lockedMonths]);
 
   const loadBudget = async () => {
     try {
@@ -54,7 +57,17 @@ export default function BudgetComplete() {
       setBudget(budgetRes.data);
 
       // Load budget data
-      const data = dataRes.data.data;
+      let data = dataRes.data.data;
+      
+      // Convert old format if needed
+      if (data.yearlyData && typeof data.yearlyData === 'object') {
+        const firstKey = Object.keys(data.yearlyData)[0];
+        if (firstKey && data.yearlyData[firstKey]?.months) {
+          console.log('Old format detected, converting...');
+          data = convertOldFormatToNew(data);
+        }
+      }
+
       setBudgetTitle(data.budgetTitle || '');
       setCurrentYear(data.currentYear || new Date().getFullYear());
       setPeople(data.people || []);
@@ -62,6 +75,8 @@ export default function BudgetComplete() {
       setProjects(data.projects || []);
       setYearlyData(data.yearlyData || {});
       setOneTimeIncomes(data.oneTimeIncomes || {});
+      setMonthComments(data.monthComments || {});
+      setLockedMonths(data.lockedMonths || {});
     } catch (error) {
       console.error('Error loading budget:', error);
     } finally {
@@ -80,7 +95,10 @@ export default function BudgetComplete() {
       projects,
       yearlyData,
       oneTimeIncomes,
-      lastUpdated: new Date().toISOString()
+      monthComments,
+      lockedMonths,
+      lastUpdated: new Date().toISOString(),
+      version: '2.0'
     };
 
     try {
@@ -98,20 +116,40 @@ export default function BudgetComplete() {
     }
   };
 
-  const handleExport = () => {
-    const data = {
-      budgetTitle,
-      currentYear,
-      people,
-      charges,
-      projects,
-      yearlyData,
-      oneTimeIncomes,
-      exportDate: new Date().toISOString(),
-      version: '2.0'
-    };
+  const handleExport = (formatType = 'new') => {
+    let dataToExport;
+    
+    if (formatType === 'old') {
+      // Export en ancien format (compatible HTML)
+      dataToExport = convertNewFormatToOld({
+        budgetTitle,
+        currentYear,
+        people,
+        charges,
+        projects,
+        yearlyData,
+        oneTimeIncomes,
+        monthComments,
+        lockedMonths
+      });
+    } else {
+      // Export en nouveau format
+      dataToExport = {
+        budgetTitle,
+        currentYear,
+        people,
+        charges,
+        projects,
+        yearlyData,
+        oneTimeIncomes,
+        monthComments,
+        lockedMonths,
+        exportDate: new Date().toISOString(),
+        version: '2.0'
+      };
+    }
 
-    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const blob = new Blob([JSON.stringify(dataToExport, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
@@ -122,8 +160,11 @@ export default function BudgetComplete() {
     URL.revokeObjectURL(url);
   };
 
-  const handleImport = (data) => {
+  const handleImport = (rawData) => {
     if (confirm('Voulez-vous vraiment importer ces données ? Cela remplacera le budget actuel.')) {
+      // Convert old format if needed
+      const data = convertOldFormatToNew(rawData);
+      
       setBudgetTitle(data.budgetTitle || '');
       setCurrentYear(data.currentYear || new Date().getFullYear());
       setPeople(data.people || []);
@@ -131,6 +172,9 @@ export default function BudgetComplete() {
       setProjects(data.projects || []);
       setYearlyData(data.yearlyData || {});
       setOneTimeIncomes(data.oneTimeIncomes || {});
+      setMonthComments(data.monthComments || {});
+      setLockedMonths(data.lockedMonths || {});
+      
       alert('Données importées avec succès !');
     }
   };
@@ -220,8 +264,12 @@ export default function BudgetComplete() {
           projects={projects}
           yearlyData={yearlyData}
           oneTimeIncomes={oneTimeIncomes}
+          monthComments={monthComments}
+          lockedMonths={lockedMonths}
           onYearlyDataChange={setYearlyData}
           onOneTimeIncomesChange={setOneTimeIncomes}
+          onMonthCommentsChange={setMonthComments}
+          onLockedMonthsChange={setLockedMonths}
         />
       </div>
 
