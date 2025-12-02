@@ -6,6 +6,7 @@ import Login from './pages/Login';
 import Signup from './pages/Signup';
 import Dashboard from './pages/Dashboard';
 import Budget from './pages/Budget';
+import BudgetComplete from './pages/BudgetComplete'; // NEW
 import Profile from './pages/Profile';
 import NotFound from './pages/NotFound';
 
@@ -24,11 +25,21 @@ export default function App() {
               <Dashboard />
             </PrivateRoute>
           } />
+          
+          {/* NEW: Complete budget interface */}
+          <Route path="/budget/:id/complete" element={
+            <PrivateRoute>
+              <BudgetComplete />
+            </PrivateRoute>
+          } />
+          
+          {/* Keep simple budget view for compatibility */}
           <Route path="/budget/:id" element={
             <PrivateRoute>
               <Budget />
             </PrivateRoute>
           } />
+          
           <Route path="/profile" element={
             <PrivateRoute>
               <Profile />
