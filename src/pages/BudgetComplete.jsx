@@ -4,6 +4,7 @@ import { budgetAPI } from '../services/api';
 import { convertOldFormatToNew, convertNewFormatToOld } from '../utils/importConverter';
 import Navbar from '../components/Navbar';
 import InviteModal from '../components/InviteModal';
+import { useAuth } from '../contexts/AuthContext'; // NOUVEAU: Importez useAuth
 
 // Components
 import BudgetHeader from '../components/budget/BudgetHeader';
@@ -13,11 +14,13 @@ import ProjectsSection from '../components/budget/ProjectsSection';
 import MonthlyTable from '../components/budget/MonthlyTable';
 import StatsSection from '../components/budget/StatsSection';
 import ActionsBar from '../components/budget/ActionsBar';
+import MemberManagementSection from '../components/budget/MemberManagementSection'; // NOUVEAU: Composant de gestion des membres
 
 export default function BudgetComplete() {
   const { id } = useParams();
   const navigate = useNavigate();
-
+  const { user } = useAuth(); // NOUVEAU: Récupérez l'utilisateur actuel
+  
   const [budget, setBudget] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -32,7 +35,7 @@ export default function BudgetComplete() {
   const [yearlyData, setYearlyData] = useState({});
   const [oneTimeIncomes, setOneTimeIncomes] = useState({});
   const [monthComments, setMonthComments] = useState({});
-  const [projectComments, setProjectComments] = useState({}); // NOUVEAU
+  const [projectComments, setProjectComments] = useState({});
   const [lockedMonths, setLockedMonths] = useState({});
 
   useEffect(() => {
@@ -77,7 +80,7 @@ export default function BudgetComplete() {
       setYearlyData(data.yearlyData || {});
       setOneTimeIncomes(data.oneTimeIncomes || {});
       setMonthComments(data.monthComments || {});
-      setProjectComments(data.projectComments || {}); // NOUVEAU
+      setProjectComments(data.projectComments || {});
       setLockedMonths(data.lockedMonths || {});
 
       console.log('Loaded data:', {
@@ -103,7 +106,7 @@ export default function BudgetComplete() {
       yearlyData,
       oneTimeIncomes,
       monthComments,
-      projectComments, // NOUVEAU
+      projectComments,
       lockedMonths,
       lastUpdated: new Date().toISOString(),
       version: '2.1'
@@ -185,7 +188,7 @@ export default function BudgetComplete() {
       setYearlyData(data.yearlyData || {});
       setOneTimeIncomes(data.oneTimeIncomes || {});
       setMonthComments(data.monthComments || {});
-      setProjectComments(data.projectComments || {}); // NOUVEAU
+      setProjectComments(data.projectComments || {});
       setLockedMonths(data.lockedMonths || {});
       
       alert('Données importées avec succès !');
@@ -236,12 +239,21 @@ export default function BudgetComplete() {
                   👥 Inviter
                 </button>
               )}
-              <span className="text-sm text-gray-600">
-                {budget?.members?.length || 0} membre(s)
-              </span>
+              {/* Le compte de membre sera géré par MemberManagementSection */}
             </div>
           </div>
         </div>
+        
+        {/* NOUVEAU: Section de gestion des membres */}
+        {budget && user && (
+            <MemberManagementSection 
+                budget={budget}
+                currentUserId={user.id} 
+                onMemberChange={loadBudget}
+            />
+        )}
+        {/* Le code du composant MemberManagementSection.jsx doit exister dans src/components/budget/ */}
+
 
         {/* Actions */}
         <ActionsBar

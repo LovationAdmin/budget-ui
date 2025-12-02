@@ -11,7 +11,7 @@ const api = axios.create({
 
 // Add token to requests
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token');
+  const token = localStorage.getItem('access_token');
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
@@ -23,7 +23,7 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      localStorage.removeItem('token');
+      localStorage.removeItem('access_token');
       localStorage.removeItem('user');
       window.location.href = '/login';
     }
@@ -41,10 +41,12 @@ export const budgetAPI = {
   create: (data) => api.post('/budgets', data),
   getById: (id) => api.get(`/budgets/${id}`),
   update: (id, data) => api.put(`/budgets/${id}`, data),
-  delete: (id) => api.delete(`/budgets/${id}`), // NOUVEAU
+  delete: (id) => api.delete(`/budgets/${id}`),
   getData: (id) => api.get(`/budgets/${id}/data`),
   updateData: (id, data) => api.put(`/budgets/${id}/data`, data),
   inviteMember: (id, email) => api.post(`/budgets/${id}/invite`, { email }),
+  // NOUVEAU : Fonction pour retirer un membre
+  removeMember: (budgetId, memberId) => api.delete(`/budgets/${budgetId}/members/${memberId}`),
 };
 
 export const invitationAPI = {
