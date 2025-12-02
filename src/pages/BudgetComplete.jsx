@@ -32,6 +32,7 @@ export default function BudgetComplete() {
   const [yearlyData, setYearlyData] = useState({});
   const [oneTimeIncomes, setOneTimeIncomes] = useState({});
   const [monthComments, setMonthComments] = useState({});
+  const [projectComments, setProjectComments] = useState({}); // NOUVEAU
   const [lockedMonths, setLockedMonths] = useState({});
 
   useEffect(() => {
@@ -45,7 +46,7 @@ export default function BudgetComplete() {
     }, 30000);
 
     return () => clearInterval(interval);
-  }, [budgetTitle, currentYear, people, charges, projects, yearlyData, oneTimeIncomes, monthComments, lockedMonths]);
+  }, [budgetTitle, currentYear, people, charges, projects, yearlyData, oneTimeIncomes, monthComments, projectComments, lockedMonths]);
 
   const loadBudget = async () => {
     try {
@@ -76,7 +77,13 @@ export default function BudgetComplete() {
       setYearlyData(data.yearlyData || {});
       setOneTimeIncomes(data.oneTimeIncomes || {});
       setMonthComments(data.monthComments || {});
+      setProjectComments(data.projectComments || {}); // NOUVEAU
       setLockedMonths(data.lockedMonths || {});
+
+      console.log('Loaded data:', {
+        yearlyData: data.yearlyData,
+        projectComments: data.projectComments
+      });
     } catch (error) {
       console.error('Error loading budget:', error);
     } finally {
@@ -96,9 +103,10 @@ export default function BudgetComplete() {
       yearlyData,
       oneTimeIncomes,
       monthComments,
+      projectComments, // NOUVEAU
       lockedMonths,
       lastUpdated: new Date().toISOString(),
-      version: '2.0'
+      version: '2.1'
     };
 
     try {
@@ -130,6 +138,7 @@ export default function BudgetComplete() {
         yearlyData,
         oneTimeIncomes,
         monthComments,
+        projectComments,
         lockedMonths
       });
     } else {
@@ -143,9 +152,10 @@ export default function BudgetComplete() {
         yearlyData,
         oneTimeIncomes,
         monthComments,
+        projectComments,
         lockedMonths,
         exportDate: new Date().toISOString(),
-        version: '2.0'
+        version: '2.1'
       };
     }
 
@@ -165,6 +175,8 @@ export default function BudgetComplete() {
       // Convert old format if needed
       const data = convertOldFormatToNew(rawData);
       
+      console.log('Imported data:', data);
+      
       setBudgetTitle(data.budgetTitle || '');
       setCurrentYear(data.currentYear || new Date().getFullYear());
       setPeople(data.people || []);
@@ -173,6 +185,7 @@ export default function BudgetComplete() {
       setYearlyData(data.yearlyData || {});
       setOneTimeIncomes(data.oneTimeIncomes || {});
       setMonthComments(data.monthComments || {});
+      setProjectComments(data.projectComments || {}); // NOUVEAU
       setLockedMonths(data.lockedMonths || {});
       
       alert('Données importées avec succès !');
@@ -265,10 +278,12 @@ export default function BudgetComplete() {
           yearlyData={yearlyData}
           oneTimeIncomes={oneTimeIncomes}
           monthComments={monthComments}
+          projectComments={projectComments}
           lockedMonths={lockedMonths}
           onYearlyDataChange={setYearlyData}
           onOneTimeIncomesChange={setOneTimeIncomes}
           onMonthCommentsChange={setMonthComments}
+          onProjectCommentsChange={setProjectComments}
           onLockedMonthsChange={setLockedMonths}
         />
       </div>

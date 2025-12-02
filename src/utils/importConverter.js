@@ -7,17 +7,18 @@ const MONTHS = [
  * Convertit l'ancien format JSON (HTML) vers le nouveau format (React)
  */
 export function convertOldFormatToNew(oldData) {
-  console.log('Converting old format to new...');
+  console.log('Converting old format to new...', oldData);
   
   // Si c'est déjà le nouveau format, retourner tel quel
   if (!oldData.yearlyData || typeof oldData.yearlyData !== 'object') {
+    console.log('No yearlyData, returning as is');
     return oldData;
   }
 
   // Détecter si c'est l'ancien format (avec yearlyData[year].months)
   const firstYear = Object.keys(oldData.yearlyData)[0];
   if (!firstYear || !oldData.yearlyData[firstYear].months) {
-    // Déjà au nouveau format
+    console.log('Already new format');
     return oldData;
   }
 
@@ -33,38 +34,46 @@ export function convertOldFormatToNew(oldData) {
     yearlyData: {},
     oneTimeIncomes: {},
     monthComments: {},
+    projectComments: {}, // NOUVEAU: commentaires par projet
     lockedMonths: {},
     lastUpdated: new Date().toISOString()
   };
 
-  // Convertir yearlyData pour chaque année
-  Object.keys(oldData.yearlyData).forEach(year => {
-    const oldYearData = oldData.yearlyData[year];
-    
-    // Convertir months (projets par mois)
-    MONTHS.forEach((month, idx) => {
-      if (oldYearData.months && oldYearData.months[idx]) {
-        newData.yearlyData[month] = oldYearData.months[idx];
-      }
-    });
+  // Convertir yearlyData pour l'année spécifiée
+  const year = firstYear;
+  const oldYearData = oldData.yearlyData[year];
+  
+  console.log('Converting year:', year);
+  console.log('Months data:', oldYearData.months);
+  console.log('Expense comments:', oldYearData.expenseComments);
 
-    // Convertir monthComments
-    if (oldYearData.monthComments) {
-      MONTHS.forEach((month, idx) => {
-        if (oldYearData.monthComments[idx]) {
-          newData.monthComments[month] = oldYearData.monthComments[idx];
-        }
-      });
+  // Convertir months (projets par mois)
+  MONTHS.forEach((month, idx) => {
+    // MONTANTS PROJETS
+    if (oldYearData.months && oldYearData.months[idx]) {
+      const monthData = oldYearData.months[idx];
+      console.log(`Month ${month} data:`, monthData);
+      newData.yearlyData[month] = { ...monthData };
     }
 
-    // Convertir oneTimeIncomes
+    // COMMENTAIRES DE MOIS
+    if (oldYearData.monthComments && oldYearData.monthComments[idx]) {
+      newData.monthComments[month] = oldYearData.monthComments[idx];
+    }
+
+    // COMMENTAIRES PAR PROJET (NOUVEAU)
+    if (oldYearData.expenseComments && oldYearData.expenseComments[idx]) {
+      const expenseComment = oldYearData.expenseComments[idx];
+      console.log(`Month ${month} expense comments:`, expenseComment);
+      newData.projectComments[month] = { ...expenseComment };
+    }
+
+    // REVENUS PONCTUELS
     if (oldData.oneTimeIncomes && oldData.oneTimeIncomes[year]) {
-      MONTHS.forEach((month, idx) => {
-        const income = oldData.oneTimeIncomes[year][idx];
-        if (income && income.amount) {
-          newData.oneTimeIncomes[month] = income.amount;
-        }
-      });
+      const income = oldData.oneTimeIncomes[year][idx];
+      if (income && income.amount) {
+        newData.oneTimeIncomes[month] = income.amount;
+      }
     }
   });
 
@@ -88,7 +97,7 @@ export function convertNewFormatToOld(newData) {
       [year]: {
         months: [],
         monthComments: [],
-        expenses: [], // Copie de months pour compatibilité
+        expenses: [],
         expenseComments: [],
         deletedMonths: []
       }
@@ -101,18 +110,18 @@ export function convertNewFormatToOld(newData) {
 
   // Convertir yearlyData
   MONTHS.forEach(month => {
-    oldData.yearlyData[year].months.push(newData.yearlyData[month] || {});
-    oldData.yearlyData[year].expenses.push(newData.yearlyData[month] || {});
+    // Months & expenses (même données)
+    const monthData = newData.yearlyData[month] || {};
+    oldData.yearlyData[year].months.push(monthData);
+    oldData.yearlyData[year].expenses.push(monthData);
+    
+    // Month comments
     oldData.yearlyData[year].monthComments.push(newData.monthComments?.[month] || '');
     
-    // expenseComments - structure complexe pour compatibilité
-    const expenseComment = {};
-    newData.projects.forEach(project => {
-      expenseComment[project.id] = ''; // Pas de commentaires par projet pour le moment
-    });
-    oldData.yearlyData[year].expenseComments.push(expenseComment);
+    // Expense comments (commentaires par projet)
+    oldData.yearlyData[year].expenseComments.push(newData.projectComments?.[month] || {});
     
-    // oneTimeIncomes
+    // OneTime incomes
     oldData.oneTimeIncomes[year].push({
       amount: newData.oneTimeIncomes?.[month] || 0,
       description: ''

@@ -13,10 +13,12 @@ export default function MonthlyTable({
   yearlyData,
   oneTimeIncomes,
   monthComments,
+  projectComments,
   lockedMonths,
   onYearlyDataChange,
   onOneTimeIncomesChange,
   onMonthCommentsChange,
+  onProjectCommentsChange,
   onLockedMonthsChange
 }) {
   const [hiddenColumns, setHiddenColumns] = useState({
@@ -26,6 +28,7 @@ export default function MonthlyTable({
   });
 
   const [showColumnSelector, setShowColumnSelector] = useState(false);
+  const [expandedComments, setExpandedComments] = useState({}); // Pour toggle commentaires projets
 
   const getMonthData = (month) => {
     return yearlyData[month] || {};
@@ -60,6 +63,20 @@ export default function MonthlyTable({
     });
   };
 
+  const getProjectComment = (month, projectId) => {
+    return projectComments?.[month]?.[projectId] || '';
+  };
+
+  const setProjectComment = (month, projectId, value) => {
+    onProjectCommentsChange({
+      ...projectComments,
+      [month]: {
+        ...(projectComments?.[month] || {}),
+        [projectId]: value
+      }
+    });
+  };
+
   const isMonthLocked = (month) => {
     return lockedMonths?.[month] || false;
   };
@@ -68,6 +85,13 @@ export default function MonthlyTable({
     onLockedMonthsChange({
       ...lockedMonths,
       [month]: !isMonthLocked(month)
+    });
+  };
+
+  const toggleProjectComments = (month) => {
+    setExpandedComments({
+      ...expandedComments,
+      [month]: !expandedComments[month]
     });
   };
 
@@ -92,6 +116,12 @@ export default function MonthlyTable({
       ...hiddenColumns,
       [group]: !hiddenColumns[group]
     });
+  };
+
+  const hasProjectComments = (month) => {
+    const comments = projectComments?.[month];
+    if (!comments) return false;
+    return Object.values(comments).some(c => c && c.trim() !== '');
   };
 
   return (
@@ -206,6 +236,8 @@ export default function MonthlyTable({
               const balance = calculateMonthTotal(month);
               const isLocked = isMonthLocked(month);
               const comment = getMonthComment(month);
+              const showProjComments = expandedComments[month];
+              const hasProjComments = hasProjectComments(month);
 
               return (
                 <>
@@ -254,25 +286,34 @@ export default function MonthlyTable({
                     </td>
                     
                     {/* Projects - editable */}
-                    {!hiddenColumns.projects && projects.map((project) => (
-                      <td key={`project-${month}-${project.id}`} className="p-3 border-r border-gray-200">
-                        <input
-                          type="number"
-                          value={monthData[project.id] || ''}
-                          onChange={(e) => {
-                            if (!isLocked) {
-                              setMonthData(month, {
-                                ...monthData,
-                                [project.id]: parseFloat(e.target.value) || 0
-                              });
-                            }
-                          }}
-                          disabled={isLocked}
-                          className="w-full px-2 py-1 text-right border border-gray-300 rounded focus:ring-2 focus:ring-primary-500 outline-none disabled:bg-gray-100"
-                          placeholder="0"
-                        />
-                      </td>
-                    ))}
+                    {!hiddenColumns.projects && projects.map((project) => {
+                      const projComment = getProjectComment(month, project.id);
+                      return (
+                        <td key={`project-${month}-${project.id}`} className="p-3 border-r border-gray-200">
+                          <div className="relative">
+                            <input
+                              type="number"
+                              value={monthData[project.id] || ''}
+                              onChange={(e) => {
+                                if (!isLocked) {
+                                  setMonthData(month, {
+                                    ...monthData,
+                                    [project.id]: parseFloat(e.target.value) || 0
+                                  });
+                                }
+                              }}
+                              disabled={isLocked}
+                              className="w-full px-2 py-1 text-right border border-gray-300 rounded focus:ring-2 focus:ring-primary-500 outline-none disabled:bg-gray-100"
+                              placeholder="0"
+                              title={projComment || ''}
+                            />
+                            {projComment && (
+                              <span className="absolute -top-1 -right-1 text-blue-500 text-xs">💬</span>
+                            )}
+                          </div>
+                        </td>
+                      );
+                    })}
                     
                     {/* Balance */}
                     <td className={`p-3 text-right font-bold border-r border-gray-300 ${balance >= 0 ? 'text-green-600 bg-green-50' : 'text-red-600 bg-red-50'}`}>
@@ -295,22 +336,63 @@ export default function MonthlyTable({
                     </td>
                   </tr>
                   
-                  {/* Comment row */}
+                  {/* Comment row - Month */}
                   <tr className={idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
                     <td className="p-2 text-xs text-gray-500 sticky left-0 bg-inherit z-10 border-r border-gray-300">
                       💬 Commentaire
                     </td>
                     <td colSpan="100" className="p-2">
-                      <input
-                        type="text"
-                        value={comment}
-                        onChange={(e) => !isLocked && setMonthComment(month, e.target.value)}
-                        disabled={isLocked}
-                        placeholder="Ajouter un commentaire pour ce mois..."
-                        className="w-full px-3 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-primary-500 outline-none disabled:bg-gray-100"
-                      />
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="text"
+                          value={comment}
+                          onChange={(e) => !isLocked && setMonthComment(month, e.target.value)}
+                          disabled={isLocked}
+                          placeholder="Commentaire du mois..."
+                          className="flex-1 px-3 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-primary-500 outline-none disabled:bg-gray-100"
+                        />
+                        {!hiddenColumns.projects && (
+                          <button
+                            onClick={() => toggleProjectComments(month)}
+                            className={`px-3 py-1 text-xs rounded transition ${
+                              showProjComments 
+                                ? 'bg-blue-100 text-blue-700' 
+                                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                            }`}
+                            title="Commentaires par projet"
+                          >
+                            {showProjComments ? '▼' : '▶'} Projets {hasProjComments && '💬'}
+                          </button>
+                        )}
+                      </div>
                     </td>
                   </tr>
+
+                  {/* Project comments row - expandable */}
+                  {showProjComments && !hiddenColumns.projects && (
+                    <tr className={`${idx % 2 === 0 ? 'bg-blue-50' : 'bg-blue-100'}`}>
+                      <td className="p-2 text-xs text-gray-500 sticky left-0 bg-inherit z-10 border-r border-gray-300">
+                        💬 Détails
+                      </td>
+                      <td colSpan="100" className="p-2">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
+                          {projects.map((project) => (
+                            <div key={`comment-${month}-${project.id}`} className="flex flex-col gap-1">
+                              <label className="text-xs font-semibold text-gray-700">{project.label}</label>
+                              <input
+                                type="text"
+                                value={getProjectComment(month, project.id)}
+                                onChange={(e) => !isLocked && setProjectComment(month, project.id, e.target.value)}
+                                disabled={isLocked}
+                                placeholder="Commentaire..."
+                                className="px-2 py-1 text-xs border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 outline-none disabled:bg-gray-100"
+                              />
+                            </div>
+                          ))}
+                        </div>
+                      </td>
+                    </tr>
+                  )}
                 </>
               );
             })}
@@ -363,15 +445,15 @@ export default function MonthlyTable({
       <div className="mt-4 flex flex-wrap gap-4 text-sm text-gray-600">
         <div className="flex items-center gap-2">
           <span>🔒</span>
-          <span>Mois verrouillé (non modifiable)</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <span>🔓</span>
-          <span>Mois déverrouillé (modifiable)</span>
+          <span>Mois verrouillé</span>
         </div>
         <div className="flex items-center gap-2">
           <span>💬</span>
-          <span>Commentaires</span>
+          <span>Commentaires mois/projets</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <span>▶/▼</span>
+          <span>Afficher/masquer commentaires projets</span>
         </div>
       </div>
     </div>
