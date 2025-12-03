@@ -8,6 +8,7 @@ import Budget from './pages/Budget';
 import BudgetComplete from './pages/BudgetComplete';
 import Profile from './pages/Profile';
 import NotFound from './pages/NotFound';
+import AcceptInvitation from './pages/AcceptInvitation';
 
 export default function App() {
   return (
@@ -15,6 +16,7 @@ export default function App() {
       {/* Public routes */}
       <Route path="/login" element={<Login />} />
       <Route path="/signup" element={<Signup />} />
+      <Route path="/invitation/accept" element={<AcceptInvitation />} />
 
       {/* Protected routes */}
       <Route path="/" element={

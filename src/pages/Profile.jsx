@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { userAPI } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
@@ -26,6 +26,11 @@ export default function Profile() {
 
     try {
       await userAPI.updateProfile({ name });
+      
+      // Update local storage
+      const updatedUser = { ...user, name };
+      localStorage.setItem('user', JSON.stringify(updatedUser));
+      
       setMessage('Profil mis à jour avec succès');
     } catch (err) {
       setError(err.response?.data?.error || 'Erreur lors de la mise à jour');

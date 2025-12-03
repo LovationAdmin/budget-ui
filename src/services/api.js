@@ -36,6 +36,11 @@ export const authAPI = {
   login: (data) => api.post('/auth/login', data),
 };
 
+export const userAPI = {
+  updateProfile: (data) => api.put('/user/profile', data),
+  changePassword: (data) => api.put('/user/password', data),
+};
+
 export const budgetAPI = {
   list: () => api.get('/budgets'),
   create: (data) => api.post('/budgets', data),
@@ -52,6 +57,7 @@ export const budgetAPI = {
 
 export const invitationAPI = {
   accept: (token) => api.post('/invitations/accept', { token }),
+  invite: (budgetId, email) => api.post(`/budgets/${budgetId}/invite`, { email }),
 };
 
 export default api;
