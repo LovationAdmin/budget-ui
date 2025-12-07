@@ -11,15 +11,16 @@ import {
 } from "lucide-react";
 import { budgetAPI } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
-import { BudgetNavbar } from '../components/budget/BudgetNavbar';
-import { StatCard } from '../components/budget/StatCard';
-import { QuickActions } from '../components/budget/QuickActions';
-import { EmptyState } from '../components/budget/EmptyState';
-import { MonthCard } from '../components/budget/MonthCard';
-import { ProjectCard } from '../components/budget/ProjectCard';
-import { ChargeItem } from '../components/budget/ChargeItem';
-import { MemberAvatar, MemberAvatarGroup } from '../components/budget/MemberAvatar';
-import { Button } from '../components/ui/button';
+// Remplace BudgetNavbar et d'autres imports
+// import { BudgetNavbar } from '../components/budget/BudgetNavbar'; 
+// import { StatCard } from '../components/budget/StatCard'; 
+// import { QuickActions } from '../components/budget/QuickActions'; 
+// import { EmptyState } from '../components/budget/EmptyState';
+// ...
+import { StatCard } from '../components/budget/StatCard'; // Import du nouveau TSX
+import { QuickActions } from '../components/budget/QuickActions'; // Import du nouveau TSX
+import { MemberAvatarGroup } from '../components/budget/MemberAvatar'; // Import du nouveau TSX
+import { Button } from '../components/ui/button'; // Import du nouveau TSX
 import {
   Dialog,
   DialogContent,
@@ -30,6 +31,27 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+
+// PLACEHOLDERS pour les composants non fournis (doivent être créés en JS/TSX)
+const BudgetNavbar = ({ budgetTitle, currentSection }: { budgetTitle: string, currentSection: string }) => (
+    <nav className="bg-white shadow-sm border-b border-gray-200">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center">
+            <h1 className="text-xl font-bold text-primary-600">{budgetTitle}</h1>
+            <span className="ml-4 text-sm text-gray-500 capitalize">{currentSection}</span>
+        </div>
+    </nav>
+);
+const EmptyState = ({ icon: Icon, title, description, actionLabel, onAction }: any) => (
+    <div className="flex flex-col items-center justify-center p-12 bg-white rounded-xl shadow-lg border border-gray-200">
+        <Icon className="h-10 w-10 text-primary mb-4" />
+        <h2 className="text-xl font-semibold text-gray-900 mb-2">{title}</h2>
+        <p className="text-gray-600 mb-6 text-center">{description}</p>
+        <Button onClick={onAction} variant="gradient">
+            {actionLabel}
+        </Button>
+    </div>
+);
+
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -88,7 +110,7 @@ export default function Dashboard() {
   if (loading) {
     return (
       <div className="min-h-screen gradient-surface">
-        <BudgetNavbar currentSection="dashboard" />
+        <BudgetNavbar currentSection="dashboard" budgetTitle="Chargement..." />
         <div className="flex items-center justify-center h-96">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
         </div>
