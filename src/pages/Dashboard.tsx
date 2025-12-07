@@ -11,16 +11,10 @@ import {
 } from "lucide-react";
 import { budgetAPI } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
-// Remplace BudgetNavbar et d'autres imports
-// import { BudgetNavbar } from '../components/budget/BudgetNavbar'; 
-// import { StatCard } from '../components/budget/StatCard'; 
-// import { QuickActions } from '../components/budget/QuickActions'; 
-// import { EmptyState } from '../components/budget/EmptyState';
-// ...
-import { StatCard } from '../components/budget/StatCard'; // Import du nouveau TSX
-import { QuickActions } from '../components/budget/QuickActions'; // Import du nouveau TSX
-import { MemberAvatarGroup } from '../components/budget/MemberAvatar'; // Import du nouveau TSX
-import { Button } from '../components/ui/button'; // Import du nouveau TSX
+import { StatCard } from '../components/budget/StatCard';
+import { QuickActions } from '../components/budget/QuickActions';
+import { MemberAvatarGroup } from '../components/budget/MemberAvatar';
+import { Button } from '../components/ui/button';
 import {
   Dialog,
   DialogContent,
@@ -32,7 +26,20 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-// PLACEHOLDERS pour les composants non fournis (doivent être créés en JS/TSX)
+interface Budget {
+  id: string;
+  name: string;
+  created_at: string;
+  is_owner: boolean;
+  members: Array<{
+    user: {
+      name: string;
+      avatar?: string;
+    };
+  }>;
+}
+
+// PLACEHOLDERS pour les composants non fournis
 const BudgetNavbar = ({ budgetTitle, currentSection }: { budgetTitle: string, currentSection: string }) => (
     <nav className="bg-white shadow-sm border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center">
@@ -41,7 +48,16 @@ const BudgetNavbar = ({ budgetTitle, currentSection }: { budgetTitle: string, cu
         </div>
     </nav>
 );
-const EmptyState = ({ icon: Icon, title, description, actionLabel, onAction }: any) => (
+
+interface EmptyStateProps {
+  icon: React.ComponentType<{ className?: string }>;
+  title: string;
+  description: string;
+  actionLabel: string;
+  onAction: () => void;
+}
+
+const EmptyState = ({ icon: Icon, title, description, actionLabel, onAction }: EmptyStateProps) => (
     <div className="flex flex-col items-center justify-center p-12 bg-white rounded-xl shadow-lg border border-gray-200">
         <Icon className="h-10 w-10 text-primary mb-4" />
         <h2 className="text-xl font-semibold text-gray-900 mb-2">{title}</h2>
@@ -56,7 +72,7 @@ const EmptyState = ({ icon: Icon, title, description, actionLabel, onAction }: a
 export default function Dashboard() {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const [budgets, setBudgets] = useState([]);
+  const [budgets, setBudgets] = useState<Budget[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [newBudgetName, setNewBudgetName] = useState('');
@@ -93,10 +109,6 @@ export default function Dashboard() {
     } finally {
       setCreating(false);
     }
-  };
-
-  const handleBudgetDeleted = () => {
-    loadBudgets();
   };
 
   // Demo data for the example cards (when user has budgets)
@@ -216,7 +228,7 @@ export default function Dashboard() {
               </div>
 
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {budgets.map((budget: any) => (
+                {budgets.map((budget) => (
                   <div
                     key={budget.id}
                     onClick={() => navigate(`/budget/${budget.id}/complete`)}
@@ -248,7 +260,7 @@ export default function Dashboard() {
                           {budget.members.length} membre(s)
                         </p>
                         <MemberAvatarGroup
-                          members={budget.members.map((m: any) => ({
+                          members={budget.members.map((m) => ({
                             name: m.user.name,
                             image: m.user.avatar
                           }))}
@@ -261,7 +273,7 @@ export default function Dashboard() {
                     <Button 
                       variant="outline" 
                       className="w-full gap-2"
-                      onClick={(e) => {
+                      onClick={(e: React.MouseEvent) => {
                         e.stopPropagation();
                         navigate(`/budget/${budget.id}/complete`);
                       }}
@@ -321,7 +333,7 @@ export default function Dashboard() {
                 <Input
                   id="name"
                   value={newBudgetName}
-                  onChange={(e) => setNewBudgetName(e.target.value)}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewBudgetName(e.target.value)}
                   placeholder="Budget Famille 2025"
                   autoFocus
                   required

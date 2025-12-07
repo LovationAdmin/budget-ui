@@ -15,29 +15,99 @@ import StatsSection from '../components/budget/StatsSection';
 import ActionsBar from '../components/budget/ActionsBar';
 import MemberManagementSection from '../components/budget/MemberManagementSection'; 
 
+// Types
+interface Person {
+  id: string;
+  name: string;
+  salary: number;
+}
+
+interface Charge {
+  id: string;
+  label: string;
+  amount: number;
+}
+
+interface Project {
+  id: string;
+  label: string;
+}
+
+interface YearlyData {
+  [month: string]: { [projectId: string]: number };
+}
+
+interface OneTimeIncomes {
+  [month: string]: number;
+}
+
+interface MonthComments {
+  [month: string]: string;
+}
+
+interface ProjectComments {
+  [month: string]: { [projectId: string]: string };
+}
+
+interface LockedMonths {
+  [month: string]: boolean;
+}
+
+interface BudgetMember {
+  id: string;
+  user: {
+    id: string;
+    name: string;
+    email: string;
+  };
+  role: 'owner' | 'member';
+}
+
+interface BudgetData {
+  id: string;
+  name: string;
+  is_owner: boolean;
+  members: BudgetMember[];
+}
+
+interface ImportedData {
+  budgetTitle?: string;
+  currentYear?: number;
+  people?: Person[];
+  charges?: Charge[];
+  projects?: Project[];
+  yearlyData?: YearlyData;
+  oneTimeIncomes?: OneTimeIncomes;
+  monthComments?: MonthComments;
+  projectComments?: ProjectComments;
+  lockedMonths?: LockedMonths;
+}
+
 export default function BudgetComplete() {
-  const { id } = useParams(); 
+  const { id } = useParams<{ id: string }>(); 
   const navigate = useNavigate(); 
   const { user } = useAuth(); 
 
-  const [budget, setBudget] = useState(null); 
+  const [budget, setBudget] = useState<BudgetData | null>(null); 
   const [loading, setLoading] = useState(true); 
   const [saving, setSaving] = useState(false); 
   const [showInviteModal, setShowInviteModal] = useState(false); 
 
   const [budgetTitle, setBudgetTitle] = useState(''); 
   const [currentYear, setCurrentYear] = useState(new Date().getFullYear()); 
-  const [people, setPeople] = useState([]); 
-  const [charges, setCharges] = useState([]); 
-  const [projects, setProjects] = useState([]); 
-  const [yearlyData, setYearlyData] = useState({}); 
-  const [oneTimeIncomes, setOneTimeIncomes] = useState({}); 
-  const [monthComments, setMonthComments] = useState({}); 
-  const [projectComments, setProjectComments] = useState({}); 
-  const [lockedMonths, setLockedMonths] = useState({}); 
+  const [people, setPeople] = useState<Person[]>([]); 
+  const [charges, setCharges] = useState<Charge[]>([]); 
+  const [projects, setProjects] = useState<Project[]>([]); 
+  const [yearlyData, setYearlyData] = useState<YearlyData>({}); 
+  const [oneTimeIncomes, setOneTimeIncomes] = useState<OneTimeIncomes>({}); 
+  const [monthComments, setMonthComments] = useState<MonthComments>({}); 
+  const [projectComments, setProjectComments] = useState<ProjectComments>({}); 
+  const [lockedMonths, setLockedMonths] = useState<LockedMonths>({}); 
 
   useEffect(() => { 
-    loadBudget(); 
+    if (id) {
+      loadBudget(); 
+    }
   }, [id]); 
 
   useEffect(() => { 
@@ -49,6 +119,8 @@ export default function BudgetComplete() {
   }, [budgetTitle, currentYear, people, charges, projects, yearlyData, oneTimeIncomes, monthComments, projectComments, lockedMonths]); 
 
   const loadBudget = async () => { 
+    if (!id) return;
+    
     try { 
       const [budgetRes, dataRes] = await Promise.all([ 
         budgetAPI.getById(id), 
@@ -57,11 +129,11 @@ export default function BudgetComplete() {
 
       setBudget(budgetRes.data); 
 
-      let data = dataRes.data.data; 
+      let data: ImportedData = dataRes.data.data; 
       
       if (data.yearlyData && typeof data.yearlyData === 'object') { 
         const firstKey = Object.keys(data.yearlyData)[0]; 
-        if (firstKey && data.yearlyData[firstKey]?.months) { 
+        if (firstKey && (data.yearlyData as Record<string, { months?: unknown }>)[firstKey]?.months) { 
           console.log('Old format detected, converting...'); 
           data = convertOldFormatToNew(data); 
         }
@@ -90,6 +162,8 @@ export default function BudgetComplete() {
   }; 
 
   const handleSave = async (silent = false) => { 
+    if (!id) return;
+    
     if (!silent) setSaving(true); 
 
     const budgetData = { 
@@ -122,7 +196,7 @@ export default function BudgetComplete() {
     } 
   }; 
 
-  const handleExport = (formatType = 'new') => { 
+  const handleExport = (formatType: 'new' | 'old' = 'new') => { 
     let dataToExport; 
     
     if (formatType === 'old') { 
@@ -166,7 +240,7 @@ export default function BudgetComplete() {
     URL.revokeObjectURL(url); 
   }; 
 
-  const handleImport = (rawData) => { 
+  const handleImport = (rawData: ImportedData) => { 
     if (confirm('Voulez-vous vraiment importer ces données ? Cela remplacera le budget actuel.')) { 
       const data = convertOldFormatToNew(rawData); 
       
@@ -231,12 +305,11 @@ export default function BudgetComplete() {
                   👥 Inviter 
                 </button> 
               )} 
-              {/* Le compte de membre sera géré par MemberManagementSection */}
             </div>
           </div>
         </div>
         
-        {/* NOUVEAU: Section de gestion des membres */}
+        {/* Section de gestion des membres */}
         {budget && user && (
             <MemberManagementSection 
                 budget={budget}
@@ -292,7 +365,7 @@ export default function BudgetComplete() {
       </div> 
 
       {/* Invite Modal */}
-      {showInviteModal && ( 
+      {showInviteModal && id && ( 
         <InviteModal 
           budgetId={id} 
           onClose={() => setShowInviteModal(false)} 
