@@ -1,43 +1,44 @@
 // Type declarations for importConverter.js
 
-interface Person {
+export interface Person {
   id: string;
   name: string;
   salary: number;
 }
 
-interface Charge {
+export interface Charge {
   id: string;
   label: string;
   amount: number;
 }
 
-interface Project {
+export interface Project {
   id: string;
   label: string;
 }
 
-interface YearlyData {
+export interface YearlyData {
   [month: string]: { [projectId: string]: number };
 }
 
-interface OneTimeIncomes {
+export interface OneTimeIncomes {
   [month: string]: number;
 }
 
-interface MonthComments {
+export interface MonthComments {
   [month: string]: string;
 }
 
-interface ProjectComments {
+export interface ProjectComments {
   [month: string]: { [projectId: string]: string };
 }
 
-interface LockedMonths {
+export interface LockedMonths {
   [month: string]: boolean;
 }
 
-interface BudgetDataFormat {
+// Type pour les données d'entrée (ancien format possible)
+export interface RawBudgetData {
   budgetTitle?: string;
   currentYear?: number;
   people?: Person[];
@@ -54,5 +55,23 @@ interface BudgetDataFormat {
   date?: string;
 }
 
-export function convertOldFormatToNew(oldData: BudgetDataFormat): BudgetDataFormat;
-export function convertNewFormatToOld(newData: BudgetDataFormat): BudgetDataFormat;
+// Type pour les données converties (nouveau format)
+export interface ConvertedBudgetData {
+  budgetTitle: string;
+  currentYear: number;
+  people: Person[];
+  charges: Charge[];
+  projects: Project[];
+  yearlyData: YearlyData;
+  oneTimeIncomes: OneTimeIncomes;
+  monthComments: MonthComments;
+  projectComments: ProjectComments;
+  lockedMonths: LockedMonths;
+  lastUpdated?: string;
+  version?: string;
+  exportDate?: string;
+  date?: string;
+}
+
+export function convertOldFormatToNew(oldData: RawBudgetData): ConvertedBudgetData;
+export function convertNewFormatToOld(newData: ConvertedBudgetData): RawBudgetData;

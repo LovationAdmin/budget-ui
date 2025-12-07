@@ -1,9 +1,64 @@
-import { useState } from 'react';
+import { useState, ChangeEvent, Fragment } from 'react';
 
 const MONTHS = [
   'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
   'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'
 ];
+
+// Types
+interface Person {
+  id: string;
+  name: string;
+  salary: number;
+}
+
+interface Charge {
+  id: string;
+  label: string;
+  amount: number;
+}
+
+interface Project {
+  id: string;
+  label: string;
+}
+
+interface YearlyData {
+  [month: string]: { [projectId: string]: number };
+}
+
+interface OneTimeIncomes {
+  [month: string]: number;
+}
+
+interface MonthComments {
+  [month: string]: string;
+}
+
+interface ProjectComments {
+  [month: string]: { [projectId: string]: string };
+}
+
+interface LockedMonths {
+  [month: string]: boolean;
+}
+
+interface MonthlyTableProps {
+  currentYear: number;
+  people: Person[];
+  charges: Charge[];
+  projects: Project[];
+  yearlyData: YearlyData;
+  oneTimeIncomes: OneTimeIncomes;
+  monthComments: MonthComments;
+  projectComments: ProjectComments;
+  lockedMonths: LockedMonths;
+  onYearlyDataChange: (data: YearlyData) => void;
+  onOneTimeIncomesChange: (data: OneTimeIncomes) => void;
+  onMonthCommentsChange: (data: MonthComments) => void;
+  onProjectCommentsChange: (data: ProjectComments) => void;
+  onLockedMonthsChange: (data: LockedMonths) => void;
+}
 
 export default function MonthlyTable({
   currentYear,
@@ -20,7 +75,7 @@ export default function MonthlyTable({
   onMonthCommentsChange,
   onProjectCommentsChange,
   onLockedMonthsChange
-}) {
+}: MonthlyTableProps): JSX.Element {
   const [hiddenColumns, setHiddenColumns] = useState({
     salaries: false,
     charges: false,
@@ -28,46 +83,46 @@ export default function MonthlyTable({
   });
 
   const [showColumnSelector, setShowColumnSelector] = useState(false);
-  const [expandedComments, setExpandedComments] = useState({}); // Pour toggle commentaires projets
+  const [expandedComments, setExpandedComments] = useState<Record<string, boolean>>({}); // Pour toggle commentaires projets
 
-  const getMonthData = (month) => {
+  const getMonthData = (month: string): { [projectId: string]: number } => {
     return yearlyData[month] || {};
   };
 
-  const setMonthData = (month, data) => {
+  const setMonthData = (month: string, data: { [projectId: string]: number }) => {
     onYearlyDataChange({
       ...yearlyData,
       [month]: data
     });
   };
 
-  const getOneTimeIncome = (month) => {
+  const getOneTimeIncome = (month: string): number => {
     return oneTimeIncomes[month] || 0;
   };
 
-  const setOneTimeIncome = (month, value) => {
+  const setOneTimeIncome = (month: string, value: string) => {
     onOneTimeIncomesChange({
       ...oneTimeIncomes,
       [month]: parseFloat(value) || 0
     });
   };
 
-  const getMonthComment = (month) => {
+  const getMonthComment = (month: string): string => {
     return monthComments?.[month] || '';
   };
 
-  const setMonthComment = (month, value) => {
+  const setMonthComment = (month: string, value: string) => {
     onMonthCommentsChange({
       ...monthComments,
       [month]: value
     });
   };
 
-  const getProjectComment = (month, projectId) => {
+  const getProjectComment = (month: string, projectId: string): string => {
     return projectComments?.[month]?.[projectId] || '';
   };
 
-  const setProjectComment = (month, projectId, value) => {
+  const setProjectComment = (month: string, projectId: string, value: string) => {
     onProjectCommentsChange({
       ...projectComments,
       [month]: {
@@ -77,25 +132,25 @@ export default function MonthlyTable({
     });
   };
 
-  const isMonthLocked = (month) => {
+  const isMonthLocked = (month: string): boolean => {
     return lockedMonths?.[month] || false;
   };
 
-  const toggleMonthLock = (month) => {
+  const toggleMonthLock = (month: string) => {
     onLockedMonthsChange({
       ...lockedMonths,
       [month]: !isMonthLocked(month)
     });
   };
 
-  const toggleProjectComments = (month) => {
+  const toggleProjectComments = (month: string) => {
     setExpandedComments({
       ...expandedComments,
       [month]: !expandedComments[month]
     });
   };
 
-  const calculateMonthTotal = (month) => {
+  const calculateMonthTotal = (month: string): number => {
     const monthData = getMonthData(month);
     const regularIncome = people.reduce((sum, p) => sum + (p.salary || 0), 0);
     const oneTimeIncome = getOneTimeIncome(month);
@@ -107,18 +162,18 @@ export default function MonthlyTable({
     return regularIncome + oneTimeIncome - monthCharges - projectsTotal;
   };
 
-  const calculateYearlyTotal = () => {
+  const calculateYearlyTotal = (): number => {
     return MONTHS.reduce((sum, month) => sum + calculateMonthTotal(month), 0);
   };
 
-  const toggleColumnGroup = (group) => {
+  const toggleColumnGroup = (group: 'salaries' | 'charges' | 'projects') => {
     setHiddenColumns({
       ...hiddenColumns,
       [group]: !hiddenColumns[group]
     });
   };
 
-  const hasProjectComments = (month) => {
+  const hasProjectComments = (month: string): boolean => {
     const comments = projectComments?.[month];
     if (!comments) return false;
     return Object.values(comments).some(c => c && c.trim() !== '');
@@ -240,8 +295,8 @@ export default function MonthlyTable({
               const hasProjComments = hasProjectComments(month);
 
               return (
-                <>
-                  <tr key={month} className={`${idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'} ${isLocked ? 'opacity-60' : ''}`}>
+                <Fragment key={month}>
+                  <tr className={`${idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'} ${isLocked ? 'opacity-60' : ''}`}>
                     <td className="p-3 font-medium sticky left-0 bg-inherit z-10 border-r border-gray-300">
                       <div className="flex items-center gap-2">
                         {isLocked && <span className="text-yellow-600">🔒</span>}
@@ -261,7 +316,7 @@ export default function MonthlyTable({
                       <input
                         type="number"
                         value={getOneTimeIncome(month) || ''}
-                        onChange={(e) => !isLocked && setOneTimeIncome(month, e.target.value)}
+                        onChange={(e: ChangeEvent<HTMLInputElement>) => !isLocked && setOneTimeIncome(month, e.target.value)}
                         disabled={isLocked}
                         className="w-full px-2 py-1 text-right border border-gray-300 rounded focus:ring-2 focus:ring-primary-500 outline-none disabled:bg-gray-100"
                         placeholder="0"
@@ -294,7 +349,7 @@ export default function MonthlyTable({
                             <input
                               type="number"
                               value={monthData[project.id] || ''}
-                              onChange={(e) => {
+                              onChange={(e: ChangeEvent<HTMLInputElement>) => {
                                 if (!isLocked) {
                                   setMonthData(month, {
                                     ...monthData,
@@ -341,12 +396,12 @@ export default function MonthlyTable({
                     <td className="p-2 text-xs text-gray-500 sticky left-0 bg-inherit z-10 border-r border-gray-300">
                       💬 Commentaire
                     </td>
-                    <td colSpan="100" className="p-2">
+                    <td colSpan={100} className="p-2">
                       <div className="flex items-center gap-2">
                         <input
                           type="text"
                           value={comment}
-                          onChange={(e) => !isLocked && setMonthComment(month, e.target.value)}
+                          onChange={(e: ChangeEvent<HTMLInputElement>) => !isLocked && setMonthComment(month, e.target.value)}
                           disabled={isLocked}
                           placeholder="Commentaire du mois..."
                           className="flex-1 px-3 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-primary-500 outline-none disabled:bg-gray-100"
@@ -374,7 +429,7 @@ export default function MonthlyTable({
                       <td className="p-2 text-xs text-gray-500 sticky left-0 bg-inherit z-10 border-r border-gray-300">
                         💬 Détails
                       </td>
-                      <td colSpan="100" className="p-2">
+                      <td colSpan={100} className="p-2">
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
                           {projects.map((project) => (
                             <div key={`comment-${month}-${project.id}`} className="flex flex-col gap-1">
@@ -382,7 +437,7 @@ export default function MonthlyTable({
                               <input
                                 type="text"
                                 value={getProjectComment(month, project.id)}
-                                onChange={(e) => !isLocked && setProjectComment(month, project.id, e.target.value)}
+                                onChange={(e: ChangeEvent<HTMLInputElement>) => !isLocked && setProjectComment(month, project.id, e.target.value)}
                                 disabled={isLocked}
                                 placeholder="Commentaire..."
                                 className="px-2 py-1 text-xs border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 outline-none disabled:bg-gray-100"
@@ -393,7 +448,7 @@ export default function MonthlyTable({
                       </td>
                     </tr>
                   )}
-                </>
+                </Fragment>
               );
             })}
             
@@ -408,11 +463,11 @@ export default function MonthlyTable({
               ))}
               
               <td className="p-3 text-right border-r border-gray-300">
-                {Object.values(oneTimeIncomes).reduce((sum, val) => sum + val, 0).toLocaleString('fr-FR')} €
+                {Object.values(oneTimeIncomes).reduce((sum: number, val: number) => sum + val, 0).toLocaleString('fr-FR')} €
               </td>
               <td className="p-3 text-right bg-green-100 border-r border-gray-300">
                 {(people.reduce((sum, p) => sum + p.salary * 12, 0) + 
-                  Object.values(oneTimeIncomes).reduce((sum, val) => sum + val, 0)).toLocaleString('fr-FR')} €
+                  Object.values(oneTimeIncomes).reduce((sum: number, val: number) => sum + val, 0)).toLocaleString('fr-FR')} €
               </td>
               
               {!hiddenColumns.charges && charges.map((charge) => (
@@ -425,7 +480,7 @@ export default function MonthlyTable({
                 -{(charges.reduce((sum, c) => sum + c.amount, 0) * 12).toLocaleString('fr-FR')} €
               </td>
               
-              {!hiddenColumns.projects && projects.map((project) => (
+              {!hiddenColumns.projects && projects.map((project: Project) => (
                 <td key={`total-project-${project.id}`} className="p-3 text-right text-purple-600 border-r border-gray-200">
                   -{MONTHS.reduce((sum, m) => sum + ((yearlyData[m] || {})[project.id] || 0), 0).toLocaleString('fr-FR')} €
                 </td>

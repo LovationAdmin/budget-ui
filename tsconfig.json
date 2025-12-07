@@ -30,7 +30,7 @@
     },
 
     /* Types */
-    "types": ["node", "vite/client"]
+    "types": ["vite/client"]
   },
   "include": ["src", "src/**/*.ts", "src/**/*.tsx", "src/**/*.d.ts"],
   "references": [{ "path": "./tsconfig.node.json" }]

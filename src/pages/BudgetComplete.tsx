@@ -1,7 +1,20 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { budgetAPI } from '../services/api';
-import { convertOldFormatToNew, convertNewFormatToOld } from '../utils/importConverter';
+import { 
+  convertOldFormatToNew, 
+  convertNewFormatToOld,
+  type RawBudgetData,
+  type ConvertedBudgetData,
+  type Person,
+  type Charge,
+  type Project,
+  type YearlyData,
+  type OneTimeIncomes,
+  type MonthComments,
+  type ProjectComments,
+  type LockedMonths
+} from '../utils/importConverter';
 import Navbar from '../components/Navbar';
 import InviteModal from '../components/InviteModal';
 import { useAuth } from '../contexts/AuthContext';
@@ -16,43 +29,6 @@ import ActionsBar from '../components/budget/ActionsBar';
 import MemberManagementSection from '../components/budget/MemberManagementSection'; 
 
 // Types
-interface Person {
-  id: string;
-  name: string;
-  salary: number;
-}
-
-interface Charge {
-  id: string;
-  label: string;
-  amount: number;
-}
-
-interface Project {
-  id: string;
-  label: string;
-}
-
-interface YearlyData {
-  [month: string]: { [projectId: string]: number };
-}
-
-interface OneTimeIncomes {
-  [month: string]: number;
-}
-
-interface MonthComments {
-  [month: string]: string;
-}
-
-interface ProjectComments {
-  [month: string]: { [projectId: string]: string };
-}
-
-interface LockedMonths {
-  [month: string]: boolean;
-}
-
 interface BudgetMember {
   id: string;
   user: {
@@ -68,19 +44,6 @@ interface BudgetData {
   name: string;
   is_owner: boolean;
   members: BudgetMember[];
-}
-
-interface ImportedData {
-  budgetTitle?: string;
-  currentYear?: number;
-  people?: Person[];
-  charges?: Charge[];
-  projects?: Project[];
-  yearlyData?: YearlyData;
-  oneTimeIncomes?: OneTimeIncomes;
-  monthComments?: MonthComments;
-  projectComments?: ProjectComments;
-  lockedMonths?: LockedMonths;
 }
 
 export default function BudgetComplete() {
@@ -129,15 +92,20 @@ export default function BudgetComplete() {
 
       setBudget(budgetRes.data); 
 
-      let data: ImportedData = dataRes.data.data; 
+      const rawData: RawBudgetData = dataRes.data.data; 
+      let data: ConvertedBudgetData;
       
-      if (data.yearlyData && typeof data.yearlyData === 'object') { 
-        const firstKey = Object.keys(data.yearlyData)[0]; 
-        if (firstKey && (data.yearlyData as Record<string, { months?: unknown }>)[firstKey]?.months) { 
+      if (rawData.yearlyData && typeof rawData.yearlyData === 'object') { 
+        const firstKey = Object.keys(rawData.yearlyData)[0]; 
+        if (firstKey && (rawData.yearlyData as Record<string, { months?: unknown }>)[firstKey]?.months) { 
           console.log('Old format detected, converting...'); 
-          data = convertOldFormatToNew(data); 
+          data = convertOldFormatToNew(rawData); 
+        } else {
+          data = convertOldFormatToNew(rawData);
         }
-      } 
+      } else {
+        data = convertOldFormatToNew(rawData);
+      }
 
       setBudgetTitle(data.budgetTitle || ''); 
       setCurrentYear(data.currentYear || new Date().getFullYear()); 
@@ -240,7 +208,7 @@ export default function BudgetComplete() {
     URL.revokeObjectURL(url); 
   }; 
 
-  const handleImport = (rawData: ImportedData) => { 
+  const handleImport = (rawData: RawBudgetData) => { 
     if (confirm('Voulez-vous vraiment importer ces données ? Cela remplacera le budget actuel.')) { 
       const data = convertOldFormatToNew(rawData); 
       
@@ -251,11 +219,11 @@ export default function BudgetComplete() {
       setPeople(data.people || []); 
       setCharges(data.charges || []); 
       setProjects(data.projects || []); 
-      setYearlyData(data.yearlyData || {}); 
-      setOneTimeIncomes(data.oneTimeIncomes || {}); 
-      setMonthComments(data.monthComments || {}); 
-      setProjectComments(data.projectComments || {}); 
-      setLockedMonths(data.lockedMonths || {}); 
+      setYearlyData(data.yearlyData); 
+      setOneTimeIncomes(data.oneTimeIncomes); 
+      setMonthComments(data.monthComments); 
+      setProjectComments(data.projectComments); 
+      setLockedMonths(data.lockedMonths); 
       
       alert('Données importées avec succès !'); 
     } 

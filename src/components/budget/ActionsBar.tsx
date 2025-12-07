@@ -1,10 +1,10 @@
 import { useState, ChangeEvent } from 'react';
-import React from 'react';
+import { type RawBudgetData } from '../../utils/importConverter';
 
 interface ActionsBarProps {
     onSave: () => void;
     onExport: (formatType: 'new' | 'old') => void;
-    onImport: (data: any) => void;
+    onImport: (data: RawBudgetData) => void;
     saving: boolean;
 }
 
@@ -17,7 +17,7 @@ export default function ActionsBar({ onSave, onExport, onImport, saving }: Actio
       const reader = new FileReader();
       reader.onload = (event) => {
         try {
-          const data = JSON.parse(event.target?.result as string);
+          const data = JSON.parse(event.target?.result as string) as RawBudgetData;
           onImport(data);
         } catch (error) {
           alert('Erreur lors de l\'importation du fichier');
