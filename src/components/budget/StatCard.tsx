@@ -70,7 +70,7 @@ export function StatCard({
                 {trend.isPositive ? "+" : ""}
                 {trend.value}%
               </span>
-              <span className="text-xs text-muted-foreground">vs last month</span>
+              <span className="text-xs text-muted-foreground">vs mois dernier</span>
             </div>
           )}
         </div>

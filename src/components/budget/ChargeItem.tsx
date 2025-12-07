@@ -53,7 +53,7 @@ export function ChargeItem({
   amount,
   category = "other",
   isRecurring = true,
-  frequency = "monthly",
+  frequency = "mensuel",
   className,
 }: ChargeItemProps) {
   const config = categoryConfig[category.toLowerCase()] || categoryConfig.other;

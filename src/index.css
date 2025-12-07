@@ -128,12 +128,9 @@
     @apply bg-background text-foreground antialiased;
     font-family: 'DM Sans', sans-serif;
     min-height: 100vh;
-    /* Support mobile */
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    /* Prevent tap highlight on mobile */
     -webkit-tap-highlight-color: transparent;
-    /* Enable momentum scrolling on iOS */
     -webkit-overflow-scrolling: touch;
   }
 
