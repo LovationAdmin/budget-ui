@@ -1,7 +1,5 @@
 import { useState } from 'react';
-// @ts-ignore
 import { budgetAPI } from '../../services/api';
-import React from 'react';
 
 interface MemberUser {
     id: string;
@@ -73,9 +71,10 @@ export default function MemberManagementSection({ budget, currentUserId, onMembe
             onMemberChange(); // Recharger les données pour mettre à jour la liste
         }
 
-    } catch (err: any) {
+    } catch (err: unknown) {
         console.error("Error removing member:", err);
-        alert(err.response?.data?.error || 'Erreur lors de la suppression du membre');
+        const error = err as { response?: { data?: { error?: string } } };
+        alert(error.response?.data?.error || 'Erreur lors de la suppression du membre');
     } finally {
         setRemovingId(null);
     }

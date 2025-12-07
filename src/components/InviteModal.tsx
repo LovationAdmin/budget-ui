@@ -1,7 +1,5 @@
 import { useState, FormEvent, ChangeEvent } from 'react';
-// @ts-ignore
 import { invitationAPI } from '../services/api';
-import React from 'react';
 
 interface InviteModalProps {
     budgetId: string;
@@ -27,8 +25,9 @@ export default function InviteModal({ budgetId, onClose, onInvited }: InviteModa
         onInvited?.();
         onClose();
       }, 1500);
-    } catch (err: any) {
-      setError(err.response?.data?.error || 'Erreur lors de l\'invitation');
+    } catch (err: unknown) {
+      const error = err as { response?: { data?: { error?: string } } };
+      setError(error.response?.data?.error || 'Erreur lors de l\'invitation');
     } finally {
       setLoading(false);
     }

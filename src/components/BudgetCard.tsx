@@ -1,8 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-// @ts-ignore
 import { budgetAPI } from '../services/api';
-import React from 'react';
 
 interface Member {
   id: string;
