@@ -29,9 +29,9 @@ export default function AcceptInvitation() {
     }
 
     acceptInvitation(token);
-  }, [user]);
+  }, [user, searchParams, navigate]);
 
-  const acceptInvitation = async (token) => {
+  const acceptInvitation = async (token: string) => {
     try {
       const response = await invitationAPI.accept(token);
       setSuccess(true);
@@ -39,8 +39,9 @@ export default function AcceptInvitation() {
       setTimeout(() => {
         navigate(`/budget/${response.data.budget_id}`);
       }, 2000);
-    } catch (err) {
-      setError(err.response?.data?.error || 'Erreur lors de l\'acceptation de l\'invitation');
+    } catch (err: unknown) {
+      const error = err as { response?: { data?: { error?: string } } };
+      setError(error.response?.data?.error || 'Erreur lors de l\'acceptation de l\'invitation');
     } finally {
       setLoading(false);
     }

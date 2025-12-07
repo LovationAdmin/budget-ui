@@ -1,10 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-// @ts-ignore
 import { budgetAPI } from '../services/api';
 import Navbar from '../components/Navbar';
 import InviteModal from '../components/InviteModal';
-import React from 'react';
 
 interface Member {
   id: string;
@@ -18,12 +16,16 @@ interface BudgetDetails {
     is_owner: boolean;
 }
 
+interface BudgetData {
+  data: unknown;
+}
+
 export default function Budget(): JSX.Element {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   
   const [budget, setBudget] = useState<BudgetDetails | null>(null);
-  const [budgetData, setBudgetData] = useState<any>(null);
+  const [budgetData, setBudgetData] = useState<BudgetData | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [showInviteModal, setShowInviteModal] = useState(false);
@@ -53,7 +55,7 @@ export default function Budget(): JSX.Element {
     if (!id) return;
     setSaving(true);
     try {
-      await budgetAPI.updateData(id, budgetData);
+      await budgetAPI.updateData(id, { data: budgetData });
       alert('Budget sauvegardé !');
     } catch (error) {
       console.error('Error saving budget:', error);

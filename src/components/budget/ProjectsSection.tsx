@@ -1,5 +1,4 @@
 import { useState, ChangeEvent, KeyboardEvent } from 'react';
-import React from 'react';
 
 interface Project {
     id: string;

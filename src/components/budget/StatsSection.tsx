@@ -1,5 +1,3 @@
-import React from 'react';
-
 // --- Interfaces ---
 interface Person { salary: number; }
 interface Charge { amount: number; }

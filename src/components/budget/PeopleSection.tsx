@@ -1,5 +1,4 @@
 import { useState, ChangeEvent } from 'react';
-import React from 'react';
 
 interface Person {
     id: string;
