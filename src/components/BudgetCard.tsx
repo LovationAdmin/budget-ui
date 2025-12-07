@@ -1,8 +1,29 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
+// @ts-ignore
 import { budgetAPI } from '../services/api';
+import React from 'react';
 
-export default function BudgetCard({ budget, onDeleted }) {
+interface Member {
+  id: string;
+  user: { name: string; email: string };
+  role: 'owner' | 'member';
+}
+
+interface Budget {
+  id: string;
+  name: string;
+  created_at: string;
+  is_owner: boolean;
+  members: Member[];
+}
+
+interface BudgetCardProps {
+  budget: Budget;
+  onDeleted?: () => void;
+}
+
+export default function BudgetCard({ budget, onDeleted }: BudgetCardProps): JSX.Element {
   const [deleting, setDeleting] = useState(false);
 
   const handleDelete = async () => {

@@ -1,6 +1,17 @@
-import { useState } from 'react';
+import { useState, ChangeEvent, KeyboardEvent } from 'react';
+import React from 'react';
 
-export default function ProjectsSection({ projects, onProjectsChange }) {
+interface Project {
+    id: string;
+    label: string;
+}
+
+interface ProjectsSectionProps {
+    projects: Project[];
+    onProjectsChange: (projects: Project[]) => void;
+}
+
+export default function ProjectsSection({ projects, onProjectsChange }: ProjectsSectionProps): JSX.Element {
   const [newProject, setNewProject] = useState('');
 
   const addProject = () => {
@@ -16,8 +27,15 @@ export default function ProjectsSection({ projects, onProjectsChange }) {
     }
   };
 
-  const removeProject = (id) => {
+  const removeProject = (id: string) => {
     onProjectsChange(projects.filter(p => p.id !== id));
+  };
+  
+  const handleKeyPress = (e: KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+        e.preventDefault();
+        addProject();
+    }
   };
 
   return (
@@ -47,8 +65,8 @@ export default function ProjectsSection({ projects, onProjectsChange }) {
         <input
           type="text"
           value={newProject}
-          onChange={(e) => setNewProject(e.target.value)}
-          onKeyPress={(e) => e.key === 'Enter' && addProject()}
+          onChange={(e: ChangeEvent<HTMLInputElement>) => setNewProject(e.target.value)}
+          onKeyPress={handleKeyPress}
           className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 outline-none"
           placeholder="Ex: Vacances, Voiture, Épargne..."
         />

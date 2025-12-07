@@ -1,6 +1,18 @@
-import { useState } from 'react';
+import { useState, ChangeEvent } from 'react';
+import React from 'react';
 
-export default function PeopleSection({ people, onPeopleChange }) {
+interface Person {
+    id: string;
+    name: string;
+    salary: number;
+}
+
+interface PeopleSectionProps {
+    people: Person[];
+    onPeopleChange: (people: Person[]) => void;
+}
+
+export default function PeopleSection({ people, onPeopleChange }: PeopleSectionProps): JSX.Element {
   const [newPerson, setNewPerson] = useState({ name: '', salary: '' });
 
   const addPerson = () => {
@@ -17,17 +29,17 @@ export default function PeopleSection({ people, onPeopleChange }) {
     }
   };
 
-  const removePerson = (id) => {
+  const removePerson = (id: string) => {
     onPeopleChange(people.filter(p => p.id !== id));
   };
 
-  const updatePerson = (id, field, value) => {
+  const updatePerson = (id: string, field: keyof Person, value: string) => {
     onPeopleChange(
       people.map(p =>
         p.id === id
           ? { ...p, [field]: field === 'salary' ? parseFloat(value) || 0 : value }
           : p
-      )
+      ) as Person[]
     );
   };
 
@@ -47,14 +59,14 @@ export default function PeopleSection({ people, onPeopleChange }) {
             <input
               type="text"
               value={person.name}
-              onChange={(e) => updatePerson(person.id, 'name', e.target.value)}
+              onChange={(e: ChangeEvent<HTMLInputElement>) => updatePerson(person.id, 'name', e.target.value)}
               className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 outline-none"
               placeholder="Nom"
             />
             <input
               type="number"
-              value={person.salary}
-              onChange={(e) => updatePerson(person.id, 'salary', e.target.value)}
+              value={person.salary || ''}
+              onChange={(e: ChangeEvent<HTMLInputElement>) => updatePerson(person.id, 'salary', e.target.value)}
               className="w-32 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 outline-none"
               placeholder="Salaire"
             />
@@ -74,14 +86,14 @@ export default function PeopleSection({ people, onPeopleChange }) {
         <input
           type="text"
           value={newPerson.name}
-          onChange={(e) => setNewPerson({ ...newPerson, name: e.target.value })}
+          onChange={(e: ChangeEvent<HTMLInputElement>) => setNewPerson({ ...newPerson, name: e.target.value })}
           className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 outline-none"
           placeholder="Nom de la personne"
         />
         <input
           type="number"
           value={newPerson.salary}
-          onChange={(e) => setNewPerson({ ...newPerson, salary: e.target.value })}
+          onChange={(e: ChangeEvent<HTMLInputElement>) => setNewPerson({ ...newPerson, salary: e.target.value })}
           className="w-32 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 outline-none"
           placeholder="Salaire"
         />

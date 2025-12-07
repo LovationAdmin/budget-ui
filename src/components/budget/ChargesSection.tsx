@@ -1,6 +1,18 @@
-import { useState } from 'react';
+import { useState, ChangeEvent } from 'react';
+import React from 'react';
 
-export default function ChargesSection({ charges, onChargesChange }) {
+interface Charge {
+    id: string;
+    label: string;
+    amount: number;
+}
+
+interface ChargesSectionProps {
+    charges: Charge[];
+    onChargesChange: (charges: Charge[]) => void;
+}
+
+export default function ChargesSection({ charges, onChargesChange }: ChargesSectionProps): JSX.Element {
   const [newCharge, setNewCharge] = useState({ label: '', amount: '' });
 
   const addCharge = () => {
@@ -17,17 +29,17 @@ export default function ChargesSection({ charges, onChargesChange }) {
     }
   };
 
-  const removeCharge = (id) => {
+  const removeCharge = (id: string) => {
     onChargesChange(charges.filter(c => c.id !== id));
   };
 
-  const updateCharge = (id, field, value) => {
+  const updateCharge = (id: string, field: keyof Charge, value: string) => {
     onChargesChange(
       charges.map(c =>
         c.id === id
           ? { ...c, [field]: field === 'amount' ? parseFloat(value) || 0 : value }
           : c
-      )
+      ) as Charge[]
     );
   };
 
@@ -47,14 +59,14 @@ export default function ChargesSection({ charges, onChargesChange }) {
             <input
               type="text"
               value={charge.label}
-              onChange={(e) => updateCharge(charge.id, 'label', e.target.value)}
+              onChange={(e: ChangeEvent<HTMLInputElement>) => updateCharge(charge.id, 'label', e.target.value)}
               className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 outline-none"
               placeholder="Type de charge"
             />
             <input
               type="number"
-              value={charge.amount}
-              onChange={(e) => updateCharge(charge.id, 'amount', e.target.value)}
+              value={charge.amount || ''}
+              onChange={(e: ChangeEvent<HTMLInputElement>) => updateCharge(charge.id, 'amount', e.target.value)}
               className="w-32 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 outline-none"
               placeholder="Montant"
             />
@@ -74,14 +86,14 @@ export default function ChargesSection({ charges, onChargesChange }) {
         <input
           type="text"
           value={newCharge.label}
-          onChange={(e) => setNewCharge({ ...newCharge, label: e.target.value })}
+          onChange={(e: ChangeEvent<HTMLInputElement>) => setNewCharge({ ...newCharge, label: e.target.value })}
           className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 outline-none"
           placeholder="Ex: Loyer, Électricité..."
         />
         <input
           type="number"
           value={newCharge.amount}
-          onChange={(e) => setNewCharge({ ...newCharge, amount: e.target.value })}
+          onChange={(e: ChangeEvent<HTMLInputElement>) => setNewCharge({ ...newCharge, amount: e.target.value })}
           className="w-32 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 outline-none"
           placeholder="Montant"
         />

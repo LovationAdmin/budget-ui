@@ -1,15 +1,23 @@
-import { useState } from 'react';
+import { useState, ChangeEvent } from 'react';
+import React from 'react';
 
-export default function ActionsBar({ onSave, onExport, onImport, saving }) {
+interface ActionsBarProps {
+    onSave: () => void;
+    onExport: (formatType: 'new' | 'old') => void;
+    onImport: (data: any) => void;
+    saving: boolean;
+}
+
+export default function ActionsBar({ onSave, onExport, onImport, saving }: ActionsBarProps): JSX.Element {
   const [showExportMenu, setShowExportMenu] = useState(false);
 
-  const handleImport = (e) => {
-    const file = e.target.files[0];
+  const handleImport = (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
     if (file) {
       const reader = new FileReader();
       reader.onload = (event) => {
         try {
-          const data = JSON.parse(event.target.result);
+          const data = JSON.parse(event.target?.result as string);
           onImport(data);
         } catch (error) {
           alert('Erreur lors de l\'importation du fichier');
@@ -17,6 +25,8 @@ export default function ActionsBar({ onSave, onExport, onImport, saving }) {
       };
       reader.readAsText(file);
     }
+    // Réinitialiser le champ de fichier après l'importation (nécessaire pour pouvoir importer à nouveau le même fichier)
+    e.target.value = '';
   };
 
   return (

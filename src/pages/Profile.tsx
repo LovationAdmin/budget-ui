@@ -1,11 +1,13 @@
-import { useState } from 'react';
+import { useState, FormEvent, ChangeEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
+// @ts-ignore
 import { userAPI } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import Navbar from '../components/Navbar';
+import React from 'react';
 
-export default function Profile() {
-  const { user, logout } = useAuth();
+export default function Profile(): JSX.Element {
+  const { user } = useAuth();
   const navigate = useNavigate();
   
   const [name, setName] = useState(user?.name || '');
@@ -18,7 +20,7 @@ export default function Profile() {
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
 
-  const handleUpdateProfile = async (e) => {
+  const handleUpdateProfile = async (e: FormEvent) => {
     e.preventDefault();
     setUpdating(true);
     setMessage('');
@@ -32,14 +34,14 @@ export default function Profile() {
       localStorage.setItem('user', JSON.stringify(updatedUser));
       
       setMessage('Profil mis à jour avec succès');
-    } catch (err) {
+    } catch (err: any) {
       setError(err.response?.data?.error || 'Erreur lors de la mise à jour');
     } finally {
       setUpdating(false);
     }
   };
 
-  const handleChangePassword = async (e) => {
+  const handleChangePassword = async (e: FormEvent) => {
     e.preventDefault();
     setChangingPassword(true);
     setMessage('');
@@ -60,7 +62,7 @@ export default function Profile() {
       setCurrentPassword('');
       setNewPassword('');
       setConfirmPassword('');
-    } catch (err) {
+    } catch (err: any) {
       setError(err.response?.data?.error || 'Erreur lors du changement de mot de passe');
     } finally {
       setChangingPassword(false);
@@ -97,7 +99,7 @@ export default function Profile() {
               <input
                 type="text"
                 value={name}
-                onChange={(e) => setName(e.target.value)}
+                onChange={(e: ChangeEvent<HTMLInputElement>) => setName(e.target.value)}
                 className="input-field"
                 required
               />
@@ -109,7 +111,7 @@ export default function Profile() {
               </label>
               <input
                 type="email"
-                value={user?.email}
+                value={user?.email || ''}
                 className="input-field bg-gray-100"
                 disabled
               />
@@ -137,7 +139,7 @@ export default function Profile() {
               <input
                 type="password"
                 value={currentPassword}
-                onChange={(e) => setCurrentPassword(e.target.value)}
+                onChange={(e: ChangeEvent<HTMLInputElement>) => setCurrentPassword(e.target.value)}
                 className="input-field"
                 required
               />
@@ -150,7 +152,7 @@ export default function Profile() {
               <input
                 type="password"
                 value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
+                onChange={(e: ChangeEvent<HTMLInputElement>) => setNewPassword(e.target.value)}
                 className="input-field"
                 minLength={8}
                 required
@@ -164,7 +166,7 @@ export default function Profile() {
               <input
                 type="password"
                 value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
+                onChange={(e: ChangeEvent<HTMLInputElement>) => setConfirmPassword(e.target.value)}
                 className="input-field"
                 required
               />

@@ -1,3 +1,20 @@
+import React from 'react';
+
+// --- Interfaces ---
+interface Person { salary: number; }
+interface Charge { amount: number; }
+interface Project { id: string; }
+interface YearlyData { [month: string]: { [projectId: string]: number }; }
+interface OneTimeIncomes { [month: string]: number; }
+
+interface StatsSectionProps {
+  people: Person[];
+  charges: Charge[];
+  projects: Project[];
+  yearlyData: YearlyData;
+  oneTimeIncomes: OneTimeIncomes;
+}
+
 const MONTHS = [
   'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
   'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'
@@ -9,7 +26,7 @@ export default function StatsSection({
   projects,
   yearlyData,
   oneTimeIncomes
-}) {
+}: StatsSectionProps): JSX.Element {
   const calculateStats = () => {
     const monthlyRegularIncome = people.reduce((sum, p) => sum + (p.salary || 0), 0);
     const annualRegularIncome = monthlyRegularIncome * 12;
@@ -39,6 +56,13 @@ export default function StatsSection({
   };
 
   const stats = calculateStats();
+  
+  const totalExpenses = stats.annualCharges + stats.totalProjectsSpending;
+  const expenseRatio = stats.totalIncome > 0 ? (totalExpenses / stats.totalIncome) * 100 : 0;
+  const chargeRatio = stats.totalIncome > 0 ? (stats.annualCharges / stats.totalIncome) * 100 : 0;
+  const projectRatio = stats.totalIncome > 0 ? (stats.totalProjectsSpending / stats.totalIncome) * 100 : 0;
+  const savingsRatio = stats.totalIncome > 0 ? (stats.yearlyBalance / stats.totalIncome * 100) : 0;
+
 
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
@@ -98,26 +122,26 @@ export default function StatsSection({
       <div className="mt-6">
         <div className="flex justify-between text-sm text-gray-600 mb-2">
           <span>Répartition des dépenses</span>
-          <span>{((stats.annualCharges + stats.totalProjectsSpending) / stats.totalIncome * 100).toFixed(1)}%</span>
+          <span>{expenseRatio.toFixed(1)}%</span>
         </div>
         <div className="h-4 bg-gray-200 rounded-full overflow-hidden">
           <div className="h-full flex">
             <div
               className="bg-red-500"
-              style={{ width: `${(stats.annualCharges / stats.totalIncome) * 100}%` }}
+              style={{ width: `${chargeRatio}%` }}
               title={`Charges: ${stats.annualCharges.toLocaleString('fr-FR')} €`}
             />
             <div
               className="bg-purple-500"
-              style={{ width: `${(stats.totalProjectsSpending / stats.totalIncome) * 100}%` }}
+              style={{ width: `${projectRatio}%` }}
               title={`Projets: ${stats.totalProjectsSpending.toLocaleString('fr-FR')} €`}
             />
           </div>
         </div>
         <div className="flex justify-between text-xs text-gray-500 mt-1">
-          <span>🔴 Charges ({((stats.annualCharges / stats.totalIncome) * 100).toFixed(1)}%)</span>
-          <span>🟣 Projets ({((stats.totalProjectsSpending / stats.totalIncome) * 100).toFixed(1)}%)</span>
-          <span>🔵 Épargne ({(stats.yearlyBalance / stats.totalIncome * 100).toFixed(1)}%)</span>
+          <span>🔴 Charges ({chargeRatio.toFixed(1)}%)</span>
+          <span>🟣 Projets ({projectRatio.toFixed(1)}%)</span>
+          <span>🔵 Épargne ({savingsRatio.toFixed(1)}%)</span>
         </div>
       </div>
     </div>

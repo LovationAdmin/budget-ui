@@ -1,13 +1,21 @@
-import { useState } from 'react';
+import { useState, FormEvent, ChangeEvent } from 'react';
+// @ts-ignore
 import { invitationAPI } from '../services/api';
+import React from 'react';
 
-export default function InviteModal({ budgetId, onClose, onInvited }) {
+interface InviteModalProps {
+    budgetId: string;
+    onClose: () => void;
+    onInvited?: () => void;
+}
+
+export default function InviteModal({ budgetId, onClose, onInvited }: InviteModalProps): JSX.Element {
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError('');
@@ -19,7 +27,7 @@ export default function InviteModal({ budgetId, onClose, onInvited }) {
         onInvited?.();
         onClose();
       }, 1500);
-    } catch (err) {
+    } catch (err: any) {
       setError(err.response?.data?.error || 'Erreur lors de l\'invitation');
     } finally {
       setLoading(false);
@@ -44,7 +52,7 @@ export default function InviteModal({ budgetId, onClose, onInvited }) {
               <input
                 type="email"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(e: ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)}
                 className="input-field"
                 placeholder="user@example.com"
                 required

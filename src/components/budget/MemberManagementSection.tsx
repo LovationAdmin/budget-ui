@@ -1,8 +1,35 @@
 import { useState } from 'react';
+// @ts-ignore
 import { budgetAPI } from '../../services/api';
+import React from 'react';
 
-export default function MemberManagementSection({ budget, currentUserId, onMemberChange }) {
-  const [removingId, setRemovingId] = useState(null);
+interface MemberUser {
+    id: string;
+    name: string;
+    email: string;
+}
+
+interface Member {
+    id: string;
+    user: MemberUser;
+    role: 'owner' | 'member';
+}
+
+interface Budget {
+    id: string;
+    name: string;
+    is_owner: boolean;
+    members: Member[];
+}
+
+interface MemberManagementSectionProps {
+    budget: Budget;
+    currentUserId: string;
+    onMemberChange: () => void;
+}
+
+export default function MemberManagementSection({ budget, currentUserId, onMemberChange }: MemberManagementSectionProps): JSX.Element | null {
+  const [removingId, setRemovingId] = useState<string | null>(null);
 
   if (!budget || !budget.members) {
     return null;
@@ -12,7 +39,7 @@ export default function MemberManagementSection({ budget, currentUserId, onMembe
   const members = budget.members;
   const budgetId = budget.id;
 
-  const handleRemoveMember = async (member) => {
+  const handleRemoveMember = async (member: Member) => {
     const memberUserId = member.user.id;
     const isSelf = memberUserId === currentUserId;
 
@@ -46,7 +73,7 @@ export default function MemberManagementSection({ budget, currentUserId, onMembe
             onMemberChange(); // Recharger les données pour mettre à jour la liste
         }
 
-    } catch (err) {
+    } catch (err: any) {
         console.error("Error removing member:", err);
         alert(err.response?.data?.error || 'Erreur lors de la suppression du membre');
     } finally {
@@ -88,15 +115,15 @@ export default function MemberManagementSection({ budget, currentUserId, onMembe
                     {canRemove && (
                         <button
                             onClick={() => handleRemoveMember(member)}
-                            disabled={removingId === member.user.id || (isOwnerRole && isOwner)}
+                            disabled={removingId === member.user.id || (isOwnerRole && isOwner && !isSelf)}
                             className={`p-2 rounded-lg text-sm font-medium transition ${
-                                isOwnerRole && isOwner
+                                isOwnerRole && isOwner && !isSelf
                                     ? 'bg-gray-50 text-gray-400 cursor-not-allowed' 
                                     : 'bg-red-50 hover:bg-red-100 text-red-600'
                             }`}
-                            title={isOwnerRole ? 'Le propriétaire ne peut pas être retiré' : (isSelf ? 'Quitter le budget' : 'Retirer le membre')}
+                            title={isOwnerRole && !isSelf ? 'Le propriétaire ne peut pas être retiré' : (isSelf ? 'Quitter le budget' : 'Retirer le membre')}
                         >
-                            {isOwnerRole ? '👑' : (removingId === member.user.id ? '⏳' : (isSelf ? '🚪 Quitter' : '❌ Retirer'))}
+                            {isOwnerRole && !isSelf ? '👑' : (removingId === member.user.id ? '⏳' : (isSelf ? '🚪 Quitter' : '❌ Retirer'))}
                         </button>
                     )}
                 </div>

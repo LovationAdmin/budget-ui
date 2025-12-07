@@ -1,15 +1,29 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { budgetAPI, invitationAPI } from '../services/api';
+// @ts-ignore
+import { budgetAPI } from '../services/api';
 import Navbar from '../components/Navbar';
 import InviteModal from '../components/InviteModal';
+import React from 'react';
 
-export default function Budget() {
-  const { id } = useParams();
+interface Member {
+  id: string;
+  user: { name: string; email: string };
+  role: 'owner' | 'member';
+}
+
+interface BudgetDetails {
+    budget: { name: string; };
+    members: Member[];
+    is_owner: boolean;
+}
+
+export default function Budget(): JSX.Element {
+  const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   
-  const [budget, setBudget] = useState(null);
-  const [budgetData, setBudgetData] = useState(null);
+  const [budget, setBudget] = useState<BudgetDetails | null>(null);
+  const [budgetData, setBudgetData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [showInviteModal, setShowInviteModal] = useState(false);
@@ -19,6 +33,7 @@ export default function Budget() {
   }, [id]);
 
   const loadBudget = async () => {
+    if (!id) return;
     try {
       const [budgetRes, dataRes] = await Promise.all([
         budgetAPI.getById(id),
@@ -35,6 +50,7 @@ export default function Budget() {
   };
 
   const handleSave = async () => {
+    if (!id) return;
     setSaving(true);
     try {
       await budgetAPI.updateData(id, budgetData);
@@ -140,7 +156,7 @@ export default function Budget() {
       </div>
 
       {/* Invite Modal */}
-      {showInviteModal && (
+      {showInviteModal && id && (
         <InviteModal
           budgetId={id}
           onClose={() => setShowInviteModal(false)}
