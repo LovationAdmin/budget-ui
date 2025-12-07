@@ -1,4 +1,6 @@
-import { useState } from 'react';
+// src/pages/Signup.tsx
+
+import { useState, FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -13,7 +15,7 @@ export default function Signup() {
   const { signup } = useAuth();
   const navigate = useNavigate();
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError('');
 
@@ -34,7 +36,7 @@ export default function Signup() {
     if (result.success) {
       navigate('/');
     } else {
-      setError(result.error);
+      setError(result.error || 'Erreur inconnue lors de la création du compte');
     }
     
     setLoading(false);

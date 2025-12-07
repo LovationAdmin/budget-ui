@@ -1,7 +1,10 @@
-import { Routes, Route, Navigate } from 'react-router-dom';
-import PrivateRoute from './components/PrivateRoute';
+// src/App.tsx
 
-import Login from './pages/Login';
+import { Routes, Route, Navigate } from 'react-router-dom';
+import PrivateRoute from './components/PrivateRoute'; // Now .tsx
+
+// Note: Assurez-vous de renommer les fichiers importés en TS/TSX au fur et à mesure
+import Login from './pages/Login'; 
 import Signup from './pages/Signup';
 import Dashboard from './pages/Dashboard';
 import Budget from './pages/Budget';
