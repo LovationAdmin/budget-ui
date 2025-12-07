@@ -26,7 +26,7 @@ export default function Login() {
     if (result.success) {
       navigate('/');
     } else {
-      setError(result.error);
+      setError(result.error || 'Erreur de connexion');
     }
     
     setLoading(false);
@@ -57,7 +57,7 @@ export default function Login() {
                 id="email"
                 type="email"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)}
                 placeholder="votre@email.com"
                 required
                 autoComplete="email"
@@ -79,7 +79,7 @@ export default function Login() {
                 id="password"
                 type="password"
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
                 placeholder="••••••••"
                 required
                 autoComplete="current-password"

@@ -1,14 +1,11 @@
 import { useState, FormEvent, ChangeEvent } from 'react';
-import { useNavigate } from 'react-router-dom';
 // @ts-ignore
 import { userAPI } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import Navbar from '../components/Navbar';
-import React from 'react';
 
 export default function Profile(): JSX.Element {
   const { user } = useAuth();
-  const navigate = useNavigate();
   
   const [name, setName] = useState(user?.name || '');
   const [currentPassword, setCurrentPassword] = useState('');
@@ -34,8 +31,9 @@ export default function Profile(): JSX.Element {
       localStorage.setItem('user', JSON.stringify(updatedUser));
       
       setMessage('Profil mis à jour avec succès');
-    } catch (err: any) {
-      setError(err.response?.data?.error || 'Erreur lors de la mise à jour');
+    } catch (err: unknown) {
+      const error = err as { response?: { data?: { error?: string } } };
+      setError(error.response?.data?.error || 'Erreur lors de la mise à jour');
     } finally {
       setUpdating(false);
     }
@@ -62,8 +60,9 @@ export default function Profile(): JSX.Element {
       setCurrentPassword('');
       setNewPassword('');
       setConfirmPassword('');
-    } catch (err: any) {
-      setError(err.response?.data?.error || 'Erreur lors du changement de mot de passe');
+    } catch (err: unknown) {
+      const error = err as { response?: { data?: { error?: string } } };
+      setError(error.response?.data?.error || 'Erreur lors du changement de mot de passe');
     } finally {
       setChangingPassword(false);
     }
