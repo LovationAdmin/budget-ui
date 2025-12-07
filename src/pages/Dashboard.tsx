@@ -1,3 +1,5 @@
+import { BudgetNavbar } from '@/components/budget/BudgetNavbar';
+import { EmptyState } from '@/components/budget/EmptyState';
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
@@ -38,36 +40,6 @@ interface Budget {
     };
   }>;
 }
-
-// PLACEHOLDERS pour les composants non fournis
-const BudgetNavbar = ({ budgetTitle, currentSection }: { budgetTitle: string, currentSection: string }) => (
-    <nav className="bg-white shadow-sm border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center">
-            <h1 className="text-xl font-bold text-primary-600">{budgetTitle}</h1>
-            <span className="ml-4 text-sm text-gray-500 capitalize">{currentSection}</span>
-        </div>
-    </nav>
-);
-
-interface EmptyStateProps {
-  icon: React.ComponentType<{ className?: string }>;
-  title: string;
-  description: string;
-  actionLabel: string;
-  onAction: () => void;
-}
-
-const EmptyState = ({ icon: Icon, title, description, actionLabel, onAction }: EmptyStateProps) => (
-    <div className="flex flex-col items-center justify-center p-12 bg-white rounded-xl shadow-lg border border-gray-200">
-        <Icon className="h-10 w-10 text-primary mb-4" />
-        <h2 className="text-xl font-semibold text-gray-900 mb-2">{title}</h2>
-        <p className="text-gray-600 mb-6 text-center">{description}</p>
-        <Button onClick={onAction} variant="gradient">
-            {actionLabel}
-        </Button>
-    </div>
-);
-
 
 export default function Dashboard() {
   const navigate = useNavigate();
