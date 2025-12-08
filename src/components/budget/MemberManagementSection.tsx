@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { MemberAvatar } from "./MemberAvatar";
@@ -22,7 +22,7 @@ interface BudgetMember {
     id: string;
     name: string;
     email: string;
-  };
+  } | null; // ← user can be null!
   role: 'owner' | 'member';
 }
 
@@ -58,7 +58,6 @@ export default function MemberManagementSection({
 
   const loadInvitations = async () => {
     if (!budget.is_owner) return;
-    
     setLoading(true);
     try {
       const response = await budgetAPI.getInvitations(budget.id);
@@ -70,15 +69,14 @@ export default function MemberManagementSection({
     }
   };
 
-  useState(() => {
+  useEffect(() => {
     if (budget.is_owner) {
       loadInvitations();
     }
-  });
+  }, [budget.is_owner, budget.id]);
 
   const handleRemoveMember = async () => {
-    if (!memberToRemove) return;
-
+    if (!memberToRemove || !memberToRemove.user) return;
     try {
       await budgetAPI.removeMember(budget.id, memberToRemove.id);
       setMemberToRemove(null);
@@ -91,7 +89,6 @@ export default function MemberManagementSection({
 
   const handleCancelInvitation = async () => {
     if (!invitationToCancel) return;
-
     try {
       await budgetAPI.cancelInvitation(budget.id, invitationToCancel.id);
       setInvitationToCancel(null);
@@ -114,61 +111,63 @@ export default function MemberManagementSection({
               <div>
                 <CardTitle className="font-display">Membres du Budget</CardTitle>
                 <p className="text-sm text-muted-foreground mt-1">
-                  {budget.members.length} membre{budget.members.length > 1 ? 's' : ''} actif{budget.members.length > 1 ? 's' : ''}
+                  {budget.members.filter(m => m.user).length} membre{budget.members.filter(m => m.user).length !== 1 ? 's' : ''}
                 </p>
               </div>
             </div>
           </div>
         </CardHeader>
-
         <CardContent className="space-y-4">
-          {/* Active Members */}
+          {/* Active Members — ONLY valid users */}
           <div className="space-y-2">
-            {budget.members.map((member) => (
-              <div
-                key={member.id}
-                className="flex items-center gap-3 p-3 rounded-xl border border-border/50 bg-card/50 hover:bg-card transition-all"
-              >
-                <MemberAvatar name={member.user.name} size="md" />
-                
-                <div className="flex-1 min-w-0">
-                  <p className="font-medium text-foreground truncate">
-                    {member.user.name}
-                    {member.user.id === currentUserId && (
-                      <span className="text-xs text-muted-foreground ml-2">(vous)</span>
-                    )}
-                  </p>
-                  <p className="text-sm text-muted-foreground truncate">
-                    {member.user.email}
-                  </p>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  {member.role === 'owner' ? (
-                    <Badge variant="default" className="gap-1">
-                      <Crown className="h-3 w-3" />
-                      Propriétaire
-                    </Badge>
-                  ) : (
-                    <Badge variant="secondary" className="gap-1">
-                      <UserPlus className="h-3 w-3" />
-                      Membre
-                    </Badge>
-                  )}
-
-                  {budget.is_owner && member.user.id !== currentUserId && member.role !== 'owner' && (
-                    <Button
-                      variant="ghost"
-                      size="icon-sm"
-                      onClick={() => setMemberToRemove(member)}
-                      className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                    >
-                      <UserMinus className="h-4 w-4" />
-                    </Button>
-                  )}
-                </div>
-              </div>
-            ))}
+            {budget.members
+              .filter(member => member.user) // ✅ Only show members with a valid user
+              .map((member) => {
+                // Safe now due to filter
+                const user = member.user!;
+                return (
+                  <div
+                    key={member.id}
+                    className="flex items-center gap-3 p-3 rounded-xl border border-border/50 bg-card/50 hover:bg-card transition-all"
+                  >
+                    <MemberAvatar name={user.name} size="md" />
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-foreground truncate">
+                        {user.name}
+                        {user.id === currentUserId && (
+                          <span className="text-xs text-muted-foreground ml-2">(vous)</span>
+                        )}
+                      </p>
+                      <p className="text-sm text-muted-foreground truncate">
+                        {user.email}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {member.role === 'owner' ? (
+                        <Badge variant="default" className="gap-1">
+                          <Crown className="h-3 w-3" />
+                          Propriétaire
+                        </Badge>
+                      ) : (
+                        <Badge variant="secondary" className="gap-1">
+                          <UserPlus className="h-3 w-3" />
+                          Membre
+                        </Badge>
+                      )}
+                      {budget.is_owner && user.id !== currentUserId && member.role !== 'owner' && (
+                        <Button
+                          variant="ghost"
+                          size="icon-sm"
+                          onClick={() => setMemberToRemove(member)}
+                          className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                        >
+                          <UserMinus className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
           </div>
 
           {/* Pending Invitations */}
@@ -178,7 +177,6 @@ export default function MemberManagementSection({
                 <Mail className="h-4 w-4" />
                 Invitations en attente ({invitations.length})
               </p>
-              
               {invitations.map((invitation) => (
                 <div
                   key={invitation.id}
@@ -187,16 +185,13 @@ export default function MemberManagementSection({
                   <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted">
                     <Mail className="h-5 w-5 text-muted-foreground" />
                   </div>
-                  
                   <div className="flex-1 min-w-0">
                     <p className="font-medium text-foreground truncate">{invitation.email}</p>
                     <p className="text-xs text-muted-foreground">
                       Envoyée le {new Date(invitation.created_at).toLocaleDateString('fr-FR')}
                     </p>
                   </div>
-
                   <Badge variant="outline" className="text-warning">En attente</Badge>
-
                   <Button
                     variant="ghost"
                     size="icon-sm"
@@ -224,7 +219,7 @@ export default function MemberManagementSection({
           <AlertDialogHeader>
             <AlertDialogTitle>Retirer ce membre ?</AlertDialogTitle>
             <AlertDialogDescription>
-              Êtes-vous sûr de vouloir retirer <strong>{memberToRemove?.user.name}</strong> de ce budget ?
+              Êtes-vous sûr de vouloir retirer <strong>{memberToRemove?.user?.name}</strong> de ce budget ?
               Cette personne perdra l'accès à toutes les données.
             </AlertDialogDescription>
           </AlertDialogHeader>
