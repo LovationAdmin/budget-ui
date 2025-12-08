@@ -36,7 +36,7 @@ export interface LockedMonths {
   [month: string]: boolean;
 }
 
-// Input Data Type (Loose type for legacy data)
+// Input Data Type
 export interface RawBudgetData {
   budgetTitle?: string;
   currentYear?: number;
@@ -54,7 +54,7 @@ export interface RawBudgetData {
   date?: string;
 }
 
-// Output Data Type (Strict modern format)
+// Output Data Type
 export interface ConvertedBudgetData {
   budgetTitle: string;
   currentYear: number;
@@ -77,12 +77,7 @@ const MONTHS = [
   'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'
 ];
 
-/**
- * Convert Old JSON Format (HTML version) to New React Format
- */
 export function convertOldFormatToNew(oldData: RawBudgetData): ConvertedBudgetData {
-  console.log('Converting format...', oldData);
-  
   // Default structure
   const newData: ConvertedBudgetData = {
     budgetTitle: oldData.budgetTitle || '',
@@ -98,40 +93,28 @@ export function convertOldFormatToNew(oldData: RawBudgetData): ConvertedBudgetDa
     lastUpdated: new Date().toISOString()
   };
 
-  // 1. If it's already the new format (has yearlyData as the correct object structure)
+  // If it's already the new format
   if (oldData.yearlyData && !Object.keys(oldData.yearlyData).some(key => key.match(/^\d{4}$/))) {
-    // It seems to be new format already, merge carefully
     return { ...newData, ...oldData } as ConvertedBudgetData;
   }
 
-  // 2. Detect Legacy Format (yearlyData keyed by Year "2023", "2024")
+  // Detect Legacy Format
   const firstYearKey = Object.keys(oldData.yearlyData || {})[0];
   
   if (firstYearKey && (oldData.yearlyData as any)[firstYearKey]?.months) {
-    console.log('Old format detected via year key:', firstYearKey);
     const oldYearData = (oldData.yearlyData as any)[firstYearKey];
-
-    // Setup basic fields if missing
     newData.currentYear = parseInt(firstYearKey);
 
-    // Map Months
     MONTHS.forEach((month, idx) => {
-      // Projects Data
       if (oldYearData.months && oldYearData.months[idx]) {
         newData.yearlyData[month] = { ...oldYearData.months[idx] };
       }
-
-      // Month Comments
       if (oldYearData.monthComments && oldYearData.monthComments[idx]) {
         newData.monthComments[month] = oldYearData.monthComments[idx];
       }
-
-      // Project Specific Comments
       if (oldYearData.expenseComments && oldYearData.expenseComments[idx]) {
         newData.projectComments[month] = { ...oldYearData.expenseComments[idx] };
       }
-
-      // One Time Incomes (Legacy was array of objects)
       if (oldData.oneTimeIncomes && (oldData.oneTimeIncomes as any)[firstYearKey]) {
         const incomeObj = (oldData.oneTimeIncomes as any)[firstYearKey][idx];
         if (incomeObj && incomeObj.amount) {
@@ -144,9 +127,6 @@ export function convertOldFormatToNew(oldData: RawBudgetData): ConvertedBudgetDa
   return newData;
 }
 
-/**
- * Convert New Format to Old (For Backward Compatibility Export)
- */
 export function convertNewFormatToOld(newData: ConvertedBudgetData): RawBudgetData {
   const year = newData.currentYear || new Date().getFullYear();
   
@@ -171,20 +151,15 @@ export function convertNewFormatToOld(newData: ConvertedBudgetData): RawBudgetDa
     date: new Date().toISOString()
   };
 
-  // Populate Arrays based on Month Index
   MONTHS.forEach(month => {
-    // 1. Project Amounts
     const monthData = newData.yearlyData[month] || {};
     oldData.yearlyData[year].months.push(monthData);
-    oldData.yearlyData[year].expenses.push(monthData); // Legacy duplication
+    oldData.yearlyData[year].expenses.push(monthData);
     
-    // 2. Month Comments
     oldData.yearlyData[year].monthComments.push(newData.monthComments?.[month] || '');
     
-    // 3. Project Comments
     oldData.yearlyData[year].expenseComments.push(newData.projectComments?.[month] || {});
     
-    // 4. One Time Incomes
     oldData.oneTimeIncomes[year].push({
       amount: newData.oneTimeIncomes?.[month] || 0,
       description: ''

@@ -1,6 +1,4 @@
-// src/services/api.ts
-
-import axios, { InternalAxiosRequestConfig } from 'axios';
+import axios, { InternalAxiosRequestConfig, AxiosResponse } from 'axios';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api/v1';
 
@@ -11,7 +9,7 @@ const api = axios.create({
   },
 });
 
-// Interceptor pour ajouter le Token
+// Interceptor for Token
 api.interceptors.request.use((config: InternalAxiosRequestConfig) => {
   const token = localStorage.getItem('token');
   if (token) {
@@ -20,20 +18,35 @@ api.interceptors.request.use((config: InternalAxiosRequestConfig) => {
   return config;
 });
 
-// Interceptor pour gérer le 401
+// Interceptor for 401
 api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
       localStorage.removeItem('token');
       localStorage.removeItem('user');
-      window.location.href = '/login';
+      if (!window.location.pathname.includes('/login')) {
+        window.location.href = '/login';
+      }
     }
     return Promise.reject(error);
   }
 );
 
-// Types pour les fonctions API
+// --- EXPORTED TYPES (Fixes AuthContext error) ---
+export interface User {
+  id: string;
+  name: string;
+  email: string;
+  avatar?: string;
+}
+
+export interface AuthResponse {
+  token: string;
+  user: User;
+}
+
+// Internal types
 interface AuthData { name?: string; email: string; password: string; }
 interface ProfileUpdateData { name: string; }
 interface PasswordChangeData { current_password: string; new_password: string; }
@@ -41,8 +54,8 @@ interface BudgetCreateData { name: string; }
 interface BudgetUpdateData { data: unknown; } 
 
 export const authAPI = {
-  signup: (data: AuthData) => api.post('/auth/signup', data),
-  login: (data: AuthData) => api.post('/auth/login', data),
+  signup: (data: AuthData): Promise<AxiosResponse<AuthResponse>> => api.post('/auth/signup', data),
+  login: (data: AuthData): Promise<AxiosResponse<AuthResponse>> => api.post('/auth/login', data),
 };
 
 export const userAPI = {
