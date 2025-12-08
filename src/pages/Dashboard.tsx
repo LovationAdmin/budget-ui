@@ -37,7 +37,7 @@ interface Budget {
     user: {
       name: string;
       avatar?: string;
-    };
+    } | null; // ← Important: user can be null
   }>;
 }
 
@@ -68,7 +68,6 @@ export default function Dashboard() {
   const handleCreateBudget = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newBudgetName.trim()) return;
-
     setCreating(true);
     try {
       const response = await budgetAPI.create({ name: newBudgetName });
@@ -108,7 +107,6 @@ export default function Dashboard() {
         budgetTitle="Mes Budgets"
         currentSection="dashboard"
       />
-
       <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
         {/* Welcome section */}
         <div className="mb-8 animate-slide-up">
@@ -198,7 +196,6 @@ export default function Dashboard() {
                   Nouveau
                 </Button>
               </div>
-
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 {budgets.map((budget) => (
                   <div
@@ -226,16 +223,19 @@ export default function Dashboard() {
                       )}
                     </div>
 
+                    {/* ✅ SAFE MAPPING: Filter out members with no user */}
                     {budget.members && budget.members.length > 0 && (
                       <div className="mb-4">
                         <p className="text-sm text-muted-foreground mb-2">
                           {budget.members.length} membre(s)
                         </p>
                         <MemberAvatarGroup
-                          members={budget.members.map((m) => ({
-                            name: m.user.name,
-                            image: m.user.avatar
-                          }))}
+                          members={budget.members
+                            .filter(m => m.user) // ← Only keep valid users
+                            .map((m) => ({
+                              name: m.user!.name, // safe after filter
+                              image: m.user!.avatar,
+                            }))}
                           max={4}
                           size="sm"
                         />
@@ -305,7 +305,7 @@ export default function Dashboard() {
                 <Input
                   id="name"
                   value={newBudgetName}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewBudgetName(e.target.value)}
+                  onChange={(e) => setNewBudgetName(e.target.value)}
                   placeholder="Budget Famille 2025"
                   autoFocus
                   required
