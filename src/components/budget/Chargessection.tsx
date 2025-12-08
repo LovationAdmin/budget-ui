@@ -7,6 +7,7 @@ import { Plus, Trash2, Receipt } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Charge } from '@/utils/importConverter.tsx';
 
+
 interface ChargesSectionProps {
   charges: Charge[];
   onChargesChange: (charges: Charge[]) => void;

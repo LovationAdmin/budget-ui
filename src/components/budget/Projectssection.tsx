@@ -7,6 +7,7 @@ import { Plus, Trash2, Target } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Project } from '@/utils/importConverter';
 
+
 interface ProjectsSectionProps {
   projects: Project[];
   onProjectsChange: (projects: Project[]) => void;

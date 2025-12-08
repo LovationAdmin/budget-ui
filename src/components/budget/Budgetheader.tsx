@@ -2,6 +2,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
+
 interface BudgetHeaderProps {
   budgetTitle: string;
   onTitleChange: (title: string) => void;
