@@ -19,7 +19,7 @@ import Navbar from '../components/Navbar.tsx';
 import InviteModal from '../components/InviteModal';
 import { useAuth } from '../contexts/AuthContext';
 
-import BudgetHeader from '../components/budget/Budgetheader';
+import BudgetHeader from '../components/budget/BudgetHeader';
 import PeopleSection from '../components/budget/PeopleSection';
 import ChargesSection from '../components/budget/ChargesSection';
 import ProjectsSection from '../components/budget/ProjectsSection';
