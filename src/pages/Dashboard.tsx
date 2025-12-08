@@ -37,7 +37,7 @@ interface Budget {
     user: {
       name: string;
       avatar?: string;
-    } | null; // ← Important: user can be null
+    } | null; // ← Important!
   }>;
 }
 
@@ -231,9 +231,9 @@ export default function Dashboard() {
                         </p>
                         <MemberAvatarGroup
                           members={budget.members
-                            .filter(m => m.user) // ← Only keep valid users
+                            .filter(m => m.user) // ✅ Only keep valid members
                             .map((m) => ({
-                              name: m.user!.name, // safe after filter
+                              name: m.user!.name,
                               image: m.user!.avatar,
                             }))}
                           max={4}
