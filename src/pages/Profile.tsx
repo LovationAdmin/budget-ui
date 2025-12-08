@@ -1,8 +1,7 @@
 import { useState, FormEvent, ChangeEvent } from 'react';
-// @ts-ignore
 import { userAPI } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
-import BudgetNavbar from '../components/budget/BudgetNavbar';
+import { BudgetNavbar } from '../components/budget/BudgetNavbar';
 
 export default function Profile(): JSX.Element {
   const { user } = useAuth();
@@ -27,8 +26,10 @@ export default function Profile(): JSX.Element {
       await userAPI.updateProfile({ name });
       
       // Update local storage
-      const updatedUser = { ...user, name };
-      localStorage.setItem('user', JSON.stringify(updatedUser));
+      if (user) {
+        const updatedUser = { ...user, name };
+        localStorage.setItem('user', JSON.stringify(updatedUser));
+      }
       
       setMessage('Profil mis à jour avec succès');
     } catch (err: unknown) {
@@ -88,7 +89,7 @@ export default function Profile(): JSX.Element {
         )}
 
         {/* Profile Info */}
-        <div className="card mb-6">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
           <h2 className="text-xl font-semibold text-gray-900 mb-4">Informations</h2>
           <form onSubmit={handleUpdateProfile}>
             <div className="mb-4">
@@ -99,7 +100,7 @@ export default function Profile(): JSX.Element {
                 type="text"
                 value={name}
                 onChange={(e: ChangeEvent<HTMLInputElement>) => setName(e.target.value)}
-                className="input-field"
+                className="flex h-10 w-full rounded-xl border border-input bg-background px-3 py-2 text-sm ring-offset-background"
                 required
               />
             </div>
@@ -111,7 +112,7 @@ export default function Profile(): JSX.Element {
               <input
                 type="email"
                 value={user?.email || ''}
-                className="input-field bg-gray-100"
+                className="flex h-10 w-full rounded-xl border border-input bg-gray-100 px-3 py-2 text-sm ring-offset-background text-gray-500"
                 disabled
               />
               <p className="text-xs text-gray-500 mt-1">L'email ne peut pas être modifié</p>
@@ -119,7 +120,7 @@ export default function Profile(): JSX.Element {
 
             <button
               type="submit"
-              className="btn-primary"
+              className="bg-primary text-primary-foreground shadow-soft hover:bg-primary/90 h-10 px-5 py-2 rounded-xl text-sm font-medium transition-colors"
               disabled={updating}
             >
               {updating ? 'Mise à jour...' : 'Mettre à jour'}
@@ -128,7 +129,7 @@ export default function Profile(): JSX.Element {
         </div>
 
         {/* Change Password */}
-        <div className="card">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
           <h2 className="text-xl font-semibold text-gray-900 mb-4">Changer le mot de passe</h2>
           <form onSubmit={handleChangePassword}>
             <div className="mb-4">
@@ -139,7 +140,7 @@ export default function Profile(): JSX.Element {
                 type="password"
                 value={currentPassword}
                 onChange={(e: ChangeEvent<HTMLInputElement>) => setCurrentPassword(e.target.value)}
-                className="input-field"
+                className="flex h-10 w-full rounded-xl border border-input bg-background px-3 py-2 text-sm ring-offset-background"
                 required
               />
             </div>
@@ -152,7 +153,7 @@ export default function Profile(): JSX.Element {
                 type="password"
                 value={newPassword}
                 onChange={(e: ChangeEvent<HTMLInputElement>) => setNewPassword(e.target.value)}
-                className="input-field"
+                className="flex h-10 w-full rounded-xl border border-input bg-background px-3 py-2 text-sm ring-offset-background"
                 minLength={8}
                 required
               />
@@ -166,14 +167,14 @@ export default function Profile(): JSX.Element {
                 type="password"
                 value={confirmPassword}
                 onChange={(e: ChangeEvent<HTMLInputElement>) => setConfirmPassword(e.target.value)}
-                className="input-field"
+                className="flex h-10 w-full rounded-xl border border-input bg-background px-3 py-2 text-sm ring-offset-background"
                 required
               />
             </div>
 
             <button
               type="submit"
-              className="btn-primary"
+              className="bg-primary text-primary-foreground shadow-soft hover:bg-primary/90 h-10 px-5 py-2 rounded-xl text-sm font-medium transition-colors"
               disabled={changingPassword}
             >
               {changingPassword ? 'Changement...' : 'Changer le mot de passe'}

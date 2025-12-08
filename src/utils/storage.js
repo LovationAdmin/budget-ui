@@ -1,9 +1,16 @@
+interface User {
+  id: string;
+  name: string;
+  email: string;
+  [key: string]: any;
+}
+
 export const storage = {
-  setToken: (token) => {
+  setToken: (token: string) => {
     localStorage.setItem('access_token', token);
   },
   
-  getToken: () => {
+  getToken: (): string | null => {
     return localStorage.getItem('access_token');
   },
   
@@ -11,11 +18,11 @@ export const storage = {
     localStorage.removeItem('access_token');
   },
   
-  setUser: (user) => {
+  setUser: (user: User) => {
     localStorage.setItem('user', JSON.stringify(user));
   },
   
-  getUser: () => {
+  getUser: (): User | null => {
     const user = localStorage.getItem('user');
     return user ? JSON.parse(user) : null;
   },

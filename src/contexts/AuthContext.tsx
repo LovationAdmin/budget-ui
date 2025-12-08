@@ -1,14 +1,5 @@
-// src/contexts/AuthContext.tsx
-
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { authAPI } from '../services/api';
-
-interface User {
-  id: string;
-  name: string;
-  email: string;
-  // Ajoutez d'autres propriétés utilisateur si nécessaire
-}
+import { authAPI, User } from '../services/api';
 
 interface AuthContextType {
   user: User | null;
@@ -42,7 +33,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
     if (token && userData) {
       try {
-        // Assertion de type pour les données stockées
         setUser(JSON.parse(userData) as User);
       } catch (error) {
         console.error('Error parsing user data:', error);
@@ -56,12 +46,11 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const signup = async (name: string, email: string, password: string) => {
     try {
       const response = await authAPI.signup({ name, email, password });
-      // @ts-ignore: Ignorer le type si la réponse est un AxiosResponse
       const { token, user: userData } = response.data;
       
       localStorage.setItem('token', token);
       localStorage.setItem('user', JSON.stringify(userData));
-      setUser(userData as User);
+      setUser(userData);
       
       return { success: true };
     } catch (error: any) {
@@ -75,12 +64,11 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const login = async (email: string, password: string) => {
     try {
       const response = await authAPI.login({ email, password });
-      // @ts-ignore: Ignorer le type si la réponse est un AxiosResponse
       const { token, user: userData } = response.data;
       
       localStorage.setItem('token', token);
       localStorage.setItem('user', JSON.stringify(userData));
-      setUser(userData as User);
+      setUser(userData);
       
       return { success: true };
     } catch (error: any) {
