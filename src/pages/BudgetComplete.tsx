@@ -14,8 +14,8 @@ import {
   type MonthComments,
   type ProjectComments,
   type LockedMonths
-} from '../utils/importConverter.tsx';
-import Navbar from '../components/Navbar.tsx';
+} from '../utils/importConverter';
+import Navbar from '../components/Navbar';
 import InviteModal from '../components/InviteModal';
 import { useAuth } from '../contexts/AuthContext';
 
