@@ -14,19 +14,19 @@ import {
   type MonthComments,
   type ProjectComments,
   type LockedMonths
-} from '../utils/importConverter';
-import Navbar from '../components/Navbar';
+} from '../utils/importConverter.tsx';
+import Navbar from '../components/Navbar.tsx';
 import InviteModal from '../components/InviteModal';
 import { useAuth } from '../contexts/AuthContext';
 
-import BudgetHeader from '../components/budget/BudgetHeader';
-import PeopleSection from '../components/budget/PeopleSection';
-import ChargesSection from '../components/budget/ChargesSection';
-import ProjectsSection from '../components/budget/ProjectsSection';
-import MonthlyTable from '../components/budget/MonthlyTable';
-import StatsSection from '../components/budget/StatsSection';
-import ActionsBar from '../components/budget/ActionsBar';
-import MemberManagementSection from '../components/budget/MemberManagementSection'; 
+import BudgetHeader from '../components/budget/Budgetheader.tsx';
+import PeopleSection from '../components/budget/PeopleSection.tsx';
+import ChargesSection from '../components/budget/ChargesSection.tsx';
+import ProjectsSection from '../components/budget/ProjectsSection.tsx';
+import MonthlyTable from '../components/budget/MonthlyTable.tsx';
+import StatsSection from '../components/budget/StatsSection.tsx';
+import ActionsBar from '../components/budget/ActionsBar.tsx';
+import MemberManagementSection from '../components/budget/MemberManagementSection.tsx'; 
 
 // Types
 interface BudgetMember {
