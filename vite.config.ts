@@ -7,7 +7,7 @@ export default defineConfig({
   plugins: [react()],
   server: {
     port: 3000,
-    host: true, // Permet l'accès depuis le réseau local (mobile)
+    host: true,
     proxy: {
       '/api': {
         target: process.env.VITE_API_URL || 'http://localhost:8080',
@@ -30,7 +30,7 @@ export default defineConfig({
       }
     },
     sourcemap: false,
-    minify: 'esbuild', // Utiliser esbuild au lieu de terser (inclus par défaut)
+    minify: 'esbuild',
   },
   optimizeDeps: {
     include: ['react', 'react-dom', 'react-router-dom']
