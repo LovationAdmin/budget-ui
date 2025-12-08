@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+// src/components/budget/MemberManagementSection.tsx
+import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { MemberAvatar } from "./MemberAvatar";
@@ -22,7 +23,7 @@ interface BudgetMember {
     id: string;
     name: string;
     email: string;
-  } | null; // ← user can be null!
+  } | null; // ⚠️ peut être null
   role: 'owner' | 'member';
 }
 
@@ -69,11 +70,11 @@ export default function MemberManagementSection({
     }
   };
 
-  useEffect(() => {
+  useState(() => {
     if (budget.is_owner) {
       loadInvitations();
     }
-  }, [budget.is_owner, budget.id]);
+  });
 
   const handleRemoveMember = async () => {
     if (!memberToRemove || !memberToRemove.user) return;
@@ -121,7 +122,7 @@ export default function MemberManagementSection({
           {/* Active Members — ONLY valid users */}
           <div className="space-y-2">
             {budget.members
-              .filter(member => member.user) // ✅ Only show members with a valid user
+              .filter(member => member.user) // ✅ SAFE
               .map((member) => {
                 // Safe now due to filter
                 const user = member.user!;
