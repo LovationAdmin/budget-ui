@@ -53,12 +53,10 @@ export default function MonthlyTable({
   yearlyData,
   oneTimeIncomes,
   monthComments,
-  projectComments,
   lockedMonths,
   onYearlyDataChange,
   onOneTimeIncomesChange,
   onMonthCommentsChange,
-  onProjectCommentsChange,
   onLockedMonthsChange,
 }: MonthlyTableProps) {
   const [selectedMonth, setSelectedMonth] = useState<string | null>(null);
@@ -207,7 +205,7 @@ export default function MonthlyTable({
                 {/* Charges Row */}
                 <tr className="bg-destructive/5 hover:bg-destructive/10 transition-colors">
                   <td className="sticky left-0 z-10 bg-destructive/10 px-4 py-3 font-medium">
-                    📋 Charges
+                    📉 Charges
                   </td>
                   {MONTHS.map((month) => (
                     <td key={month} className="px-3 py-3 text-center">
