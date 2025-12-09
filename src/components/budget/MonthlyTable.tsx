@@ -53,7 +53,8 @@ const MONTHS = [
   'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'
 ];
 
-const GENERAL_SAVINGS_ID = 'general_savings';
+// UPDATED: Matches your JSON ID exactly
+const GENERAL_SAVINGS_ID = 'epargne';
 
 export default function MonthlyTable({
   currentYear,
@@ -98,13 +99,17 @@ export default function MonthlyTable({
     return baseIncome + oneTime - chargesTotal;
   };
 
-  // 1. Calculate General Savings Allocation (Available - Allocated to Projects)
+  // 1. Calculate General Savings Allocation (Available - Allocated to OTHER Projects)
   const getGeneralSavingsAllocation = (month: string) => {
     const available = getMonthlyAvailableSavings(month);
-    const totalAllocatedToProjects = projects.reduce((sum, project) => {
-      const monthData = yearlyData[month] || {};
-      return sum + (monthData[project.id] || 0);
-    }, 0);
+    
+    // Filter out the 'epargne' project so we don't double count if it has a value in DB
+    const totalAllocatedToProjects = projects
+      .filter(p => p.id !== GENERAL_SAVINGS_ID)
+      .reduce((sum, project) => {
+        const monthData = yearlyData[month] || {};
+        return sum + (monthData[project.id] || 0);
+      }, 0);
     
     return available - totalAllocatedToProjects;
   };
@@ -128,7 +133,7 @@ export default function MonthlyTable({
       const monthName = MONTHS[i];
       // Allocation is calculated automatically
       const allocation = getGeneralSavingsAllocation(monthName);
-      // Expense is manual
+      // Expense is manual (read from yearlyExpenses using the correct ID)
       const expense = yearlyExpenses[monthName]?.[GENERAL_SAVINGS_ID] || 0;
       total += (allocation - expense);
     }
@@ -201,6 +206,10 @@ export default function MonthlyTable({
     setTempComment('');
   };
 
+  // Filter projects to exclude "epargne" from the dynamic columns
+  // We will render "epargne" manually in the special column at the end
+  const standardProjects = projects.filter(p => p.id !== GENERAL_SAVINGS_ID);
+
   return (
     <>
       <Card className="glass-card overflow-hidden animate-fade-in shadow-lg">
@@ -217,7 +226,7 @@ export default function MonthlyTable({
                     </div>
                   </th>
                   
-                  {/* Categories */}
+                  {/* Standard Categories */}
                   <th className="px-3 py-3 text-center font-semibold text-success bg-success/5 border-b border-border min-w-[100px]">
                     Revenus<br/><span className="text-[10px] font-normal opacity-70">Salaires</span>
                   </th>
@@ -228,8 +237,8 @@ export default function MonthlyTable({
                     Charges<br/><span className="text-[10px] font-normal opacity-70">Fixes</span>
                   </th>
 
-                  {/* Dynamic Project Columns */}
-                  {projects.map((project) => (
+                  {/* Dynamic Project Columns (Filtered to exclude Epargne) */}
+                  {standardProjects.map((project) => (
                     <th 
                       key={project.id}
                       className="px-3 py-3 text-center font-semibold text-foreground border-b border-border bg-background min-w-[190px]"
@@ -308,8 +317,8 @@ export default function MonthlyTable({
                         -{getMonthlyChargesTotal().toLocaleString()}
                       </td>
 
-                      {/* 5. Projects */}
-                      {projects.map((project) => {
+                      {/* 5. Projects (Filtered: NO Epargne here) */}
+                      {standardProjects.map((project) => {
                         const allocation = yearlyData[month]?.[project.id] || 0;
                         const expense = yearlyExpenses[month]?.[project.id] || 0;
                         const comment = projectComments[month]?.[project.id];
@@ -397,7 +406,7 @@ export default function MonthlyTable({
                             <div className="flex items-center gap-1">
                                 {/* Auto Allocation (Read Only) */}
                                 <Input
-                                    type="text" // Text to allow cleaner formatting if needed, but number is fine
+                                    type="text"
                                     value={genSavingsAllocation.toLocaleString()}
                                     disabled
                                     className={cn(
