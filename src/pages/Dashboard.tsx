@@ -2,11 +2,10 @@ import { BudgetNavbar } from '@/components/budget/BudgetNavbar';
 import { EmptyState } from '@/components/budget/EmptyState';
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { PiggyBank, Plus, ArrowRight } from "lucide-react";
+import { PiggyBank, Plus, ArrowRight, Trash2, Loader2 } from "lucide-react";
 import { budgetAPI } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
-import { useToast } from '@/hooks/use-toast'; // Import Toast
-import { QuickActions } from '../components/budget/QuickActions';
+import { useToast } from '@/hooks/use-toast';
 import { MemberAvatarGroup } from '../components/budget/MemberAvatar';
 import { Button } from '../components/ui/button';
 import {
@@ -17,6 +16,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
@@ -43,6 +52,10 @@ export default function Dashboard() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [newBudgetName, setNewBudgetName] = useState('');
   const [creating, setCreating] = useState(false);
+  
+  // Delete state
+  const [budgetToDelete, setBudgetToDelete] = useState<Budget | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   const loadBudgets = async () => {
     try {
@@ -92,10 +105,38 @@ export default function Dashboard() {
     }
   };
 
+  const handleDeleteBudget = async () => {
+    if (!budgetToDelete) return;
+    setDeleting(true);
+    try {
+      await budgetAPI.delete(budgetToDelete.id);
+      setBudgets(budgets.filter(b => b.id !== budgetToDelete.id));
+      setBudgetToDelete(null);
+      toast({
+        title: "Budget supprimé",
+        description: "Le budget a été supprimé définitivement.",
+        variant: "default",
+      });
+    } catch (error) {
+      console.error('Error deleting budget:', error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de supprimer le budget.",
+        variant: "destructive",
+      });
+    } finally {
+      setDeleting(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen gradient-surface">
-        <BudgetNavbar currentSection="dashboard" budgetTitle="Chargement..." />
+        <BudgetNavbar 
+            currentSection="dashboard" 
+            budgetTitle="Chargement..." 
+            onMenuClick={() => {}} // Placeholder
+        />
         <div className="flex items-center justify-center h-96">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
         </div>
@@ -108,6 +149,10 @@ export default function Dashboard() {
       <BudgetNavbar
         budgetTitle="Mes Budgets"
         currentSection="dashboard"
+        userName={user?.name}
+        onSectionChange={(section) => {
+            if (section === 'profile') navigate('/profile');
+        }}
       />
       <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
         {/* Welcome section */}
@@ -123,9 +168,14 @@ export default function Dashboard() {
                   : 'Créez votre premier budget pour commencer'}
               </p>
             </div>
-            <QuickActions 
-              onAddMember={() => setShowCreateModal(true)}
-            />
+            <Button 
+                variant="gradient"
+                onClick={() => setShowCreateModal(true)}
+                className="gap-2 shadow-lg"
+            >
+                <Plus className="h-4 w-4" />
+                Nouveau Budget
+            </Button>
           </div>
         </div>
 
@@ -142,30 +192,16 @@ export default function Dashboard() {
           </div>
         ) : (
           <section className="animate-fade-in">
-            <div className="mb-4 flex items-center justify-between">
-              <h2 className="font-display text-xl font-semibold text-foreground">
-                Vos budgets
-              </h2>
-              <Button 
-                variant="ghost" 
-                size="sm"
-                onClick={() => setShowCreateModal(true)}
-                className="gap-1"
-              >
-                <Plus className="h-4 w-4" />
-                Nouveau
-              </Button>
-            </div>
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {budgets.map((budget) => (
                 <div
                   key={budget.id}
                   onClick={() => navigate(`/budget/${budget.id}/complete`)}
-                  className="glass-card p-6 cursor-pointer transition-all duration-300 hover:scale-[1.02] hover:shadow-elevated"
+                  className="glass-card p-6 cursor-pointer transition-all duration-300 hover:scale-[1.02] hover:shadow-elevated relative group"
                 >
                   <div className="flex items-start justify-between mb-4">
                     <div>
-                      <h3 className="font-display font-semibold text-foreground mb-1">
+                      <h3 className="font-display font-semibold text-foreground mb-1 group-hover:text-primary transition-colors">
                         {budget.name}
                       </h3>
                       <p className="text-sm text-muted-foreground">
@@ -201,17 +237,33 @@ export default function Dashboard() {
                     </div>
                   )}
 
-                  <Button 
-                    variant="outline" 
-                    className="w-full gap-2"
-                    onClick={(e: React.MouseEvent) => {
-                      e.stopPropagation();
-                      navigate(`/budget/${budget.id}/complete`);
-                    }}
-                  >
-                    Ouvrir le budget
-                    <ArrowRight className="h-4 w-4" />
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button 
+                        variant="outline" 
+                        className="flex-1 gap-2"
+                        onClick={(e: React.MouseEvent) => {
+                        e.stopPropagation();
+                        navigate(`/budget/${budget.id}/complete`);
+                        }}
+                    >
+                        Ouvrir
+                        <ArrowRight className="h-4 w-4" />
+                    </Button>
+                    
+                    {budget.is_owner && (
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            className="text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                            onClick={(e: React.MouseEvent) => {
+                                e.stopPropagation();
+                                setBudgetToDelete(budget);
+                            }}
+                        >
+                            <Trash2 className="h-4 w-4" />
+                        </Button>
+                    )}
+                  </div>
                 </div>
               ))}
             </div>
@@ -263,6 +315,39 @@ export default function Dashboard() {
           </form>
         </DialogContent>
       </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={!!budgetToDelete} onOpenChange={() => setBudgetToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Supprimer le budget ?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Êtes-vous sûr de vouloir supprimer <strong>{budgetToDelete?.name}</strong> ?<br/><br/>
+              Cette action est irréversible et supprimera toutes les données, l'historique et l'accès pour tous les membres.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>Annuler</AlertDialogCancel>
+            <AlertDialogAction 
+                onClick={(e) => {
+                    e.preventDefault();
+                    handleDeleteBudget();
+                }}
+                className="bg-destructive hover:bg-destructive/90 text-destructive-foreground"
+                disabled={deleting}
+            >
+              {deleting ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Suppression...
+                  </>
+              ) : (
+                  'Supprimer définitivement'
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

@@ -1,6 +1,6 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import PrivateRoute from './components/PrivateRoute';
-import { Toaster } from "@/components/ui/toaster"; // Import the Toaster
+import { Toaster } from "@/components/ui/toaster";
 
 // Pages
 import Login from './pages/Login'; 
@@ -27,7 +27,6 @@ export default function App() {
           </PrivateRoute>
         } />
         
-        {/* The new "Complete" view */}
         <Route path="/budget/:id/complete" element={
           <PrivateRoute>
             <BudgetComplete />
@@ -45,7 +44,6 @@ export default function App() {
         <Route path="*" element={<Navigate to="/404" replace />} />
       </Routes>
 
-      {/* Global Toaster for Notifications */}
       <Toaster />
     </>
   );

@@ -4,10 +4,10 @@ import {
   Users, 
   Receipt, 
   Target, 
-  CalendarDays,
-  Settings,
-  Bell,
-  Search,
+  CalendarDays, 
+  Settings, 
+  Bell, 
+  Search, 
   Menu
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -27,12 +27,12 @@ const navItems = [
   { id: "members", label: "Membres", icon: Users },
   { id: "charges", label: "Charges", icon: Receipt },
   { id: "projects", label: "Projets", icon: Target },
-  { id: "calendar", label: "Calendrier", icon: CalendarDays },
+  { id: "calendar", label: "Tableau Mensuel", icon: CalendarDays },
 ];
 
 export function BudgetNavbar({
   budgetTitle = "Budget familial",
-  currentSection = "dashboard",
+  currentSection,
   onSectionChange,
   onMenuClick,
   userName = "Utilisateur",
@@ -95,17 +95,34 @@ export function BudgetNavbar({
 
         {/* Right section */}
         <div className="flex items-center gap-2">
-          <Button variant="ghost" size="icon" className="hidden sm:flex">
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="hidden sm:flex"
+            onClick={() => onSectionChange?.('search')}
+          >
             <Search className="h-5 w-5" />
           </Button>
-          <Button variant="ghost" size="icon" className="relative">
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="relative"
+            onClick={() => onSectionChange?.('notifications')}
+          >
             <Bell className="h-5 w-5" />
             <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-primary" />
           </Button>
-          <Button variant="ghost" size="icon">
+          <Button 
+            variant="ghost" 
+            size="icon"
+            onClick={() => onSectionChange?.('settings')}
+          >
             <Settings className="h-5 w-5" />
           </Button>
-          <div className="hidden sm:block pl-2 border-l border-border">
+          <div 
+            className="hidden sm:block pl-2 border-l border-border cursor-pointer"
+            onClick={() => onSectionChange?.('profile')}
+          >
             <MemberAvatar name={userName} size="sm" />
           </div>
         </div>

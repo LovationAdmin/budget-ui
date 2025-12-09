@@ -18,7 +18,7 @@ import {
 import Navbar from '../components/Navbar';
 import InviteModal from '../components/InviteModal';
 import { useAuth } from '../contexts/AuthContext';
-import { useToast } from '@/hooks/use-toast'; // Import Toast
+import { useToast } from '@/hooks/use-toast'; 
 
 import BudgetHeader from '../components/budget/BudgetHeader';
 import PeopleSection from '../components/budget/PeopleSection';
@@ -28,6 +28,7 @@ import MonthlyTable from '../components/budget/MonthlyTable';
 import StatsSection from '../components/budget/StatsSection';
 import ActionsBar from '../components/budget/ActionsBar';
 import MemberManagementSection from '../components/budget/MemberManagementSection';
+import { BudgetNavbar } from '@/components/budget/BudgetNavbar';
 
 // Types
 interface BudgetMember {
@@ -51,7 +52,7 @@ export default function BudgetComplete() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { toast } = useToast(); // Initialize hook
+  const { toast } = useToast(); 
 
   const [budget, setBudget] = useState<BudgetData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -99,7 +100,6 @@ export default function BudgetComplete() {
       const rawData: RawBudgetData = dataRes.data.data;
       let data: ConvertedBudgetData;
       
-      // Handle legacy format conversion if necessary
       if (rawData.yearlyData && typeof rawData.yearlyData === 'object') {
         const firstKey = Object.keys(rawData.yearlyData)[0];
         if (firstKey && (rawData.yearlyData as Record<string, { months?: unknown }>)[firstKey]?.months) {
@@ -137,7 +137,6 @@ export default function BudgetComplete() {
 
   const handleSave = async (silent = false) => {
     if (!id) return;
-    
     if (!silent) setSaving(true);
 
     const budgetData = {
@@ -180,7 +179,6 @@ export default function BudgetComplete() {
 
   const handleExport = (formatType: 'new' | 'old' = 'new') => {
     let dataToExport;
-    
     if (formatType === 'old') {
       dataToExport = convertNewFormatToOld({
         budgetTitle,
@@ -229,10 +227,8 @@ export default function BudgetComplete() {
   };
 
   const handleImport = (rawData: RawBudgetData) => {
-    // Keep confirm for safety as it acts as a blocking modal
     if (confirm('Voulez-vous vraiment importer ces données ? Cela remplacera le budget actuel.')) {
       const data = convertOldFormatToNew(rawData);
-      
       setBudgetTitle(data.budgetTitle || '');
       setCurrentYear(data.currentYear || new Date().getFullYear());
       setPeople(data.people || []);
@@ -252,6 +248,35 @@ export default function BudgetComplete() {
     }
   };
 
+  // --- NAVIGATION LOGIC ---
+  const handleSectionChange = (section: string) => {
+    if (section === 'dashboard') {
+        navigate('/');
+        return;
+    }
+    
+    if (section === 'profile') {
+        navigate('/profile');
+        return;
+    }
+
+    // Features not yet implemented in backend but UI exists
+    if (['settings', 'notifications', 'search'].includes(section)) {
+        toast({
+            title: "Bientôt disponible",
+            description: "Cette fonctionnalité sera disponible dans une prochaine mise à jour.",
+            variant: "default"
+        });
+        return;
+    }
+
+    // Scroll to section
+    const element = document.getElementById(section);
+    if (element) {
+        element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50">
@@ -265,10 +290,15 @@ export default function BudgetComplete() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary-50 to-purple-50">
-      <Navbar />
+      {/* Custom Navbar with navigation handlers */}
+      <BudgetNavbar 
+        budgetTitle={budget?.name} 
+        userName={user?.name}
+        onSectionChange={handleSectionChange}
+        currentSection="overview" // Default active state
+      />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Back button */}
         <button 
           onClick={() => navigate('/')} 
           className="text-primary-600 hover:text-primary-700 mb-4 flex items-center gap-2 font-medium"
@@ -276,7 +306,6 @@ export default function BudgetComplete() {
           ← Retour aux budgets
         </button>
 
-        {/* Header */}
         <div className="bg-white rounded-xl shadow-lg overflow-hidden mb-6">
           <BudgetHeader 
             budgetTitle={budgetTitle} 
@@ -285,7 +314,6 @@ export default function BudgetComplete() {
             onYearChange={setCurrentYear} 
           />
 
-          {/* Actions bar (Invite button) */}
           <div className="p-4 bg-gray-50 border-t border-gray-200 flex justify-between items-center">
             <div className="flex items-center gap-3">
               {budget?.is_owner && (
@@ -300,16 +328,17 @@ export default function BudgetComplete() {
           </div>
         </div>
         
-        {/* Member Management Section */}
+        {/* ID hooks for Navbar scrolling */}
         {budget && user && (
-            <MemberManagementSection 
-                budget={budget}
-                currentUserId={user.id} 
-                onMemberChange={loadBudget}
-            />
+            <div id="members">
+                <MemberManagementSection 
+                    budget={budget}
+                    currentUserId={user.id} 
+                    onMemberChange={loadBudget}
+                />
+            </div>
         )}
 
-        {/* Actions (Import/Export/Save) */}
         <ActionsBar 
           onSave={() => handleSave(false)} 
           onExport={handleExport} 
@@ -317,40 +346,48 @@ export default function BudgetComplete() {
           saving={saving} 
         />
 
-        {/* Data Sections */}
-        <PeopleSection people={people} onPeopleChange={setPeople} />
-        <ChargesSection charges={charges} onChargesChange={setCharges} />
-        <ProjectsSection projects={projects} onProjectsChange={setProjects} />
+        <div id="people">
+            <PeopleSection people={people} onPeopleChange={setPeople} />
+        </div>
+        
+        <div id="charges" className="mt-6">
+            <ChargesSection charges={charges} onChargesChange={setCharges} />
+        </div>
+        
+        <div id="projects" className="mt-6">
+            <ProjectsSection projects={projects} onProjectsChange={setProjects} />
+        </div>
 
-        {/* Stats Section (Visualizations) */}
-        <StatsSection 
-          people={people} 
-          charges={charges} 
-          projects={projects} 
-          yearlyData={yearlyData} 
-          oneTimeIncomes={oneTimeIncomes} 
-        />
+        <div className="mt-6">
+            <StatsSection 
+            people={people} 
+            charges={charges} 
+            projects={projects} 
+            yearlyData={yearlyData} 
+            oneTimeIncomes={oneTimeIncomes} 
+            />
+        </div>
 
-        {/* Monthly Table (The Grid) */}
-        <MonthlyTable 
-          currentYear={currentYear} 
-          people={people} 
-          charges={charges} 
-          projects={projects} 
-          yearlyData={yearlyData} 
-          oneTimeIncomes={oneTimeIncomes} 
-          monthComments={monthComments} 
-          projectComments={projectComments} 
-          lockedMonths={lockedMonths} 
-          onYearlyDataChange={setYearlyData} 
-          onOneTimeIncomesChange={setOneTimeIncomes} 
-          onMonthCommentsChange={setMonthComments} 
-          onProjectCommentsChange={setProjectComments} 
-          onLockedMonthsChange={setLockedMonths} 
-        />
+        <div id="calendar" className="mt-6">
+            <MonthlyTable 
+            currentYear={currentYear} 
+            people={people} 
+            charges={charges} 
+            projects={projects} 
+            yearlyData={yearlyData} 
+            oneTimeIncomes={oneTimeIncomes} 
+            monthComments={monthComments} 
+            projectComments={projectComments} 
+            lockedMonths={lockedMonths} 
+            onYearlyDataChange={setYearlyData} 
+            onOneTimeIncomesChange={setOneTimeIncomes} 
+            onMonthCommentsChange={setMonthComments} 
+            onProjectCommentsChange={setProjectComments} 
+            onLockedMonthsChange={setLockedMonths} 
+            />
+        </div>
       </div>
 
-      {/* Invite Modal */}
       {showInviteModal && id && (
         <InviteModal 
           budgetId={id} 
