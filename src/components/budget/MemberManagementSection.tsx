@@ -1,4 +1,3 @@
-// src/components/budget/MemberManagementSection.tsx
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -6,6 +5,7 @@ import { MemberAvatar } from "./MemberAvatar";
 import { Badge } from "@/components/ui/badge";
 import { Users, UserPlus, UserMinus, Mail, Trash2, Crown, Loader2 } from "lucide-react";
 import { budgetAPI } from '@/services/api';
+import { useToast } from '@/hooks/use-toast'; // Import Toast
 import {
   AlertDialog,
   AlertDialogAction,
@@ -23,7 +23,7 @@ interface BudgetMember {
     id: string;
     name: string;
     email: string;
-  } | null; // ⚠️ peut être null
+  } | null;
   role: 'owner' | 'member';
 }
 
@@ -56,6 +56,8 @@ export default function MemberManagementSection({
   const [loading, setLoading] = useState(false);
   const [memberToRemove, setMemberToRemove] = useState<BudgetMember | null>(null);
   const [invitationToCancel, setInvitationToCancel] = useState<Invitation | null>(null);
+  
+  const { toast } = useToast();
 
   const loadInvitations = async () => {
     if (!budget.is_owner) return;
@@ -82,9 +84,19 @@ export default function MemberManagementSection({
       await budgetAPI.removeMember(budget.id, memberToRemove.id);
       setMemberToRemove(null);
       onMemberChange();
+      
+      toast({
+        title: "Membre retiré",
+        description: `${memberToRemove.user.name} a été retiré du budget.`,
+        variant: "default",
+      });
     } catch (error) {
       console.error('Error removing member:', error);
-      alert('Erreur lors de la suppression du membre');
+      toast({
+        title: "Erreur",
+        description: "Impossible de retirer le membre.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -94,9 +106,19 @@ export default function MemberManagementSection({
       await budgetAPI.cancelInvitation(budget.id, invitationToCancel.id);
       setInvitationToCancel(null);
       loadInvitations();
+      
+      toast({
+        title: "Invitation annulée",
+        description: "L'invitation a été annulée avec succès.",
+        variant: "default",
+      });
     } catch (error) {
       console.error('Error canceling invitation:', error);
-      alert('Erreur lors de l\'annulation de l\'invitation');
+      toast({
+        title: "Erreur",
+        description: "Impossible d'annuler l'invitation.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -122,9 +144,8 @@ export default function MemberManagementSection({
           {/* Active Members — ONLY valid users */}
           <div className="space-y-2">
             {budget.members
-              .filter(member => member.user) // ✅ SAFE
+              .filter(member => member.user)
               .map((member) => {
-                // Safe now due to filter
                 const user = member.user!;
                 return (
                   <div

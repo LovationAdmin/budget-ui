@@ -123,22 +123,6 @@ export default function Login() {
             </p>
           </div>
         </div>
-
-        {/* Features */}
-        <div className="mt-8 grid grid-cols-3 gap-4 text-center">
-          <div className="glass-card p-4 animate-fade-in stagger-1">
-            <div className="text-2xl mb-2">🔒</div>
-            <p className="text-xs text-muted-foreground">Sécurisé</p>
-          </div>
-          <div className="glass-card p-4 animate-fade-in stagger-2">
-            <div className="text-2xl mb-2">👥</div>
-            <p className="text-xs text-muted-foreground">Collaboratif</p>
-          </div>
-          <div className="glass-card p-4 animate-fade-in stagger-3">
-            <div className="text-2xl mb-2">📊</div>
-            <p className="text-xs text-muted-foreground">Intelligent</p>
-          </div>
-        </div>
       </div>
     </div>
   );

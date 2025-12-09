@@ -2,18 +2,10 @@ import { BudgetNavbar } from '@/components/budget/BudgetNavbar';
 import { EmptyState } from '@/components/budget/EmptyState';
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { 
-  Wallet, 
-  TrendingUp, 
-  TrendingDown, 
-  PiggyBank,
-  Plus,
-  Sparkles,
-  ArrowRight
-} from "lucide-react";
+import { PiggyBank, Plus, ArrowRight } from "lucide-react";
 import { budgetAPI } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
-import { StatCard } from '../components/budget/StatCard';
+import { useToast } from '@/hooks/use-toast'; // Import Toast
 import { QuickActions } from '../components/budget/QuickActions';
 import { MemberAvatarGroup } from '../components/budget/MemberAvatar';
 import { Button } from '../components/ui/button';
@@ -37,13 +29,15 @@ interface Budget {
     user: {
       name: string;
       avatar?: string;
-    } | null; // ← Important!
+    } | null;
   }>;
 }
 
 export default function Dashboard() {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { toast } = useToast();
+  
   const [budgets, setBudgets] = useState<Budget[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -56,6 +50,11 @@ export default function Dashboard() {
       setBudgets(response.data);
     } catch (error) {
       console.error('Error loading budgets:', error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de charger les budgets.",
+        variant: "destructive",
+      });
     } finally {
       setLoading(false);
     }
@@ -73,22 +72,25 @@ export default function Dashboard() {
       const response = await budgetAPI.create({ name: newBudgetName });
       setShowCreateModal(false);
       setNewBudgetName('');
+      
+      toast({
+        title: "Budget créé",
+        description: `Le budget "${newBudgetName}" a été créé avec succès.`,
+        variant: "success",
+      });
+
       navigate(`/budget/${response.data.id}/complete`);
     } catch (error) {
       console.error('Error creating budget:', error);
-      alert('Erreur lors de la création du budget');
+      toast({
+        title: "Erreur",
+        description: "Erreur lors de la création du budget.",
+        variant: "destructive",
+      });
     } finally {
       setCreating(false);
     }
   };
-
-  // Demo data for the example cards (when user has budgets)
-  const demoStats = budgets.length > 0 ? {
-    totalIncome: 7500,
-    totalExpenses: 5200,
-    balance: 2300,
-    savings: 9550
-  } : null;
 
   if (loading) {
     return (
@@ -139,143 +141,81 @@ export default function Dashboard() {
             />
           </div>
         ) : (
-          <>
-            {/* Stats Grid - Only show if user has budgets */}
-            {demoStats && (
-              <div className="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                <StatCard
-                  title="Revenus totaux"
-                  value={`${demoStats.totalIncome.toLocaleString('fr-FR')} €`}
-                  subtitle="Tous budgets confondus"
-                  icon={Wallet}
-                  trend={{ value: 2.5, isPositive: true }}
-                  variant="default"
-                  className="animate-slide-up stagger-1"
-                />
-                <StatCard
-                  title="Dépenses totales"
-                  value={`${demoStats.totalExpenses.toLocaleString('fr-FR')} €`}
-                  subtitle="Ce mois-ci"
-                  icon={TrendingDown}
-                  variant="danger"
-                  className="animate-slide-up stagger-2"
-                />
-                <StatCard
-                  title="Solde disponible"
-                  value={`${demoStats.balance.toLocaleString('fr-FR')} €`}
-                  subtitle="Après charges"
-                  icon={TrendingUp}
-                  trend={{ value: 8.3, isPositive: true }}
-                  variant="success"
-                  className="animate-slide-up stagger-3"
-                />
-                <StatCard
-                  title="Épargne totale"
-                  value={`${demoStats.savings.toLocaleString('fr-FR')} €`}
-                  subtitle="Tous projets"
-                  icon={PiggyBank}
-                  variant="accent"
-                  className="animate-slide-up stagger-4"
-                />
-              </div>
-            )}
-
-            {/* Budgets List */}
-            <section className="animate-fade-in">
-              <div className="mb-4 flex items-center justify-between">
-                <h2 className="font-display text-xl font-semibold text-foreground">
-                  Vos budgets
-                </h2>
-                <Button 
-                  variant="ghost" 
-                  size="sm"
-                  onClick={() => setShowCreateModal(true)}
-                  className="gap-1"
-                >
-                  <Plus className="h-4 w-4" />
-                  Nouveau
-                </Button>
-              </div>
-              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {budgets.map((budget) => (
-                  <div
-                    key={budget.id}
-                    onClick={() => navigate(`/budget/${budget.id}/complete`)}
-                    className="glass-card p-6 cursor-pointer transition-all duration-300 hover:scale-[1.02] hover:shadow-elevated"
-                  >
-                    <div className="flex items-start justify-between mb-4">
-                      <div>
-                        <h3 className="font-display font-semibold text-foreground mb-1">
-                          {budget.name}
-                        </h3>
-                        <p className="text-sm text-muted-foreground">
-                          Créé le {new Date(budget.created_at).toLocaleDateString('fr-FR')}
-                        </p>
-                      </div>
-                      {budget.is_owner ? (
-                        <span className="bg-primary/10 text-primary px-3 py-1 rounded-full text-xs font-medium">
-                          👑 Propriétaire
-                        </span>
-                      ) : (
-                        <span className="bg-secondary/10 text-secondary px-3 py-1 rounded-full text-xs font-medium">
-                          👥 Membre
-                        </span>
-                      )}
-                    </div>
-
-                    {/* ✅ SAFE MAPPING: Filter out members with no user */}
-                    {budget.members && budget.members.length > 0 && (
-                      <div className="mb-4">
-                        <p className="text-sm text-muted-foreground mb-2">
-                          {budget.members.length} membre(s)
-                        </p>
-                        <MemberAvatarGroup
-                          members={budget.members
-                            .filter(m => m.user) // ✅ Only keep valid members
-                            .map((m) => ({
-                              name: m.user!.name,
-                              image: m.user!.avatar,
-                            }))}
-                          max={4}
-                          size="sm"
-                        />
-                      </div>
-                    )}
-
-                    <Button 
-                      variant="outline" 
-                      className="w-full gap-2"
-                      onClick={(e: React.MouseEvent) => {
-                        e.stopPropagation();
-                        navigate(`/budget/${budget.id}/complete`);
-                      }}
-                    >
-                      Ouvrir le budget
-                      <ArrowRight className="h-4 w-4" />
-                    </Button>
-                  </div>
-                ))}
-              </div>
-            </section>
-
-            {/* Quick tip card */}
-            <div className="glass-card-elevated p-6 mt-8 animate-fade-in">
-              <div className="flex items-start gap-4">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-[hsl(35_90%_65%)] flex-shrink-0">
-                  <Sparkles className="h-5 w-5 text-primary-foreground" />
-                </div>
-                <div className="flex-1">
-                  <h3 className="font-display font-semibold text-foreground mb-2">
-                    Conseil du jour
-                  </h3>
-                  <p className="text-sm text-muted-foreground">
-                    Créez des projets d'épargne pour atteindre vos objectifs financiers plus facilement. 
-                    Définissez un montant cible et suivez votre progression mois après mois !
-                  </p>
-                </div>
-              </div>
+          <section className="animate-fade-in">
+            <div className="mb-4 flex items-center justify-between">
+              <h2 className="font-display text-xl font-semibold text-foreground">
+                Vos budgets
+              </h2>
+              <Button 
+                variant="ghost" 
+                size="sm"
+                onClick={() => setShowCreateModal(true)}
+                className="gap-1"
+              >
+                <Plus className="h-4 w-4" />
+                Nouveau
+              </Button>
             </div>
-          </>
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {budgets.map((budget) => (
+                <div
+                  key={budget.id}
+                  onClick={() => navigate(`/budget/${budget.id}/complete`)}
+                  className="glass-card p-6 cursor-pointer transition-all duration-300 hover:scale-[1.02] hover:shadow-elevated"
+                >
+                  <div className="flex items-start justify-between mb-4">
+                    <div>
+                      <h3 className="font-display font-semibold text-foreground mb-1">
+                        {budget.name}
+                      </h3>
+                      <p className="text-sm text-muted-foreground">
+                        Créé le {new Date(budget.created_at).toLocaleDateString('fr-FR')}
+                      </p>
+                    </div>
+                    {budget.is_owner ? (
+                      <span className="bg-primary/10 text-primary px-3 py-1 rounded-full text-xs font-medium">
+                        👑 Propriétaire
+                      </span>
+                    ) : (
+                      <span className="bg-secondary/10 text-secondary px-3 py-1 rounded-full text-xs font-medium">
+                        👥 Membre
+                      </span>
+                    )}
+                  </div>
+
+                  {budget.members && budget.members.length > 0 && (
+                    <div className="mb-4">
+                      <p className="text-sm text-muted-foreground mb-2">
+                        {budget.members.length} membre(s)
+                      </p>
+                      <MemberAvatarGroup
+                        members={budget.members
+                          .filter(m => m.user)
+                          .map((m) => ({
+                            name: m.user!.name,
+                            image: m.user!.avatar,
+                          }))}
+                        max={4}
+                        size="sm"
+                      />
+                    </div>
+                  )}
+
+                  <Button 
+                    variant="outline" 
+                    className="w-full gap-2"
+                    onClick={(e: React.MouseEvent) => {
+                      e.stopPropagation();
+                      navigate(`/budget/${budget.id}/complete`);
+                    }}
+                  >
+                    Ouvrir le budget
+                    <ArrowRight className="h-4 w-4" />
+                  </Button>
+                </div>
+              ))}
+            </div>
+          </section>
         )}
       </main>
 
@@ -313,18 +253,10 @@ export default function Dashboard() {
               </div>
             </div>
             <DialogFooter>
-              <Button 
-                type="button" 
-                variant="outline" 
-                onClick={() => setShowCreateModal(false)}
-              >
+              <Button type="button" variant="outline" onClick={() => setShowCreateModal(false)}>
                 Annuler
               </Button>
-              <Button 
-                type="submit" 
-                variant="gradient"
-                disabled={creating || !newBudgetName.trim()}
-              >
+              <Button type="submit" variant="gradient" disabled={creating || !newBudgetName.trim()}>
                 {creating ? 'Création...' : 'Créer'}
               </Button>
             </DialogFooter>

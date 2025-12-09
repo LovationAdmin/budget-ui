@@ -7,6 +7,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Save, Download, Upload, ChevronDown, Loader2 } from "lucide-react";
+import { useToast } from '@/hooks/use-toast'; // Import Toast
 import type { RawBudgetData } from '@/utils/importConverter';
 
 interface ActionsBarProps {
@@ -24,6 +25,7 @@ export default function ActionsBar({
 }: ActionsBarProps) {
   const [importing, setImporting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { toast } = useToast();
 
   const handleImportClick = () => {
     fileInputRef.current?.click();
@@ -40,7 +42,11 @@ export default function ActionsBar({
       onImport(data);
     } catch (error) {
       console.error('Error importing file:', error);
-      alert('Erreur lors de l\'importation du fichier');
+      toast({
+        title: "Erreur d'importation",
+        description: "Le fichier n'a pas pu être lu. Vérifiez qu'il s'agit bien d'un fichier JSON valide.",
+        variant: "destructive",
+      });
     } finally {
       setImporting(false);
       // Reset input

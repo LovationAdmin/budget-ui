@@ -1,8 +1,11 @@
-// src/pages/Signup.tsx
-
 import { useState, FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Wallet, AlertCircle, Loader2 } from 'lucide-react';
 
 export default function Signup() {
   const [name, setName] = useState('');
@@ -43,92 +46,103 @@ export default function Signup() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-50 to-purple-50 px-4">
-      <div className="max-w-md w-full">
-        <div className="text-center mb-8">
-          <div className="text-6xl mb-4">💰</div>
-          <h1 className="text-3xl font-bold text-gray-900">Budget Famille</h1>
-          <p className="text-gray-600 mt-2">Créez votre compte gratuit</p>
+    <div className="min-h-screen flex items-center justify-center gradient-surface px-4 py-12">
+      <div className="w-full max-w-md">
+        <div className="text-center mb-8 animate-slide-up">
+          <div className="inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-[hsl(35_90%_65%)] mb-4 shadow-glow">
+            <Wallet className="h-8 w-8 text-primary-foreground" />
+          </div>
+          <h1 className="font-display text-3xl font-bold text-foreground mb-2">
+            Budget Famille
+          </h1>
+          <p className="text-muted-foreground">
+            Créez votre compte gratuit
+          </p>
         </div>
 
-        <div className="bg-white rounded-xl shadow-lg p-8">
+        <div className="glass-card-elevated p-8 animate-scale-in">
           <form onSubmit={handleSubmit} className="space-y-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Nom complet
-              </label>
-              <input
+            <div className="space-y-2">
+              <Label htmlFor="name">Nom complet</Label>
+              <Input
+                id="name"
                 type="text"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="input-field"
                 placeholder="John Doe"
                 required
+                className="h-11"
               />
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Email
-              </label>
-              <input
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="input-field"
                 placeholder="votre@email.com"
                 required
+                className="h-11"
               />
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Mot de passe
-              </label>
-              <input
+            <div className="space-y-2">
+              <Label htmlFor="password">Mot de passe</Label>
+              <Input
+                id="password"
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="input-field"
                 placeholder="••••••••"
                 minLength={8}
                 required
+                className="h-11"
               />
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Confirmer le mot de passe
-              </label>
-              <input
+            <div className="space-y-2">
+              <Label htmlFor="confirmPassword">Confirmer le mot de passe</Label>
+              <Input
+                id="confirmPassword"
                 type="password"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-                className="input-field"
                 placeholder="••••••••"
                 required
+                className="h-11"
               />
             </div>
 
             {error && (
-              <div className="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg text-sm">
-                {error}
-              </div>
+              <Alert variant="destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
             )}
 
-            <button
+            <Button
               type="submit"
-              className="btn-primary w-full"
+              variant="gradient"
+              className="w-full h-11"
               disabled={loading}
             >
-              {loading ? 'Création...' : 'Créer mon compte'}
-            </button>
+              {loading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Création...
+                </>
+              ) : (
+                'Créer mon compte'
+              )}
+            </Button>
           </form>
 
           <div className="mt-6 text-center">
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-muted-foreground">
               Déjà un compte ?{' '}
-              <Link to="/login" className="text-primary-600 hover:text-primary-700 font-medium">
+              <Link to="/login" className="font-medium text-primary hover:underline">
                 Se connecter
               </Link>
             </p>
