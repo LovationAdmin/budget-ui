@@ -53,7 +53,7 @@ const MONTHS = [
   'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'
 ];
 
-// UPDATED: Matches your JSON ID exactly
+// Matches your JSON ID exactly
 const GENERAL_SAVINGS_ID = 'epargne';
 
 export default function MonthlyTable({
@@ -92,6 +92,7 @@ export default function MonthlyTable({
     return oneTimeIncomes[month] || 0;
   };
 
+  // Money available to be saved (Income + OneTime - Charges)
   const getMonthlyAvailableSavings = (month: string) => {
     const baseIncome = getMonthlyBaseIncome();
     const oneTime = getMonthlyOneTimeIncome(month);
@@ -99,7 +100,7 @@ export default function MonthlyTable({
     return baseIncome + oneTime - chargesTotal;
   };
 
-  // 1. Calculate General Savings Allocation (Available - Allocated to OTHER Projects)
+  // Epargne Générale = Available - Total Allocated to OTHER Projects
   const getGeneralSavingsAllocation = (month: string) => {
     const available = getMonthlyAvailableSavings(month);
     
@@ -114,7 +115,7 @@ export default function MonthlyTable({
     return available - totalAllocatedToProjects;
   };
 
-  // 2. Cumulative Total Logic (Generic for Projects)
+  // Cumulative Total Logic (Generic for Projects)
   const getCumulativeProjectTotal = (projectId: string, upToMonthIndex: number) => {
     let total = 0;
     for (let i = 0; i <= upToMonthIndex; i++) {
@@ -126,7 +127,7 @@ export default function MonthlyTable({
     return total;
   };
 
-  // 3. Cumulative Total Logic (Specific for General Savings)
+  // Cumulative Total Logic (Specific for General Savings)
   const getCumulativeGeneralSavings = (upToMonthIndex: number) => {
     let total = 0;
     for (let i = 0; i <= upToMonthIndex; i++) {
@@ -207,7 +208,6 @@ export default function MonthlyTable({
   };
 
   // Filter projects to exclude "epargne" from the dynamic columns
-  // We will render "epargne" manually in the special column at the end
   const standardProjects = projects.filter(p => p.id !== GENERAL_SAVINGS_ID);
 
   return (
@@ -237,6 +237,11 @@ export default function MonthlyTable({
                     Charges<br/><span className="text-[10px] font-normal opacity-70">Fixes</span>
                   </th>
 
+                  {/* NEW COLUMN: Disponible à dispatcher */}
+                  <th className="px-3 py-3 text-center font-bold text-primary bg-primary/10 border-b border-border min-w-[120px]">
+                    Disponible<br/><span className="text-[10px] font-normal opacity-70">À allouer</span>
+                  </th>
+
                   {/* Dynamic Project Columns (Filtered to exclude Epargne) */}
                   {standardProjects.map((project) => (
                     <th 
@@ -253,7 +258,7 @@ export default function MonthlyTable({
                     </th>
                   ))}
 
-                  {/* Epargne Générale (NOW with 2 columns inputs style) */}
+                  {/* Epargne Générale */}
                   <th className="px-3 py-3 text-center font-bold text-primary bg-primary/5 border-b border-border min-w-[190px]">
                     <div className="flex flex-col items-center gap-1">
                         <span>💰 Épargne Générale</span>
@@ -276,7 +281,8 @@ export default function MonthlyTable({
                   const isLocked = lockedMonths[month];
                   const hasComment = !!monthComments[month];
                   
-                  // General Savings Data
+                  // Calculations
+                  const availableToSave = getMonthlyAvailableSavings(month);
                   const genSavingsAllocation = getGeneralSavingsAllocation(month);
                   const genSavingsExpense = yearlyExpenses[month]?.[GENERAL_SAVINGS_ID] || 0;
                   const genSavingsCumulative = getCumulativeGeneralSavings(monthIndex);
@@ -317,7 +323,12 @@ export default function MonthlyTable({
                         -{getMonthlyChargesTotal().toLocaleString()}
                       </td>
 
-                      {/* 5. Projects (Filtered: NO Epargne here) */}
+                      {/* 5. NEW COLUMN: Disponible */}
+                      <td className="px-3 py-3 text-center font-bold text-primary bg-primary/10 border-r border-primary/20">
+                        {availableToSave.toLocaleString()} €
+                      </td>
+
+                      {/* 6. Projects (Filtered: NO Epargne here) */}
                       {standardProjects.map((project) => {
                         const allocation = yearlyData[month]?.[project.id] || 0;
                         const expense = yearlyExpenses[month]?.[project.id] || 0;
@@ -399,7 +410,7 @@ export default function MonthlyTable({
                         );
                       })}
 
-                      {/* 6. Epargne Générale (Auto Calculated + Manual Expense) */}
+                      {/* 7. Epargne Générale (Auto Calculated + Manual Expense) */}
                       <td className="px-2 py-2 border-l border-border bg-primary/5">
                         <div className="flex flex-col gap-1.5">
                             {/* Input Pair */}
@@ -471,7 +482,7 @@ export default function MonthlyTable({
                         </div>
                       </td>
 
-                      {/* 7. Actions */}
+                      {/* 8. Actions */}
                       <td className="px-3 py-2">
                         <div className="flex items-center justify-center gap-1">
                           <Button
