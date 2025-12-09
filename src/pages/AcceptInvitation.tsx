@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { invitationAPI } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
+import { Button } from '@/components/ui/button'; // Optional, for the error view
 
 export default function AcceptInvitation() {
   const [searchParams] = useSearchParams();
@@ -13,35 +14,46 @@ export default function AcceptInvitation() {
   const [success, setSuccess] = useState(false);
 
   useEffect(() => {
+    // 1. Get token from URL
     const token = searchParams.get('token');
     
-    if (!token) {
+    // 2. If no token in URL, check if we saved one in localStorage previously
+    // This handles the case where we just came back from Signup
+    const savedToken = localStorage.getItem('pendingInvitation');
+    const effectiveToken = token || savedToken;
+
+    if (!effectiveToken) {
       setError('Token d\'invitation manquant');
       setLoading(false);
       return;
     }
 
+    // 3. If user is NOT logged in, save token and send to SIGNUP
     if (!user) {
-      // Save token and redirect to login
-      localStorage.setItem('pendingInvitation', token);
-      navigate('/login');
+      localStorage.setItem('pendingInvitation', effectiveToken);
+      // Redirect to Signup (instead of Login)
+      navigate('/signup');
       return;
     }
 
-    acceptInvitation(token);
+    // 4. User is logged in, proceed to accept
+    acceptInvitation(effectiveToken);
   }, [user, searchParams, navigate]);
 
   const acceptInvitation = async (token: string) => {
     try {
       const response = await invitationAPI.accept(token);
-      setSuccess(true);
       
+      // Clean up local storage
+      localStorage.removeItem('pendingInvitation');
+      
+      setSuccess(true);
       setTimeout(() => {
-        navigate(`/budget/${response.data.budget_id}`);
+        navigate(`/budget/${response.data.budget_id}/complete`);
       }, 2000);
-    } catch (err: unknown) {
-      const error = err as { response?: { data?: { error?: string } } };
-      setError(error.response?.data?.error || 'Erreur lors de l\'acceptation de l\'invitation');
+    } catch (err: any) {
+      const errorMessage = err.response?.data?.error || 'Erreur lors de l\'acceptation de l\'invitation';
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -52,7 +64,7 @@ export default function AcceptInvitation() {
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Vérification de l'invitation...</p>
+          <p className="text-gray-600">Traitement de l'invitation...</p>
         </div>
       </div>
     );
@@ -65,12 +77,15 @@ export default function AcceptInvitation() {
           <div className="text-6xl mb-4">❌</div>
           <h1 className="text-2xl font-bold text-gray-900 mb-4">Invitation invalide</h1>
           <p className="text-gray-600 mb-6">{error}</p>
-          <button
-            onClick={() => navigate('/')}
-            className="btn-primary"
-          >
-            Retour à l'accueil
-          </button>
+          <div className="flex flex-col gap-2">
+            <Button onClick={() => navigate('/')} variant="default">
+                Aller à l'accueil
+            </Button>
+            {/* Useful if the user logged into the WRONG account */}
+            <Button onClick={() => navigate('/login')} variant="outline">
+                Changer de compte
+            </Button>
+          </div>
         </div>
       </div>
     );

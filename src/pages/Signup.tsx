@@ -1,11 +1,11 @@
-import { useState, FormEvent } from 'react';
+import { useState, FormEvent, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Wallet, AlertCircle, Loader2 } from 'lucide-react';
+import { Wallet, AlertCircle, Loader2, Mail } from 'lucide-react';
 
 export default function Signup() {
   const [name, setName] = useState('');
@@ -14,9 +14,17 @@ export default function Signup() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [hasPendingInvite, setHasPendingInvite] = useState(false);
   
   const { signup } = useAuth();
   const navigate = useNavigate();
+
+  // Check for pending invitation on mount to show a friendly message
+  useEffect(() => {
+    if (localStorage.getItem('pendingInvitation')) {
+        setHasPendingInvite(true);
+    }
+  }, []);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -37,7 +45,14 @@ export default function Signup() {
     const result = await signup(name, email, password);
 
     if (result.success) {
-      navigate('/');
+      // Logic Update: Check if we need to redirect to invitation acceptance
+      const pendingToken = localStorage.getItem('pendingInvitation');
+      if (pendingToken) {
+        // Redirect back to the acceptance page, the token is in localStorage
+        navigate('/invitation/accept'); 
+      } else {
+        navigate('/');
+      }
     } else {
       setError(result.error || 'Erreur inconnue lors de la création du compte');
     }
@@ -59,6 +74,16 @@ export default function Signup() {
             Créez votre compte gratuit
           </p>
         </div>
+
+        {/* Invitation Alert */}
+        {hasPendingInvite && (
+            <Alert className="mb-6 border-primary/50 bg-primary/10 animate-fade-in">
+                <Mail className="h-4 w-4 text-primary" />
+                <AlertDescription className="text-primary font-medium">
+                    Vous avez une invitation en attente ! Créez votre compte pour rejoindre le budget.
+                </AlertDescription>
+            </Alert>
+        )}
 
         <div className="glass-card-elevated p-8 animate-scale-in">
           <form onSubmit={handleSubmit} className="space-y-6">
