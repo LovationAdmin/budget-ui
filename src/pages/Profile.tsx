@@ -2,9 +2,15 @@ import { useState, FormEvent, ChangeEvent } from 'react';
 import { userAPI } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import { BudgetNavbar } from '../components/budget/BudgetNavbar';
+import { useToast } from '@/hooks/use-toast';
+import { Button } from '@/components/ui/button';
+import { useNavigate } from 'react-router-dom';
+import { ArrowLeft } from 'lucide-react';
 
-export default function Profile(): JSX.Element {
+export default function Profile() {
   const { user } = useAuth();
+  const navigate = useNavigate();
+  const { toast } = useToast();
   
   const [name, setName] = useState(user?.name || '');
   const [currentPassword, setCurrentPassword] = useState('');
@@ -13,28 +19,24 @@ export default function Profile(): JSX.Element {
   
   const [updating, setUpdating] = useState(false);
   const [changingPassword, setChangingPassword] = useState(false);
-  const [message, setMessage] = useState('');
-  const [error, setError] = useState('');
 
   const handleUpdateProfile = async (e: FormEvent) => {
     e.preventDefault();
     setUpdating(true);
-    setMessage('');
-    setError('');
 
     try {
       await userAPI.updateProfile({ name });
-      
-      // Update local storage
       if (user) {
         const updatedUser = { ...user, name };
         localStorage.setItem('user', JSON.stringify(updatedUser));
       }
-      
-      setMessage('Profil mis à jour avec succès');
-    } catch (err: unknown) {
-      const error = err as { response?: { data?: { error?: string } } };
-      setError(error.response?.data?.error || 'Erreur lors de la mise à jour');
+      toast({ title: "Profil mis à jour", description: "Vos informations ont été enregistrées.", variant: "success" });
+    } catch (err: any) {
+      toast({ 
+        title: "Erreur", 
+        description: err.response?.data?.error || 'Erreur lors de la mise à jour', 
+        variant: "destructive" 
+      });
     } finally {
       setUpdating(false);
     }
@@ -43,11 +45,9 @@ export default function Profile(): JSX.Element {
   const handleChangePassword = async (e: FormEvent) => {
     e.preventDefault();
     setChangingPassword(true);
-    setMessage('');
-    setError('');
 
     if (newPassword !== confirmPassword) {
-      setError('Les mots de passe ne correspondent pas');
+      toast({ title: "Erreur", description: 'Les mots de passe ne correspondent pas', variant: "destructive" });
       setChangingPassword(false);
       return;
     }
@@ -57,13 +57,16 @@ export default function Profile(): JSX.Element {
         current_password: currentPassword,
         new_password: newPassword
       });
-      setMessage('Mot de passe changé avec succès');
+      toast({ title: "Succès", description: 'Mot de passe changé avec succès', variant: "success" });
       setCurrentPassword('');
       setNewPassword('');
       setConfirmPassword('');
-    } catch (err: unknown) {
-      const error = err as { response?: { data?: { error?: string } } };
-      setError(error.response?.data?.error || 'Erreur lors du changement de mot de passe');
+    } catch (err: any) {
+      toast({ 
+        title: "Erreur", 
+        description: err.response?.data?.error || 'Erreur lors du changement de mot de passe', 
+        variant: "destructive" 
+      });
     } finally {
       setChangingPassword(false);
     }
@@ -71,60 +74,48 @@ export default function Profile(): JSX.Element {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <BudgetNavbar />
+      <BudgetNavbar items={[]} userName={user?.name} />
       
       <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <Button 
+            variant="ghost" 
+            className="mb-4 gap-2 pl-0 hover:bg-transparent hover:text-primary"
+            onClick={() => navigate('/')}
+        >
+            <ArrowLeft className="h-4 w-4" />
+            Retour au tableau de bord
+        </Button>
+
         <h1 className="text-3xl font-bold text-gray-900 mb-8">Mon Profil</h1>
-
-        {message && (
-          <div className="mb-6 bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded-lg">
-            {message}
-          </div>
-        )}
-
-        {error && (
-          <div className="mb-6 bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg">
-            {error}
-          </div>
-        )}
 
         {/* Profile Info */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
           <h2 className="text-xl font-semibold text-gray-900 mb-4">Informations</h2>
           <form onSubmit={handleUpdateProfile}>
             <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Nom
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Nom</label>
               <input
                 type="text"
                 value={name}
                 onChange={(e: ChangeEvent<HTMLInputElement>) => setName(e.target.value)}
-                className="flex h-10 w-full rounded-xl border border-input bg-background px-3 py-2 text-sm ring-offset-background"
+                className="flex h-10 w-full rounded-xl border border-input bg-background px-3 py-2 text-sm"
                 required
               />
             </div>
 
             <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Email
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
               <input
                 type="email"
                 value={user?.email || ''}
-                className="flex h-10 w-full rounded-xl border border-input bg-gray-100 px-3 py-2 text-sm ring-offset-background text-gray-500"
+                className="flex h-10 w-full rounded-xl border border-input bg-gray-100 px-3 py-2 text-sm text-gray-500"
                 disabled
               />
-              <p className="text-xs text-gray-500 mt-1">L'email ne peut pas être modifié</p>
             </div>
 
-            <button
-              type="submit"
-              className="bg-primary text-primary-foreground shadow-soft hover:bg-primary/90 h-10 px-5 py-2 rounded-xl text-sm font-medium transition-colors"
-              disabled={updating}
-            >
+            <Button type="submit" variant="gradient" disabled={updating}>
               {updating ? 'Mise à jour...' : 'Mettre à jour'}
-            </button>
+            </Button>
           </form>
         </div>
 
@@ -133,52 +124,42 @@ export default function Profile(): JSX.Element {
           <h2 className="text-xl font-semibold text-gray-900 mb-4">Changer le mot de passe</h2>
           <form onSubmit={handleChangePassword}>
             <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Mot de passe actuel
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Mot de passe actuel</label>
               <input
                 type="password"
                 value={currentPassword}
                 onChange={(e: ChangeEvent<HTMLInputElement>) => setCurrentPassword(e.target.value)}
-                className="flex h-10 w-full rounded-xl border border-input bg-background px-3 py-2 text-sm ring-offset-background"
+                className="flex h-10 w-full rounded-xl border border-input bg-background px-3 py-2 text-sm"
                 required
               />
             </div>
 
             <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Nouveau mot de passe
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Nouveau mot de passe</label>
               <input
                 type="password"
                 value={newPassword}
                 onChange={(e: ChangeEvent<HTMLInputElement>) => setNewPassword(e.target.value)}
-                className="flex h-10 w-full rounded-xl border border-input bg-background px-3 py-2 text-sm ring-offset-background"
+                className="flex h-10 w-full rounded-xl border border-input bg-background px-3 py-2 text-sm"
                 minLength={8}
                 required
               />
             </div>
 
             <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Confirmer le nouveau mot de passe
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Confirmer le nouveau mot de passe</label>
               <input
                 type="password"
                 value={confirmPassword}
                 onChange={(e: ChangeEvent<HTMLInputElement>) => setConfirmPassword(e.target.value)}
-                className="flex h-10 w-full rounded-xl border border-input bg-background px-3 py-2 text-sm ring-offset-background"
+                className="flex h-10 w-full rounded-xl border border-input bg-background px-3 py-2 text-sm"
                 required
               />
             </div>
 
-            <button
-              type="submit"
-              className="bg-primary text-primary-foreground shadow-soft hover:bg-primary/90 h-10 px-5 py-2 rounded-xl text-sm font-medium transition-colors"
-              disabled={changingPassword}
-            >
+            <Button type="submit" variant="default" disabled={changingPassword}>
               {changingPassword ? 'Changement...' : 'Changer le mot de passe'}
-            </button>
+            </Button>
           </form>
         </div>
       </div>

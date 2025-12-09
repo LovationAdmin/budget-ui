@@ -52,8 +52,6 @@ export default function Dashboard() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [newBudgetName, setNewBudgetName] = useState('');
   const [creating, setCreating] = useState(false);
-  
-  // Delete state
   const [budgetToDelete, setBudgetToDelete] = useState<Budget | null>(null);
   const [deleting, setDeleting] = useState(false);
 
@@ -85,13 +83,11 @@ export default function Dashboard() {
       const response = await budgetAPI.create({ name: newBudgetName });
       setShowCreateModal(false);
       setNewBudgetName('');
-      
       toast({
         title: "Budget créé",
         description: `Le budget "${newBudgetName}" a été créé avec succès.`,
         variant: "success",
       });
-
       navigate(`/budget/${response.data.id}/complete`);
     } catch (error) {
       console.error('Error creating budget:', error);
@@ -132,11 +128,7 @@ export default function Dashboard() {
   if (loading) {
     return (
       <div className="min-h-screen gradient-surface">
-        <BudgetNavbar 
-            currentSection="dashboard" 
-            budgetTitle="Chargement..." 
-            onMenuClick={() => {}} // Placeholder
-        />
+        <BudgetNavbar budgetTitle="Chargement..." items={[]} />
         <div className="flex items-center justify-center h-96">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
         </div>
@@ -146,16 +138,18 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen gradient-surface">
+      {/* Navbar with NO items (Clean Dashboard) */}
       <BudgetNavbar
         budgetTitle="Mes Budgets"
-        currentSection="dashboard"
         userName={user?.name}
+        items={[]} 
         onSectionChange={(section) => {
-            if (section === 'profile') navigate('/profile');
+            if (section === 'notifications') {
+                toast({ title: "Notifications", description: "Pas de nouvelles notifications." });
+            }
         }}
       />
       <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-        {/* Welcome section */}
         <div className="mb-8 animate-slide-up">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
@@ -180,7 +174,6 @@ export default function Dashboard() {
         </div>
 
         {budgets.length === 0 ? (
-          /* Empty state */
           <div className="max-w-2xl mx-auto mt-12">
             <EmptyState
               icon={PiggyBank}
@@ -271,7 +264,6 @@ export default function Dashboard() {
         )}
       </main>
 
-      {/* Floating action button - Mobile */}
       <Button
         variant="gradient"
         size="icon-lg"
@@ -281,7 +273,6 @@ export default function Dashboard() {
         <Plus className="h-6 w-6" />
       </Button>
 
-      {/* Create Budget Dialog */}
       <Dialog open={showCreateModal} onOpenChange={setShowCreateModal}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
@@ -316,7 +307,6 @@ export default function Dashboard() {
         </DialogContent>
       </Dialog>
 
-      {/* Delete Confirmation Dialog */}
       <AlertDialog open={!!budgetToDelete} onOpenChange={() => setBudgetToDelete(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
