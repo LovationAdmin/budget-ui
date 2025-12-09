@@ -39,7 +39,6 @@ const BUDGET_NAV_ITEMS: NavItem[] = [
   { id: "calendar", label: "Tableau Mensuel", icon: CalendarDays },
 ];
 
-// Define interfaces locally for the component state
 interface BudgetMember {
   id: string;
   user: { id: string; name: string; email: string };
@@ -59,20 +58,23 @@ export default function BudgetComplete() {
   const { user } = useAuth();
   const { toast } = useToast(); 
 
-  // Budget Metadata State
   const [budget, setBudget] = useState<BudgetData | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [lastServerUpdate, setLastServerUpdate] = useState<string>("");
 
-  // Core Budget Data Content State
+  // --- Core Budget Data State ---
   const [budgetTitle, setBudgetTitle] = useState('');
   const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
   const [people, setPeople] = useState<Person[]>([]);
   const [charges, setCharges] = useState<Charge[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
-  const [yearlyData, setYearlyData] = useState<YearlyData>({});
+  
+  // Data Matrices
+  const [yearlyData, setYearlyData] = useState<YearlyData>({});         // Allocations
+  const [yearlyExpenses, setYearlyExpenses] = useState<YearlyData>({}); // Expenses (NEW)
+  
   const [oneTimeIncomes, setOneTimeIncomes] = useState<OneTimeIncomes>({});
   const [monthComments, setMonthComments] = useState<MonthComments>({});
   const [projectComments, setProjectComments] = useState<ProjectComments>({});
@@ -84,31 +86,27 @@ export default function BudgetComplete() {
     if (id) loadBudget();
   }, [id]);
 
-  // 1. Auto-Save Logic (Every 30s)
+  // Auto-Save Logic
   useEffect(() => {
     if (!loadedRef.current) return;
     const saveInterval = setInterval(() => handleSave(true), 30000);
     return () => clearInterval(saveInterval);
-  }, [budgetTitle, currentYear, people, charges, projects, yearlyData, oneTimeIncomes, monthComments, projectComments, lockedMonths]);
+  }, [budgetTitle, currentYear, people, charges, projects, yearlyData, yearlyExpenses, oneTimeIncomes, monthComments, projectComments, lockedMonths]);
 
-  // 2. Collaborative Polling Logic (Every 15s)
+  // Polling Logic
   useEffect(() => {
     if (!id || !loadedRef.current) return;
-
     const pollInterval = setInterval(async () => {
       try {
         const res = await budgetAPI.getData(id);
         const remoteData: RawBudgetData = res.data.data;
-        
         if (remoteData.lastUpdated && lastServerUpdate && remoteData.lastUpdated > lastServerUpdate) {
           toast({
             title: "Mise à jour disponible",
             description: "Un autre membre a modifié le budget.",
             variant: "default",
             action: (
-              <ToastAction altText="Rafraîchir" onClick={() => loadBudget()}>
-                Rafraîchir
-              </ToastAction>
+              <ToastAction altText="Rafraîchir" onClick={() => loadBudget()}>Rafraîchir</ToastAction>
             ),
           });
         }
@@ -116,13 +114,11 @@ export default function BudgetComplete() {
         console.error("Polling error", err);
       }
     }, 15000);
-
     return () => clearInterval(pollInterval);
   }, [id, lastServerUpdate]);
 
   const loadBudget = async () => {
     if (!id) return;
-    
     try {
       const [budgetRes, dataRes] = await Promise.all([
         budgetAPI.getById(id),
@@ -132,24 +128,11 @@ export default function BudgetComplete() {
       setBudget(budgetRes.data);
       const rawData: RawBudgetData = dataRes.data.data;
       
-      // Store server timestamp for sync checking
-      if (rawData.lastUpdated) {
-        setLastServerUpdate(rawData.lastUpdated);
-      } else {
-        setLastServerUpdate(new Date().toISOString());
-      }
+      if (rawData.lastUpdated) setLastServerUpdate(rawData.lastUpdated);
+      else setLastServerUpdate(new Date().toISOString());
 
-      let data: ConvertedBudgetData;
-      if (rawData.yearlyData && typeof rawData.yearlyData === 'object') {
-        const firstKey = Object.keys(rawData.yearlyData)[0];
-        if (firstKey && (rawData.yearlyData as Record<string, { months?: unknown }>)[firstKey]?.months) {
-          data = convertOldFormatToNew(rawData);
-        } else {
-          data = convertOldFormatToNew(rawData);
-        }
-      } else {
-        data = convertOldFormatToNew(rawData);
-      }
+      // Use Converter
+      const data = convertOldFormatToNew(rawData);
 
       setBudgetTitle(data.budgetTitle || '');
       setCurrentYear(data.currentYear || new Date().getFullYear());
@@ -157,20 +140,16 @@ export default function BudgetComplete() {
       setCharges(data.charges || []);
       setProjects(data.projects || []);
       setYearlyData(data.yearlyData || {});
+      setYearlyExpenses(data.yearlyExpenses || {}); // Load Expenses
       setOneTimeIncomes(data.oneTimeIncomes || {});
       setMonthComments(data.monthComments || {});
       setProjectComments(data.projectComments || {});
       setLockedMonths(data.lockedMonths || {});
       
       loadedRef.current = true;
-
     } catch (error) {
       console.error('Error loading budget:', error);
-      toast({
-        title: "Erreur",
-        description: "Impossible de charger les données.",
-        variant: "destructive",
-      });
+      toast({ title: "Erreur", description: "Impossible de charger les données.", variant: "destructive" });
     } finally {
       setLoading(false);
     }
@@ -181,35 +160,30 @@ export default function BudgetComplete() {
     if (!silent) setSaving(true);
 
     const now = new Date().toISOString();
-    
-    // Include updatedBy so NotificationContext can detect who made the change
     const budgetData = {
       budgetTitle,
       currentYear,
       people,
       charges,
       projects,
-      yearlyData,
+      yearlyData,     // Allocations
+      yearlyExpenses, // Expenses
       oneTimeIncomes,
       monthComments,
       projectComments,
       lockedMonths,
       lastUpdated: now,
-      updatedBy: user?.name, // Important for notifications
-      version: '2.1'
+      updatedBy: user?.name,
+      version: '2.2'
     };
 
     try {
       await budgetAPI.updateData(id, { data: budgetData });
-      setLastServerUpdate(now); // Update local timestamp to match server
-      if (!silent) {
-        toast({ title: "Succès", description: "Budget sauvegardé !", variant: "success" });
-      }
+      setLastServerUpdate(now);
+      if (!silent) toast({ title: "Succès", description: "Budget sauvegardé !", variant: "success" });
     } catch (error) {
       console.error('Error saving:', error);
-      if (!silent) {
-        toast({ title: "Erreur", description: "Échec de la sauvegarde.", variant: "destructive" });
-      }
+      if (!silent) toast({ title: "Erreur", description: "Échec de la sauvegarde.", variant: "destructive" });
     } finally {
       if (!silent) setSaving(false);
     }
@@ -217,17 +191,16 @@ export default function BudgetComplete() {
 
   const handleExport = (formatType: 'new' | 'old' = 'new') => {
     let dataToExport;
+    const commonData = {
+      budgetTitle, currentYear, people, charges, projects, yearlyData, yearlyExpenses, oneTimeIncomes, monthComments, projectComments, lockedMonths
+    };
+
     if (formatType === 'old') {
-      dataToExport = convertNewFormatToOld({
-        budgetTitle, currentYear, people, charges, projects, yearlyData, oneTimeIncomes, monthComments, projectComments, lockedMonths
-      });
+      dataToExport = convertNewFormatToOld(commonData);
     } else {
-      dataToExport = {
-        budgetTitle, currentYear, people, charges, projects, yearlyData, oneTimeIncomes, monthComments, projectComments, lockedMonths,
-        exportDate: new Date().toISOString(),
-        version: '2.1'
-      };
+      dataToExport = { ...commonData, exportDate: new Date().toISOString(), version: '2.2' };
     }
+
     const blob = new Blob([JSON.stringify(dataToExport, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -237,7 +210,6 @@ export default function BudgetComplete() {
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
-    
     toast({ title: "Export terminé", description: "Fichier téléchargé.", variant: "default" });
   };
 
@@ -250,6 +222,7 @@ export default function BudgetComplete() {
       setCharges(data.charges || []);
       setProjects(data.projects || []);
       setYearlyData(data.yearlyData);
+      setYearlyExpenses(data.yearlyExpenses);
       setOneTimeIncomes(data.oneTimeIncomes);
       setMonthComments(data.monthComments);
       setProjectComments(data.projectComments);
@@ -258,18 +231,11 @@ export default function BudgetComplete() {
     }
   };
 
-  // Navigation / Scroll Logic
   const handleSectionChange = (section: string) => {
-    if (section === 'settings' || section === 'notifications') {
-        // Notification popover is handled inside Navbar, but we keep this for consistency
-        return;
-    }
+    if (section === 'settings' || section === 'notifications') return;
     const element = document.getElementById(section);
-    if (element) {
-        element.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    } else if (section === 'overview') {
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
+    if (element) element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    else if (section === 'overview') window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   if (loading) {
@@ -294,10 +260,7 @@ export default function BudgetComplete() {
       />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <button 
-          onClick={() => navigate('/')} 
-          className="text-primary-600 hover:text-primary-700 mb-4 flex items-center gap-2 font-medium"
-        >
+        <button onClick={() => navigate('/')} className="text-primary-600 hover:text-primary-700 mb-4 flex items-center gap-2 font-medium">
           ← Retour aux budgets
         </button>
 
@@ -324,59 +287,38 @@ export default function BudgetComplete() {
         
         {budget && user && (
             <div id="members">
-                <MemberManagementSection 
-                    budget={budget}
-                    currentUserId={user.id} 
-                    onMemberChange={loadBudget}
-                />
+                <MemberManagementSection budget={budget} currentUserId={user.id} onMemberChange={loadBudget} />
             </div>
         )}
 
-        <ActionsBar 
-          onSave={() => handleSave(false)} 
-          onExport={handleExport} 
-          onImport={handleImport} 
-          saving={saving} 
-        />
+        <ActionsBar onSave={() => handleSave(false)} onExport={handleExport} onImport={handleImport} saving={saving} />
 
-        <div id="people">
-            <PeopleSection people={people} onPeopleChange={setPeople} />
-        </div>
-        
-        <div id="charges" className="mt-6">
-            <ChargesSection charges={charges} onChargesChange={setCharges} />
-        </div>
-        
-        <div id="projects" className="mt-6">
-            <ProjectsSection projects={projects} onProjectsChange={setProjects} />
-        </div>
+        <div id="people"><PeopleSection people={people} onPeopleChange={setPeople} /></div>
+        <div id="charges" className="mt-6"><ChargesSection charges={charges} onChargesChange={setCharges} /></div>
+        <div id="projects" className="mt-6"><ProjectsSection projects={projects} onProjectsChange={setProjects} /></div>
 
         <div className="mt-6">
-            <StatsSection 
-            people={people} 
-            charges={charges} 
-            projects={projects} 
-            yearlyData={yearlyData} 
-            oneTimeIncomes={oneTimeIncomes} 
-            />
+            <StatsSection people={people} charges={charges} projects={projects} yearlyData={yearlyData} oneTimeIncomes={oneTimeIncomes} />
         </div>
 
         <div id="calendar" className="mt-6">
             <MonthlyTable 
-            currentYear={currentYear} 
-            people={people} 
-            charges={charges} 
-            projects={projects} 
-            yearlyData={yearlyData} 
-            oneTimeIncomes={oneTimeIncomes} 
-            monthComments={monthComments} 
-            projectComments={projectComments} 
-            lockedMonths={lockedMonths} 
-            onYearlyDataChange={setYearlyData} 
-            onOneTimeIncomesChange={setOneTimeIncomes} 
-            onMonthCommentsChange={setMonthComments} 
-            onProjectCommentsChange={setProjectComments} 
-            onLockedMonthsChange={setLockedMonths} 
+                currentYear={currentYear} 
+                people={people} 
+                charges={charges} 
+                projects={projects} 
+                yearlyData={yearlyData} 
+                yearlyExpenses={yearlyExpenses} // Pass Expenses
+                oneTimeIncomes={oneTimeIncomes} 
+                monthComments={monthComments} 
+                projectComments={projectComments} 
+                lockedMonths={lockedMonths} 
+                onYearlyDataChange={setYearlyData} 
+                onYearlyExpensesChange={setYearlyExpenses} // Pass Setter
+                onOneTimeIncomesChange={setOneTimeIncomes} 
+                onMonthCommentsChange={setMonthComments} 
+                onProjectCommentsChange={setProjectComments} 
+                onLockedMonthsChange={setLockedMonths} 
             />
         </div>
       </div>

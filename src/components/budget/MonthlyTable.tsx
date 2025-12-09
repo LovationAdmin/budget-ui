@@ -16,7 +16,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { Lock, Unlock, MessageCircle, Plus, MessageSquarePlus } from "lucide-react";
+import { Lock, Unlock, MessageCircle, MessageSquarePlus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type {
   Person,
@@ -34,12 +34,14 @@ interface MonthlyTableProps {
   people: Person[];
   charges: Charge[];
   projects: Project[];
-  yearlyData: YearlyData;
+  yearlyData: YearlyData;     // Allocations
+  yearlyExpenses: YearlyData; // Expenses
   oneTimeIncomes: OneTimeIncomes;
   monthComments: MonthComments;
   projectComments: ProjectComments;
   lockedMonths: LockedMonths;
   onYearlyDataChange: (data: YearlyData) => void;
+  onYearlyExpensesChange: (data: YearlyData) => void;
   onOneTimeIncomesChange: (data: OneTimeIncomes) => void;
   onMonthCommentsChange: (data: MonthComments) => void;
   onProjectCommentsChange: (data: ProjectComments) => void;
@@ -57,11 +59,13 @@ export default function MonthlyTable({
   charges,
   projects,
   yearlyData,
+  yearlyExpenses,
   oneTimeIncomes,
   monthComments,
   projectComments,
   lockedMonths,
   onYearlyDataChange,
+  onYearlyExpensesChange,
   onOneTimeIncomesChange,
   onMonthCommentsChange,
   onProjectCommentsChange,
@@ -73,7 +77,7 @@ export default function MonthlyTable({
 
   // --- Calculations ---
 
-  const getMonthlySalaryTotal = () => {
+  const getMonthlyBaseIncome = () => {
     return people.reduce((sum, person) => sum + person.salary, 0);
   };
 
@@ -81,25 +85,44 @@ export default function MonthlyTable({
     return charges.reduce((sum, charge) => sum + charge.amount, 0);
   };
 
-  const getMonthProjectTotal = (month: string) => {
-    const monthData = yearlyData[month] || {};
-    return projects.reduce((sum, project) => {
-      return sum + (monthData[project.id] || 0);
-    }, 0);
+  const getMonthlyOneTimeIncome = (month: string) => {
+    return oneTimeIncomes[month] || 0;
   };
 
-  const getMonthBalance = (month: string) => {
-    const salaries = getMonthlySalaryTotal();
-    const oneTime = oneTimeIncomes[month] || 0;
+  // Money available to be saved (Income + OneTime - Charges)
+  const getMonthlyAvailableSavings = (month: string) => {
+    const baseIncome = getMonthlyBaseIncome();
+    const oneTime = getMonthlyOneTimeIncome(month);
     const chargesTotal = getMonthlyChargesTotal();
-    const projectsTotal = getMonthProjectTotal(month);
+    return baseIncome + oneTime - chargesTotal;
+  };
+
+  // Epargne Générale = Available - Total Allocated to specific Projects
+  const getGeneralSavings = (month: string) => {
+    const available = getMonthlyAvailableSavings(month);
+    const totalAllocated = projects.reduce((sum, project) => {
+      const monthData = yearlyData[month] || {};
+      return sum + (monthData[project.id] || 0);
+    }, 0);
     
-    return salaries + oneTime - chargesTotal - projectsTotal;
+    return available - totalAllocated;
+  };
+
+  // Cumulative Total: Sum of (Allocation - Expense) for all previous months + current
+  const getCumulativeTotal = (projectId: string, upToMonthIndex: number) => {
+    let total = 0;
+    for (let i = 0; i <= upToMonthIndex; i++) {
+      const monthName = MONTHS[i];
+      const allocation = yearlyData[monthName]?.[projectId] || 0;
+      const expense = yearlyExpenses[monthName]?.[projectId] || 0;
+      total += (allocation - expense);
+    }
+    return total;
   };
 
   // --- Updates ---
 
-  const updateProjectAmount = (month: string, projectId: string, amount: number) => {
+  const updateAllocation = (month: string, projectId: string, amount: number) => {
     const newYearlyData = {
       ...yearlyData,
       [month]: {
@@ -108,6 +131,24 @@ export default function MonthlyTable({
       },
     };
     onYearlyDataChange(newYearlyData);
+  };
+
+  const updateExpense = (month: string, projectId: string, amount: number) => {
+    const newExpensesData = {
+      ...yearlyExpenses,
+      [month]: {
+        ...(yearlyExpenses[month] || {}),
+        [projectId]: amount,
+      },
+    };
+    onYearlyExpensesChange(newExpensesData);
+  };
+
+  const updateOneTimeIncome = (month: string, amount: number) => {
+    onOneTimeIncomesChange({
+      ...oneTimeIncomes,
+      [month]: amount,
+    });
   };
 
   const updateProjectComment = (month: string, projectId: string, comment: string) => {
@@ -121,21 +162,12 @@ export default function MonthlyTable({
     onProjectCommentsChange(newComments);
   };
 
-  const updateOneTimeIncome = (month: string, amount: number) => {
-    onOneTimeIncomesChange({
-      ...oneTimeIncomes,
-      [month]: amount,
-    });
-  };
-
   const toggleMonthLock = (month: string) => {
     onLockedMonthsChange({
       ...lockedMonths,
       [month]: !lockedMonths[month],
     });
   };
-
-  // --- Global Comments ---
 
   const openCommentDialog = (month: string) => {
     setSelectedMonth(month);
@@ -145,7 +177,6 @@ export default function MonthlyTable({
 
   const saveComment = () => {
     if (!selectedMonth) return;
-    
     onMonthCommentsChange({
       ...monthComments,
       [selectedMonth]: tempComment,
@@ -161,162 +192,189 @@ export default function MonthlyTable({
         <CardContent className="p-0">
           <div className="overflow-x-auto">
             <table className="w-full border-collapse">
-              {/* --- HEADER ROW (Categories) --- */}
               <thead className="bg-muted/50">
                 <tr>
-                  {/* Fixed Month Column Header */}
-                  <th className="sticky left-0 z-20 bg-background px-4 py-4 text-left font-semibold text-foreground border-b-2 border-r border-border shadow-[4px_0_12px_-4px_rgba(0,0,0,0.1)] min-w-[140px]">
-                    Année {currentYear}
+                  {/* Fixed Month Column */}
+                  <th className="sticky left-0 z-30 bg-background px-4 py-4 text-left font-semibold text-foreground border-b-2 border-r border-border shadow-[4px_0_12px_-4px_rgba(0,0,0,0.1)] min-w-[180px]">
+                    <div className="flex flex-col">
+                      <span>Mois {currentYear}</span>
+                      <span className="text-[10px] text-muted-foreground font-normal">Revenus & Charges Fixes</span>
+                    </div>
                   </th>
                   
-                  {/* Fixed Categories */}
-                  <th className="px-3 py-3 text-center font-semibold text-success min-w-[120px] border-b border-border bg-success/5">
-                    💰 Salaires
+                  {/* Standard Categories */}
+                  <th className="px-3 py-3 text-center font-semibold text-success bg-success/5 border-b border-border min-w-[100px]">
+                    Revenus<br/><span className="text-[10px] font-normal opacity-70">Salaires</span>
                   </th>
-                  <th className="px-3 py-3 text-center font-semibold text-success min-w-[140px] border-b border-border bg-success/5">
-                    💸 Rev. Ponctuels
+                  <th className="px-3 py-3 text-center font-semibold text-success bg-success/5 border-b border-border min-w-[120px]">
+                    Ponctuels<br/><span className="text-[10px] font-normal opacity-70">Primes, etc.</span>
                   </th>
-                  <th className="px-3 py-3 text-center font-semibold text-destructive min-w-[120px] border-b border-border bg-destructive/5">
-                    📉 Charges
+                  <th className="px-3 py-3 text-center font-semibold text-destructive bg-destructive/5 border-b border-border min-w-[100px]">
+                    Charges<br/><span className="text-[10px] font-normal opacity-70">Fixes</span>
                   </th>
 
-                  {/* Dynamic Projects Columns */}
+                  {/* Project Columns (Dynamic) */}
                   {projects.map((project) => (
                     <th 
                       key={project.id}
-                      className="px-3 py-3 text-center font-semibold text-foreground min-w-[160px] border-b border-border bg-background"
+                      className="px-3 py-3 text-center font-semibold text-foreground border-b border-border bg-background min-w-[190px]"
                     >
-                      🎯 {project.label}
+                      <div className="flex flex-col items-center gap-1">
+                        <span>🎯 {project.label}</span>
+                        <div className="grid grid-cols-2 gap-2 w-full text-[10px] font-normal text-muted-foreground bg-muted/30 rounded px-2 py-0.5">
+                          <span title="Montant alloué">Alloué</span>
+                          <span title="Montant dépensé">Dépensé</span>
+                        </div>
+                      </div>
                     </th>
                   ))}
 
-                  {/* Balance & Actions */}
-                  <th className="px-3 py-3 text-center font-bold text-foreground min-w-[120px] border-b border-border bg-gradient-to-r from-primary/10 to-transparent">
-                    💵 Solde
+                  {/* General Savings */}
+                  <th className="px-3 py-3 text-center font-bold text-primary bg-primary/5 border-b border-border min-w-[140px]">
+                    💰 Épargne<br/>Générale
                   </th>
-                  <th className="px-3 py-3 text-center font-semibold text-muted-foreground min-w-[100px] border-b border-border">
+                  
+                  {/* Actions */}
+                  <th className="px-3 py-3 text-center font-semibold text-muted-foreground border-b border-border min-w-[100px]">
                     Actions
                   </th>
                 </tr>
               </thead>
 
-              {/* --- BODY ROWS (Months) --- */}
               <tbody className="divide-y divide-border/50">
-                {MONTHS.map((month) => {
+                {MONTHS.map((month, monthIndex) => {
                   const isLocked = lockedMonths[month];
                   const hasComment = !!monthComments[month];
-                  const balance = getMonthBalance(month);
-                  const isPositive = balance >= 0;
-
+                  const generalSavings = getGeneralSavings(month);
+                  
                   return (
                     <tr key={month} className="hover:bg-muted/20 transition-colors group">
                       
-                      {/* 1. Month Name (Sticky Row Header) */}
-                      <td className="sticky left-0 z-20 bg-background group-hover:bg-muted/20 px-4 py-3 font-medium text-foreground border-r border-border shadow-[4px_0_12px_-4px_rgba(0,0,0,0.1)]">
-                        {month}
+                      {/* 1. Sticky Month Column */}
+                      <td className="sticky left-0 z-20 bg-background group-hover:bg-muted/20 px-4 py-3 border-r border-border shadow-[4px_0_12px_-4px_rgba(0,0,0,0.1)]">
+                        <span className="font-medium text-foreground">{month}</span>
                       </td>
 
-                      {/* 2. Total Salaries (Read only) */}
-                      <td className="px-3 py-3 text-center bg-success/5 group-hover:bg-success/10 transition-colors">
-                        <div className="text-sm font-medium text-success">
-                          +{getMonthlySalaryTotal().toLocaleString('fr-FR')} €
-                        </div>
+                      {/* 2. Base Income */}
+                      <td className="px-3 py-3 text-center bg-success/5 group-hover:bg-success/10 transition-colors text-sm font-medium text-success">
+                        +{getMonthlyBaseIncome().toLocaleString()}
                       </td>
 
-                      {/* 3. One Time Incomes (Input) */}
+                      {/* 3. One Time Income */}
                       <td className="px-3 py-3 bg-success/5 group-hover:bg-success/10 transition-colors">
                         <Input
                           type="number"
                           min="0"
-                          step="0.01"
                           value={oneTimeIncomes[month] || ''}
                           onChange={(e) => updateOneTimeIncome(month, parseFloat(e.target.value) || 0)}
                           disabled={isLocked}
                           className={cn(
                             "text-center h-8 text-sm font-medium border-success/30 focus-visible:ring-success/30 bg-background",
                             oneTimeIncomes[month] ? "text-success font-bold" : "text-muted-foreground",
-                            isLocked && "opacity-50 cursor-not-allowed"
+                            isLocked && "opacity-50"
                           )}
                           placeholder="-"
                         />
                       </td>
 
-                      {/* 4. Total Charges (Read only) */}
-                      <td className="px-3 py-3 text-center bg-destructive/5 group-hover:bg-destructive/10 transition-colors">
-                        <div className="text-sm font-medium text-destructive">
-                          -{getMonthlyChargesTotal().toLocaleString('fr-FR')} €
-                        </div>
+                      {/* 4. Charges */}
+                      <td className="px-3 py-3 text-center bg-destructive/5 group-hover:bg-destructive/10 transition-colors text-sm font-medium text-destructive">
+                        -{getMonthlyChargesTotal().toLocaleString()}
                       </td>
 
-                      {/* 5. Dynamic Projects Inputs */}
+                      {/* 5. Projects (Allocation | Expense) */}
                       {projects.map((project) => {
-                        const amount = yearlyData[month]?.[project.id] || 0;
+                        const allocation = yearlyData[month]?.[project.id] || 0;
+                        const expense = yearlyExpenses[month]?.[project.id] || 0;
                         const comment = projectComments[month]?.[project.id];
+                        const cumulative = getCumulativeTotal(project.id, monthIndex);
 
                         return (
                           <td key={project.id} className="px-2 py-2">
-                            <div className="flex items-center gap-1">
-                              <Input
-                                type="number"
-                                min="0"
-                                step="0.01"
-                                value={amount || ''}
-                                onChange={(e) => updateProjectAmount(month, project.id, parseFloat(e.target.value) || 0)}
-                                disabled={isLocked}
-                                className={cn(
-                                  "text-center h-8 text-sm font-medium",
-                                  amount > 0 ? "text-secondary font-bold bg-secondary/5 border-secondary/30" : "bg-transparent border-transparent hover:border-input",
-                                  isLocked && "opacity-50 cursor-not-allowed"
-                                )}
-                                placeholder="-"
-                              />
-                              
-                              {/* Project Specific Comment */}
-                              <Popover>
-                                <PopoverTrigger asChild>
-                                  <Button 
-                                    variant="ghost" 
-                                    size="icon" 
-                                    className={cn(
-                                      "h-8 w-8 shrink-0 rounded-full",
-                                      comment ? "text-primary bg-primary/10 hover:bg-primary/20" : "text-muted-foreground/20 hover:text-foreground hover:bg-muted"
-                                    )}
-                                  >
-                                    {comment ? <MessageCircle className="h-3.5 w-3.5" /> : <MessageSquarePlus className="h-3.5 w-3.5" />}
-                                  </Button>
-                                </PopoverTrigger>
-                                <PopoverContent className="w-64 p-3">
-                                  <div className="space-y-2">
-                                    <h4 className="font-medium text-xs text-muted-foreground mb-1">
-                                      Note pour {project.label} ({month})
-                                    </h4>
-                                    <Textarea 
-                                      value={comment || ''}
-                                      onChange={(e) => updateProjectComment(month, project.id, e.target.value)}
-                                      placeholder="Ajouter un détail..."
-                                      className="h-20 text-sm resize-none"
-                                    />
-                                  </div>
-                                </PopoverContent>
-                              </Popover>
+                            <div className="flex flex-col gap-1.5">
+                              {/* Input Pair */}
+                              <div className="flex items-center gap-1">
+                                <Input
+                                  type="number"
+                                  min="0"
+                                  value={allocation || ''}
+                                  onChange={(e) => updateAllocation(month, project.id, parseFloat(e.target.value) || 0)}
+                                  disabled={isLocked}
+                                  className={cn(
+                                    "text-center h-8 text-sm px-1 font-medium bg-background border-primary/20 focus-visible:ring-primary/30",
+                                    allocation > 0 && "text-primary font-bold bg-primary/5",
+                                    isLocked && "opacity-50"
+                                  )}
+                                  placeholder="0"
+                                  title="Allocation"
+                                />
+                                <Input
+                                  type="number"
+                                  min="0"
+                                  value={expense || ''}
+                                  onChange={(e) => updateExpense(month, project.id, parseFloat(e.target.value) || 0)}
+                                  disabled={isLocked}
+                                  className={cn(
+                                    "text-center h-8 text-sm px-1 font-medium bg-background border-destructive/20 focus-visible:ring-destructive/30",
+                                    expense > 0 && "text-destructive font-bold bg-destructive/5",
+                                    isLocked && "opacity-50"
+                                  )}
+                                  placeholder="0"
+                                  title="Dépense"
+                                />
+                              </div>
+
+                              {/* Footer: Cumulative + Comment */}
+                              <div className="flex items-center justify-between px-1">
+                                <div className="text-[10px] text-muted-foreground flex items-center gap-1 bg-muted/20 px-1.5 py-0.5 rounded" title="Total Cumulé">
+                                  <span>∑</span>
+                                  <span className={cumulative >= 0 ? "text-success font-medium" : "text-destructive font-medium"}>
+                                    {cumulative.toLocaleString()}
+                                  </span>
+                                </div>
+
+                                <Popover>
+                                  <PopoverTrigger asChild>
+                                    <Button 
+                                      variant="ghost" 
+                                      size="icon" 
+                                      className={cn(
+                                        "h-5 w-5 rounded-full p-0",
+                                        comment ? "text-primary bg-primary/10" : "text-muted-foreground/30 hover:text-foreground"
+                                      )}
+                                    >
+                                      {comment ? <MessageCircle className="h-3 w-3" /> : <MessageSquarePlus className="h-3 w-3" />}
+                                    </Button>
+                                  </PopoverTrigger>
+                                  <PopoverContent className="w-64 p-3">
+                                    <div className="space-y-2">
+                                      <h4 className="font-medium text-xs text-muted-foreground mb-1">
+                                        Note pour {project.label} ({month})
+                                      </h4>
+                                      <Textarea 
+                                        value={comment || ''}
+                                        onChange={(e) => updateProjectComment(month, project.id, e.target.value)}
+                                        placeholder="Détail..."
+                                        className="h-20 text-sm resize-none"
+                                      />
+                                    </div>
+                                  </PopoverContent>
+                                </Popover>
+                              </div>
                             </div>
                           </td>
                         );
                       })}
 
-                      {/* 6. Balance (Calculated) */}
-                      <td className="px-3 py-3 text-center bg-gradient-to-r from-primary/5 to-transparent">
-                        <div
-                          className={cn(
-                            "text-sm font-bold rounded-lg py-1.5 px-2 transition-all",
-                            isPositive ? "bg-success/10 text-success border border-success/20" : "bg-destructive/10 text-destructive border border-destructive/20"
-                          )}
-                        >
-                          {isPositive ? '+' : ''}{balance.toLocaleString('fr-FR')} €
-                        </div>
+                      {/* 6. Epargne Générale */}
+                      <td className={cn(
+                        "px-3 py-3 text-center border-l border-border font-bold bg-primary/5",
+                        generalSavings >= 0 ? "text-primary" : "text-destructive"
+                      )}>
+                        {generalSavings.toLocaleString()} €
                       </td>
 
-                      {/* 7. Actions (Lock & Month Comment) */}
+                      {/* 7. Actions */}
                       <td className="px-3 py-2">
                         <div className="flex items-center justify-center gap-1">
                           <Button
@@ -325,9 +383,9 @@ export default function MonthlyTable({
                             onClick={() => toggleMonthLock(month)}
                             className={cn(
                               "h-8 w-8 rounded-full transition-all",
-                              isLocked ? "text-warning bg-warning/10 hover:bg-warning/20" : "text-muted-foreground hover:bg-muted"
+                              isLocked ? "text-warning bg-warning/10" : "text-muted-foreground hover:bg-muted"
                             )}
-                            title={isLocked ? "Déverrouiller le mois" : "Verrouiller le mois"}
+                            title={isLocked ? "Déverrouiller" : "Verrouiller"}
                           >
                             {isLocked ? <Lock className="h-3.5 w-3.5" /> : <Unlock className="h-3.5 w-3.5" />}
                           </Button>
@@ -338,9 +396,9 @@ export default function MonthlyTable({
                             onClick={() => openCommentDialog(month)}
                             className={cn(
                               "h-8 w-8 rounded-full transition-all",
-                              hasComment ? "text-primary bg-primary/10 hover:bg-primary/20" : "text-muted-foreground hover:bg-muted"
+                              hasComment ? "text-primary bg-primary/10" : "text-muted-foreground hover:bg-muted"
                             )}
-                            title="Note générale du mois"
+                            title="Commentaire global"
                           >
                             <MessageCircle className="h-3.5 w-3.5" />
                           </Button>
@@ -353,16 +411,6 @@ export default function MonthlyTable({
               </tbody>
             </table>
           </div>
-
-          {/* Empty state if no projects */}
-          {projects.length === 0 && (
-            <div className="text-center py-8 border-t bg-muted/10">
-              <Plus className="h-12 w-12 mx-auto mb-3 text-muted-foreground opacity-30" />
-              <p className="text-sm text-muted-foreground">
-                Ajoutez des projets d'épargne pour voir les colonnes s'ajouter au tableau
-              </p>
-            </div>
-          )}
         </CardContent>
       </Card>
 
@@ -372,10 +420,9 @@ export default function MonthlyTable({
           <DialogHeader>
             <DialogTitle>Commentaire - {selectedMonth}</DialogTitle>
             <DialogDescription>
-              Ajoutez une note générale pour ce mois (ex: Prime reçue, Dépense imprévue...)
+              Ajoutez une note générale pour ce mois.
             </DialogDescription>
           </DialogHeader>
-          
           <Textarea
             value={tempComment}
             onChange={(e) => setTempComment(e.target.value)}
@@ -383,14 +430,9 @@ export default function MonthlyTable({
             rows={4}
             className="resize-none"
           />
-          
           <DialogFooter>
-            <Button variant="outline" onClick={() => setCommentDialogOpen(false)}>
-              Annuler
-            </Button>
-            <Button variant="gradient" onClick={saveComment}>
-              Enregistrer
-            </Button>
+            <Button variant="outline" onClick={() => setCommentDialogOpen(false)}>Annuler</Button>
+            <Button variant="gradient" onClick={saveComment}>Enregistrer</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

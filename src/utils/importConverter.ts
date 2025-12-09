@@ -43,12 +43,14 @@ export interface RawBudgetData {
   people?: Person[];
   charges?: Charge[];
   projects?: Project[];
-  yearlyData?: YearlyData | Record<string, { months?: unknown; expenseComments?: unknown; monthComments?: unknown }>;
+  yearlyData?: YearlyData | Record<string, { months?: unknown; expenses?: unknown; expenseComments?: unknown; monthComments?: unknown }>;
+  yearlyExpenses?: YearlyData; // NEW: Explicit expenses storage
   oneTimeIncomes?: OneTimeIncomes | Record<string, any[]>;
   monthComments?: MonthComments;
   projectComments?: ProjectComments;
   lockedMonths?: LockedMonths;
   lastUpdated?: string;
+  updatedBy?: string;
   version?: string;
   exportDate?: string;
   date?: string;
@@ -61,12 +63,14 @@ export interface ConvertedBudgetData {
   people: Person[];
   charges: Charge[];
   projects: Project[];
-  yearlyData: YearlyData;
+  yearlyData: YearlyData;     // Allocations
+  yearlyExpenses: YearlyData; // Expenses (NEW)
   oneTimeIncomes: OneTimeIncomes;
   monthComments: MonthComments;
   projectComments: ProjectComments;
   lockedMonths: LockedMonths;
   lastUpdated?: string;
+  updatedBy?: string;
   version?: string;
   exportDate?: string;
   date?: string;
@@ -85,20 +89,22 @@ export function convertOldFormatToNew(oldData: RawBudgetData): ConvertedBudgetDa
     people: oldData.people || [],
     charges: oldData.charges || [],
     projects: oldData.projects || [],
-    yearlyData: {},
-    oneTimeIncomes: {},
-    monthComments: {},
-    projectComments: {},
+    yearlyData: oldData.yearlyData as YearlyData || {},     // Default Allocations
+    yearlyExpenses: oldData.yearlyExpenses as YearlyData || {}, // Default Expenses
+    oneTimeIncomes: oldData.oneTimeIncomes as OneTimeIncomes || {},
+    monthComments: oldData.monthComments || {},
+    projectComments: oldData.projectComments || {},
     lockedMonths: oldData.lockedMonths || {},
-    lastUpdated: new Date().toISOString()
+    lastUpdated: new Date().toISOString(),
+    updatedBy: oldData.updatedBy
   };
 
-  // If it's already the new format
-  if (oldData.yearlyData && !Object.keys(oldData.yearlyData).some(key => key.match(/^\d{4}$/))) {
+  // If it's already the new format with explicit expenses, return
+  if (oldData.yearlyExpenses && !Object.keys(oldData.yearlyData || {}).some(key => key.match(/^\d{4}$/))) {
     return { ...newData, ...oldData } as ConvertedBudgetData;
   }
 
-  // Detect Legacy Format
+  // Detect Legacy Format (Nested under Year key)
   const firstYearKey = Object.keys(oldData.yearlyData || {})[0];
   
   if (firstYearKey && (oldData.yearlyData as any)[firstYearKey]?.months) {
@@ -106,15 +112,22 @@ export function convertOldFormatToNew(oldData: RawBudgetData): ConvertedBudgetDa
     newData.currentYear = parseInt(firstYearKey);
 
     MONTHS.forEach((month, idx) => {
+      // Allocations
       if (oldYearData.months && oldYearData.months[idx]) {
         newData.yearlyData[month] = { ...oldYearData.months[idx] };
       }
+      // Expenses (New mapping)
+      if (oldYearData.expenses && oldYearData.expenses[idx]) {
+        newData.yearlyExpenses[month] = { ...oldYearData.expenses[idx] };
+      }
+      // Comments
       if (oldYearData.monthComments && oldYearData.monthComments[idx]) {
         newData.monthComments[month] = oldYearData.monthComments[idx];
       }
       if (oldYearData.expenseComments && oldYearData.expenseComments[idx]) {
         newData.projectComments[month] = { ...oldYearData.expenseComments[idx] };
       }
+      // Incomes
       if (oldData.oneTimeIncomes && (oldData.oneTimeIncomes as any)[firstYearKey]) {
         const incomeObj = (oldData.oneTimeIncomes as any)[firstYearKey][idx];
         if (incomeObj && incomeObj.amount) {
@@ -138,9 +151,9 @@ export function convertNewFormatToOld(newData: ConvertedBudgetData): RawBudgetDa
     projects: newData.projects,
     yearlyData: {
       [year]: {
-        months: [],
+        months: [], // Allocations
+        expenses: [], // Expenses
         monthComments: [],
-        expenses: [],
         expenseComments: [],
         deletedMonths: []
       }
@@ -152,12 +165,13 @@ export function convertNewFormatToOld(newData: ConvertedBudgetData): RawBudgetDa
   };
 
   MONTHS.forEach(month => {
-    const monthData = newData.yearlyData[month] || {};
-    oldData.yearlyData[year].months.push(monthData);
-    oldData.yearlyData[year].expenses.push(monthData);
+    const allocationData = newData.yearlyData[month] || {};
+    const expenseData = newData.yearlyExpenses[month] || {};
+
+    oldData.yearlyData[year].months.push(allocationData);
+    oldData.yearlyData[year].expenses.push(expenseData);
     
     oldData.yearlyData[year].monthComments.push(newData.monthComments?.[month] || '');
-    
     oldData.yearlyData[year].expenseComments.push(newData.projectComments?.[month] || {});
     
     oldData.oneTimeIncomes[year].push({
