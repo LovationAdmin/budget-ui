@@ -53,6 +53,8 @@ const MONTHS = [
   'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'
 ];
 
+const GENERAL_SAVINGS_ID = 'general_savings';
+
 export default function MonthlyTable({
   currentYear,
   people,
@@ -89,7 +91,6 @@ export default function MonthlyTable({
     return oneTimeIncomes[month] || 0;
   };
 
-  // Money available to be saved (Income + OneTime - Charges)
   const getMonthlyAvailableSavings = (month: string) => {
     const baseIncome = getMonthlyBaseIncome();
     const oneTime = getMonthlyOneTimeIncome(month);
@@ -97,24 +98,38 @@ export default function MonthlyTable({
     return baseIncome + oneTime - chargesTotal;
   };
 
-  // Epargne Générale = Available - Total Allocated to specific Projects
-  const getGeneralSavings = (month: string) => {
+  // 1. Calculate General Savings Allocation (Available - Allocated to Projects)
+  const getGeneralSavingsAllocation = (month: string) => {
     const available = getMonthlyAvailableSavings(month);
-    const totalAllocated = projects.reduce((sum, project) => {
+    const totalAllocatedToProjects = projects.reduce((sum, project) => {
       const monthData = yearlyData[month] || {};
       return sum + (monthData[project.id] || 0);
     }, 0);
     
-    return available - totalAllocated;
+    return available - totalAllocatedToProjects;
   };
 
-  // Cumulative Total: Sum of (Allocation - Expense) for all previous months + current
-  const getCumulativeTotal = (projectId: string, upToMonthIndex: number) => {
+  // 2. Cumulative Total Logic (Generic for Projects)
+  const getCumulativeProjectTotal = (projectId: string, upToMonthIndex: number) => {
     let total = 0;
     for (let i = 0; i <= upToMonthIndex; i++) {
       const monthName = MONTHS[i];
       const allocation = yearlyData[monthName]?.[projectId] || 0;
       const expense = yearlyExpenses[monthName]?.[projectId] || 0;
+      total += (allocation - expense);
+    }
+    return total;
+  };
+
+  // 3. Cumulative Total Logic (Specific for General Savings)
+  const getCumulativeGeneralSavings = (upToMonthIndex: number) => {
+    let total = 0;
+    for (let i = 0; i <= upToMonthIndex; i++) {
+      const monthName = MONTHS[i];
+      // Allocation is calculated automatically
+      const allocation = getGeneralSavingsAllocation(monthName);
+      // Expense is manual
+      const expense = yearlyExpenses[monthName]?.[GENERAL_SAVINGS_ID] || 0;
       total += (allocation - expense);
     }
     return total;
@@ -202,7 +217,7 @@ export default function MonthlyTable({
                     </div>
                   </th>
                   
-                  {/* Standard Categories */}
+                  {/* Categories */}
                   <th className="px-3 py-3 text-center font-semibold text-success bg-success/5 border-b border-border min-w-[100px]">
                     Revenus<br/><span className="text-[10px] font-normal opacity-70">Salaires</span>
                   </th>
@@ -213,7 +228,7 @@ export default function MonthlyTable({
                     Charges<br/><span className="text-[10px] font-normal opacity-70">Fixes</span>
                   </th>
 
-                  {/* Project Columns (Dynamic) */}
+                  {/* Dynamic Project Columns */}
                   {projects.map((project) => (
                     <th 
                       key={project.id}
@@ -229,9 +244,15 @@ export default function MonthlyTable({
                     </th>
                   ))}
 
-                  {/* General Savings */}
-                  <th className="px-3 py-3 text-center font-bold text-primary bg-primary/5 border-b border-border min-w-[140px]">
-                    💰 Épargne<br/>Générale
+                  {/* Epargne Générale (NOW with 2 columns inputs style) */}
+                  <th className="px-3 py-3 text-center font-bold text-primary bg-primary/5 border-b border-border min-w-[190px]">
+                    <div className="flex flex-col items-center gap-1">
+                        <span>💰 Épargne Générale</span>
+                        <div className="grid grid-cols-2 gap-2 w-full text-[10px] font-normal text-primary/70 bg-primary/10 rounded px-2 py-0.5">
+                          <span title="Reste du budget (Auto)">Auto</span>
+                          <span title="Dépenses imprévues">Dépensé</span>
+                        </div>
+                    </div>
                   </th>
                   
                   {/* Actions */}
@@ -245,12 +266,17 @@ export default function MonthlyTable({
                 {MONTHS.map((month, monthIndex) => {
                   const isLocked = lockedMonths[month];
                   const hasComment = !!monthComments[month];
-                  const generalSavings = getGeneralSavings(month);
                   
+                  // General Savings Data
+                  const genSavingsAllocation = getGeneralSavingsAllocation(month);
+                  const genSavingsExpense = yearlyExpenses[month]?.[GENERAL_SAVINGS_ID] || 0;
+                  const genSavingsCumulative = getCumulativeGeneralSavings(monthIndex);
+                  const genSavingsComment = projectComments[month]?.[GENERAL_SAVINGS_ID];
+
                   return (
                     <tr key={month} className="hover:bg-muted/20 transition-colors group">
                       
-                      {/* 1. Sticky Month Column */}
+                      {/* 1. Sticky Month */}
                       <td className="sticky left-0 z-20 bg-background group-hover:bg-muted/20 px-4 py-3 border-r border-border shadow-[4px_0_12px_-4px_rgba(0,0,0,0.1)]">
                         <span className="font-medium text-foreground">{month}</span>
                       </td>
@@ -271,7 +297,7 @@ export default function MonthlyTable({
                           className={cn(
                             "text-center h-8 text-sm font-medium border-success/30 focus-visible:ring-success/30 bg-background",
                             oneTimeIncomes[month] ? "text-success font-bold" : "text-muted-foreground",
-                            isLocked && "opacity-50"
+                            isLocked && "opacity-50 cursor-not-allowed"
                           )}
                           placeholder="-"
                         />
@@ -282,12 +308,12 @@ export default function MonthlyTable({
                         -{getMonthlyChargesTotal().toLocaleString()}
                       </td>
 
-                      {/* 5. Projects (Allocation | Expense) */}
+                      {/* 5. Projects */}
                       {projects.map((project) => {
                         const allocation = yearlyData[month]?.[project.id] || 0;
                         const expense = yearlyExpenses[month]?.[project.id] || 0;
                         const comment = projectComments[month]?.[project.id];
-                        const cumulative = getCumulativeTotal(project.id, monthIndex);
+                        const cumulative = getCumulativeProjectTotal(project.id, monthIndex);
 
                         return (
                           <td key={project.id} className="px-2 py-2">
@@ -306,7 +332,6 @@ export default function MonthlyTable({
                                     isLocked && "opacity-50"
                                   )}
                                   placeholder="0"
-                                  title="Allocation"
                                 />
                                 <Input
                                   type="number"
@@ -320,11 +345,10 @@ export default function MonthlyTable({
                                     isLocked && "opacity-50"
                                   )}
                                   placeholder="0"
-                                  title="Dépense"
                                 />
                               </div>
 
-                              {/* Footer: Cumulative + Comment */}
+                              {/* Footer */}
                               <div className="flex items-center justify-between px-1">
                                 <div className="text-[10px] text-muted-foreground flex items-center gap-1 bg-muted/20 px-1.5 py-0.5 rounded" title="Total Cumulé">
                                   <span>∑</span>
@@ -366,12 +390,76 @@ export default function MonthlyTable({
                         );
                       })}
 
-                      {/* 6. Epargne Générale */}
-                      <td className={cn(
-                        "px-3 py-3 text-center border-l border-border font-bold bg-primary/5",
-                        generalSavings >= 0 ? "text-primary" : "text-destructive"
-                      )}>
-                        {generalSavings.toLocaleString()} €
+                      {/* 6. Epargne Générale (Auto Calculated + Manual Expense) */}
+                      <td className="px-2 py-2 border-l border-border bg-primary/5">
+                        <div className="flex flex-col gap-1.5">
+                            {/* Input Pair */}
+                            <div className="flex items-center gap-1">
+                                {/* Auto Allocation (Read Only) */}
+                                <Input
+                                    type="text" // Text to allow cleaner formatting if needed, but number is fine
+                                    value={genSavingsAllocation.toLocaleString()}
+                                    disabled
+                                    className={cn(
+                                        "text-center h-8 text-sm px-1 font-bold bg-primary/10 border-primary/20 text-primary cursor-default",
+                                    )}
+                                    title="Calculé automatiquement (Revenus - Charges - Projets)"
+                                />
+                                {/* Manual Expense */}
+                                <Input
+                                    type="number"
+                                    min="0"
+                                    value={genSavingsExpense || ''}
+                                    onChange={(e) => updateExpense(month, GENERAL_SAVINGS_ID, parseFloat(e.target.value) || 0)}
+                                    disabled={isLocked}
+                                    className={cn(
+                                        "text-center h-8 text-sm px-1 font-medium bg-background border-destructive/20 focus-visible:ring-destructive/30",
+                                        genSavingsExpense > 0 && "text-destructive font-bold bg-destructive/5",
+                                        isLocked && "opacity-50"
+                                    )}
+                                    placeholder="0"
+                                    title="Dépense imprévue"
+                                />
+                            </div>
+
+                            {/* Footer */}
+                            <div className="flex items-center justify-between px-1">
+                                <div className="text-[10px] text-muted-foreground flex items-center gap-1 bg-muted/20 px-1.5 py-0.5 rounded" title="Total Cumulé Epargne Générale">
+                                    <span>∑</span>
+                                    <span className={genSavingsCumulative >= 0 ? "text-success font-medium" : "text-destructive font-medium"}>
+                                    {genSavingsCumulative.toLocaleString()}
+                                    </span>
+                                </div>
+
+                                <Popover>
+                                    <PopoverTrigger asChild>
+                                    <Button 
+                                        variant="ghost" 
+                                        size="icon" 
+                                        className={cn(
+                                        "h-5 w-5 rounded-full p-0",
+                                        genSavingsComment ? "text-primary bg-primary/10" : "text-muted-foreground/30 hover:text-foreground"
+                                        )}
+                                    >
+                                        {genSavingsComment ? <MessageCircle className="h-3 w-3" /> : <MessageSquarePlus className="h-3 w-3" />}
+                                    </Button>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="w-64 p-3">
+                                    <div className="space-y-2">
+                                        <h4 className="font-medium text-xs text-muted-foreground mb-1">
+                                        Note pour Épargne Générale ({month})
+                                        </h4>
+                                        <Textarea 
+                                        value={genSavingsComment || ''}
+                                        onChange={(e) => updateProjectComment(month, GENERAL_SAVINGS_ID, e.target.value)}
+                                        placeholder="Détail..."
+                                        className="h-20 text-sm resize-none"
+                                        />
+                                    </div>
+                                    </PopoverContent>
+                                </Popover>
+                            </div>
+                        </div>
                       </td>
 
                       {/* 7. Actions */}
