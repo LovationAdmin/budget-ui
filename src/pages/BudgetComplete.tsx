@@ -73,7 +73,7 @@ export default function BudgetComplete() {
   
   // Data Matrices
   const [yearlyData, setYearlyData] = useState<YearlyData>({});         // Allocations
-  const [yearlyExpenses, setYearlyExpenses] = useState<YearlyData>({}); // Expenses (NEW)
+  const [yearlyExpenses, setYearlyExpenses] = useState<YearlyData>({}); // Expenses
   
   const [oneTimeIncomes, setOneTimeIncomes] = useState<OneTimeIncomes>({});
   const [monthComments, setMonthComments] = useState<MonthComments>({});
@@ -86,24 +86,32 @@ export default function BudgetComplete() {
     if (id) loadBudget();
   }, [id]);
 
-  // Auto-Save Logic
+  // 1. Auto-Save Logic (Every 30s)
   useEffect(() => {
     if (!loadedRef.current) return;
     const saveInterval = setInterval(() => handleSave(true), 30000);
     return () => clearInterval(saveInterval);
   }, [budgetTitle, currentYear, people, charges, projects, yearlyData, yearlyExpenses, oneTimeIncomes, monthComments, projectComments, lockedMonths]);
 
-  // Polling Logic
+  // 2. Collaborative Polling Logic (Every 15s)
   useEffect(() => {
     if (!id || !loadedRef.current) return;
+
     const pollInterval = setInterval(async () => {
       try {
         const res = await budgetAPI.getData(id);
         const remoteData: RawBudgetData = res.data.data;
-        if (remoteData.lastUpdated && lastServerUpdate && remoteData.lastUpdated > lastServerUpdate) {
+        
+        // FIX: Check if the update is newer AND if the updater is NOT me
+        if (
+            remoteData.lastUpdated && 
+            lastServerUpdate && 
+            remoteData.lastUpdated > lastServerUpdate && 
+            remoteData.updatedBy !== user?.name // <--- THIS PREVENTS SELF-NOTIFICATION
+        ) {
           toast({
             title: "Mise à jour disponible",
-            description: "Un autre membre a modifié le budget.",
+            description: `Modifié par ${remoteData.updatedBy || 'un membre'}.`,
             variant: "default",
             action: (
               <ToastAction altText="Rafraîchir" onClick={() => loadBudget()}>Rafraîchir</ToastAction>
@@ -114,11 +122,13 @@ export default function BudgetComplete() {
         console.error("Polling error", err);
       }
     }, 15000);
+
     return () => clearInterval(pollInterval);
-  }, [id, lastServerUpdate]);
+  }, [id, lastServerUpdate, user?.name]); // Added user?.name dependency
 
   const loadBudget = async () => {
     if (!id) return;
+    
     try {
       const [budgetRes, dataRes] = await Promise.all([
         budgetAPI.getById(id),
@@ -140,7 +150,7 @@ export default function BudgetComplete() {
       setCharges(data.charges || []);
       setProjects(data.projects || []);
       setYearlyData(data.yearlyData || {});
-      setYearlyExpenses(data.yearlyExpenses || {}); // Load Expenses
+      setYearlyExpenses(data.yearlyExpenses || {}); 
       setOneTimeIncomes(data.oneTimeIncomes || {});
       setMonthComments(data.monthComments || {});
       setProjectComments(data.projectComments || {});
@@ -166,14 +176,14 @@ export default function BudgetComplete() {
       people,
       charges,
       projects,
-      yearlyData,     // Allocations
-      yearlyExpenses, // Expenses
+      yearlyData,     
+      yearlyExpenses, 
       oneTimeIncomes,
       monthComments,
       projectComments,
       lockedMonths,
       lastUpdated: now,
-      updatedBy: user?.name,
+      updatedBy: user?.name, // Critical for avoiding self-notification
       version: '2.2'
     };
 
@@ -308,13 +318,13 @@ export default function BudgetComplete() {
                 charges={charges} 
                 projects={projects} 
                 yearlyData={yearlyData} 
-                yearlyExpenses={yearlyExpenses} // Pass Expenses
+                yearlyExpenses={yearlyExpenses}
                 oneTimeIncomes={oneTimeIncomes} 
                 monthComments={monthComments} 
                 projectComments={projectComments} 
                 lockedMonths={lockedMonths} 
                 onYearlyDataChange={setYearlyData} 
-                onYearlyExpensesChange={setYearlyExpenses} // Pass Setter
+                onYearlyExpensesChange={setYearlyExpenses}
                 onOneTimeIncomesChange={setOneTimeIncomes} 
                 onMonthCommentsChange={setMonthComments} 
                 onProjectCommentsChange={setProjectComments} 

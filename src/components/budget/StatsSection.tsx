@@ -1,5 +1,5 @@
 import { StatCard } from "./StatCard";
-import { Wallet, TrendingDown, TrendingUp, PiggyBank } from "lucide-react";
+import { Wallet, TrendingDown, PiggyBank, Scale } from "lucide-react";
 import { Bar, BarChart, CartesianGrid, XAxis, Tooltip, ResponsiveContainer, Legend } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { Person, Charge, Project, YearlyData, OneTimeIncomes } from '@/utils/importConverter';
@@ -8,7 +8,7 @@ interface StatsSectionProps {
   people: Person[];
   charges: Charge[];
   projects: Project[];
-  yearlyData: YearlyData;
+  yearlyData: YearlyData; // Allocations
   oneTimeIncomes: OneTimeIncomes;
 }
 
@@ -22,6 +22,9 @@ const FULL_MONTHS_KEYS = [
   'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'
 ];
 
+// Helper ID for General Savings
+const GENERAL_SAVINGS_ID = 'epargne';
+
 export default function StatsSection({
   people,
   charges,
@@ -29,39 +32,57 @@ export default function StatsSection({
   yearlyData,
   oneTimeIncomes,
 }: StatsSectionProps) {
-  // Calculate Totals
-  const monthlySalaryIncome = people.reduce((sum, person) => sum + person.salary, 0);
-  const yearlyOneTimeIncome = Object.values(oneTimeIncomes).reduce((sum, amount) => sum + (amount || 0), 0);
-  const yearlyIncome = (monthlySalaryIncome * 12) + yearlyOneTimeIncome;
-  const monthlyCharges = charges.reduce((sum, charge) => sum + charge.amount, 0);
-  const yearlyCharges = monthlyCharges * 12;
-
-  let totalProjectSavings = 0;
   
-  // Data for Charts
-  const chartData = FULL_MONTHS_KEYS.map((monthKey, index) => {
-    const monthData = yearlyData[monthKey] || {};
-    
-    // Calculate Project Savings for this month
-    const monthProjectSavings = projects.reduce((sum, project) => {
-      return sum + (monthData[project.id] || 0);
-    }, 0);
-    totalProjectSavings += monthProjectSavings;
+  // 1. Calculate Fixed Base Numbers
+  const monthlySalaryIncome = people.reduce((sum, person) => sum + person.salary, 0);
+  const monthlyCharges = charges.reduce((sum, charge) => sum + charge.amount, 0);
+  
+  const yearlyBaseIncome = monthlySalaryIncome * 12;
+  const yearlyCharges = monthlyCharges * 12;
+  const yearlyOneTimeIncome = Object.values(oneTimeIncomes).reduce((sum, amount) => sum + (amount || 0), 0);
 
-    // Calculate One Time Income for this month
-    const monthOneTime = oneTimeIncomes[monthKey] || 0;
+  const totalYearlyIncome = yearlyBaseIncome + yearlyOneTimeIncome;
+
+  // 2. Calculate Project Allocations
+  let totalProjectAllocations = 0;
+  
+  // Prepare Chart Data
+  const chartData = FULL_MONTHS_KEYS.map((monthKey, index) => {
+    // Income for this month
+    const monthIncome = monthlySalaryIncome + (oneTimeIncomes[monthKey] || 0);
+    
+    // Allocations for this month (excluding general savings logic for now, summing specific projects)
+    const monthProjectAllocation = projects
+      .filter(p => p.id !== GENERAL_SAVINGS_ID)
+      .reduce((sum, project) => {
+        const amount = yearlyData[monthKey]?.[project.id] || 0;
+        return sum + amount;
+      }, 0);
+
+    totalProjectAllocations += monthProjectAllocation;
+
+    // "Available" for this month (Income - Charges)
+    const available = monthIncome - monthlyCharges;
+
+    // "General Savings" for this month (Available - Allocated)
+    const generalSavings = available - monthProjectAllocation;
 
     return {
       name: MONTHS[index],
-      revenus: monthlySalaryIncome + monthOneTime,
-      depenses: monthlyCharges + monthProjectSavings, // Considering savings as money "out" of checking account
-      epargne: monthProjectSavings
+      revenus: monthIncome,
+      charges: monthlyCharges,
+      projets: monthProjectAllocation,
+      general: generalSavings
     };
   });
 
-  const yearlyBalance = yearlyIncome - yearlyCharges - totalProjectSavings;
-  const monthlyBalance = monthlySalaryIncome - monthlyCharges;
-  const savingsRate = yearlyIncome > 0 ? (totalProjectSavings / yearlyIncome) * 100 : 0;
+  // 3. Calculate Final "General Savings" (The buffer)
+  // Logic: Total Income - Total Charges - Total Allocated to specific projects
+  const totalGeneralSavings = totalYearlyIncome - yearlyCharges - totalProjectAllocations;
+
+  // 4. Savings Rate (Project Allocations + General Savings) / Total Income
+  const totalSaved = totalProjectAllocations + totalGeneralSavings;
+  const savingsRate = totalYearlyIncome > 0 ? (totalSaved / totalYearlyIncome) * 100 : 0;
 
   return (
     <div className="space-y-6 mb-6 animate-fade-in">
@@ -69,8 +90,8 @@ export default function StatsSection({
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
           title="Revenus annuels"
-          value={`${yearlyIncome.toLocaleString('fr-FR')} €`}
-          subtitle={`${monthlySalaryIncome.toLocaleString('fr-FR')} €/mois`}
+          value={`${totalYearlyIncome.toLocaleString('fr-FR')} €`}
+          subtitle="Salaires + Ponctuels"
           icon={Wallet}
           variant="default"
           className="animate-slide-up stagger-1"
@@ -79,27 +100,27 @@ export default function StatsSection({
         <StatCard
           title="Charges annuelles"
           value={`${yearlyCharges.toLocaleString('fr-FR')} €`}
-          subtitle={`${monthlyCharges.toLocaleString('fr-FR')} €/mois`}
+          subtitle="Dépenses fixes"
           icon={TrendingDown}
           variant="danger"
           className="animate-slide-up stagger-2"
         />
 
         <StatCard
-          title="Solde disponible"
-          value={`${yearlyBalance.toLocaleString('fr-FR')} €`}
-          subtitle={`${monthlyBalance.toLocaleString('fr-FR')} €/mois`}
-          icon={TrendingUp}
-          variant={yearlyBalance >= 0 ? "success" : "danger"}
+          title="Total Alloué Projets"
+          value={`${totalProjectAllocations.toLocaleString('fr-FR')} €`}
+          subtitle="Épargne affectée"
+          icon={PiggyBank}
+          variant="accent"
           className="animate-slide-up stagger-3"
         />
 
         <StatCard
-          title="Épargne projets"
-          value={`${totalProjectSavings.toLocaleString('fr-FR')} €`}
-          subtitle={`${savingsRate.toFixed(1)}% des revenus`}
-          icon={PiggyBank}
-          variant="accent"
+          title="Total Épargne Générale"
+          value={`${totalGeneralSavings.toLocaleString('fr-FR')} €`}
+          subtitle={`${savingsRate.toFixed(0)}% du revenu global`}
+          icon={Scale} // Icon representing Balance/buffer
+          variant={totalGeneralSavings >= 0 ? "success" : "warning"}
           className="animate-slide-up stagger-4"
         />
       </div>
@@ -108,7 +129,7 @@ export default function StatsSection({
       <div className="grid gap-4 md:grid-cols-2">
         <Card className="glass-card">
           <CardHeader>
-            <CardTitle className="text-base font-medium">Évolution Mensuelle</CardTitle>
+            <CardTitle className="text-base font-medium">Répartition Mensuelle (Flux)</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="h-[300px] w-full">
@@ -127,8 +148,9 @@ export default function StatsSection({
                     contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
                   />
                   <Legend iconType="circle" />
-                  <Bar dataKey="revenus" name="Revenus" fill="hsl(var(--success))" radius={[4, 4, 0, 0]} />
-                  <Bar dataKey="depenses" name="Dépenses + Épargne" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="charges" name="Charges Fixes" stackId="a" fill="hsl(var(--destructive))" radius={[0, 0, 4, 4]} />
+                  <Bar dataKey="projets" name="Alloc. Projets" stackId="a" fill="hsl(var(--secondary))" />
+                  <Bar dataKey="general" name="Épargne Générale" stackId="a" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -137,7 +159,7 @@ export default function StatsSection({
 
         <Card className="glass-card">
           <CardHeader>
-            <CardTitle className="text-base font-medium">Épargne par Mois</CardTitle>
+            <CardTitle className="text-base font-medium">Comparatif Revenus vs Sorties</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="h-[300px] w-full">
@@ -155,7 +177,14 @@ export default function StatsSection({
                     cursor={{ fill: "hsl(var(--muted)/0.2)" }}
                     contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
                   />
-                  <Bar dataKey="epargne" name="Épargne Réalisée" fill="hsl(var(--secondary))" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="revenus" name="Revenus Totaux" fill="hsl(var(--success))" radius={[4, 4, 0, 0]} barSize={20} />
+                  <Bar 
+                    dataKey="projets" 
+                    name="Alloué Projets" 
+                    fill="hsl(var(--secondary))" 
+                    radius={[4, 4, 0, 0]} 
+                    barSize={20} 
+                  />
                 </BarChart>
               </ResponsiveContainer>
             </div>
