@@ -52,6 +52,7 @@ export default function Dashboard() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [newBudgetName, setNewBudgetName] = useState('');
   const [creating, setCreating] = useState(false);
+  
   const [budgetToDelete, setBudgetToDelete] = useState<Budget | null>(null);
   const [deleting, setDeleting] = useState(false);
 
@@ -61,11 +62,6 @@ export default function Dashboard() {
       setBudgets(response.data);
     } catch (error) {
       console.error('Error loading budgets:', error);
-      toast({
-        title: "Erreur",
-        description: "Impossible de charger les budgets.",
-        variant: "destructive",
-      });
     } finally {
       setLoading(false);
     }
@@ -73,6 +69,10 @@ export default function Dashboard() {
 
   useEffect(() => {
     loadBudgets();
+    
+    // NEW: Poll every 30 seconds to update member counts/lists
+    const interval = setInterval(loadBudgets, 30000);
+    return () => clearInterval(interval);
   }, []);
 
   const handleCreateBudget = async (e: React.FormEvent) => {
@@ -83,11 +83,13 @@ export default function Dashboard() {
       const response = await budgetAPI.create({ name: newBudgetName });
       setShowCreateModal(false);
       setNewBudgetName('');
+      
       toast({
         title: "Budget créé",
         description: `Le budget "${newBudgetName}" a été créé avec succès.`,
         variant: "success",
       });
+
       navigate(`/budget/${response.data.id}/complete`);
     } catch (error) {
       console.error('Error creating budget:', error);
@@ -138,7 +140,6 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen gradient-surface">
-      {/* Navbar with NO items (Clean Dashboard) */}
       <BudgetNavbar
         budgetTitle="Mes Budgets"
         userName={user?.name}

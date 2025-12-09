@@ -1,11 +1,11 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { MemberAvatar } from "./MemberAvatar";
 import { Badge } from "@/components/ui/badge";
 import { Users, UserPlus, UserMinus, Mail, Trash2, Crown, Loader2 } from "lucide-react";
 import { budgetAPI } from '@/services/api';
-import { useToast } from '@/hooks/use-toast'; // Import Toast
+import { useToast } from '@/hooks/use-toast';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -61,22 +61,29 @@ export default function MemberManagementSection({
 
   const loadInvitations = async () => {
     if (!budget.is_owner) return;
-    setLoading(true);
+    // Don't set loading on poll, only initial
     try {
       const response = await budgetAPI.getInvitations(budget.id);
       setInvitations(response.data.filter((inv: Invitation) => inv.status === 'pending'));
     } catch (error) {
       console.error('Error loading invitations:', error);
-    } finally {
-      setLoading(false);
     }
   };
 
-  useState(() => {
-    if (budget.is_owner) {
-      loadInvitations();
-    }
-  });
+  // Initial Load & Polling for Member/Invitation changes
+  useEffect(() => {
+    // 1. Initial Load
+    loadInvitations();
+
+    // 2. Poll every 15 seconds to check if invitations were accepted
+    const interval = setInterval(() => {
+        loadInvitations();
+        // Also trigger the parent refresh to get the new members in the main budget object
+        onMemberChange(); 
+    }, 15000);
+
+    return () => clearInterval(interval);
+  }, []);
 
   const handleRemoveMember = async () => {
     if (!memberToRemove || !memberToRemove.user) return;
@@ -141,7 +148,7 @@ export default function MemberManagementSection({
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
-          {/* Active Members — ONLY valid users */}
+          {/* Active Members */}
           <div className="space-y-2">
             {budget.members
               .filter(member => member.user)
@@ -226,16 +233,10 @@ export default function MemberManagementSection({
               ))}
             </div>
           )}
-
-          {loading && (
-            <div className="flex items-center justify-center py-4">
-              <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-            </div>
-          )}
         </CardContent>
       </Card>
 
-      {/* Remove Member Dialog */}
+      {/* Dialogs remain the same */}
       <AlertDialog open={!!memberToRemove} onOpenChange={() => setMemberToRemove(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -254,7 +255,6 @@ export default function MemberManagementSection({
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Cancel Invitation Dialog */}
       <AlertDialog open={!!invitationToCancel} onOpenChange={() => setInvitationToCancel(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
