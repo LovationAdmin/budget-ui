@@ -45,7 +45,7 @@ interface BudgetMember {
     id: string; 
     name: string; 
     email: string;
-    avatar?: string; // Updated to include Avatar
+    avatar?: string; 
   };
   role: 'owner' | 'member';
 }
@@ -87,7 +87,6 @@ export default function BudgetComplete() {
 
   const loadedRef = useRef(false);
 
-  // Initial Load
   useEffect(() => {
     if (id) loadBudget();
   }, [id]);
@@ -99,7 +98,7 @@ export default function BudgetComplete() {
     return () => clearInterval(saveInterval);
   }, [budgetTitle, currentYear, people, charges, projects, yearlyData, yearlyExpenses, oneTimeIncomes, monthComments, projectComments, lockedMonths]);
 
-  // 2. Data Polling (Every 15s) - Checks for changes by others
+  // 2. Data Polling (Every 15s)
   useEffect(() => {
     if (!id || !loadedRef.current) return;
 
@@ -108,7 +107,6 @@ export default function BudgetComplete() {
         const res = await budgetAPI.getData(id);
         const remoteData: RawBudgetData = res.data.data;
         
-        // Notify only if timestamp is newer AND updater is NOT me
         if (
             remoteData.lastUpdated && 
             lastServerUpdate && 
@@ -134,7 +132,7 @@ export default function BudgetComplete() {
     return () => clearInterval(pollInterval);
   }, [id, lastServerUpdate, user?.name]);
 
-  // 3. Member List Polling (Every 5s) - Keeps the member list "Live"
+  // 3. Member List Polling (Every 5s)
   useEffect(() => {
     if (!id) return;
     const memberInterval = setInterval(() => {
@@ -143,7 +141,6 @@ export default function BudgetComplete() {
     return () => clearInterval(memberInterval);
   }, [id]);
 
-  // Full Data Load
   const loadBudget = async () => {
     if (!id) return;
     try {
@@ -158,7 +155,6 @@ export default function BudgetComplete() {
       if (rawData.lastUpdated) setLastServerUpdate(rawData.lastUpdated);
       else setLastServerUpdate(new Date().toISOString());
 
-      // Use Converter (Handles legacy/new formats)
       const data = convertOldFormatToNew(rawData);
 
       setBudgetTitle(data.budgetTitle || '');
@@ -182,13 +178,11 @@ export default function BudgetComplete() {
     }
   };
 
-  // Lightweight refresh for Members only (Does not reset inputs)
   const refreshMembersOnly = async () => {
     if (!id) return;
     try {
         const response = await budgetAPI.getById(id);
         setBudget(prev => {
-            // Only force update if the list changed deep equality check
             if (JSON.stringify(prev?.members) !== JSON.stringify(response.data.members)) {
                 return response.data;
             }
@@ -217,7 +211,7 @@ export default function BudgetComplete() {
       projectComments,
       lockedMonths,
       lastUpdated: now,
-      updatedBy: user?.name, // Critical for avoiding self-notification
+      updatedBy: user?.name, 
       version: '2.2'
     };
 
@@ -275,18 +269,13 @@ export default function BudgetComplete() {
     }
   };
 
-  // Smooth Scroll Logic
   const handleSectionChange = (section: string) => {
     if (section === 'settings' || section === 'notifications') return;
-    
-    if (section === 'overview') {
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-        return;
-    }
-
     const element = document.getElementById(section);
     if (element) {
         element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } else if (section === 'overview') {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
 
@@ -304,6 +293,7 @@ export default function BudgetComplete() {
       <BudgetNavbar 
         budgetTitle={budget?.name} 
         userName={user?.name}
+        userAvatar={user?.avatar} // UPDATED: Pass the avatar
         items={BUDGET_NAV_ITEMS}
         onSectionChange={handleSectionChange}
         currentSection="overview"
@@ -335,7 +325,6 @@ export default function BudgetComplete() {
           </div>
         </div>
         
-        {/* Pass refreshMembersOnly to allow sections to trigger a refresh */}
         {budget && user && (
             <div id="members">
                 <MemberManagementSection 

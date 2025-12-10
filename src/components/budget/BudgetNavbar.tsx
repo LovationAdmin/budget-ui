@@ -3,8 +3,7 @@ import {
   Settings, 
   Bell, 
   Menu,
-  LucideIcon,
-  Check
+  LucideIcon
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { MemberAvatar } from "./MemberAvatar";
@@ -30,6 +29,7 @@ interface BudgetNavbarProps {
   onSectionChange?: (section: string) => void;
   onMenuClick?: () => void;
   userName?: string;
+  userAvatar?: string; // NEW PROP
   className?: string;
 }
 
@@ -40,6 +40,7 @@ export function BudgetNavbar({
   onSectionChange,
   onMenuClick,
   userName = "Utilisateur",
+  userAvatar, // NEW PROP
   className,
 }: BudgetNavbarProps) {
   const navigate = useNavigate();
@@ -179,7 +180,8 @@ export function BudgetNavbar({
             onClick={() => navigate('/profile')}
             title="Mon Profil"
           >
-            <MemberAvatar name={userName} size="sm" />
+            {/* UPDATED: Passing image prop here */}
+            <MemberAvatar name={userName} image={userAvatar} size="sm" />
           </div>
         </div>
       </div>
