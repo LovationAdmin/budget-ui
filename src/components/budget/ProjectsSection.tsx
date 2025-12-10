@@ -3,7 +3,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Plus, Trash2, Target, CheckCircle2 } from "lucide-react";
+// FIX: Added 'X' to the imports
+import { Plus, Trash2, Target, CheckCircle2, X } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
 import type { Project, YearlyData } from '@/utils/importConverter';
@@ -11,7 +12,6 @@ import type { Project, YearlyData } from '@/utils/importConverter';
 interface ProjectsSectionProps {
   projects: Project[];
   onProjectsChange: (projects: Project[]) => void;
-  // NEW: To calculate progress we need current allocations
   yearlyData?: YearlyData; 
 }
 
