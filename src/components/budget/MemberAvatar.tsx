@@ -2,7 +2,7 @@ import { cn } from "@/lib/utils";
 
 interface MemberAvatarProps {
   name: string;
-  image?: string;
+  image?: string; // Can be URL, Base64, or Gradient CSS
   size?: "sm" | "md" | "lg";
   showRing?: boolean;
   className?: string;
@@ -46,13 +46,16 @@ export function MemberAvatar({
   showRing = false,
   className,
 }: MemberAvatarProps) {
-  const colorClass = colors[getColorIndex(name)];
+  // Logic to determine if 'image' is a CSS gradient or a real image
+  const isGradient = image?.startsWith("linear-gradient");
+  const isRealImage = image && !isGradient;
 
-  if (image) {
+  // 1. Render Real Image (Photo)
+  if (isRealImage) {
     return (
       <div
         className={cn(
-          "relative flex items-center justify-center overflow-hidden rounded-full",
+          "relative flex items-center justify-center overflow-hidden rounded-full bg-muted",
           sizeClasses[size],
           showRing && "ring-2 ring-primary/30 ring-offset-2 ring-offset-background",
           className
@@ -67,15 +70,22 @@ export function MemberAvatar({
     );
   }
 
+  // 2. Render Gradient (Custom Preset) or Default Hash
+  const colorClass = !image ? colors[getColorIndex(name)] : "";
+  
   return (
     <div
       className={cn(
-        "relative flex items-center justify-center rounded-full bg-gradient-to-br font-medium text-primary-foreground shadow-soft",
+        "relative flex items-center justify-center rounded-full font-medium text-primary-foreground shadow-soft",
+        // Only apply default bg-gradient class if no custom gradient is provided
+        !isGradient && "bg-gradient-to-br",
+        !isGradient && colorClass,
         sizeClasses[size],
-        colorClass,
         showRing && "ring-2 ring-primary/30 ring-offset-2 ring-offset-background",
         className
       )}
+      // Apply custom gradient directly to style
+      style={isGradient ? { background: image } : undefined}
     >
       {getInitials(name)}
     </div>

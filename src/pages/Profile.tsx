@@ -6,6 +6,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
+import { AvatarPicker } from '../components/ui/avatar-picker';
 
 export default function Profile() {
   const { user } = useAuth();
@@ -13,6 +14,7 @@ export default function Profile() {
   const { toast } = useToast();
   
   const [name, setName] = useState(user?.name || '');
+  const [avatar, setAvatar] = useState(user?.avatar || '');
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -25,10 +27,14 @@ export default function Profile() {
     setUpdating(true);
 
     try {
-      await userAPI.updateProfile({ name });
+      await userAPI.updateProfile({ name, avatar });
+      
       if (user) {
-        const updatedUser = { ...user, name };
+        // Update local storage so the navbar and other components update immediately
+        const updatedUser = { ...user, name, avatar };
         localStorage.setItem('user', JSON.stringify(updatedUser));
+        // Simple reload to propagate changes to context (or you could expose a setUser in AuthContext)
+        window.location.reload();
       }
       toast({ title: "Profil mis à jour", description: "Vos informations ont été enregistrées.", variant: "success" });
     } catch (err: any) {
@@ -90,8 +96,19 @@ export default function Profile() {
 
         {/* Profile Info */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">Informations</h2>
+          <h2 className="text-xl font-semibold text-gray-900 mb-6">Informations</h2>
+          
           <form onSubmit={handleUpdateProfile}>
+            {/* AVATAR PICKER */}
+            <div className="flex flex-col items-center mb-8">
+                <AvatarPicker 
+                    name={name} 
+                    currentAvatar={avatar} 
+                    onSelect={(newAvatar) => setAvatar(newAvatar)} 
+                />
+                <p className="text-sm text-muted-foreground mt-3">Cliquez sur l'avatar pour le modifier</p>
+            </div>
+
             <div className="mb-4">
               <label className="block text-sm font-medium text-gray-700 mb-2">Nom</label>
               <input
