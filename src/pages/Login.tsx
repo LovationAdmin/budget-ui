@@ -1,7 +1,7 @@
 import { useState, FormEvent, ChangeEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { authAPI } from '../services/api'; // Import API directly for resend
+import { authAPI } from '../services/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -39,7 +39,6 @@ export default function Login() {
       setError(errorMessage);
 
       // Check if the error is about email verification
-      // (Backend returns "Email non vérifié..." on 403)
       if (errorMessage.toLowerCase().includes("vérifié") || errorMessage.toLowerCase().includes("verified")) {
         setShowResend(true);
       }
@@ -59,7 +58,7 @@ export default function Login() {
             variant: "success" 
         });
         setShowResend(false);
-        setError(""); // Clear error to clean up UI
+        setError(""); 
     } catch (err: any) {
         const msg = err.response?.data?.error || "Impossible de renvoyer l'email.";
         toast({ 
@@ -74,11 +73,9 @@ export default function Login() {
 
   return (
     <div className="min-h-screen flex flex-col">
-      {/* Main Container */}
       <div className="flex-1 flex items-center justify-center gradient-surface px-4 py-12">
         <div className="w-full max-w-md">
           
-          {/* Header */}
           <div className="text-center mb-8 animate-slide-up">
             <div className="inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-[hsl(35_90%_65%)] mb-4 shadow-glow">
               <Wallet className="h-8 w-8 text-primary-foreground" />
@@ -91,7 +88,6 @@ export default function Login() {
             </p>
           </div>
 
-          {/* Login Card */}
           <div className="glass-card-elevated p-8 animate-scale-in">
             <form onSubmit={handleSubmit} className="space-y-6">
               
@@ -131,10 +127,9 @@ export default function Login() {
                 />
               </div>
 
-              {/* Error Alert with Resend Button */}
               {error && (
-                <Alert variant="destructive" className="animate-fade-in">
-                  <AlertCircle className="h-4 w-4 mt-0.5" />
+                <Alert variant="destructive" className="animate-fade-in border-destructive/50 bg-destructive/10 text-destructive">
+                  <AlertCircle className="h-4 w-4 mt-0.5 text-destructive" />
                   <AlertDescription className="flex flex-col gap-3">
                       <span>{error}</span>
                       
@@ -143,7 +138,8 @@ export default function Login() {
                             variant="outline" 
                             size="sm" 
                             type="button"
-                            className="bg-white/50 hover:bg-white text-destructive-foreground border-destructive/20 w-full sm:w-auto self-start gap-2"
+                            // FIX: Changed colors to be Red text on White/Transparent background
+                            className="bg-background border-destructive/30 text-destructive hover:bg-destructive/10 hover:text-destructive w-full sm:w-auto self-start gap-2 shadow-sm"
                             onClick={handleResendEmail}
                             disabled={resendLoading}
                           >
