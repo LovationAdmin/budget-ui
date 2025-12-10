@@ -64,7 +64,7 @@ export default function BudgetComplete() {
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [lastServerUpdate, setLastServerUpdate] = useState<string>("");
 
-  // Core Budget Data State
+  // Core Data
   const [budgetTitle, setBudgetTitle] = useState('');
   const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
   const [people, setPeople] = useState<Person[]>([]);
@@ -83,55 +83,46 @@ export default function BudgetComplete() {
     if (id) loadBudget();
   }, [id]);
 
-  // 1. Auto-Save Logic (Every 30s)
+  // 1. Data Auto-Save (30s)
   useEffect(() => {
     if (!loadedRef.current) return;
     const saveInterval = setInterval(() => handleSave(true), 30000);
     return () => clearInterval(saveInterval);
   }, [budgetTitle, currentYear, people, charges, projects, yearlyData, yearlyExpenses, oneTimeIncomes, monthComments, projectComments, lockedMonths]);
 
-  // 2. Collaborative Polling Logic (For DATA Updates)
+  // 2. Data Polling (15s) - Checks for changes by others
   useEffect(() => {
     if (!id || !loadedRef.current) return;
-
     const pollInterval = setInterval(async () => {
       try {
         const res = await budgetAPI.getData(id);
         const remoteData: RawBudgetData = res.data.data;
-        
         if (remoteData.lastUpdated && lastServerUpdate && remoteData.lastUpdated > lastServerUpdate && remoteData.updatedBy !== user?.name) {
           toast({
             title: "Mise à jour disponible",
             description: `Modifié par ${remoteData.updatedBy || 'un membre'}.`,
             variant: "default",
-            action: (
-              <ToastAction altText="Rafraîchir" onClick={() => loadBudget()}>Rafraîchir</ToastAction>
-            ),
+            action: <ToastAction altText="Rafraîchir" onClick={() => loadBudget()}>Rafraîchir</ToastAction>,
           });
         }
       } catch (err) {
         console.error("Polling error", err);
       }
     }, 15000);
-
     return () => clearInterval(pollInterval);
   }, [id, lastServerUpdate, user?.name]);
 
-  // 3. Silent Member Polling (Keeps member list and invitations in sync)
+  // 3. Member List Polling (5s) - Keeps the member list "Live"
   useEffect(() => {
     if (!id) return;
     const memberInterval = setInterval(() => {
         refreshMembersOnly();
-    }, 10000); // Check every 10 seconds
+    }, 5000); // Check every 5 seconds
     return () => clearInterval(memberInterval);
   }, [id]);
 
-  // --- Data Loading Functions ---
-
-  // Initial Full Load
   const loadBudget = async () => {
     if (!id) return;
-    
     try {
       const [budgetRes, dataRes] = await Promise.all([
         budgetAPI.getById(id),
@@ -167,13 +158,13 @@ export default function BudgetComplete() {
     }
   };
 
-  // Lightweight Refresh (Members Only) - Safe to call repeatedly
+  // Lightweight refresh for Members only
   const refreshMembersOnly = async () => {
     if (!id) return;
     try {
         const response = await budgetAPI.getById(id);
         setBudget(prev => {
-            // Only update if actually different to avoid render noise (optional optimization)
+            // Only force update if the list length or content changed
             if (JSON.stringify(prev?.members) !== JSON.stringify(response.data.members)) {
                 return response.data;
             }
@@ -190,20 +181,8 @@ export default function BudgetComplete() {
 
     const now = new Date().toISOString();
     const budgetData = {
-      budgetTitle,
-      currentYear,
-      people,
-      charges,
-      projects,
-      yearlyData,     
-      yearlyExpenses, 
-      oneTimeIncomes,
-      monthComments,
-      projectComments,
-      lockedMonths,
-      lastUpdated: now,
-      updatedBy: user?.name,
-      version: '2.2'
+      budgetTitle, currentYear, people, charges, projects, yearlyData, yearlyExpenses, oneTimeIncomes, monthComments, projectComments, lockedMonths,
+      lastUpdated: now, updatedBy: user?.name, version: '2.2'
     };
 
     try {
@@ -211,31 +190,20 @@ export default function BudgetComplete() {
       setLastServerUpdate(now);
       if (!silent) toast({ title: "Succès", description: "Budget sauvegardé !", variant: "success" });
     } catch (error) {
-      console.error('Error saving:', error);
       if (!silent) toast({ title: "Erreur", description: "Échec de la sauvegarde.", variant: "destructive" });
     } finally {
       if (!silent) setSaving(false);
     }
   };
 
-  // ... (handleExport, handleImport unchanged, included in previous steps)
   const handleExport = (formatType: 'new' | 'old' = 'new') => {
-    let dataToExport;
-    const commonData = {
-      budgetTitle, currentYear, people, charges, projects, yearlyData, yearlyExpenses, oneTimeIncomes, monthComments, projectComments, lockedMonths
-    };
-
-    if (formatType === 'old') {
-      dataToExport = convertNewFormatToOld(commonData);
-    } else {
-      dataToExport = { ...commonData, exportDate: new Date().toISOString(), version: '2.2' };
-    }
-
+    const commonData = { budgetTitle, currentYear, people, charges, projects, yearlyData, yearlyExpenses, oneTimeIncomes, monthComments, projectComments, lockedMonths };
+    const dataToExport = formatType === 'old' ? convertNewFormatToOld(commonData) : { ...commonData, exportDate: new Date().toISOString(), version: '2.2' };
     const blob = new Blob([JSON.stringify(dataToExport, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `budget_${budgetTitle || 'export'}_${new Date().toISOString().split('T')[0]}.json`;
+    a.download = `budget_${budgetTitle || 'export'}.json`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -244,7 +212,7 @@ export default function BudgetComplete() {
   };
 
   const handleImport = (rawData: RawBudgetData) => {
-    if (confirm('Importer ces données ? Cela remplacera le budget actuel.')) {
+    if (confirm('Importer ces données ?')) {
       const data = convertOldFormatToNew(rawData);
       setBudgetTitle(data.budgetTitle || '');
       setCurrentYear(data.currentYear || new Date().getFullYear());
@@ -270,11 +238,8 @@ export default function BudgetComplete() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50">
-        <BudgetNavbar items={[]} />
-        <div className="flex items-center justify-center h-96">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
-        </div>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
       </div>
     );
   }
@@ -315,7 +280,6 @@ export default function BudgetComplete() {
           </div>
         </div>
         
-        {/* Pass refreshMembersOnly to the management section */}
         {budget && user && (
             <div id="members">
                 <MemberManagementSection 
