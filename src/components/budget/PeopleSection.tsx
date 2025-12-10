@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { MemberAvatar } from "./MemberAvatar";
-import { Plus, Trash2, Users, DollarSign } from "lucide-react";
+import { Plus, Trash2, Users, DollarSign, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Person } from '@/utils/importConverter';
 
@@ -21,7 +21,7 @@ export default function PeopleSection({ people, onPeopleChange }: PeopleSectionP
   const addPerson = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newPersonName.trim()) return;
-    
+
     const newPerson: Person = {
       id: Date.now().toString(),
       name: newPersonName.trim(),
@@ -35,7 +35,7 @@ export default function PeopleSection({ people, onPeopleChange }: PeopleSectionP
   };
 
   const removePerson = (id: string) => {
-    if (confirm('Êtes-vous sûr de vouloir supprimer cette personne ? Toutes ses données seront perdues.')) {
+    if (confirm('Êtes-vous sûr de vouloir supprimer cette personne ?')) {
       onPeopleChange(people.filter(p => p.id !== id));
     }
   };
@@ -50,138 +50,113 @@ export default function PeopleSection({ people, onPeopleChange }: PeopleSectionP
 
   return (
     <Card className="glass-card animate-slide-up">
-      <CardHeader>
+      <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10">
               <Users className="h-5 w-5 text-primary" />
             </div>
             <div>
-              <CardTitle className="font-display">Personnes</CardTitle>
-              <p className="text-sm text-muted-foreground mt-1">
-                {people.length} personne{people.length > 1 ? 's' : ''} • 
-                {' '}{totalSalary.toLocaleString('fr-FR')} € / mois
+              <CardTitle className="font-display text-lg">Personnes</CardTitle>
+              <p className="text-sm text-muted-foreground">
+                {totalSalary.toLocaleString('fr-FR')} € / mois
               </p>
             </div>
           </div>
           
           {!showAddForm && (
             <Button
-              variant="outline"
+              variant="ghost"
               size="sm"
               onClick={() => setShowAddForm(true)}
-              className="gap-2"
+              className="gap-1 h-8 bg-primary/5 hover:bg-primary/10 text-primary"
             >
-              <Plus className="h-4 w-4" />
-              <span className="hidden sm:inline">Ajouter</span>
+              <Plus className="h-3.5 w-3.5" />
+              Ajouter
             </Button>
           )}
         </div>
       </CardHeader>
 
-      <CardContent className="space-y-4">
-        {/* Add Form */}
+      <CardContent>
+        {/* Add Form (Inline) */}
         {showAddForm && (
-          <form onSubmit={addPerson} className="glass-card-elevated p-4 space-y-3 animate-scale-in">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div className="space-y-2">
-                <Label htmlFor="person-name">Nom</Label>
+          <form onSubmit={addPerson} className="mb-4 p-3 rounded-xl border border-primary/20 bg-primary/5 animate-scale-in">
+            <div className="flex flex-col sm:flex-row gap-3 items-end">
+              <div className="w-full sm:flex-1 space-y-1.5">
+                <Label htmlFor="person-name" className="text-xs">Nom</Label>
                 <Input
                   id="person-name"
                   value={newPersonName}
                   onChange={(e) => setNewPersonName(e.target.value)}
-                  placeholder="Jean Dupont"
+                  placeholder="Ex: Jean"
+                  className="h-9 bg-white"
                   required
                   autoFocus
                 />
               </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="person-salary">Salaire mensuel (€)</Label>
+              <div className="w-full sm:w-32 space-y-1.5">
+                <Label htmlFor="person-salary" className="text-xs">Salaire</Label>
                 <Input
                   id="person-salary"
                   type="number"
-                  min="0"
-                  step="0.01"
                   value={newPersonSalary}
                   onChange={(e) => setNewPersonSalary(e.target.value)}
-                  placeholder="2500"
+                  placeholder="2000"
+                  className="h-9 bg-white"
                 />
               </div>
-            </div>
-            
-            <div className="flex gap-2">
-              <Button type="submit" variant="gradient" size="sm" className="flex-1">
-                <Plus className="h-4 w-4 mr-2" />
-                Ajouter
-              </Button>
-              <Button 
-                type="button" 
-                variant="outline" 
-                size="sm"
-                onClick={() => {
-                  setShowAddForm(false);
-                  setNewPersonName('');
-                  setNewPersonSalary('');
-                }}
-              >
-                Annuler
-              </Button>
+              <div className="flex gap-2">
+                <Button type="submit" size="sm" variant="gradient" className="h-9">
+                    <Plus className="h-4 w-4" />
+                </Button>
+                <Button type="button" size="sm" variant="ghost" onClick={() => setShowAddForm(false)} className="h-9">
+                    <X className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
           </form>
         )}
 
-        {/* People List */}
+        {/* COMPACT GRID LAYOUT */}
         {people.length === 0 ? (
-          <div className="text-center py-8 text-muted-foreground">
-            <Users className="h-12 w-12 mx-auto mb-3 opacity-30" />
-            <p className="text-sm">Aucune personne ajoutée</p>
-            <p className="text-xs mt-1">Commencez par ajouter les membres du foyer</p>
+          <div className="text-center py-6 text-muted-foreground text-sm">
+            Ajoutez les membres du foyer ici.
           </div>
         ) : (
-          <div className="space-y-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
             {people.map((person) => (
               <div
                 key={person.id}
-                className={cn(
-                  "group flex items-center gap-3 p-3 rounded-xl border border-border/50",
-                  "bg-card/50 hover:bg-card transition-all duration-200",
-                  "hover:shadow-soft"
-                )}
+                className="group relative flex items-center gap-3 p-3 rounded-xl border border-border/50 bg-card/50 hover:bg-card hover:shadow-sm transition-all"
               >
-                <MemberAvatar name={person.name} size="md" />
+                <MemberAvatar name={person.name} size="sm" />
                 
                 <div className="flex-1 min-w-0">
                   <Input
                     value={person.name}
                     onChange={(e) => updatePerson(person.id, { name: e.target.value })}
-                    className="font-medium bg-transparent border-0 p-0 h-auto focus-visible:ring-0 focus-visible:bg-white/50 rounded px-2"
+                    className="h-7 text-sm font-medium bg-transparent border-0 p-0 focus-visible:ring-0 px-1 -ml-1"
                   />
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <div className="flex items-center gap-1 bg-success/10 text-success px-3 py-1.5 rounded-lg">
-                    <DollarSign className="h-4 w-4" />
+                  <div className="flex items-center gap-1 text-muted-foreground">
+                    <DollarSign className="h-3 w-3" />
                     <Input
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      value={person.salary}
-                      onChange={(e) => updatePerson(person.id, { salary: parseFloat(e.target.value) || 0 })}
-                      className="w-24 bg-transparent border-0 p-0 h-auto text-right font-semibold focus-visible:ring-0 focus-visible:bg-white/50 rounded px-1"
+                        type="number"
+                        value={person.salary}
+                        onChange={(e) => updatePerson(person.id, { salary: parseFloat(e.target.value) || 0 })}
+                        className="h-6 w-20 text-xs bg-transparent border-0 p-0 focus-visible:ring-0"
                     />
-                    <span className="text-xs">€</span>
                   </div>
-
-                  <Button
-                    variant="ghost"
-                    size="icon-sm"
-                    onClick={() => removePerson(person.id)}
-                    className="opacity-0 group-hover:opacity-100 transition-opacity text-destructive hover:text-destructive hover:bg-destructive/10"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
                 </div>
+
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  onClick={() => removePerson(person.id)}
+                  className="opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive h-7 w-7"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                </Button>
               </div>
             ))}
           </div>
