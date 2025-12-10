@@ -21,11 +21,12 @@ import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
+  DropdownMenuItem, // Added
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Lock, Unlock, MessageCircle, MessageSquarePlus, Settings2, Eye } from "lucide-react";
+import { Lock, Unlock, MessageCircle, MessageSquarePlus, Settings2, Eye, CheckSquare, Square } from "lucide-react"; // Added Icons
 import { cn } from "@/lib/utils";
 import type {
   Person,
@@ -201,6 +202,15 @@ export default function MonthlyTable({
     );
   };
 
+  // NEW: Bulk Actions
+  const showAllProjects = () => {
+    setVisibleProjectIds(standardProjects.map(p => p.id));
+  };
+
+  const hideAllProjects = () => {
+    setVisibleProjectIds([]);
+  };
+
   return (
     <>
       <Card className="glass-card overflow-hidden animate-fade-in shadow-lg border-t-4 border-t-primary/20">
@@ -228,25 +238,54 @@ export default function MonthlyTable({
                         </Badge>
                     </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuContent align="end" className="w-64">
                     <DropdownMenuLabel>Projets à afficher</DropdownMenuLabel>
-                    <DropdownMenuSeparator />
-                    {standardProjects.length === 0 && (
-                        <div className="p-2 text-xs text-muted-foreground text-center">
-                            Aucun projet créé
-                        </div>
-                    )}
-                    {standardProjects.map((project) => (
-                        <DropdownMenuCheckboxItem
-                            key={project.id}
-                            checked={visibleProjectIds.includes(project.id)}
-                            onCheckedChange={() => toggleProjectVisibility(project.id)}
-                            // FIX: Prevent menu from closing on click
-                            onSelect={(e) => e.preventDefault()}
+                    
+                    {/* NEW: Bulk Action Buttons */}
+                    <div className="p-2 flex gap-2">
+                        <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            className="flex-1 h-7 text-xs bg-muted/50"
+                            onClick={(e) => {
+                                e.preventDefault();
+                                showAllProjects();
+                            }}
                         >
-                            {project.label}
-                        </DropdownMenuCheckboxItem>
-                    ))}
+                            <CheckSquare className="h-3 w-3 mr-1" /> Tout
+                        </Button>
+                        <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            className="flex-1 h-7 text-xs bg-muted/50"
+                            onClick={(e) => {
+                                e.preventDefault();
+                                hideAllProjects();
+                            }}
+                        >
+                            <Square className="h-3 w-3 mr-1" /> Aucun
+                        </Button>
+                    </div>
+
+                    <DropdownMenuSeparator />
+                    
+                    <div className="max-h-[300px] overflow-y-auto">
+                        {standardProjects.length === 0 && (
+                            <div className="p-2 text-xs text-muted-foreground text-center">
+                                Aucun projet créé
+                            </div>
+                        )}
+                        {standardProjects.map((project) => (
+                            <DropdownMenuCheckboxItem
+                                key={project.id}
+                                checked={visibleProjectIds.includes(project.id)}
+                                onCheckedChange={() => toggleProjectVisibility(project.id)}
+                                onSelect={(e) => e.preventDefault()}
+                            >
+                                {project.label}
+                            </DropdownMenuCheckboxItem>
+                        ))}
+                    </div>
                 </DropdownMenuContent>
             </DropdownMenu>
         </CardHeader>
