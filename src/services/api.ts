@@ -33,12 +33,12 @@ api.interceptors.response.use(
   }
 );
 
-// --- EXPORTED TYPES (Fixes AuthContext error) ---
+// --- EXPORTED TYPES ---
 export interface User {
   id: string;
   name: string;
   email: string;
-  avatar?: string;
+  avatar?: string; // Added avatar field
 }
 
 export interface AuthResponse {
@@ -48,7 +48,13 @@ export interface AuthResponse {
 
 // Internal types
 interface AuthData { name?: string; email: string; password: string; }
-interface ProfileUpdateData { name: string; }
+
+// UPDATED: Added avatar optional field
+interface ProfileUpdateData { 
+    name: string; 
+    avatar?: string; 
+}
+
 interface PasswordChangeData { current_password: string; new_password: string; }
 interface BudgetCreateData { name: string; }
 interface BudgetUpdateData { data: unknown; } 
