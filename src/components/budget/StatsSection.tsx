@@ -77,12 +77,15 @@ export default function StatsSection({
   });
 
   // 3. Calculate Final "General Savings" (The buffer)
-  // Logic: Total Income - Total Charges - Total Allocated to specific projects
   const totalGeneralSavings = totalYearlyIncome - yearlyCharges - totalProjectAllocations;
 
-  // 4. Savings Rate (Project Allocations + General Savings) / Total Income
-  const totalSaved = totalProjectAllocations + totalGeneralSavings;
-  const savingsRate = totalYearlyIncome > 0 ? (totalSaved / totalYearlyIncome) * 100 : 0;
+  // 4. Specific Rates (Correction)
+  // Avoid division by zero
+  const incomeBase = totalYearlyIncome > 0 ? totalYearlyIncome : 1;
+  
+  const chargesRate = (yearlyCharges / incomeBase) * 100;
+  const projectRate = (totalProjectAllocations / incomeBase) * 100;
+  const generalRate = (totalGeneralSavings / incomeBase) * 100;
 
   return (
     <div className="space-y-6 mb-6 animate-fade-in">
@@ -100,7 +103,7 @@ export default function StatsSection({
         <StatCard
           title="Charges annuelles"
           value={`${yearlyCharges.toLocaleString('fr-FR')} €`}
-          subtitle="Dépenses fixes"
+          subtitle={`${chargesRate.toFixed(0)}% des revenus`} // UPDATED
           icon={TrendingDown}
           variant="danger"
           className="animate-slide-up stagger-2"
@@ -109,7 +112,7 @@ export default function StatsSection({
         <StatCard
           title="Total Alloué Projets"
           value={`${totalProjectAllocations.toLocaleString('fr-FR')} €`}
-          subtitle="Épargne affectée"
+          subtitle={`${projectRate.toFixed(0)}% des revenus`} // UPDATED
           icon={PiggyBank}
           variant="accent"
           className="animate-slide-up stagger-3"
@@ -118,8 +121,8 @@ export default function StatsSection({
         <StatCard
           title="Total Épargne Générale"
           value={`${totalGeneralSavings.toLocaleString('fr-FR')} €`}
-          subtitle={`${savingsRate.toFixed(0)}% du revenu global`}
-          icon={Scale} // Icon representing Balance/buffer
+          subtitle={`${generalRate.toFixed(0)}% des revenus`} // UPDATED
+          icon={Scale} 
           variant={totalGeneralSavings >= 0 ? "success" : "warning"}
           className="animate-slide-up stagger-4"
         />
