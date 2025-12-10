@@ -1,8 +1,9 @@
-import { useState } from 'react';
-import { Card, CardContent } from "@/components/ui/card";
+import { useState, useEffect } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
   DialogContent,
@@ -16,7 +17,15 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { Lock, Unlock, MessageCircle, MessageSquarePlus } from "lucide-react";
+import { 
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Lock, Unlock, MessageCircle, MessageSquarePlus, Settings2, Eye } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type {
   Person,
@@ -34,8 +43,8 @@ interface MonthlyTableProps {
   people: Person[];
   charges: Charge[];
   projects: Project[];
-  yearlyData: YearlyData;     // Allocations
-  yearlyExpenses: YearlyData; // Expenses
+  yearlyData: YearlyData;
+  yearlyExpenses: YearlyData;
   oneTimeIncomes: OneTimeIncomes;
   monthComments: MonthComments;
   projectComments: ProjectComments;
@@ -53,7 +62,6 @@ const MONTHS = [
   'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'
 ];
 
-// Matches your JSON ID exactly
 const GENERAL_SAVINGS_ID = 'epargne';
 
 export default function MonthlyTable({
@@ -77,22 +85,27 @@ export default function MonthlyTable({
   const [selectedMonth, setSelectedMonth] = useState<string | null>(null);
   const [commentDialogOpen, setCommentDialogOpen] = useState(false);
   const [tempComment, setTempComment] = useState('');
+  
+  // NEW: State to track which project columns are visible
+  // Initialize with all IDs
+  const [visibleProjectIds, setVisibleProjectIds] = useState<string[]>([]);
+
+  // Initialize visibility when projects load
+  useEffect(() => {
+    // By default, show all projects (excluding 'epargne' which is handled separately)
+    const ids = projects.filter(p => p.id !== GENERAL_SAVINGS_ID).map(p => p.id);
+    // Only update if list size changed to avoid resetting user choice on every render
+    setVisibleProjectIds(prev => {
+        if (prev.length === 0 && ids.length > 0) return ids;
+        return prev;
+    });
+  }, [projects.length]); // Only re-run if number of projects changes
 
   // --- Calculations ---
-
-  const getMonthlyBaseIncome = () => {
-    return people.reduce((sum, person) => sum + person.salary, 0);
-  };
-
-  const getMonthlyChargesTotal = () => {
-    return charges.reduce((sum, charge) => sum + charge.amount, 0);
-  };
-
-  const getMonthlyOneTimeIncome = (month: string) => {
-    return oneTimeIncomes[month] || 0;
-  };
-
-  // Money available to be saved (Income + OneTime - Charges)
+  const getMonthlyBaseIncome = () => people.reduce((sum, person) => sum + person.salary, 0);
+  const getMonthlyChargesTotal = () => charges.reduce((sum, charge) => sum + charge.amount, 0);
+  const getMonthlyOneTimeIncome = (month: string) => oneTimeIncomes[month] || 0;
+  
   const getMonthlyAvailableSavings = (month: string) => {
     const baseIncome = getMonthlyBaseIncome();
     const oneTime = getMonthlyOneTimeIncome(month);
@@ -100,22 +113,18 @@ export default function MonthlyTable({
     return baseIncome + oneTime - chargesTotal;
   };
 
-  // Epargne Générale = Available - Total Allocated to OTHER Projects
   const getGeneralSavingsAllocation = (month: string) => {
     const available = getMonthlyAvailableSavings(month);
-    
-    // Filter out the 'epargne' project so we don't double count if it has a value in DB
+    // Sum of ALL projects (even hidden ones) to get correct math
     const totalAllocatedToProjects = projects
       .filter(p => p.id !== GENERAL_SAVINGS_ID)
       .reduce((sum, project) => {
         const monthData = yearlyData[month] || {};
         return sum + (monthData[project.id] || 0);
       }, 0);
-    
     return available - totalAllocatedToProjects;
   };
 
-  // Cumulative Total Logic (Generic for Projects)
   const getCumulativeProjectTotal = (projectId: string, upToMonthIndex: number) => {
     let total = 0;
     for (let i = 0; i <= upToMonthIndex; i++) {
@@ -127,14 +136,11 @@ export default function MonthlyTable({
     return total;
   };
 
-  // Cumulative Total Logic (Specific for General Savings)
   const getCumulativeGeneralSavings = (upToMonthIndex: number) => {
     let total = 0;
     for (let i = 0; i <= upToMonthIndex; i++) {
       const monthName = MONTHS[i];
-      // Allocation is calculated automatically
       const allocation = getGeneralSavingsAllocation(monthName);
-      // Expense is manual (read from yearlyExpenses using the correct ID)
       const expense = yearlyExpenses[monthName]?.[GENERAL_SAVINGS_ID] || 0;
       total += (allocation - expense);
     }
@@ -142,14 +148,10 @@ export default function MonthlyTable({
   };
 
   // --- Updates ---
-
   const updateAllocation = (month: string, projectId: string, amount: number) => {
     const newYearlyData = {
       ...yearlyData,
-      [month]: {
-        ...(yearlyData[month] || {}),
-        [projectId]: amount,
-      },
+      [month]: { ...(yearlyData[month] || {}), [projectId]: amount },
     };
     onYearlyDataChange(newYearlyData);
   };
@@ -157,37 +159,25 @@ export default function MonthlyTable({
   const updateExpense = (month: string, projectId: string, amount: number) => {
     const newExpensesData = {
       ...yearlyExpenses,
-      [month]: {
-        ...(yearlyExpenses[month] || {}),
-        [projectId]: amount,
-      },
+      [month]: { ...(yearlyExpenses[month] || {}), [projectId]: amount },
     };
     onYearlyExpensesChange(newExpensesData);
   };
 
   const updateOneTimeIncome = (month: string, amount: number) => {
-    onOneTimeIncomesChange({
-      ...oneTimeIncomes,
-      [month]: amount,
-    });
+    onOneTimeIncomesChange({ ...oneTimeIncomes, [month]: amount });
   };
 
   const updateProjectComment = (month: string, projectId: string, comment: string) => {
     const newComments = {
       ...projectComments,
-      [month]: {
-        ...(projectComments[month] || {}),
-        [projectId]: comment
-      }
+      [month]: { ...(projectComments[month] || {}), [projectId]: comment }
     };
     onProjectCommentsChange(newComments);
   };
 
   const toggleMonthLock = (month: string) => {
-    onLockedMonthsChange({
-      ...lockedMonths,
-      [month]: !lockedMonths[month],
-    });
+    onLockedMonthsChange({ ...lockedMonths, [month]: !lockedMonths[month] });
   };
 
   const openCommentDialog = (month: string) => {
@@ -198,80 +188,129 @@ export default function MonthlyTable({
 
   const saveComment = () => {
     if (!selectedMonth) return;
-    onMonthCommentsChange({
-      ...monthComments,
-      [selectedMonth]: tempComment,
-    });
+    onMonthCommentsChange({ ...monthComments, [selectedMonth]: tempComment });
     setCommentDialogOpen(false);
     setSelectedMonth(null);
     setTempComment('');
   };
 
-  // Filter projects to exclude "epargne" from the dynamic columns
+  // Filter projects based on Visibility State
   const standardProjects = projects.filter(p => p.id !== GENERAL_SAVINGS_ID);
+  const visibleProjects = standardProjects.filter(p => visibleProjectIds.includes(p.id));
+
+  // Toggle Visibility Handler
+  const toggleProjectVisibility = (projectId: string) => {
+    setVisibleProjectIds(prev => 
+      prev.includes(projectId) 
+        ? prev.filter(id => id !== projectId)
+        : [...prev, projectId]
+    );
+  };
 
   return (
     <>
-      <Card className="glass-card overflow-hidden animate-fade-in shadow-lg">
+      <Card className="glass-card overflow-hidden animate-fade-in shadow-lg border-t-4 border-t-primary/20">
+        
+        {/* TABLE CONTROLS HEADER */}
+        <CardHeader className="flex flex-row items-center justify-between py-4 px-6 border-b border-border/40 bg-muted/20">
+            <div className="flex items-center gap-2">
+                <CardTitle className="text-lg font-medium flex items-center gap-2">
+                    <Settings2 className="h-5 w-5 text-primary" />
+                    Tableau de Gestion
+                </CardTitle>
+                <Badge variant="outline" className="ml-2 font-normal text-muted-foreground">
+                    {currentYear}
+                </Badge>
+            </div>
+
+            {/* COLUMN VISIBILITY FILTER */}
+            <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                    <Button variant="outline" size="sm" className="gap-2 h-9 bg-background">
+                        <Eye className="h-4 w-4" />
+                        <span className="hidden sm:inline">Afficher/Masquer Projets</span>
+                        <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-[10px]">
+                            {visibleProjects.length}
+                        </Badge>
+                    </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                    <DropdownMenuLabel>Projets à afficher</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    {standardProjects.length === 0 && (
+                        <div className="p-2 text-xs text-muted-foreground text-center">
+                            Aucun projet créé
+                        </div>
+                    )}
+                    {standardProjects.map((project) => (
+                        <DropdownMenuCheckboxItem
+                            key={project.id}
+                            checked={visibleProjectIds.includes(project.id)}
+                            onCheckedChange={() => toggleProjectVisibility(project.id)}
+                        >
+                            {project.label}
+                        </DropdownMenuCheckboxItem>
+                    ))}
+                </DropdownMenuContent>
+            </DropdownMenu>
+        </CardHeader>
+
         <CardContent className="p-0">
           <div className="overflow-x-auto">
             <table className="w-full border-collapse">
-              <thead className="bg-muted/50">
+              <thead className="bg-muted/30">
                 <tr>
-                  {/* Fixed Month Column */}
-                  <th className="sticky left-0 z-30 bg-background px-4 py-4 text-left font-semibold text-foreground border-b-2 border-r border-border shadow-[4px_0_12px_-4px_rgba(0,0,0,0.1)] min-w-[180px]">
+                  {/* FIX: Sticky Column - Solid Background to prevent Fade/Ghosting */}
+                  <th className="sticky left-0 z-20 bg-background px-4 py-4 text-left font-semibold text-foreground border-b border-r border-border shadow-[4px_0_12px_-4px_rgba(0,0,0,0.1)] min-w-[160px]">
                     <div className="flex flex-col">
-                      <span>Mois {currentYear}</span>
-                      <span className="text-[10px] text-muted-foreground font-normal">Revenus & Charges Fixes</span>
+                      <span>Mois</span>
                     </div>
                   </th>
                   
-                  {/* Standard Categories */}
-                  <th className="px-3 py-3 text-center font-semibold text-success bg-success/5 border-b border-border min-w-[100px]">
-                    Revenus<br/><span className="text-[10px] font-normal opacity-70">Salaires</span>
+                  {/* Fixed Columns */}
+                  <th className="px-3 py-3 text-center font-medium text-success bg-success/5 border-b border-border border-r border-dashed border-border/50 min-w-[110px]">
+                    Revenus
                   </th>
-                  <th className="px-3 py-3 text-center font-semibold text-success bg-success/5 border-b border-border min-w-[120px]">
-                    Ponctuels<br/><span className="text-[10px] font-normal opacity-70">Primes, etc.</span>
+                  <th className="px-3 py-3 text-center font-medium text-success bg-success/5 border-b border-border border-r border-dashed border-border/50 min-w-[120px]">
+                    Ponctuels
                   </th>
-                  <th className="px-3 py-3 text-center font-semibold text-destructive bg-destructive/5 border-b border-border min-w-[100px]">
-                    Charges<br/><span className="text-[10px] font-normal opacity-70">Fixes</span>
+                  <th className="px-3 py-3 text-center font-medium text-destructive bg-destructive/5 border-b border-border border-r border-dashed border-border/50 min-w-[110px]">
+                    Charges
                   </th>
-
-                  {/* NEW COLUMN: Disponible à dispatcher */}
-                  <th className="px-3 py-3 text-center font-bold text-primary bg-primary/10 border-b border-border min-w-[120px]">
-                    Disponible<br/><span className="text-[10px] font-normal opacity-70">À allouer</span>
+                  <th className="px-3 py-3 text-center font-bold text-primary bg-primary/10 border-b border-border border-r-2 border-primary/20 min-w-[130px]">
+                    Disponible
                   </th>
 
-                  {/* Dynamic Project Columns (Filtered to exclude Epargne) */}
-                  {standardProjects.map((project) => (
+                  {/* Dynamic Project Columns (Only Visible Ones) */}
+                  {visibleProjects.map((project) => (
                     <th 
                       key={project.id}
-                      className="px-3 py-3 text-center font-semibold text-foreground border-b border-border bg-background min-w-[190px]"
+                      className="px-3 py-3 text-center font-semibold text-foreground border-b border-r border-border border-dashed min-w-[180px] bg-background"
                     >
                       <div className="flex flex-col items-center gap-1">
-                        <span>🎯 {project.label}</span>
-                        <div className="grid grid-cols-2 gap-2 w-full text-[10px] font-normal text-muted-foreground bg-muted/30 rounded px-2 py-0.5">
-                          <span title="Montant alloué">Alloué</span>
-                          <span title="Montant dépensé">Dépensé</span>
+                        <span className="truncate max-w-[150px]" title={project.label}>{project.label}</span>
+                        <div className="grid grid-cols-2 gap-2 w-full text-[10px] font-normal text-muted-foreground bg-muted/50 rounded px-2 py-0.5">
+                          <span>Alloué</span>
+                          <span>Dépensé</span>
                         </div>
                       </div>
                     </th>
                   ))}
 
                   {/* Epargne Générale */}
-                  <th className="px-3 py-3 text-center font-bold text-primary bg-primary/5 border-b border-border min-w-[190px]">
-                    <div className="flex flex-col items-center gap-1">
-                        <span>💰 Épargne Générale</span>
+                  <th className="px-3 py-3 text-center font-bold text-primary bg-primary/5 border-b border-border min-w-[180px]">
+                     <div className="flex flex-col items-center gap-1">
+                        <span>Épargne Générale</span>
                         <div className="grid grid-cols-2 gap-2 w-full text-[10px] font-normal text-primary/70 bg-primary/10 rounded px-2 py-0.5">
-                          <span title="Reste du budget (Auto)">Auto</span>
-                          <span title="Dépenses imprévues">Dépensé</span>
+                           <span>Auto</span>
+                           <span>Dépensé</span>
                         </div>
                     </div>
                   </th>
                   
                   {/* Actions */}
-                  <th className="px-3 py-3 text-center font-semibold text-muted-foreground border-b border-border min-w-[100px]">
-                    Actions
+                  <th className="px-3 py-3 text-center font-semibold text-muted-foreground border-b border-border min-w-[100px] sticky right-0 bg-background z-20 shadow-[-4px_0_12px_-4px_rgba(0,0,0,0.1)]">
+                    
                   </th>
                 </tr>
               </thead>
@@ -280,8 +319,6 @@ export default function MonthlyTable({
                 {MONTHS.map((month, monthIndex) => {
                   const isLocked = lockedMonths[month];
                   const hasComment = !!monthComments[month];
-                  
-                  // Calculations
                   const availableToSave = getMonthlyAvailableSavings(month);
                   const genSavingsAllocation = getGeneralSavingsAllocation(month);
                   const genSavingsExpense = yearlyExpenses[month]?.[GENERAL_SAVINGS_ID] || 0;
@@ -289,20 +326,23 @@ export default function MonthlyTable({
                   const genSavingsComment = projectComments[month]?.[GENERAL_SAVINGS_ID];
 
                   return (
-                    <tr key={month} className="hover:bg-muted/20 transition-colors group">
+                    <tr key={month} className="hover:bg-muted/30 transition-colors group">
                       
-                      {/* 1. Sticky Month */}
-                      <td className="sticky left-0 z-20 bg-background group-hover:bg-muted/20 px-4 py-3 border-r border-border shadow-[4px_0_12px_-4px_rgba(0,0,0,0.1)]">
-                        <span className="font-medium text-foreground">{month}</span>
+                      {/* 1. Sticky Month - SOLID BACKGROUND */}
+                      <td className="sticky left-0 z-20 bg-background group-hover:bg-background px-4 py-3 border-r border-border shadow-[4px_0_12px_-4px_rgba(0,0,0,0.1)] font-medium text-foreground">
+                        {month}
+                        <div className="text-[10px] text-muted-foreground font-normal">
+                            {isLocked ? 'Verrouillé' : 'Ouvert'}
+                        </div>
                       </td>
 
                       {/* 2. Base Income */}
-                      <td className="px-3 py-3 text-center bg-success/5 group-hover:bg-success/10 transition-colors text-sm font-medium text-success">
+                      <td className="px-3 py-3 text-center bg-success/5 text-sm font-medium text-success border-r border-dashed border-border/50">
                         +{getMonthlyBaseIncome().toLocaleString()}
                       </td>
 
                       {/* 3. One Time Income */}
-                      <td className="px-3 py-3 bg-success/5 group-hover:bg-success/10 transition-colors">
+                      <td className="px-3 py-3 bg-success/5 border-r border-dashed border-border/50">
                         <Input
                           type="number"
                           min="0"
@@ -310,7 +350,7 @@ export default function MonthlyTable({
                           onChange={(e) => updateOneTimeIncome(month, parseFloat(e.target.value) || 0)}
                           disabled={isLocked}
                           className={cn(
-                            "text-center h-8 text-sm font-medium border-success/30 focus-visible:ring-success/30 bg-background",
+                            "text-center h-8 text-sm font-medium border-success/20 focus-visible:ring-success/30 bg-background hover:bg-white shadow-sm",
                             oneTimeIncomes[month] ? "text-success font-bold" : "text-muted-foreground",
                             isLocked && "opacity-50 cursor-not-allowed"
                           )}
@@ -319,26 +359,25 @@ export default function MonthlyTable({
                       </td>
 
                       {/* 4. Charges */}
-                      <td className="px-3 py-3 text-center bg-destructive/5 group-hover:bg-destructive/10 transition-colors text-sm font-medium text-destructive">
+                      <td className="px-3 py-3 text-center bg-destructive/5 text-sm font-medium text-destructive border-r border-dashed border-border/50">
                         -{getMonthlyChargesTotal().toLocaleString()}
                       </td>
 
-                      {/* 5. NEW COLUMN: Disponible */}
-                      <td className="px-3 py-3 text-center font-bold text-primary bg-primary/10 border-r border-primary/20">
+                      {/* 5. Disponible */}
+                      <td className="px-3 py-3 text-center font-bold text-primary bg-primary/10 border-r-2 border-primary/20">
                         {availableToSave.toLocaleString()} €
                       </td>
 
-                      {/* 6. Projects (Filtered: NO Epargne here) */}
-                      {standardProjects.map((project) => {
+                      {/* 6. Visible Projects */}
+                      {visibleProjects.map((project) => {
                         const allocation = yearlyData[month]?.[project.id] || 0;
                         const expense = yearlyExpenses[month]?.[project.id] || 0;
                         const comment = projectComments[month]?.[project.id];
                         const cumulative = getCumulativeProjectTotal(project.id, monthIndex);
 
                         return (
-                          <td key={project.id} className="px-2 py-2">
+                          <td key={project.id} className="px-2 py-2 border-r border-dashed border-border/50">
                             <div className="flex flex-col gap-1.5">
-                              {/* Input Pair */}
                               <div className="flex items-center gap-1">
                                 <Input
                                   type="number"
@@ -347,7 +386,7 @@ export default function MonthlyTable({
                                   onChange={(e) => updateAllocation(month, project.id, parseFloat(e.target.value) || 0)}
                                   disabled={isLocked}
                                   className={cn(
-                                    "text-center h-8 text-sm px-1 font-medium bg-background border-primary/20 focus-visible:ring-primary/30",
+                                    "text-center h-8 text-sm px-1 font-medium bg-background border-primary/20 focus-visible:ring-primary/30 shadow-sm",
                                     allocation > 0 && "text-primary font-bold bg-primary/5",
                                     isLocked && "opacity-50"
                                   )}
@@ -360,7 +399,7 @@ export default function MonthlyTable({
                                   onChange={(e) => updateExpense(month, project.id, parseFloat(e.target.value) || 0)}
                                   disabled={isLocked}
                                   className={cn(
-                                    "text-center h-8 text-sm px-1 font-medium bg-background border-destructive/20 focus-visible:ring-destructive/30",
+                                    "text-center h-8 text-sm px-1 font-medium bg-background border-destructive/20 focus-visible:ring-destructive/30 shadow-sm",
                                     expense > 0 && "text-destructive font-bold bg-destructive/5",
                                     isLocked && "opacity-50"
                                   )}
@@ -368,9 +407,8 @@ export default function MonthlyTable({
                                 />
                               </div>
 
-                              {/* Footer */}
                               <div className="flex items-center justify-between px-1">
-                                <div className="text-[10px] text-muted-foreground flex items-center gap-1 bg-muted/20 px-1.5 py-0.5 rounded" title="Total Cumulé">
+                                <div className="text-[10px] text-muted-foreground flex items-center gap-1 bg-muted/30 px-1.5 py-0.5 rounded" title="Total Cumulé">
                                   <span>∑</span>
                                   <span className={cumulative >= 0 ? "text-success font-medium" : "text-destructive font-medium"}>
                                     {cumulative.toLocaleString()}
@@ -383,17 +421,17 @@ export default function MonthlyTable({
                                       variant="ghost" 
                                       size="icon" 
                                       className={cn(
-                                        "h-5 w-5 rounded-full p-0",
-                                        comment ? "text-primary bg-primary/10" : "text-muted-foreground/30 hover:text-foreground"
+                                        "h-5 w-5 rounded-full p-0 transition-colors",
+                                        comment ? "text-primary bg-primary/10" : "text-muted-foreground/30 hover:text-foreground hover:bg-muted"
                                       )}
                                     >
-                                      {comment ? <MessageCircle className="h-3 w-3" /> : <MessageSquarePlus className="h-3 w-3" />}
+                                       {comment ? <MessageCircle className="h-3 w-3" /> : <MessageSquarePlus className="h-3 w-3" />}
                                     </Button>
                                   </PopoverTrigger>
                                   <PopoverContent className="w-64 p-3">
                                     <div className="space-y-2">
                                       <h4 className="font-medium text-xs text-muted-foreground mb-1">
-                                        Note pour {project.label} ({month})
+                                         Note pour {project.label} ({month})
                                       </h4>
                                       <Textarea 
                                         value={comment || ''}
@@ -410,22 +448,17 @@ export default function MonthlyTable({
                         );
                       })}
 
-                      {/* 7. Epargne Générale (Auto Calculated + Manual Expense) */}
-                      <td className="px-2 py-2 border-l border-border bg-primary/5">
+                      {/* 7. Epargne Générale */}
+                      <td className="px-2 py-2 bg-primary/5">
                         <div className="flex flex-col gap-1.5">
-                            {/* Input Pair */}
                             <div className="flex items-center gap-1">
-                                {/* Auto Allocation (Read Only) */}
                                 <Input
                                     type="text"
                                     value={genSavingsAllocation.toLocaleString()}
                                     disabled
-                                    className={cn(
-                                        "text-center h-8 text-sm px-1 font-bold bg-primary/10 border-primary/20 text-primary cursor-default",
-                                    )}
+                                    className="text-center h-8 text-sm px-1 font-bold bg-primary/10 border-primary/20 text-primary cursor-default shadow-none"
                                     title="Calculé automatiquement (Revenus - Charges - Projets)"
-                                />
-                                {/* Manual Expense */}
+                                  />
                                 <Input
                                     type="number"
                                     min="0"
@@ -433,7 +466,7 @@ export default function MonthlyTable({
                                     onChange={(e) => updateExpense(month, GENERAL_SAVINGS_ID, parseFloat(e.target.value) || 0)}
                                     disabled={isLocked}
                                     className={cn(
-                                        "text-center h-8 text-sm px-1 font-medium bg-background border-destructive/20 focus-visible:ring-destructive/30",
+                                        "text-center h-8 text-sm px-1 font-medium bg-background border-destructive/20 focus-visible:ring-destructive/30 shadow-sm",
                                         genSavingsExpense > 0 && "text-destructive font-bold bg-destructive/5",
                                         isLocked && "opacity-50"
                                     )}
@@ -442,9 +475,8 @@ export default function MonthlyTable({
                                 />
                             </div>
 
-                            {/* Footer */}
                             <div className="flex items-center justify-between px-1">
-                                <div className="text-[10px] text-muted-foreground flex items-center gap-1 bg-muted/20 px-1.5 py-0.5 rounded" title="Total Cumulé Epargne Générale">
+                                <div className="text-[10px] text-muted-foreground flex items-center gap-1 bg-muted/30 px-1.5 py-0.5 rounded" title="Total Cumulé Epargne Générale">
                                     <span>∑</span>
                                     <span className={genSavingsCumulative >= 0 ? "text-success font-medium" : "text-destructive font-medium"}>
                                     {genSavingsCumulative.toLocaleString()}
@@ -457,17 +489,17 @@ export default function MonthlyTable({
                                         variant="ghost" 
                                         size="icon" 
                                         className={cn(
-                                        "h-5 w-5 rounded-full p-0",
-                                        genSavingsComment ? "text-primary bg-primary/10" : "text-muted-foreground/30 hover:text-foreground"
+                                        "h-5 w-5 rounded-full p-0 transition-colors",
+                                        genSavingsComment ? "text-primary bg-primary/10" : "text-muted-foreground/30 hover:text-foreground hover:bg-muted"
                                         )}
-                                    >
+                                   >
                                         {genSavingsComment ? <MessageCircle className="h-3 w-3" /> : <MessageSquarePlus className="h-3 w-3" />}
                                     </Button>
                                     </PopoverTrigger>
                                     <PopoverContent className="w-64 p-3">
                                     <div className="space-y-2">
                                         <h4 className="font-medium text-xs text-muted-foreground mb-1">
-                                        Note pour Épargne Générale ({month})
+                                           Note pour Épargne Générale ({month})
                                         </h4>
                                         <Textarea 
                                         value={genSavingsComment || ''}
@@ -482,16 +514,16 @@ export default function MonthlyTable({
                         </div>
                       </td>
 
-                      {/* 8. Actions */}
-                      <td className="px-3 py-2">
-                        <div className="flex items-center justify-center gap-1">
+                      {/* 8. Actions Sticky Right */}
+                      <td className="px-3 py-2 sticky right-0 z-20 bg-background group-hover:bg-background shadow-[-4px_0_12px_-4px_rgba(0,0,0,0.1)] border-l border-border">
+                         <div className="flex items-center justify-center gap-1">
                           <Button
                             variant="ghost"
                             size="icon-sm"
                             onClick={() => toggleMonthLock(month)}
                             className={cn(
                               "h-8 w-8 rounded-full transition-all",
-                              isLocked ? "text-warning bg-warning/10" : "text-muted-foreground hover:bg-muted"
+                              isLocked ? "text-warning bg-warning/10 hover:bg-warning/20" : "text-muted-foreground hover:bg-muted hover:text-foreground"
                             )}
                             title={isLocked ? "Déverrouiller" : "Verrouiller"}
                           >
@@ -499,12 +531,12 @@ export default function MonthlyTable({
                           </Button>
                           
                           <Button
-                            variant="ghost"
+                              variant="ghost"
                             size="icon-sm"
                             onClick={() => openCommentDialog(month)}
                             className={cn(
                               "h-8 w-8 rounded-full transition-all",
-                              hasComment ? "text-primary bg-primary/10" : "text-muted-foreground hover:bg-muted"
+                              hasComment ? "text-primary bg-primary/10 hover:bg-primary/20" : "text-muted-foreground hover:bg-muted hover:text-foreground"
                             )}
                             title="Commentaire global"
                           >
@@ -522,7 +554,6 @@ export default function MonthlyTable({
         </CardContent>
       </Card>
 
-      {/* Global Month Comment Dialog */}
       <Dialog open={commentDialogOpen} onOpenChange={setCommentDialogOpen}>
         <DialogContent>
           <DialogHeader>
