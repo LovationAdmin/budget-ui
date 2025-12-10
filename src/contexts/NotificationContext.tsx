@@ -35,49 +35,40 @@ const POLLING_INTERVAL = 60000;
 export const NotificationProvider = ({ children }: { children: ReactNode }) => {
   const { user } = useAuth();
   const [notifications, setNotifications] = useState<Notification[]>([]);
-  // Store the last known update time for each budget to compare against
   const [lastKnownUpdates, setLastKnownUpdates] = useState<Record<string, string>>({});
 
   useEffect(() => {
-    if (!user) return;
+    // SECURITY CHECK: Don't poll if no user
+    if (!user || !user.id) return;
 
     const checkUpdates = async () => {
       try {
-        // 1. Get list of all budgets
         const listRes = await budgetAPI.list();
-        const budgets = listRes.data;
+        // SAFEGUARD: Ensure budgets is an array
+        const budgets = Array.isArray(listRes.data) ? listRes.data : [];
 
         for (const budget of budgets) {
-          // 2. Skip if we already have an unread notification for this budget
-          // (User requirement: "once a change is detected, no need check again until the notif is read")
+          // SAFEGUARD: Check if budget exists
+          if (!budget || !budget.id) continue;
+
           const hasUnread = notifications.some(n => n.budgetId === budget.id && !n.isRead);
           if (hasUnread) continue;
 
-          // 3. Check if the budget was updated recently
-          // We assume budget.updated_at comes from the DB. 
-          // However, to get the specific "Updated By Member X", we need the JSON data.
-          // Optimization: Only fetch data if the DB timestamp is newer than what we know.
-          
           const localLastUpdate = lastKnownUpdates[budget.id];
           
-          // Initial load: just store the timestamp, don't notify
           if (!localLastUpdate) {
-            setLastKnownUpdates(prev => ({ ...prev, [budget.id]: budget.created_at })); // Use created_at or fetch actual data if needed
+            setLastKnownUpdates(prev => ({ ...prev, [budget.id]: budget.created_at }));
             continue;
           }
 
-          // If simple comparison isn't enough (because DB updated_at might change on metadata updates),
-          // we fetch the data head. 
           try {
             const dataRes = await budgetAPI.getData(budget.id);
+            // SAFEGUARD: Ensure data exists
+            if (!dataRes || !dataRes.data || !dataRes.data.data) continue;
+
             const rawData: RawBudgetData = dataRes.data.data;
             
-            // Check if the internal JSON timestamp is newer than our local knowledge
             if (rawData.lastUpdated && rawData.lastUpdated > localLastUpdate) {
-                
-                // Don't notify if I am the one who updated it
-                // (We need to store updatedBy in the JSON blob, see BudgetComplete update)
-                // @ts-ignore - Assuming updatedBy was added to JSON in BudgetComplete
                 const updatedByName = rawData.updatedBy || "Un membre";
                 
                 if (updatedByName !== user.name) {
@@ -90,38 +81,37 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
                         isRead: false
                     };
 
-                    setNotifications(prev => [newNotification, ...prev]);
+                    // SAFEGUARD: Ensure prev is iterable
+                    setNotifications(prev => [newNotification, ...(Array.isArray(prev) ? prev : [])]);
                 }
 
-                // Update local tracker
                 setLastKnownUpdates(prev => ({ ...prev, [budget.id]: rawData.lastUpdated || new Date().toISOString() }));
             }
           } catch (err) {
-            console.error("Failed to check specific budget data", err);
+            // Silent fail for individual budget check
+            console.warn("Failed to check specific budget data", budget.id);
           }
         }
       } catch (error) {
-        console.error("Notification polling failed", error);
+        // Silent fail for polling loop
+        console.warn("Notification polling failed", error);
       }
     };
 
-    // Initial check
     checkUpdates();
-
-    // Poll
     const interval = setInterval(checkUpdates, POLLING_INTERVAL);
     return () => clearInterval(interval);
-  }, [user, notifications, lastKnownUpdates]);
+  }, [user, notifications, lastKnownUpdates]); // Dependencies
 
   const markAsRead = (id: string) => {
-    setNotifications(prev => prev.map(n => n.id === id ? { ...n, isRead: true } : n));
+    setNotifications(prev => (Array.isArray(prev) ? prev.map(n => n.id === id ? { ...n, isRead: true } : n) : []));
   };
 
   const markAllAsRead = () => {
-    setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
+    setNotifications(prev => (Array.isArray(prev) ? prev.map(n => ({ ...n, isRead: true })) : []));
   };
 
-  const unreadCount = notifications.filter(n => !n.isRead).length;
+  const unreadCount = Array.isArray(notifications) ? notifications.filter(n => !n.isRead).length : 0;
 
   return (
     <NotificationContext.Provider value={{ notifications, unreadCount, markAsRead, markAllAsRead }}>
