@@ -3,17 +3,28 @@ import {
   Settings, 
   Bell, 
   Menu,
+  LogOut,
+  User,
   LucideIcon
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { MemberAvatar } from "./MemberAvatar";
 import { useNavigate } from "react-router-dom";
 import { useNotifications } from "@/contexts/NotificationContext";
+import { useAuth } from "@/contexts/AuthContext"; // Import useAuth
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"; // Import Dropdown
 import { ScrollArea } from "@/components/ui/scroll-area";
 
 export interface NavItem {
@@ -29,7 +40,7 @@ interface BudgetNavbarProps {
   onSectionChange?: (section: string) => void;
   onMenuClick?: () => void;
   userName?: string;
-  userAvatar?: string; // NEW PROP
+  userAvatar?: string;
   className?: string;
 }
 
@@ -40,11 +51,17 @@ export function BudgetNavbar({
   onSectionChange,
   onMenuClick,
   userName = "Utilisateur",
-  userAvatar, // NEW PROP
+  userAvatar,
   className,
 }: BudgetNavbarProps) {
   const navigate = useNavigate();
   const { notifications, unreadCount, markAllAsRead, markAsRead } = useNotifications();
+  const { logout } = useAuth(); // Get logout function
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
 
   return (
     <header
@@ -175,13 +192,33 @@ export function BudgetNavbar({
             <Settings className="h-5 w-5" />
           </Button>
           
-          <div 
-            className="hidden sm:block pl-2 border-l border-border cursor-pointer"
-            onClick={() => navigate('/profile')}
-            title="Mon Profil"
-          >
-            {/* UPDATED: Passing image prop here */}
-            <MemberAvatar name={userName} image={userAvatar} size="sm" />
+          {/* USER DROPDOWN WITH LOGOUT */}
+          <div className="pl-2 border-l border-border">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className="outline-none rounded-full transition-transform hover:scale-105 active:scale-95">
+                  <MemberAvatar name={userName} image={userAvatar} size="sm" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuLabel className="font-normal">
+                  <div className="flex flex-col space-y-1">
+                    <p className="text-sm font-medium leading-none">{userName}</p>
+                    <p className="text-xs leading-none text-muted-foreground">Compte Personnel</p>
+                  </div>
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => navigate('/profile')} className="cursor-pointer">
+                  <User className="mr-2 h-4 w-4" />
+                  <span>Mon Profil</span>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleLogout} className="text-destructive focus:text-destructive cursor-pointer">
+                  <LogOut className="mr-2 h-4 w-4" />
+                  <span>Se déconnecter</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
       </div>
