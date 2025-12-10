@@ -10,6 +10,7 @@ import BudgetComplete from './pages/BudgetComplete';
 import Profile from './pages/Profile';
 import NotFound from './pages/NotFound';
 import AcceptInvitation from './pages/AcceptInvitation';
+import PrivacyPolicy from './pages/PrivacyPolicy';
 
 export default function App() {
   return (
@@ -42,6 +43,7 @@ export default function App() {
         {/* 404 */}
         <Route path="/404" element={<NotFound />} />
         <Route path="*" element={<Navigate to="/404" replace />} />
+        <Route path="/privacy" element={<PrivacyPolicy />} />
       </Routes>
 
       <Toaster />

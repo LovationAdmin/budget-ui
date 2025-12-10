@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Wallet, AlertCircle, Loader2 } from 'lucide-react';
+import { Footer } from '@/components/Footer';
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -124,6 +125,7 @@ export default function Login() {
           </div>
         </div>
       </div>
+      <Footer />
     </div>
   );
 }
