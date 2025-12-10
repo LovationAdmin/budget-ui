@@ -62,6 +62,7 @@ interface BudgetUpdateData { data: unknown; }
 export const authAPI = {
   signup: (data: AuthData): Promise<AxiosResponse<AuthResponse>> => api.post('/auth/signup', data),
   login: (data: AuthData): Promise<AxiosResponse<AuthResponse>> => api.post('/auth/login', data),
+  resendVerification: (email: string) => api.post('/auth/verify/resend', { email }),
 };
 
 export const userAPI = {

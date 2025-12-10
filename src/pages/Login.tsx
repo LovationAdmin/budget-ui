@@ -1,12 +1,14 @@
 import { useState, FormEvent, ChangeEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { authAPI } from '../services/api'; // Import API directly for resend
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Wallet, AlertCircle, Loader2 } from 'lucide-react';
+import { Wallet, AlertCircle, Loader2, Mail } from 'lucide-react';
 import { Footer } from '@/components/Footer';
+import { useToast } from '@/hooks/use-toast';
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -14,12 +16,18 @@ export default function Login() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   
+  // States for Resend Verification
+  const [showResend, setShowResend] = useState(false);
+  const [resendLoading, setResendLoading] = useState(false);
+  
   const { login } = useAuth();
   const navigate = useNavigate();
+  const { toast } = useToast();
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError('');
+    setShowResend(false);
     setLoading(true);
 
     const result = await login(email, password);
@@ -27,19 +35,50 @@ export default function Login() {
     if (result.success) {
       navigate('/');
     } else {
-      setError(result.error || 'Erreur de connexion');
+      const errorMessage = result.error || 'Erreur de connexion';
+      setError(errorMessage);
+
+      // Check if the error is about email verification
+      // (Backend returns "Email non vérifié..." on 403)
+      if (errorMessage.toLowerCase().includes("vérifié") || errorMessage.toLowerCase().includes("verified")) {
+        setShowResend(true);
+      }
     }
     
     setLoading(false);
   };
 
+  const handleResendEmail = async () => {
+    if (!email) return;
+    setResendLoading(true);
+    try {
+        await authAPI.resendVerification(email);
+        toast({ 
+            title: "Email envoyé !", 
+            description: "Vérifiez votre boîte de réception (et vos spams).", 
+            variant: "success" 
+        });
+        setShowResend(false);
+        setError(""); // Clear error to clean up UI
+    } catch (err: any) {
+        const msg = err.response?.data?.error || "Impossible de renvoyer l'email.";
+        toast({ 
+            title: "Erreur", 
+            description: msg, 
+            variant: "destructive" 
+        });
+    } finally {
+        setResendLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen flex flex-col">
-      {/* Container principal centré qui prend tout l'espace disponible */}
+      {/* Main Container */}
       <div className="flex-1 flex items-center justify-center gradient-surface px-4 py-12">
         <div className="w-full max-w-md">
           
-          {/* Logo & Titre */}
+          {/* Header */}
           <div className="text-center mb-8 animate-slide-up">
             <div className="inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-[hsl(35_90%_65%)] mb-4 shadow-glow">
               <Wallet className="h-8 w-8 text-primary-foreground" />
@@ -52,7 +91,7 @@ export default function Login() {
             </p>
           </div>
 
-          {/* Carte de Connexion */}
+          {/* Login Card */}
           <div className="glass-card-elevated p-8 animate-scale-in">
             <form onSubmit={handleSubmit} className="space-y-6">
               
@@ -92,10 +131,31 @@ export default function Login() {
                 />
               </div>
 
+              {/* Error Alert with Resend Button */}
               {error && (
-                <Alert variant="destructive">
-                  <AlertCircle className="h-4 w-4" />
-                  <AlertDescription>{error}</AlertDescription>
+                <Alert variant="destructive" className="animate-fade-in">
+                  <AlertCircle className="h-4 w-4 mt-0.5" />
+                  <AlertDescription className="flex flex-col gap-3">
+                      <span>{error}</span>
+                      
+                      {showResend && (
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            type="button"
+                            className="bg-white/50 hover:bg-white text-destructive-foreground border-destructive/20 w-full sm:w-auto self-start gap-2"
+                            onClick={handleResendEmail}
+                            disabled={resendLoading}
+                          >
+                              {resendLoading ? (
+                                  <Loader2 className="h-3 w-3 animate-spin" />
+                              ) : (
+                                  <Mail className="h-3 w-3" />
+                              )}
+                              {resendLoading ? "Envoi..." : "Renvoyer l'email de validation"}
+                          </Button>
+                      )}
+                  </AlertDescription>
                 </Alert>
               )}
 
@@ -131,7 +191,6 @@ export default function Login() {
         </div>
       </div>
       
-      {/* Intégration du Footer en bas de page */}
       <Footer />
     </div>
   );
