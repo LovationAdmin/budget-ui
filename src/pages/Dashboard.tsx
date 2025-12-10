@@ -8,6 +8,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { MemberAvatarGroup } from '../components/budget/MemberAvatar';
 import { Button } from '../components/ui/button';
+import { Footer } from '@/components/Footer';
 import {
   Dialog,
   DialogContent,
@@ -28,7 +29,6 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Footer } from '@/components/Footer';
 
 interface Budget {
   id: string;
@@ -38,7 +38,7 @@ interface Budget {
   members: Array<{
     user: {
       name: string;
-      avatar?: string; // NEW: Added avatar
+      avatar?: string;
     } | null;
   }>;
 }
@@ -60,14 +60,11 @@ export default function Dashboard() {
   const loadBudgets = async () => {
     try {
       const response = await budgetAPI.list();
-      setBudgets(response.data);
+      // FIX: Ensure we always set an array, even if API returns null
+      setBudgets(Array.isArray(response.data) ? response.data : []);
     } catch (error) {
       console.error('Error loading budgets:', error);
-      toast({
-        title: "Erreur",
-        description: "Impossible de charger les budgets.",
-        variant: "destructive",
-      });
+      // Silent error for dashboard to avoid spamming toast on mount
     } finally {
       setLoading(false);
     }
@@ -75,8 +72,6 @@ export default function Dashboard() {
 
   useEffect(() => {
     loadBudgets();
-    
-    // Poll every 30 seconds
     const interval = setInterval(loadBudgets, 30000);
     return () => clearInterval(interval);
   }, []);
@@ -114,7 +109,8 @@ export default function Dashboard() {
     setDeleting(true);
     try {
       await budgetAPI.delete(budgetToDelete.id);
-      setBudgets(budgets.filter(b => b.id !== budgetToDelete.id));
+      // Safe filter
+      setBudgets(prev => prev.filter(b => b.id !== budgetToDelete.id));
       setBudgetToDelete(null);
       toast({
         title: "Budget supprimé",
@@ -145,10 +141,11 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="min-h-screen gradient-surface">
+    <div className="min-h-screen flex flex-col gradient-surface">
       <BudgetNavbar
         budgetTitle="Mes Budgets"
         userName={user?.name}
+        userAvatar={user?.avatar}
         items={[]} 
         onSectionChange={(section) => {
             if (section === 'notifications') {
@@ -156,7 +153,7 @@ export default function Dashboard() {
             }
         }}
       />
-      <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+      <main className="flex-1 mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
         <div className="mb-8 animate-slide-up">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
@@ -229,7 +226,7 @@ export default function Dashboard() {
                           .filter(m => m.user)
                           .map((m) => ({
                             name: m.user!.name,
-                            image: m.user!.avatar, // NEW: Passing avatar to the group
+                            image: m.user!.avatar,
                           }))}
                         max={4}
                         size="sm"
@@ -271,6 +268,9 @@ export default function Dashboard() {
         )}
       </main>
 
+      <Footer />
+
+      {/* Keep existing Dialogs and Alert logic */}
       <Button
         variant="gradient"
         size="icon-lg"
@@ -345,7 +345,6 @@ export default function Dashboard() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-      <Footer />
     </div>
   );
 }
