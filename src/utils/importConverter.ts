@@ -3,20 +3,25 @@ export interface Person {
   id: string;
   name: string;
   salary: number;
+  // NEW: Date limits for people (e.g. start/end of contract)
+  startDate?: string; // Format: "YYYY-MM-DD"
+  endDate?: string;   // Format: "YYYY-MM-DD"
 }
 
 export interface Charge {
   id: string;
   label: string;
   amount: number;
-  // NEW: Date limits for charges
-  startDate?: string; // Format: "YYYY-MM-DD"
-  endDate?: string;   // Format: "YYYY-MM-DD"
+  // Date limits for charges
+  startDate?: string; 
+  endDate?: string;   
 }
 
 export interface Project {
   id: string;
   label: string;
+  // NEW: Target amount for the project goal
+  targetAmount?: number;
 }
 
 export interface YearlyData {

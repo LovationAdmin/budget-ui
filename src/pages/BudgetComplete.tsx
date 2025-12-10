@@ -28,7 +28,7 @@ import MonthlyTable from '../components/budget/MonthlyTable';
 import StatsSection from '../components/budget/StatsSection';
 import ActionsBar from '../components/budget/ActionsBar';
 import MemberManagementSection from '../components/budget/MemberManagementSection';
-import { LayoutDashboard, Users, Receipt, Target, CalendarDays } from "lucide-react";
+import { LayoutDashboard, Users, Receipt, Target, CalendarDays, PartyPopper } from "lucide-react";
 import { ToastAction } from '@/components/ui/toast';
 
 const BUDGET_NAV_ITEMS: NavItem[] = [
@@ -38,6 +38,8 @@ const BUDGET_NAV_ITEMS: NavItem[] = [
   { id: "projects", label: "Projets", icon: Target },
   { id: "calendar", label: "Tableau Mensuel", icon: CalendarDays },
 ];
+
+const MONTHS = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
 
 interface BudgetMember {
   id: string;
@@ -86,6 +88,8 @@ export default function BudgetComplete() {
   const [lockedMonths, setLockedMonths] = useState<LockedMonths>({});
 
   const loadedRef = useRef(false);
+  // Ref to prevent spamming congratulations on every render
+  const notifiedProjectsRef = useRef<Set<string>>(new Set());
 
   useEffect(() => {
     if (id) loadBudget();
@@ -140,6 +144,37 @@ export default function BudgetComplete() {
     }, 5000); 
     return () => clearInterval(memberInterval);
   }, [id]);
+
+  // 4. ACHIEVEMENT CHECKER (New Feature)
+  useEffect(() => {
+    if (!loadedRef.current) return;
+
+    projects.forEach(project => {
+        if (!project.targetAmount || project.targetAmount <= 0) return;
+        
+        // Prevent notifying twice for the same project in this session
+        if (notifiedProjectsRef.current.has(project.id)) return;
+
+        // Calculate total allocated
+        let totalAllocated = 0;
+        MONTHS.forEach(month => {
+            totalAllocated += yearlyData[month]?.[project.id] || 0;
+        });
+
+        if (totalAllocated >= project.targetAmount) {
+            // Mark as notified so we don't spam
+            notifiedProjectsRef.current.add(project.id);
+
+            // Trigger Celebration Toast
+            toast({
+                title: "🎉 Objectif Atteint !",
+                description: `Félicitations ! Le projet "${project.label}" est entièrement financé.`,
+                className: "bg-success/10 border-success/50 text-success-foreground",
+                duration: 5000,
+            });
+        }
+    });
+  }, [projects, yearlyData]);
 
   const loadBudget = async () => {
     if (!id) return;
@@ -339,7 +374,13 @@ export default function BudgetComplete() {
 
         <div id="people"><PeopleSection people={people} onPeopleChange={setPeople} /></div>
         <div id="charges" className="mt-6"><ChargesSection charges={charges} onChargesChange={setCharges} /></div>
-        <div id="projects" className="mt-6"><ProjectsSection projects={projects} onProjectsChange={setProjects} /></div>
+        <div id="projects" className="mt-6">
+            <ProjectsSection 
+                projects={projects} 
+                onProjectsChange={setProjects}
+                yearlyData={yearlyData} // Passed for Progress Calculation
+            />
+        </div>
 
         <div className="mt-6">
             <StatsSection 
@@ -348,7 +389,7 @@ export default function BudgetComplete() {
                 projects={projects} 
                 yearlyData={yearlyData} 
                 oneTimeIncomes={oneTimeIncomes} 
-                currentYear={currentYear} // PASSED HERE
+                currentYear={currentYear}
             />
         </div>
 
