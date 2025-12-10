@@ -23,6 +23,7 @@ interface BudgetMember {
     id: string;
     name: string;
     email: string;
+    avatar?: string; // NEW: Added avatar field
   } | null;
   role: 'owner' | 'member';
 }
@@ -59,6 +60,14 @@ export default function MemberManagementSection({
   
   const { toast } = useToast();
 
+  const memberEmails = new Set(
+    budget.members
+      .filter(m => m.user?.email)
+      .map(m => m.user!.email)
+  );
+
+  const validInvitations = invitations.filter(inv => !memberEmails.has(inv.email));
+
   const loadInvitations = async () => {
     if (!budget.is_owner) return;
     try {
@@ -72,10 +81,9 @@ export default function MemberManagementSection({
 
   useEffect(() => {
     loadInvitations();
-    // Aggressive polling (5s) to ensure UI updates when friend accepts
     const interval = setInterval(() => {
         loadInvitations();
-        onMemberChange(); // This triggers the parent to fetch new members
+        onMemberChange(); 
     }, 5000); 
 
     return () => clearInterval(interval);
@@ -139,7 +147,9 @@ export default function MemberManagementSection({
                 const user = member.user!;
                 return (
                   <div key={member.id} className="flex items-center gap-3 p-3 rounded-xl border border-border/50 bg-card/50 hover:bg-card transition-all">
-                    <MemberAvatar name={user.name} size="md" />
+                    {/* NEW: Pass the avatar image here */}
+                    <MemberAvatar name={user.name} image={user.avatar} size="md" />
+                    
                     <div className="flex-1 min-w-0">
                       <p className="font-medium text-foreground truncate">
                         {user.name} {user.id === currentUserId && <span className="text-xs text-muted-foreground ml-2">(vous)</span>}
@@ -163,12 +173,12 @@ export default function MemberManagementSection({
               })}
           </div>
 
-          {budget.is_owner && invitations.length > 0 && (
+          {budget.is_owner && validInvitations.length > 0 && (
             <div className="space-y-2 pt-4 border-t">
               <p className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                <Mail className="h-4 w-4" /> Invitations en attente ({invitations.length})
+                <Mail className="h-4 w-4" /> Invitations en attente ({validInvitations.length})
               </p>
-              {invitations.map((invitation) => {
+              {validInvitations.map((invitation) => {
                   let dateDisplay = "Date inconnue";
                   try {
                     const date = new Date(invitation.created_at);
@@ -198,7 +208,6 @@ export default function MemberManagementSection({
         </CardContent>
       </Card>
 
-      {/* Dialogs */}
       <AlertDialog open={!!memberToRemove} onOpenChange={() => setMemberToRemove(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>

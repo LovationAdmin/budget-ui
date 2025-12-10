@@ -37,7 +37,7 @@ interface Budget {
   members: Array<{
     user: {
       name: string;
-      avatar?: string;
+      avatar?: string; // NEW: Added avatar
     } | null;
   }>;
 }
@@ -62,6 +62,11 @@ export default function Dashboard() {
       setBudgets(response.data);
     } catch (error) {
       console.error('Error loading budgets:', error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de charger les budgets.",
+        variant: "destructive",
+      });
     } finally {
       setLoading(false);
     }
@@ -70,7 +75,7 @@ export default function Dashboard() {
   useEffect(() => {
     loadBudgets();
     
-    // NEW: Poll every 30 seconds to update member counts/lists
+    // Poll every 30 seconds
     const interval = setInterval(loadBudgets, 30000);
     return () => clearInterval(interval);
   }, []);
@@ -223,7 +228,7 @@ export default function Dashboard() {
                           .filter(m => m.user)
                           .map((m) => ({
                             name: m.user!.name,
-                            image: m.user!.avatar,
+                            image: m.user!.avatar, // NEW: Passing avatar to the group
                           }))}
                         max={4}
                         size="sm"
