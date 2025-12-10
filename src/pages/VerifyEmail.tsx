@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import api from '../services/api'; // Votre instance axios
+import api from '../services/api';
 import { Button } from '@/components/ui/button';
 import { CheckCircle, XCircle, Loader2 } from 'lucide-react';
 
@@ -24,7 +24,9 @@ export default function VerifyEmail() {
       })
       .catch((err) => {
         setStatus('error');
-        setMessage(err.response?.data?.error || 'Erreur lors de la vérification.');
+        // Gestion sécurisée de l'erreur
+        const msg = err.response?.data?.error || 'Erreur lors de la vérification.';
+        setMessage(msg);
       });
   }, [searchParams]);
 
