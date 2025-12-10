@@ -21,12 +21,11 @@ import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
-  DropdownMenuItem, // Added
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Lock, Unlock, MessageCircle, MessageSquarePlus, Settings2, Eye, CheckSquare, Square } from "lucide-react"; // Added Icons
+import { Lock, Unlock, MessageCircle, MessageSquarePlus, Settings2, Eye, CheckSquare, Square } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type {
   Person,
@@ -65,6 +64,28 @@ const MONTHS = [
 
 const GENERAL_SAVINGS_ID = 'epargne';
 
+// Helper: Check if a charge is active for a specific month index (0-11)
+const isChargeActive = (charge: Charge, year: number, monthIndex: number): boolean => {
+    // Start of the current column's month
+    const monthStart = new Date(year, monthIndex, 1);
+    // End of the current column's month
+    const monthEnd = new Date(year, monthIndex + 1, 0);
+
+    if (charge.startDate) {
+        const start = new Date(charge.startDate);
+        // If charge starts AFTER this month ends, it's not active yet
+        if (start > monthEnd) return false;
+    }
+
+    if (charge.endDate) {
+        const end = new Date(charge.endDate);
+        // If charge ended BEFORE this month started, it's inactive
+        if (end < monthStart) return false;
+    }
+
+    return true;
+};
+
 export default function MonthlyTable({
   currentYear,
   people,
@@ -101,18 +122,26 @@ export default function MonthlyTable({
 
   // --- Calculations ---
   const getMonthlyBaseIncome = () => people.reduce((sum, person) => sum + person.salary, 0);
-  const getMonthlyChargesTotal = () => charges.reduce((sum, charge) => sum + charge.amount, 0);
+  
+  // Updated: Respects dates
+  const getMonthlyChargesTotal = (monthIndex: number) => {
+    return charges.reduce((sum, charge) => {
+        return isChargeActive(charge, currentYear, monthIndex) ? sum + charge.amount : sum;
+    }, 0);
+  };
+
   const getMonthlyOneTimeIncome = (month: string) => oneTimeIncomes[month] || 0;
   
-  const getMonthlyAvailableSavings = (month: string) => {
+  const getMonthlyAvailableSavings = (month: string, monthIndex: number) => {
     const baseIncome = getMonthlyBaseIncome();
     const oneTime = getMonthlyOneTimeIncome(month);
-    const chargesTotal = getMonthlyChargesTotal();
+    const chargesTotal = getMonthlyChargesTotal(monthIndex);
     return baseIncome + oneTime - chargesTotal;
   };
 
-  const getGeneralSavingsAllocation = (month: string) => {
-    const available = getMonthlyAvailableSavings(month);
+  const getGeneralSavingsAllocation = (month: string, monthIndex: number) => {
+    const available = getMonthlyAvailableSavings(month, monthIndex);
+    // Note: We sum ALL projects (even hidden ones) to ensure math is correct
     const totalAllocatedToProjects = projects
       .filter(p => p.id !== GENERAL_SAVINGS_ID)
       .reduce((sum, project) => {
@@ -137,7 +166,7 @@ export default function MonthlyTable({
     let total = 0;
     for (let i = 0; i <= upToMonthIndex; i++) {
       const monthName = MONTHS[i];
-      const allocation = getGeneralSavingsAllocation(monthName);
+      const allocation = getGeneralSavingsAllocation(monthName, i);
       const expense = yearlyExpenses[monthName]?.[GENERAL_SAVINGS_ID] || 0;
       total += (allocation - expense);
     }
@@ -202,7 +231,7 @@ export default function MonthlyTable({
     );
   };
 
-  // NEW: Bulk Actions
+  // Bulk Actions
   const showAllProjects = () => {
     setVisibleProjectIds(standardProjects.map(p => p.id));
   };
@@ -241,7 +270,7 @@ export default function MonthlyTable({
                 <DropdownMenuContent align="end" className="w-64">
                     <DropdownMenuLabel>Projets à afficher</DropdownMenuLabel>
                     
-                    {/* NEW: Bulk Action Buttons */}
+                    {/* Bulk Action Buttons */}
                     <div className="p-2 flex gap-2">
                         <Button 
                             variant="ghost" 
@@ -351,8 +380,12 @@ export default function MonthlyTable({
                 {MONTHS.map((month, monthIndex) => {
                   const isLocked = lockedMonths[month];
                   const hasComment = !!monthComments[month];
-                  const availableToSave = getMonthlyAvailableSavings(month);
-                  const genSavingsAllocation = getGeneralSavingsAllocation(month);
+                  
+                  // UPDATED CALCULATIONS
+                  const chargesTotal = getMonthlyChargesTotal(monthIndex);
+                  const availableToSave = getMonthlyAvailableSavings(month, monthIndex);
+                  const genSavingsAllocation = getGeneralSavingsAllocation(month, monthIndex);
+                  
                   const genSavingsExpense = yearlyExpenses[month]?.[GENERAL_SAVINGS_ID] || 0;
                   const genSavingsCumulative = getCumulativeGeneralSavings(monthIndex);
                   const genSavingsComment = projectComments[month]?.[GENERAL_SAVINGS_ID];
@@ -392,7 +425,7 @@ export default function MonthlyTable({
 
                       {/* 4. Charges */}
                       <td className="px-3 py-3 text-center bg-destructive/5 text-sm font-medium text-destructive border-r border-dashed border-border/50">
-                        -{getMonthlyChargesTotal().toLocaleString()}
+                        -{chargesTotal.toLocaleString()}
                       </td>
 
                       {/* 5. Disponible */}

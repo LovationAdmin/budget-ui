@@ -9,6 +9,9 @@ export interface Charge {
   id: string;
   label: string;
   amount: number;
+  // NEW: Date limits for charges
+  startDate?: string; // Format: "YYYY-MM-DD"
+  endDate?: string;   // Format: "YYYY-MM-DD"
 }
 
 export interface Project {
@@ -44,7 +47,7 @@ export interface RawBudgetData {
   charges?: Charge[];
   projects?: Project[];
   yearlyData?: YearlyData | Record<string, { months?: unknown; expenses?: unknown; expenseComments?: unknown; monthComments?: unknown }>;
-  yearlyExpenses?: YearlyData; // NEW: Explicit expenses storage
+  yearlyExpenses?: YearlyData; 
   oneTimeIncomes?: OneTimeIncomes | Record<string, any[]>;
   monthComments?: MonthComments;
   projectComments?: ProjectComments;
@@ -64,7 +67,7 @@ export interface ConvertedBudgetData {
   charges: Charge[];
   projects: Project[];
   yearlyData: YearlyData;     // Allocations
-  yearlyExpenses: YearlyData; // Expenses (NEW)
+  yearlyExpenses: YearlyData; // Expenses
   oneTimeIncomes: OneTimeIncomes;
   monthComments: MonthComments;
   projectComments: ProjectComments;
@@ -89,8 +92,8 @@ export function convertOldFormatToNew(oldData: RawBudgetData): ConvertedBudgetDa
     people: oldData.people || [],
     charges: oldData.charges || [],
     projects: oldData.projects || [],
-    yearlyData: oldData.yearlyData as YearlyData || {},     // Default Allocations
-    yearlyExpenses: oldData.yearlyExpenses as YearlyData || {}, // Default Expenses
+    yearlyData: oldData.yearlyData as YearlyData || {},     
+    yearlyExpenses: oldData.yearlyExpenses as YearlyData || {}, 
     oneTimeIncomes: oldData.oneTimeIncomes as OneTimeIncomes || {},
     monthComments: oldData.monthComments || {},
     projectComments: oldData.projectComments || {},
@@ -106,7 +109,6 @@ export function convertOldFormatToNew(oldData: RawBudgetData): ConvertedBudgetDa
 
   // Detect Legacy Format (Nested under Year key)
   const firstYearKey = Object.keys(oldData.yearlyData || {})[0];
-  
   if (firstYearKey && (oldData.yearlyData as any)[firstYearKey]?.months) {
     const oldYearData = (oldData.yearlyData as any)[firstYearKey];
     newData.currentYear = parseInt(firstYearKey);

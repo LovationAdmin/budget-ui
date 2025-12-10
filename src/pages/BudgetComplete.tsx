@@ -293,7 +293,7 @@ export default function BudgetComplete() {
       <BudgetNavbar 
         budgetTitle={budget?.name} 
         userName={user?.name}
-        userAvatar={user?.avatar} // UPDATED: Pass the avatar
+        userAvatar={user?.avatar}
         items={BUDGET_NAV_ITEMS}
         onSectionChange={handleSectionChange}
         currentSection="overview"
@@ -342,7 +342,14 @@ export default function BudgetComplete() {
         <div id="projects" className="mt-6"><ProjectsSection projects={projects} onProjectsChange={setProjects} /></div>
 
         <div className="mt-6">
-            <StatsSection people={people} charges={charges} projects={projects} yearlyData={yearlyData} oneTimeIncomes={oneTimeIncomes} />
+            <StatsSection 
+                people={people} 
+                charges={charges} 
+                projects={projects} 
+                yearlyData={yearlyData} 
+                oneTimeIncomes={oneTimeIncomes} 
+                currentYear={currentYear} // PASSED HERE
+            />
         </div>
 
         <div id="calendar" className="mt-6">
@@ -352,13 +359,13 @@ export default function BudgetComplete() {
                 charges={charges} 
                 projects={projects} 
                 yearlyData={yearlyData} 
-                yearlyExpenses={yearlyExpenses} // Pass Expenses
+                yearlyExpenses={yearlyExpenses} 
                 oneTimeIncomes={oneTimeIncomes} 
                 monthComments={monthComments} 
                 projectComments={projectComments} 
                 lockedMonths={lockedMonths} 
                 onYearlyDataChange={setYearlyData} 
-                onYearlyExpensesChange={setYearlyExpenses} // Pass Setter
+                onYearlyExpensesChange={setYearlyExpenses} 
                 onOneTimeIncomesChange={setOneTimeIncomes} 
                 onMonthCommentsChange={setMonthComments} 
                 onProjectCommentsChange={setProjectComments} 
