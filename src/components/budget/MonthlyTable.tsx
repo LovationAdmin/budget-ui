@@ -86,20 +86,17 @@ export default function MonthlyTable({
   const [commentDialogOpen, setCommentDialogOpen] = useState(false);
   const [tempComment, setTempComment] = useState('');
   
-  // NEW: State to track which project columns are visible
-  // Initialize with all IDs
+  // State to track which project columns are visible
   const [visibleProjectIds, setVisibleProjectIds] = useState<string[]>([]);
 
   // Initialize visibility when projects load
   useEffect(() => {
-    // By default, show all projects (excluding 'epargne' which is handled separately)
     const ids = projects.filter(p => p.id !== GENERAL_SAVINGS_ID).map(p => p.id);
-    // Only update if list size changed to avoid resetting user choice on every render
     setVisibleProjectIds(prev => {
         if (prev.length === 0 && ids.length > 0) return ids;
         return prev;
     });
-  }, [projects.length]); // Only re-run if number of projects changes
+  }, [projects.length]);
 
   // --- Calculations ---
   const getMonthlyBaseIncome = () => people.reduce((sum, person) => sum + person.salary, 0);
@@ -115,7 +112,6 @@ export default function MonthlyTable({
 
   const getGeneralSavingsAllocation = (month: string) => {
     const available = getMonthlyAvailableSavings(month);
-    // Sum of ALL projects (even hidden ones) to get correct math
     const totalAllocatedToProjects = projects
       .filter(p => p.id !== GENERAL_SAVINGS_ID)
       .reduce((sum, project) => {
@@ -194,11 +190,9 @@ export default function MonthlyTable({
     setTempComment('');
   };
 
-  // Filter projects based on Visibility State
   const standardProjects = projects.filter(p => p.id !== GENERAL_SAVINGS_ID);
   const visibleProjects = standardProjects.filter(p => visibleProjectIds.includes(p.id));
 
-  // Toggle Visibility Handler
   const toggleProjectVisibility = (projectId: string) => {
     setVisibleProjectIds(prev => 
       prev.includes(projectId) 
@@ -247,6 +241,8 @@ export default function MonthlyTable({
                             key={project.id}
                             checked={visibleProjectIds.includes(project.id)}
                             onCheckedChange={() => toggleProjectVisibility(project.id)}
+                            // FIX: Prevent menu from closing on click
+                            onSelect={(e) => e.preventDefault()}
                         >
                             {project.label}
                         </DropdownMenuCheckboxItem>
@@ -260,7 +256,6 @@ export default function MonthlyTable({
             <table className="w-full border-collapse">
               <thead className="bg-muted/30">
                 <tr>
-                  {/* FIX: Sticky Column - Solid Background to prevent Fade/Ghosting */}
                   <th className="sticky left-0 z-20 bg-background px-4 py-4 text-left font-semibold text-foreground border-b border-r border-border shadow-[4px_0_12px_-4px_rgba(0,0,0,0.1)] min-w-[160px]">
                     <div className="flex flex-col">
                       <span>Mois</span>
@@ -297,7 +292,6 @@ export default function MonthlyTable({
                     </th>
                   ))}
 
-                  {/* Epargne Générale */}
                   <th className="px-3 py-3 text-center font-bold text-primary bg-primary/5 border-b border-border min-w-[180px]">
                      <div className="flex flex-col items-center gap-1">
                         <span>Épargne Générale</span>
@@ -308,7 +302,6 @@ export default function MonthlyTable({
                     </div>
                   </th>
                   
-                  {/* Actions */}
                   <th className="px-3 py-3 text-center font-semibold text-muted-foreground border-b border-border min-w-[100px] sticky right-0 bg-background z-20 shadow-[-4px_0_12px_-4px_rgba(0,0,0,0.1)]">
                     
                   </th>
@@ -328,7 +321,7 @@ export default function MonthlyTable({
                   return (
                     <tr key={month} className="hover:bg-muted/30 transition-colors group">
                       
-                      {/* 1. Sticky Month - SOLID BACKGROUND */}
+                      {/* 1. Sticky Month */}
                       <td className="sticky left-0 z-20 bg-background group-hover:bg-background px-4 py-3 border-r border-border shadow-[4px_0_12px_-4px_rgba(0,0,0,0.1)] font-medium text-foreground">
                         {month}
                         <div className="text-[10px] text-muted-foreground font-normal">
