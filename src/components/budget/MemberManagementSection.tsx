@@ -61,26 +61,25 @@ export default function MemberManagementSection({
 
   const loadInvitations = async () => {
     if (!budget.is_owner) return;
-    // Don't set loading on poll, only initial
     try {
       const response = await budgetAPI.getInvitations(budget.id);
-      setInvitations(response.data.filter((inv: Invitation) => inv.status === 'pending'));
+      // Filter only pending. If an invite is accepted, it disappears from this list.
+      const pending = response.data.filter((inv: Invitation) => inv.status === 'pending');
+      setInvitations(pending);
     } catch (error) {
       console.error('Error loading invitations:', error);
     }
   };
 
-  // Initial Load & Polling for Member/Invitation changes
   useEffect(() => {
-    // 1. Initial Load
     loadInvitations();
-
-    // 2. Poll every 15 seconds to check if invitations were accepted
+    
+    // Poll invitations every 10 seconds to remove them if accepted
     const interval = setInterval(() => {
         loadInvitations();
-        // Also trigger the parent refresh to get the new members in the main budget object
+        // Also trigger parent refresh to see if new members joined
         onMemberChange(); 
-    }, 15000);
+    }, 10000);
 
     return () => clearInterval(interval);
   }, []);
@@ -236,7 +235,7 @@ export default function MemberManagementSection({
         </CardContent>
       </Card>
 
-      {/* Dialogs remain the same */}
+      {/* Dialogs remain unchanged */}
       <AlertDialog open={!!memberToRemove} onOpenChange={() => setMemberToRemove(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>

@@ -64,17 +64,14 @@ export default function BudgetComplete() {
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [lastServerUpdate, setLastServerUpdate] = useState<string>("");
 
-  // --- Core Budget Data State ---
+  // Core Budget Data State
   const [budgetTitle, setBudgetTitle] = useState('');
   const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
   const [people, setPeople] = useState<Person[]>([]);
   const [charges, setCharges] = useState<Charge[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
-  
-  // Data Matrices
-  const [yearlyData, setYearlyData] = useState<YearlyData>({});         // Allocations
-  const [yearlyExpenses, setYearlyExpenses] = useState<YearlyData>({}); // Expenses
-  
+  const [yearlyData, setYearlyData] = useState<YearlyData>({});
+  const [yearlyExpenses, setYearlyExpenses] = useState<YearlyData>({});
   const [oneTimeIncomes, setOneTimeIncomes] = useState<OneTimeIncomes>({});
   const [monthComments, setMonthComments] = useState<MonthComments>({});
   const [projectComments, setProjectComments] = useState<ProjectComments>({});
@@ -93,7 +90,7 @@ export default function BudgetComplete() {
     return () => clearInterval(saveInterval);
   }, [budgetTitle, currentYear, people, charges, projects, yearlyData, yearlyExpenses, oneTimeIncomes, monthComments, projectComments, lockedMonths]);
 
-  // 2. Collaborative Polling Logic (Every 15s)
+  // 2. Collaborative Polling Logic (For DATA Updates)
   useEffect(() => {
     if (!id || !loadedRef.current) return;
 
@@ -102,13 +99,7 @@ export default function BudgetComplete() {
         const res = await budgetAPI.getData(id);
         const remoteData: RawBudgetData = res.data.data;
         
-        // FIX: Check if the update is newer AND if the updater is NOT me
-        if (
-            remoteData.lastUpdated && 
-            lastServerUpdate && 
-            remoteData.lastUpdated > lastServerUpdate && 
-            remoteData.updatedBy !== user?.name // <--- THIS PREVENTS SELF-NOTIFICATION
-        ) {
+        if (remoteData.lastUpdated && lastServerUpdate && remoteData.lastUpdated > lastServerUpdate && remoteData.updatedBy !== user?.name) {
           toast({
             title: "Mise à jour disponible",
             description: `Modifié par ${remoteData.updatedBy || 'un membre'}.`,
@@ -124,8 +115,20 @@ export default function BudgetComplete() {
     }, 15000);
 
     return () => clearInterval(pollInterval);
-  }, [id, lastServerUpdate, user?.name]); // Added user?.name dependency
+  }, [id, lastServerUpdate, user?.name]);
 
+  // 3. Silent Member Polling (Keeps member list and invitations in sync)
+  useEffect(() => {
+    if (!id) return;
+    const memberInterval = setInterval(() => {
+        refreshMembersOnly();
+    }, 10000); // Check every 10 seconds
+    return () => clearInterval(memberInterval);
+  }, [id]);
+
+  // --- Data Loading Functions ---
+
+  // Initial Full Load
   const loadBudget = async () => {
     if (!id) return;
     
@@ -141,7 +144,6 @@ export default function BudgetComplete() {
       if (rawData.lastUpdated) setLastServerUpdate(rawData.lastUpdated);
       else setLastServerUpdate(new Date().toISOString());
 
-      // Use Converter
       const data = convertOldFormatToNew(rawData);
 
       setBudgetTitle(data.budgetTitle || '');
@@ -165,6 +167,23 @@ export default function BudgetComplete() {
     }
   };
 
+  // Lightweight Refresh (Members Only) - Safe to call repeatedly
+  const refreshMembersOnly = async () => {
+    if (!id) return;
+    try {
+        const response = await budgetAPI.getById(id);
+        setBudget(prev => {
+            // Only update if actually different to avoid render noise (optional optimization)
+            if (JSON.stringify(prev?.members) !== JSON.stringify(response.data.members)) {
+                return response.data;
+            }
+            return prev;
+        });
+    } catch (error) {
+        console.error("Failed to refresh members", error);
+    }
+  };
+
   const handleSave = async (silent = false) => {
     if (!id) return;
     if (!silent) setSaving(true);
@@ -183,7 +202,7 @@ export default function BudgetComplete() {
       projectComments,
       lockedMonths,
       lastUpdated: now,
-      updatedBy: user?.name, // Critical for avoiding self-notification
+      updatedBy: user?.name,
       version: '2.2'
     };
 
@@ -199,6 +218,7 @@ export default function BudgetComplete() {
     }
   };
 
+  // ... (handleExport, handleImport unchanged, included in previous steps)
   const handleExport = (formatType: 'new' | 'old' = 'new') => {
     let dataToExport;
     const commonData = {
@@ -295,9 +315,14 @@ export default function BudgetComplete() {
           </div>
         </div>
         
+        {/* Pass refreshMembersOnly to the management section */}
         {budget && user && (
             <div id="members">
-                <MemberManagementSection budget={budget} currentUserId={user.id} onMemberChange={loadBudget} />
+                <MemberManagementSection 
+                    budget={budget}
+                    currentUserId={user.id} 
+                    onMemberChange={refreshMembersOnly} 
+                />
             </div>
         )}
 
@@ -338,7 +363,7 @@ export default function BudgetComplete() {
           budgetId={id} 
           onClose={() => setShowInviteModal(false)} 
           onInvited={() => {
-            loadBudget();
+            refreshMembersOnly();
             toast({ title: "Invitation envoyée", description: "Le membre a été invité.", variant: "success" });
           }} 
         />
