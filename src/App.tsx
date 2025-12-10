@@ -12,6 +12,7 @@ import Profile from './pages/Profile';
 import NotFound from './pages/NotFound';
 import AcceptInvitation from './pages/AcceptInvitation';
 import PrivacyPolicy from './pages/PrivacyPolicy';
+import VerifyEmail from './pages/VerifyEmail';
 
 export default function App() {
   return (
@@ -42,6 +43,7 @@ export default function App() {
 
         <Route path="/404" element={<NotFound />} />
         <Route path="*" element={<Navigate to="/404" replace />} />
+        <Route path="/verify-email" element={<VerifyEmail />} />
       </Routes>
 
       {/* Ce composant est indispensable pour les notifications */}

@@ -17,6 +17,7 @@ export default function Signup() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [hasPendingInvite, setHasPendingInvite] = useState(false);
+  const [successMode, setSuccessMode] = useState(false);
   
   const { signup } = useAuth();
   const navigate = useNavigate();
@@ -47,20 +48,24 @@ export default function Signup() {
     const result = await signup(name, email, password);
 
     if (result.success) {
-      // 1. Notification de confidentialité
+      // 1. Privacy Toast
       toast({
         title: "Compte créé avec succès ! 🛡️",
-        description: "Vos données financières sont chiffrées. Personne, pas même les administrateurs Lovation, ne peut les consulter sans votre accord.",
+        description: "Vos données sont chiffrées et sécurisées.",
         duration: 8000,
         className: "bg-green-50 border-green-200"
       });
 
-      // 2. Gestion de la redirection (Invitation ou Dashboard)
+      // 2. Logic: If invited -> Go accept (skip verify UI). Else -> Verify Email UI.
       const pendingToken = localStorage.getItem('pendingInvitation');
+      
       if (pendingToken) {
+        // Automatically redirect invited users to the acceptance logic
+        // The backend AcceptInvitation function handles auto-verifying the email
         navigate('/invitation/accept'); 
       } else {
-        navigate('/');
+        // Standard user: Must check email
+        setSuccessMode(true);
       }
     } else {
       setError(result.error || 'Erreur inconnue lors de la création du compte');
@@ -68,6 +73,29 @@ export default function Signup() {
     
     setLoading(false);
   };
+
+  if (successMode) {
+    return (
+        <div className="min-h-screen flex flex-col">
+            <div className="flex-1 flex items-center justify-center gradient-surface px-4">
+                <div className="max-w-md w-full bg-white rounded-xl shadow-lg p-8 text-center animate-scale-in">
+                    <div className="w-16 h-16 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <Mail className="h-8 w-8" />
+                    </div>
+                    <h2 className="text-2xl font-bold text-gray-900 mb-2">Vérifiez vos emails</h2>
+                    <p className="text-gray-600 mb-6">
+                        Un lien de confirmation a été envoyé à <strong>{email}</strong>.<br/>
+                        Veuillez cliquer dessus pour activer votre compte.
+                    </p>
+                    <Button onClick={() => navigate('/login')} variant="outline" className="w-full">
+                        Retour à la connexion
+                    </Button>
+                </div>
+            </div>
+            <Footer />
+        </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -86,13 +114,11 @@ export default function Signup() {
             </p>
           </div>
 
-          {/* Badge de confidentialité */}
           <div className="mb-6 flex items-center justify-center gap-2 text-xs text-green-700 bg-green-50 py-2 px-4 rounded-full border border-green-100 w-fit mx-auto animate-fade-in">
             <ShieldCheck className="h-3 w-3" />
             <span>Données chiffrées & Privées (Zero-Knowledge)</span>
           </div>
 
-          {/* Alerte Invitation */}
           {hasPendingInvite && (
               <Alert className="mb-6 border-primary/50 bg-primary/10 animate-fade-in">
                   <Mail className="h-4 w-4 text-primary" />
@@ -192,7 +218,6 @@ export default function Signup() {
         </div>
       </div>
       
-      {/* Footer Integration */}
       <Footer />
     </div>
   );
