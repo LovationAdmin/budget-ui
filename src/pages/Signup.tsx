@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Wallet, AlertCircle, Loader2, Mail, ShieldCheck } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { Footer } from '@/components/Footer'; // Import Footer
+import { Footer } from '@/components/Footer';
 
 export default function Signup() {
   const [name, setName] = useState('');
@@ -20,7 +20,7 @@ export default function Signup() {
   
   const { signup } = useAuth();
   const navigate = useNavigate();
-  const { toast } = useToast(); // Use toast hook
+  const { toast } = useToast();
 
   useEffect(() => {
     if (localStorage.getItem('pendingInvitation')) {
@@ -47,7 +47,7 @@ export default function Signup() {
     const result = await signup(name, email, password);
 
     if (result.success) {
-      // 1. PRIVACY GUARANTEE TOAST
+      // 1. Notification de confidentialité
       toast({
         title: "Compte créé avec succès ! 🛡️",
         description: "Vos données financières sont chiffrées. Personne, pas même les administrateurs Lovation, ne peut les consulter sans votre accord.",
@@ -55,6 +55,7 @@ export default function Signup() {
         className: "bg-green-50 border-green-200"
       });
 
+      // 2. Gestion de la redirection (Invitation ou Dashboard)
       const pendingToken = localStorage.getItem('pendingInvitation');
       if (pendingToken) {
         navigate('/invitation/accept'); 
@@ -85,12 +86,13 @@ export default function Signup() {
             </p>
           </div>
 
-          {/* Privacy Badge */}
-          <div className="mb-6 flex items-center justify-center gap-2 text-xs text-green-700 bg-green-50 py-2 px-4 rounded-full border border-green-100 w-fit mx-auto">
+          {/* Badge de confidentialité */}
+          <div className="mb-6 flex items-center justify-center gap-2 text-xs text-green-700 bg-green-50 py-2 px-4 rounded-full border border-green-100 w-fit mx-auto animate-fade-in">
             <ShieldCheck className="h-3 w-3" />
             <span>Données chiffrées & Privées (Zero-Knowledge)</span>
           </div>
 
+          {/* Alerte Invitation */}
           {hasPendingInvite && (
               <Alert className="mb-6 border-primary/50 bg-primary/10 animate-fade-in">
                   <Mail className="h-4 w-4 text-primary" />
@@ -102,22 +104,56 @@ export default function Signup() {
 
           <div className="glass-card-elevated p-8 animate-scale-in">
             <form onSubmit={handleSubmit} className="space-y-6">
-              {/* Form inputs same as before... */}
               <div className="space-y-2">
                 <Label htmlFor="name">Nom complet</Label>
-                <Input id="name" value={name} onChange={(e) => setName(e.target.value)} placeholder="John Doe" required className="h-11" />
+                <Input 
+                  id="name" 
+                  value={name} 
+                  onChange={(e) => setName(e.target.value)} 
+                  placeholder="John Doe" 
+                  required 
+                  className="h-11" 
+                />
               </div>
+
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
-                <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="votre@email.com" required className="h-11" />
+                <Input 
+                  id="email" 
+                  type="email" 
+                  value={email} 
+                  onChange={(e) => setEmail(e.target.value)} 
+                  placeholder="votre@email.com" 
+                  required 
+                  className="h-11" 
+                />
               </div>
+
               <div className="space-y-2">
                 <Label htmlFor="password">Mot de passe</Label>
-                <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" minLength={8} required className="h-11" />
+                <Input 
+                  id="password" 
+                  type="password" 
+                  value={password} 
+                  onChange={(e) => setPassword(e.target.value)} 
+                  placeholder="••••••••" 
+                  minLength={8} 
+                  required 
+                  className="h-11" 
+                />
               </div>
+
               <div className="space-y-2">
                 <Label htmlFor="confirmPassword">Confirmer le mot de passe</Label>
-                <Input id="confirmPassword" type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder="••••••••" required className="h-11" />
+                <Input 
+                  id="confirmPassword" 
+                  type="password" 
+                  value={confirmPassword} 
+                  onChange={(e) => setConfirmPassword(e.target.value)} 
+                  placeholder="••••••••" 
+                  required 
+                  className="h-11" 
+                />
               </div>
 
               {error && (
@@ -127,15 +163,29 @@ export default function Signup() {
                 </Alert>
               )}
 
-              <Button type="submit" variant="gradient" className="w-full h-11" disabled={loading}>
-                {loading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Création...</> : 'Créer mon compte'}
+              <Button 
+                type="submit" 
+                variant="gradient" 
+                className="w-full h-11" 
+                disabled={loading}
+              >
+                {loading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Création...
+                  </>
+                ) : (
+                  'Créer mon compte'
+                )}
               </Button>
             </form>
 
             <div className="mt-6 text-center">
               <p className="text-sm text-muted-foreground">
                 Déjà un compte ?{' '}
-                <Link to="/login" className="font-medium text-primary hover:underline">Se connecter</Link>
+                <Link to="/login" className="font-medium text-primary hover:underline">
+                  Se connecter
+                </Link>
               </p>
             </div>
           </div>

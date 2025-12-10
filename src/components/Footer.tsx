@@ -1,3 +1,4 @@
+// src/components/Footer.tsx
 import { Link } from 'react-router-dom';
 import { ShieldCheck } from 'lucide-react';
 

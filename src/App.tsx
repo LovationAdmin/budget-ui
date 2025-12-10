@@ -1,6 +1,7 @@
+// src/App.tsx
 import { Routes, Route, Navigate } from 'react-router-dom';
 import PrivateRoute from './components/PrivateRoute';
-import { Toaster } from "@/components/ui/toaster";
+import { Toaster } from "@/components/ui/toaster"; // IMPORTANT
 
 // Pages
 import Login from './pages/Login'; 
@@ -16,12 +17,11 @@ export default function App() {
   return (
     <>
       <Routes>
-        {/* Public routes */}
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
         <Route path="/invitation/accept" element={<AcceptInvitation />} />
+        <Route path="/privacy" element={<PrivacyPolicy />} />
 
-        {/* Protected routes */}
         <Route path="/" element={
           <PrivateRoute>
             <Dashboard />
@@ -40,12 +40,11 @@ export default function App() {
           </PrivateRoute>
         } />
 
-        {/* 404 */}
         <Route path="/404" element={<NotFound />} />
         <Route path="*" element={<Navigate to="/404" replace />} />
-        <Route path="/privacy" element={<PrivacyPolicy />} />
       </Routes>
 
+      {/* Ce composant est indispensable pour les notifications */}
       <Toaster />
     </>
   );
