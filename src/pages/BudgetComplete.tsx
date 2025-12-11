@@ -9,7 +9,7 @@ import {
   type Charge,
   type Project,
   type YearlyData,
-  type YearlyExpenses,
+  // REMOVED: type YearlyExpenses (it is the same structure as YearlyData)
   type OneTimeIncomes,
   type MonthComments,
   type ProjectComments,
@@ -30,7 +30,7 @@ import ActionsBar from '../components/budget/ActionsBar';
 import MemberManagementSection from '../components/budget/MemberManagementSection';
 import { LayoutDashboard, Users, Receipt, Target, CalendarDays } from "lucide-react";
 import { ToastAction } from '@/components/ui/toast';
-import { useTutorial } from '../contexts/TutorialContext'; // IMPORT
+import { useTutorial } from '../contexts/TutorialContext';
 
 const BUDGET_NAV_ITEMS: NavItem[] = [
   { id: "overview", label: "Vue d'ensemble", icon: LayoutDashboard },
@@ -65,7 +65,7 @@ export default function BudgetComplete() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { toast } = useToast(); 
-  const { hasSeenTutorial, startTutorial } = useTutorial(); // USE HOOK
+  const { hasSeenTutorial, startTutorial } = useTutorial(); 
 
   const [budget, setBudget] = useState<BudgetData | null>(null);
   const [loading, setLoading] = useState(true);
