@@ -124,20 +124,21 @@ export default function StatsSection({
 
       <div className="grid gap-4 md:grid-cols-2">
         <Card className="glass-card">
-          <CardHeader>
+          <CardHeader className="pb-2">
             <CardTitle className="text-base font-medium">Répartition Mensuelle (Flux)</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="h-[300px] w-full">
+            {/* Reduced Height to 200px */}
+            <div className="h-[200px] w-full">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                <BarChart data={chartData} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
-                  <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }} dy={10} />
-                  <Tooltip cursor={{ fill: "hsl(var(--muted)/0.2)" }} contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }} />
-                  <Legend iconType="circle" />
-                  <Bar dataKey="charges" name="Charges Fixes" stackId="a" fill="hsl(var(--destructive))" radius={[0, 0, 4, 4]} />
-                  <Bar dataKey="projets" name="Alloc. Projets" stackId="a" fill="hsl(var(--secondary))" />
-                  <Bar dataKey="general" name="Épargne Générale" stackId="a" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+                  <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} dy={5} />
+                  <Tooltip cursor={{ fill: "hsl(var(--muted)/0.2)" }} contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', fontSize: '12px' }} />
+                  <Legend iconType="circle" wrapperStyle={{ fontSize: '11px', paddingTop: '5px' }} />
+                  <Bar dataKey="charges" name="Charges" stackId="a" fill="hsl(var(--destructive))" radius={[0, 0, 2, 2]} />
+                  <Bar dataKey="projets" name="Projets" stackId="a" fill="hsl(var(--secondary))" />
+                  <Bar dataKey="general" name="Épargne" stackId="a" fill="hsl(var(--primary))" radius={[2, 2, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -145,18 +146,20 @@ export default function StatsSection({
         </Card>
 
         <Card className="glass-card">
-          <CardHeader>
+          <CardHeader className="pb-2">
             <CardTitle className="text-base font-medium">Comparatif Revenus vs Sorties</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="h-[300px] w-full">
+            {/* Reduced Height to 200px */}
+            <div className="h-[200px] w-full">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                <BarChart data={chartData} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
-                  <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }} dy={10} />
-                  <Tooltip cursor={{ fill: "hsl(var(--muted)/0.2)" }} contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }} />
-                  <Bar dataKey="revenus" name="Revenus Totaux" fill="hsl(var(--success))" radius={[4, 4, 0, 0]} barSize={20} />
-                  <Bar dataKey="projets" name="Alloué Projets" fill="hsl(var(--secondary))" radius={[4, 4, 0, 0]} barSize={20} />
+                  <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} dy={5} />
+                  <Tooltip cursor={{ fill: "hsl(var(--muted)/0.2)" }} contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', fontSize: '12px' }} />
+                  <Legend iconType="circle" wrapperStyle={{ fontSize: '11px', paddingTop: '5px' }} />
+                  <Bar dataKey="revenus" name="Revenus" fill="hsl(var(--success))" radius={[2, 2, 0, 0]} barSize={15} />
+                  <Bar dataKey="projets" name="Inv + Épargne" fill="hsl(var(--secondary))" radius={[2, 2, 0, 0]} barSize={15} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
