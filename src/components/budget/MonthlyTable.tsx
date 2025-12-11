@@ -66,20 +66,16 @@ const GENERAL_SAVINGS_ID = 'epargne';
 
 // Helper: Check if a charge is active for a specific month index (0-11)
 const isChargeActive = (charge: Charge, year: number, monthIndex: number): boolean => {
-    // Start of the current column's month
     const monthStart = new Date(year, monthIndex, 1);
-    // End of the current column's month
     const monthEnd = new Date(year, monthIndex + 1, 0);
 
     if (charge.startDate) {
         const start = new Date(charge.startDate);
-        // If charge starts AFTER this month ends, it's not active yet
         if (start > monthEnd) return false;
     }
 
     if (charge.endDate) {
         const end = new Date(charge.endDate);
-        // If charge ended BEFORE this month started, it's inactive
         if (end < monthStart) return false;
     }
 
@@ -108,10 +104,8 @@ export default function MonthlyTable({
   const [commentDialogOpen, setCommentDialogOpen] = useState(false);
   const [tempComment, setTempComment] = useState('');
   
-  // State to track which project columns are visible
   const [visibleProjectIds, setVisibleProjectIds] = useState<string[]>([]);
 
-  // Initialize visibility when projects load
   useEffect(() => {
     const ids = projects.filter(p => p.id !== GENERAL_SAVINGS_ID).map(p => p.id);
     setVisibleProjectIds(prev => {
@@ -123,7 +117,6 @@ export default function MonthlyTable({
   // --- Calculations ---
   const getMonthlyBaseIncome = () => people.reduce((sum, person) => sum + person.salary, 0);
   
-  // Updated: Respects dates
   const getMonthlyChargesTotal = (monthIndex: number) => {
     return charges.reduce((sum, charge) => {
         return isChargeActive(charge, currentYear, monthIndex) ? sum + charge.amount : sum;
@@ -141,7 +134,6 @@ export default function MonthlyTable({
 
   const getGeneralSavingsAllocation = (month: string, monthIndex: number) => {
     const available = getMonthlyAvailableSavings(month, monthIndex);
-    // Note: We sum ALL projects (even hidden ones) to ensure math is correct
     const totalAllocatedToProjects = projects
       .filter(p => p.id !== GENERAL_SAVINGS_ID)
       .reduce((sum, project) => {
@@ -231,7 +223,6 @@ export default function MonthlyTable({
     );
   };
 
-  // Bulk Actions
   const showAllProjects = () => {
     setVisibleProjectIds(standardProjects.map(p => p.id));
   };
@@ -256,7 +247,6 @@ export default function MonthlyTable({
                 </Badge>
             </div>
 
-            {/* COLUMN VISIBILITY FILTER */}
             <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                     <Button variant="outline" size="sm" className="gap-2 h-9 bg-background">
@@ -270,7 +260,6 @@ export default function MonthlyTable({
                 <DropdownMenuContent align="end" className="w-64">
                     <DropdownMenuLabel>Projets à afficher</DropdownMenuLabel>
                     
-                    {/* Bulk Action Buttons */}
                     <div className="p-2 flex gap-2">
                         <Button 
                             variant="ghost" 
@@ -324,13 +313,14 @@ export default function MonthlyTable({
             <table className="w-full border-collapse">
               <thead className="bg-muted/30">
                 <tr>
-                  <th className="sticky left-0 z-20 bg-background px-2 py-4 text-left font-semibold text-foreground border-b border-r border-border shadow-[4px_0_12px_-4px_rgba(0,0,0,0.1)] w-[100px] min-w-[100px]">
+                  {/* MODIFIED: Left Sticky Column - Now contains both Month and Action Header */}
+                  <th className="sticky left-0 z-20 bg-background px-3 py-4 text-left font-semibold text-foreground border-b border-r border-border shadow-[4px_0_12px_-4px_rgba(0,0,0,0.1)] w-[120px] min-w-[120px]">
                     <div className="flex flex-col">
                       <span>Mois</span>
+                      <span className="text-[10px] font-normal text-muted-foreground">Actions</span>
                     </div>
                   </th>
                   
-                  {/* Fixed Columns */}
                   <th className="px-3 py-3 text-center font-medium text-success bg-success/5 border-b border-border border-r border-dashed border-border/50 min-w-[110px]">
                     Revenus
                   </th>
@@ -344,7 +334,7 @@ export default function MonthlyTable({
                     Disponible
                   </th>
 
-                  {/* Dynamic Project Columns (Only Visible Ones) */}
+                  {/* Dynamic Project Columns */}
                   {visibleProjects.map((project) => (
                     <th 
                       key={project.id}
@@ -370,9 +360,7 @@ export default function MonthlyTable({
                     </div>
                   </th>
                   
-                  <th className="px-3 py-3 text-center font-semibold text-muted-foreground border-b border-border min-w-[100px] sticky right-0 bg-background z-20 shadow-[-4px_0_12px_-4px_rgba(0,0,0,0.1)]">
-                    
-                  </th>
+                  {/* REMOVED: Right Sticky Column */}
                 </tr>
               </thead>
 
@@ -381,7 +369,6 @@ export default function MonthlyTable({
                   const isLocked = lockedMonths[month];
                   const hasComment = !!monthComments[month];
                   
-                  // UPDATED CALCULATIONS
                   const chargesTotal = getMonthlyChargesTotal(monthIndex);
                   const availableToSave = getMonthlyAvailableSavings(month, monthIndex);
                   const genSavingsAllocation = getGeneralSavingsAllocation(month, monthIndex);
@@ -393,11 +380,39 @@ export default function MonthlyTable({
                   return (
                     <tr key={month} className="hover:bg-muted/30 transition-colors group">
                       
-                      {/* 1. Sticky Month */}
-                      <td className="sticky left-0 z-20 bg-background group-hover:bg-background px-2 py-3 border-r border-border shadow-[4px_0_12px_-4px_rgba(0,0,0,0.1)] font-medium text-foreground">
-                        <div className="truncate text-sm font-semibold">{month}</div>
-                        <div className="text-[10px] text-muted-foreground font-normal">
-                            {isLocked ? 'Verrouillé' : 'Ouvert'}
+                      {/* MODIFIED: Sticky Left Column - Contains Month Name + Actions */}
+                      <td className="sticky left-0 z-20 bg-background group-hover:bg-background px-3 py-2 border-r border-border shadow-[4px_0_12px_-4px_rgba(0,0,0,0.1)]">
+                        <div className="flex flex-col gap-1">
+                            <div className="truncate text-sm font-semibold text-foreground" title={month}>{month}</div>
+                            
+                            {/* Actions Row in same cell */}
+                            <div className="flex items-center gap-1">
+                                <Button
+                                    variant="ghost"
+                                    size="icon-sm"
+                                    onClick={() => toggleMonthLock(month)}
+                                    className={cn(
+                                        "h-6 w-6 rounded-md transition-all",
+                                        isLocked ? "text-warning bg-warning/10 hover:bg-warning/20" : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                                    )}
+                                    title={isLocked ? "Déverrouiller" : "Verrouiller"}
+                                >
+                                    {isLocked ? <Lock className="h-3 w-3" /> : <Unlock className="h-3 w-3" />}
+                                </Button>
+                                
+                                <Button
+                                    variant="ghost"
+                                    size="icon-sm"
+                                    onClick={() => openCommentDialog(month)}
+                                    className={cn(
+                                        "h-6 w-6 rounded-md transition-all",
+                                        hasComment ? "text-primary bg-primary/10 hover:bg-primary/20" : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                                    )}
+                                    title="Commentaire global"
+                                >
+                                    <MessageCircle className="h-3 w-3" />
+                                </Button>
+                            </div>
                         </div>
                       </td>
 
@@ -579,36 +594,7 @@ export default function MonthlyTable({
                         </div>
                       </td>
 
-                      {/* 8. Actions Sticky Right */}
-                      <td className="px-3 py-2 sticky right-0 z-20 bg-background group-hover:bg-background shadow-[-4px_0_12px_-4px_rgba(0,0,0,0.1)] border-l border-border">
-                          <div className="flex items-center justify-center gap-1">
-                           <Button
-                            variant="ghost"
-                            size="icon-sm"
-                            onClick={() => toggleMonthLock(month)}
-                            className={cn(
-                              "h-8 w-8 rounded-full transition-all",
-                              isLocked ? "text-warning bg-warning/10 hover:bg-warning/20" : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                            )}
-                            title={isLocked ? "Déverrouiller" : "Verrouiller"}
-                          >
-                            {isLocked ? <Lock className="h-3.5 w-3.5" /> : <Unlock className="h-3.5 w-3.5" />}
-                          </Button>
-                           
-                          <Button
-                              variant="ghost"
-                              size="icon-sm"
-                              onClick={() => openCommentDialog(month)}
-                              className={cn(
-                                "h-8 w-8 rounded-full transition-all",
-                                hasComment ? "text-primary bg-primary/10 hover:bg-primary/20" : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                              )}
-                              title="Commentaire global"
-                            >
-                              <MessageCircle className="h-3.5 w-3.5" />
-                            </Button>
-                        </div>
-                      </td>
+                      {/* REMOVED: Right Sticky Column Body */}
 
                     </tr>
                   );
