@@ -256,13 +256,27 @@ export default function MonthlyTable({
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-64">
                     <DropdownMenuLabel>Colonnes Standards</DropdownMenuLabel>
-                    <DropdownMenuCheckboxItem checked={showIncome} onCheckedChange={setShowIncome}>
+                    
+                    {/* ADDED: onSelect={(e) => e.preventDefault()} to prevent closing */}
+                    <DropdownMenuCheckboxItem 
+                        checked={showIncome} 
+                        onCheckedChange={setShowIncome}
+                        onSelect={(e) => e.preventDefault()}
+                    >
                         Revenus (Salaires)
                     </DropdownMenuCheckboxItem>
-                    <DropdownMenuCheckboxItem checked={showOneTime} onCheckedChange={setShowOneTime}>
+                    <DropdownMenuCheckboxItem 
+                        checked={showOneTime} 
+                        onCheckedChange={setShowOneTime}
+                        onSelect={(e) => e.preventDefault()}
+                    >
                         Revenus (Ponctuels)
                     </DropdownMenuCheckboxItem>
-                    <DropdownMenuCheckboxItem checked={showCharges} onCheckedChange={setShowCharges}>
+                    <DropdownMenuCheckboxItem 
+                        checked={showCharges} 
+                        onCheckedChange={setShowCharges}
+                        onSelect={(e) => e.preventDefault()}
+                    >
                         Charges Fixes
                     </DropdownMenuCheckboxItem>
 
