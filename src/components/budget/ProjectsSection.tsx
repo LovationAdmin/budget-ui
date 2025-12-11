@@ -268,9 +268,10 @@ export default function ProjectsSection({ projects, onProjectsChange, yearlyData
                     {/* Progress Bar Area */}
                     {hasTarget && (
                         <div className="space-y-1.5 mt-1">
+                            {/* HERE IS THE CHANGE: Explicitly adding "% réalisé" */}
                             <div className="flex justify-between items-end text-[10px]">
                                 <span className={cn("font-medium", isGoalReached ? "text-success" : "text-muted-foreground")}>
-                                    {isGoalReached ? "100%" : `${progress.toFixed(0)}%`}
+                                    {isGoalReached ? "100% réalisé" : `${progress.toFixed(0)}% réalisé`}
                                 </span>
                                 {isGoalReached ? (
                                     <span className="text-success font-bold flex items-center gap-1">
