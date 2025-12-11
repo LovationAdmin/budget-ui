@@ -9,7 +9,7 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Check, ShieldCheck, Calendar, Target, Users } from "lucide-react";
+import { ArrowRight, Check, ShieldCheck, Calendar, Target, Users, MessageCircle } from "lucide-react";
 
 // Tutorial Steps Configuration
 const STEPS = [
@@ -38,13 +38,17 @@ const STEPS = [
       <div className="space-y-3 text-sm text-muted-foreground">
         <ul className="list-disc pl-4 space-y-2">
           <li>
-            <strong>Mois verrouillés :</strong> Les mois passés se verrouillent pour figer l'historique.
-          </li>
-          <li>
             <strong>Revenus & Charges :</strong> Saisissez vos entrées et sorties fixes.
           </li>
           <li>
-            <strong>Disponible :</strong> Ce qu'il reste est automatiquement réparti entre vos projets et l'épargne générale.
+            <strong>Disponible :</strong> Ce qu'il reste est automatiquement réparti entre vos projets.
+          </li>
+          {/* NEW BULLET POINT ABOUT COMMENTS */}
+          <li className="flex items-start gap-2">
+            <span className="mt-1"><MessageCircle className="h-3 w-3 inline" /></span>
+            <span>
+                <strong>Notes & Commentaires :</strong> Cliquez sur les petites bulles pour annoter un mois globalement ou préciser une dépense spécifique dans une case projet.
+            </span>
           </li>
         </ul>
       </div>
