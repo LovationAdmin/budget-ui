@@ -5,13 +5,15 @@ import {
   Menu,
   LogOut,
   User,
-  LucideIcon
+  LucideIcon,
+  HelpCircle // Added icon
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { MemberAvatar } from "./MemberAvatar";
 import { useNavigate } from "react-router-dom";
 import { useNotifications } from "@/contexts/NotificationContext";
-import { useAuth } from "@/contexts/AuthContext"; // Import useAuth
+import { useAuth } from "@/contexts/AuthContext";
+import { useTutorial } from "@/contexts/TutorialContext"; // Added Context
 import {
   Popover,
   PopoverContent,
@@ -24,7 +26,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"; // Import Dropdown
+} from "@/components/ui/dropdown-menu";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
 export interface NavItem {
@@ -56,7 +58,8 @@ export function BudgetNavbar({
 }: BudgetNavbarProps) {
   const navigate = useNavigate();
   const { notifications, unreadCount, markAllAsRead, markAsRead } = useNotifications();
-  const { logout } = useAuth(); // Get logout function
+  const { logout } = useAuth();
+  const { startTutorial } = useTutorial(); // Hook for tutorial
 
   const handleLogout = () => {
     logout();
@@ -120,6 +123,18 @@ export function BudgetNavbar({
 
         {/* Right: Actions */}
         <div className="flex items-center gap-2">
+          
+          {/* TUTORIAL BUTTON */}
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={startTutorial}
+            title="Aide & Tutoriel"
+            className="text-muted-foreground hover:text-primary"
+          >
+            <HelpCircle className="h-5 w-5" />
+          </Button>
+
           {/* Notifications Popover */}
           <Popover>
             <PopoverTrigger asChild>
@@ -186,7 +201,7 @@ export function BudgetNavbar({
 
           <Button 
             variant="ghost" 
-            size="icon"
+            size="icon" 
             onClick={() => onSectionChange?.('settings')}
           >
             <Settings className="h-5 w-5" />

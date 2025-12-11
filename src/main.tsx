@@ -3,6 +3,8 @@ import ReactDOM from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import { NotificationProvider } from './contexts/NotificationContext';
+import { TutorialProvider } from './contexts/TutorialContext'; // <--- Import
+import { TutorialModal } from './components/tutorial/TutorialModal'; // <--- Import
 import App from './App';
 import './index.css';
 
@@ -11,7 +13,10 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
     <BrowserRouter>
       <AuthProvider>
         <NotificationProvider>
-          <App />
+          <TutorialProvider> {/* <--- Wrap here */}
+            <App />
+            <TutorialModal /> {/* <--- Place component here */}
+          </TutorialProvider>
         </NotificationProvider>
       </AuthProvider>
     </BrowserRouter>

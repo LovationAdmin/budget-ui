@@ -5,11 +5,11 @@ import {
   convertOldFormatToNew, 
   convertNewFormatToOld,
   type RawBudgetData,
-  type ConvertedBudgetData,
   type Person,
   type Charge,
   type Project,
   type YearlyData,
+  type YearlyExpenses,
   type OneTimeIncomes,
   type MonthComments,
   type ProjectComments,
@@ -28,8 +28,9 @@ import MonthlyTable from '../components/budget/MonthlyTable';
 import StatsSection from '../components/budget/StatsSection';
 import ActionsBar from '../components/budget/ActionsBar';
 import MemberManagementSection from '../components/budget/MemberManagementSection';
-import { LayoutDashboard, Users, Receipt, Target, CalendarDays, PartyPopper } from "lucide-react";
+import { LayoutDashboard, Users, Receipt, Target, CalendarDays } from "lucide-react";
 import { ToastAction } from '@/components/ui/toast';
+import { useTutorial } from '../contexts/TutorialContext'; // IMPORT
 
 const BUDGET_NAV_ITEMS: NavItem[] = [
   { id: "overview", label: "Vue d'ensemble", icon: LayoutDashboard },
@@ -64,6 +65,7 @@ export default function BudgetComplete() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { toast } = useToast(); 
+  const { hasSeenTutorial, startTutorial } = useTutorial(); // USE HOOK
 
   const [budget, setBudget] = useState<BudgetData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -90,6 +92,16 @@ export default function BudgetComplete() {
   const loadedRef = useRef(false);
   // Ref to prevent spamming congratulations on every render
   const notifiedProjectsRef = useRef<Set<string>>(new Set());
+
+  // 0. AUTO TUTORIAL START
+  useEffect(() => {
+    if (!loading && !hasSeenTutorial && loadedRef.current) {
+       const timer = setTimeout(() => {
+           startTutorial();
+       }, 1500); // Small delay to let page settle
+       return () => clearTimeout(timer);
+    }
+  }, [loading, hasSeenTutorial, startTutorial]);
 
   useEffect(() => {
     if (id) loadBudget();
@@ -145,7 +157,7 @@ export default function BudgetComplete() {
     return () => clearInterval(memberInterval);
   }, [id]);
 
-  // 4. ACHIEVEMENT CHECKER (New Feature)
+  // 4. ACHIEVEMENT CHECKER
   useEffect(() => {
     if (!loadedRef.current) return;
 
@@ -162,7 +174,6 @@ export default function BudgetComplete() {
         });
 
         if (totalAllocated >= project.targetAmount) {
-            // Mark as notified so we don't spam
             notifiedProjectsRef.current.add(project.id);
 
             // Trigger Celebration Toast
@@ -239,7 +250,7 @@ export default function BudgetComplete() {
       people,
       charges,
       projects,
-      yearlyData,     
+      yearlyData,      
       yearlyExpenses, 
       oneTimeIncomes,
       monthComments,

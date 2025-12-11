@@ -6,8 +6,9 @@ import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, AlertTriangle, Trash2 } from 'lucide-react';
+import { ArrowLeft, AlertTriangle, Trash2, HelpCircle } from 'lucide-react';
 import { AvatarPicker } from '../components/ui/avatar-picker';
+import { useTutorial } from '../contexts/TutorialContext'; // IMPORT
 import {
   AlertDialog,
   AlertDialogAction,
@@ -23,6 +24,7 @@ export default function Profile() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { startTutorial } = useTutorial(); // HOOK
   
   // Profile State
   const [name, setName] = useState(user?.name || '');
@@ -105,7 +107,6 @@ export default function Profile() {
     setDeleting(true);
     
     try {
-      // Calls DELETE /api/v1/user/account
       await userAPI.deleteAccount({ password: deletePassword });
       
       toast({ 
@@ -114,7 +115,6 @@ export default function Profile() {
         variant: "default" 
       });
       
-      // Clear auth and redirect
       logout();
       navigate('/login');
     } catch (err: any) {
@@ -148,7 +148,6 @@ export default function Profile() {
           <h2 className="text-xl font-semibold text-gray-900 mb-6">Informations</h2>
           
           <form onSubmit={handleUpdateProfile}>
-            {/* AVATAR PICKER */}
             <div className="flex flex-col items-center mb-8">
                 <AvatarPicker 
                     name={name} 
@@ -225,7 +224,19 @@ export default function Profile() {
           </form>
         </div>
 
-        {/* --- SECTION 3: DANGER ZONE --- */}
+        {/* --- SECTION 3: TUTORIAL --- */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
+            <h2 className="text-xl font-semibold text-gray-900 mb-4">Aide & Tutoriel</h2>
+            <p className="text-muted-foreground text-sm mb-4">
+                Besoin d'un rappel sur le fonctionnement de l'application ?
+            </p>
+            <Button variant="outline" onClick={startTutorial} className="w-full sm:w-auto gap-2">
+                <HelpCircle className="h-4 w-4" />
+                Revoir le tutoriel
+            </Button>
+        </div>
+
+        {/* --- SECTION 4: DANGER ZONE --- */}
         <div className="bg-red-50 rounded-xl border border-red-200 p-6">
             <div className="flex items-center gap-3 mb-4">
                 <AlertTriangle className="h-6 w-6 text-red-600" />
