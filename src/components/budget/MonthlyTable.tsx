@@ -324,7 +324,7 @@ export default function MonthlyTable({
             <table className="w-full border-collapse">
               <thead className="bg-muted/30">
                 <tr>
-                  <th className="sticky left-0 z-20 bg-background px-4 py-4 text-left font-semibold text-foreground border-b border-r border-border shadow-[4px_0_12px_-4px_rgba(0,0,0,0.1)] min-w-[160px]">
+                  <th className="sticky left-0 z-20 bg-background px-2 py-4 text-left font-semibold text-foreground border-b border-r border-border shadow-[4px_0_12px_-4px_rgba(0,0,0,0.1)] w-[100px] min-w-[100px]">
                     <div className="flex flex-col">
                       <span>Mois</span>
                     </div>
@@ -361,7 +361,7 @@ export default function MonthlyTable({
                   ))}
 
                   <th className="px-3 py-3 text-center font-bold text-primary bg-primary/5 border-b border-border min-w-[180px]">
-                     <div className="flex flex-col items-center gap-1">
+                      <div className="flex flex-col items-center gap-1">
                         <span>Épargne Générale</span>
                         <div className="grid grid-cols-2 gap-2 w-full text-[10px] font-normal text-primary/70 bg-primary/10 rounded px-2 py-0.5">
                            <span>Auto</span>
@@ -394,8 +394,8 @@ export default function MonthlyTable({
                     <tr key={month} className="hover:bg-muted/30 transition-colors group">
                       
                       {/* 1. Sticky Month */}
-                      <td className="sticky left-0 z-20 bg-background group-hover:bg-background px-4 py-3 border-r border-border shadow-[4px_0_12px_-4px_rgba(0,0,0,0.1)] font-medium text-foreground">
-                        {month}
+                      <td className="sticky left-0 z-20 bg-background group-hover:bg-background px-2 py-3 border-r border-border shadow-[4px_0_12px_-4px_rgba(0,0,0,0.1)] font-medium text-foreground">
+                        <div className="truncate text-sm font-semibold">{month}</div>
                         <div className="text-[10px] text-muted-foreground font-normal">
                             {isLocked ? 'Verrouillé' : 'Ouvert'}
                         </div>
@@ -523,7 +523,7 @@ export default function MonthlyTable({
                                     disabled
                                     className="text-center h-8 text-sm px-1 font-bold bg-primary/10 border-primary/20 text-primary cursor-default shadow-none"
                                     title="Calculé automatiquement (Revenus - Charges - Projets)"
-                                  />
+                                />
                                 <Input
                                     type="number"
                                     min="0"
@@ -581,8 +581,8 @@ export default function MonthlyTable({
 
                       {/* 8. Actions Sticky Right */}
                       <td className="px-3 py-2 sticky right-0 z-20 bg-background group-hover:bg-background shadow-[-4px_0_12px_-4px_rgba(0,0,0,0.1)] border-l border-border">
-                         <div className="flex items-center justify-center gap-1">
-                          <Button
+                          <div className="flex items-center justify-center gap-1">
+                           <Button
                             variant="ghost"
                             size="icon-sm"
                             onClick={() => toggleMonthLock(month)}
@@ -594,19 +594,19 @@ export default function MonthlyTable({
                           >
                             {isLocked ? <Lock className="h-3.5 w-3.5" /> : <Unlock className="h-3.5 w-3.5" />}
                           </Button>
-                          
+                           
                           <Button
                               variant="ghost"
-                            size="icon-sm"
-                            onClick={() => openCommentDialog(month)}
-                            className={cn(
-                              "h-8 w-8 rounded-full transition-all",
-                              hasComment ? "text-primary bg-primary/10 hover:bg-primary/20" : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                            )}
-                            title="Commentaire global"
-                          >
-                            <MessageCircle className="h-3.5 w-3.5" />
-                          </Button>
+                              size="icon-sm"
+                              onClick={() => openCommentDialog(month)}
+                              className={cn(
+                                "h-8 w-8 rounded-full transition-all",
+                                hasComment ? "text-primary bg-primary/10 hover:bg-primary/20" : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                              )}
+                              title="Commentaire global"
+                            >
+                              <MessageCircle className="h-3.5 w-3.5" />
+                            </Button>
                         </div>
                       </td>
 
