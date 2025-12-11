@@ -3,8 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-// FIX: Added 'X' to the imports
-import { Plus, Trash2, Target, CheckCircle2, X } from "lucide-react";
+import { Plus, Trash2, Target, CheckCircle2, CalendarClock, X } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
 import type { Project, YearlyData } from '@/utils/importConverter';
@@ -13,22 +12,42 @@ interface ProjectsSectionProps {
   projects: Project[];
   onProjectsChange: (projects: Project[]) => void;
   yearlyData?: YearlyData; 
+  currentYear?: number; // ADDED: Need this to check if budget months are in past
 }
 
 const MONTHS = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
 
-export default function ProjectsSection({ projects, onProjectsChange, yearlyData = {} }: ProjectsSectionProps) {
+export default function ProjectsSection({ projects, onProjectsChange, yearlyData = {}, currentYear = new Date().getFullYear() }: ProjectsSectionProps) {
   const [newProjectLabel, setNewProjectLabel] = useState('');
   const [newProjectTarget, setNewProjectTarget] = useState('');
   const [showAddForm, setShowAddForm] = useState(false);
 
-  // Helper to calculate total allocated for a project across all months
-  const getProjectTotalAllocated = (projectId: string) => {
-    let total = 0;
-    MONTHS.forEach(month => {
-        total += yearlyData[month]?.[projectId] || 0;
+  // Helper: Get today's month index (0-11)
+  const today = new Date();
+  const currentMonthIndex = today.getMonth();
+  const currentRealYear = today.getFullYear();
+
+  const getProjectStats = (projectId: string) => {
+    let totalPlanned = 0;
+    let totalRealized = 0;
+
+    MONTHS.forEach((month, index) => {
+        const amount = yearlyData[month]?.[projectId] || 0;
+        totalPlanned += amount;
+
+        // "Realized" logic:
+        // 1. If budget year is in the past (< currentRealYear), ALL months are realized.
+        // 2. If budget year is current year, months <= currentMonthIndex are realized.
+        // 3. If budget year is future, nothing is realized.
+        
+        if (currentYear < currentRealYear) {
+            totalRealized += amount;
+        } else if (currentYear === currentRealYear && index <= currentMonthIndex) {
+            totalRealized += amount;
+        }
     });
-    return total;
+
+    return { totalPlanned, totalRealized };
   };
 
   const addProject = (e: React.FormEvent) => {
@@ -136,20 +155,25 @@ export default function ProjectsSection({ projects, onProjectsChange, yearlyData
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-            {projects.map((project, index) => {
-              const allocated = getProjectTotalAllocated(project.id);
+            {projects.map((project) => {
+              const { totalPlanned, totalRealized } = getProjectStats(project.id);
               const target = project.targetAmount || 0;
               const hasTarget = target > 0;
-              const progress = hasTarget ? Math.min((allocated / target) * 100, 100) : 0;
-              const isFullyPlanned = hasTarget && allocated >= target;
+              
+              // Progress reflects Realized Amount vs Target
+              // If no target, we just show 100% if there is money
+              const progress = hasTarget ? Math.min((totalRealized / target) * 100, 100) : (totalRealized > 0 ? 100 : 0);
+              
+              const isGoalReached = hasTarget && totalRealized >= target;
+              const isFullyScheduled = hasTarget && totalPlanned >= target && !isGoalReached;
 
               return (
                 <div
                   key={project.id}
                   className={cn(
                     "group relative overflow-hidden rounded-xl border transition-all duration-200 p-4",
-                    isFullyPlanned 
-                        ? "bg-success/5 border-success/30 shadow-sm" 
+                    isGoalReached 
+                        ? "bg-success/10 border-success/30 shadow-sm" 
                         : "bg-card/50 border-border/50 hover:bg-card hover:shadow-md"
                   )}
                 >
@@ -160,9 +184,11 @@ export default function ProjectsSection({ projects, onProjectsChange, yearlyData
                         <div className="flex items-center gap-2 flex-1 min-w-0">
                             <div className={cn(
                                 "flex h-8 w-8 shrink-0 items-center justify-center rounded-lg",
-                                isFullyPlanned ? "bg-success/20 text-success" : "bg-secondary/20 text-secondary"
+                                isGoalReached ? "bg-success/20 text-success" : 
+                                isFullyScheduled ? "bg-blue-100 text-blue-600" : "bg-secondary/20 text-secondary"
                             )}>
-                                {isFullyPlanned ? <CheckCircle2 className="h-4 w-4" /> : <Target className="h-4 w-4" />}
+                                {isGoalReached ? <CheckCircle2 className="h-4 w-4" /> : 
+                                 isFullyScheduled ? <CalendarClock className="h-4 w-4" /> : <Target className="h-4 w-4" />}
                             </div>
                             <Input
                                 value={project.label}
@@ -175,7 +201,7 @@ export default function ProjectsSection({ projects, onProjectsChange, yearlyData
                             variant="ghost"
                             size="icon-sm"
                             onClick={() => removeProject(project.id)}
-                            className="opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive h-7 w-7"
+                            className="opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive hover:bg-destructive/10 h-7 w-7"
                         >
                             <Trash2 className="h-3.5 w-3.5" />
                         </Button>
@@ -198,12 +224,14 @@ export default function ProjectsSection({ projects, onProjectsChange, yearlyData
                         </div>
 
                         <div className="text-right">
-                            <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">Planifié</p>
+                            <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">
+                                {isGoalReached ? "Atteint" : "En Caisse"}
+                            </p>
                             <p className={cn(
                                 "text-sm font-bold",
-                                isFullyPlanned ? "text-success" : "text-foreground"
+                                isGoalReached ? "text-success" : "text-foreground"
                             )}>
-                                {allocated.toLocaleString()} €
+                                {totalRealized.toLocaleString()} €
                             </p>
                         </div>
                     </div>
@@ -212,22 +240,34 @@ export default function ProjectsSection({ projects, onProjectsChange, yearlyData
                     {hasTarget && (
                         <div className="space-y-1 mt-1">
                             <div className="flex justify-between text-[10px] text-muted-foreground">
-                                <span>{progress.toFixed(0)}%</span>
-                                {isFullyPlanned ? (
+                                <span>{progress.toFixed(0)}% réalisé</span>
+                                {isGoalReached ? (
                                     <span className="text-success font-medium flex items-center gap-1">
                                         <CheckCircle2 className="h-3 w-3" /> Objectif atteint
                                     </span>
+                                ) : isFullyScheduled ? (
+                                    <span className="text-blue-600 font-medium flex items-center gap-1">
+                                        <CalendarClock className="h-3 w-3" /> Planifié à 100%
+                                    </span>
                                 ) : (
-                                    <span>Reste: {(target - allocated).toLocaleString()} €</span>
+                                    <span>Reste: {(target - totalRealized).toLocaleString()} €</span>
                                 )}
                             </div>
-                            <Progress 
-                                value={progress} 
-                                className={cn(
-                                    "h-1.5",
-                                    isFullyPlanned ? "bg-success/20" : "bg-secondary/20"
-                                )} 
-                            />
+                            <div className="relative h-1.5 w-full bg-secondary/10 rounded-full overflow-hidden">
+                                {/* Plan Bar (Background) */}
+                                <div 
+                                    className="absolute top-0 left-0 h-full bg-blue-200 transition-all duration-300"
+                                    style={{ width: `${Math.min((totalPlanned / target) * 100, 100)}%` }}
+                                />
+                                {/* Realized Bar (Foreground) */}
+                                <div 
+                                    className={cn(
+                                        "absolute top-0 left-0 h-full transition-all duration-500",
+                                        isGoalReached ? "bg-success" : "bg-secondary"
+                                    )}
+                                    style={{ width: `${progress}%` }}
+                                />
+                            </div>
                         </div>
                     )}
                   </div>

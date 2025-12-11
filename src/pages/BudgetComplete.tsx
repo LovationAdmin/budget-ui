@@ -378,7 +378,8 @@ export default function BudgetComplete() {
             <ProjectsSection 
                 projects={projects} 
                 onProjectsChange={setProjects}
-                yearlyData={yearlyData} // Passed for Progress Calculation
+                yearlyData={yearlyData}
+                currentYear={currentYear}
             />
         </div>
 
