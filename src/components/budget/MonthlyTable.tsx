@@ -103,11 +103,11 @@ export default function MonthlyTable({
   const [commentDialogOpen, setCommentDialogOpen] = useState(false);
   const [tempComment, setTempComment] = useState('');
   
-  // Visibility States
+  // Visibility States - UPDATED: Standard columns default to FALSE (hidden)
   const [visibleProjectIds, setVisibleProjectIds] = useState<string[]>([]);
-  const [showIncome, setShowIncome] = useState(true);
-  const [showOneTime, setShowOneTime] = useState(true);
-  const [showCharges, setShowCharges] = useState(true);
+  const [showIncome, setShowIncome] = useState(false); 
+  const [showOneTime, setShowOneTime] = useState(false);
+  const [showCharges, setShowCharges] = useState(false);
 
   useEffect(() => {
     const ids = projects.filter(p => p.id !== GENERAL_SAVINGS_ID).map(p => p.id);
@@ -257,7 +257,6 @@ export default function MonthlyTable({
                 <DropdownMenuContent align="end" className="w-64">
                     <DropdownMenuLabel>Colonnes Standards</DropdownMenuLabel>
                     
-                    {/* ADDED: onSelect={(e) => e.preventDefault()} to prevent closing */}
                     <DropdownMenuCheckboxItem 
                         checked={showIncome} 
                         onCheckedChange={setShowIncome}
