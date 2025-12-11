@@ -4,24 +4,45 @@ import { useAuth } from '../contexts/AuthContext';
 import { BudgetNavbar } from '../components/budget/BudgetNavbar';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, AlertTriangle, Trash2 } from 'lucide-react';
 import { AvatarPicker } from '../components/ui/avatar-picker';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 export default function Profile() {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   
+  // Profile State
   const [name, setName] = useState(user?.name || '');
   const [avatar, setAvatar] = useState(user?.avatar || '');
+  
+  // Password State
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   
+  // Delete Account State
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deletePassword, setDeletePassword] = useState('');
+  
+  // Loading States
   const [updating, setUpdating] = useState(false);
   const [changingPassword, setChangingPassword] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
+  // 1. Update Profile Logic
   const handleUpdateProfile = async (e: FormEvent) => {
     e.preventDefault();
     setUpdating(true);
@@ -30,10 +51,9 @@ export default function Profile() {
       await userAPI.updateProfile({ name, avatar });
       
       if (user) {
-        // Update local storage so the navbar and other components update immediately
+        // Update local storage so the navbar updates immediately
         const updatedUser = { ...user, name, avatar };
         localStorage.setItem('user', JSON.stringify(updatedUser));
-        // Simple reload to propagate changes to context (or you could expose a setUser in AuthContext)
         window.location.reload();
       }
       toast({ title: "Profil mis à jour", description: "Vos informations ont été enregistrées.", variant: "success" });
@@ -48,6 +68,7 @@ export default function Profile() {
     }
   };
 
+  // 2. Change Password Logic
   const handleChangePassword = async (e: FormEvent) => {
     e.preventDefault();
     setChangingPassword(true);
@@ -78,9 +99,37 @@ export default function Profile() {
     }
   };
 
+  // 3. Delete Account Logic
+  const handleDeleteAccount = async () => {
+    if (!deletePassword) return;
+    setDeleting(true);
+    
+    try {
+      // Calls DELETE /api/v1/user/account
+      await userAPI.deleteAccount({ password: deletePassword });
+      
+      toast({ 
+        title: "Compte supprimé", 
+        description: "Vos données ont été effacées. Au revoir !", 
+        variant: "default" 
+      });
+      
+      // Clear auth and redirect
+      logout();
+      navigate('/login');
+    } catch (err: any) {
+      toast({ 
+        title: "Erreur", 
+        description: err.response?.data?.error || "Mot de passe incorrect ou erreur serveur", 
+        variant: "destructive" 
+      });
+      setDeleting(false); 
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-gray-50">
-      <BudgetNavbar items={[]} userName={user?.name} />
+    <div className="min-h-screen bg-gray-50 pb-12">
+      <BudgetNavbar items={[]} userName={user?.name} userAvatar={user?.avatar} />
       
       <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <Button 
@@ -94,7 +143,7 @@ export default function Profile() {
 
         <h1 className="text-3xl font-bold text-gray-900 mb-8">Mon Profil</h1>
 
-        {/* Profile Info */}
+        {/* --- SECTION 1: PROFILE INFO --- */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
           <h2 className="text-xl font-semibold text-gray-900 mb-6">Informations</h2>
           
@@ -111,21 +160,20 @@ export default function Profile() {
 
             <div className="mb-4">
               <label className="block text-sm font-medium text-gray-700 mb-2">Nom</label>
-              <input
+              <Input
                 type="text"
                 value={name}
                 onChange={(e: ChangeEvent<HTMLInputElement>) => setName(e.target.value)}
-                className="flex h-10 w-full rounded-xl border border-input bg-background px-3 py-2 text-sm"
                 required
               />
             </div>
 
             <div className="mb-4">
               <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
-              <input
+              <Input
                 type="email"
                 value={user?.email || ''}
-                className="flex h-10 w-full rounded-xl border border-input bg-gray-100 px-3 py-2 text-sm text-gray-500"
+                className="bg-gray-100 text-gray-500"
                 disabled
               />
             </div>
@@ -136,28 +184,26 @@ export default function Profile() {
           </form>
         </div>
 
-        {/* Change Password */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        {/* --- SECTION 2: CHANGE PASSWORD --- */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
           <h2 className="text-xl font-semibold text-gray-900 mb-4">Changer le mot de passe</h2>
           <form onSubmit={handleChangePassword}>
             <div className="mb-4">
               <label className="block text-sm font-medium text-gray-700 mb-2">Mot de passe actuel</label>
-              <input
+              <Input
                 type="password"
                 value={currentPassword}
                 onChange={(e: ChangeEvent<HTMLInputElement>) => setCurrentPassword(e.target.value)}
-                className="flex h-10 w-full rounded-xl border border-input bg-background px-3 py-2 text-sm"
                 required
               />
             </div>
 
             <div className="mb-4">
               <label className="block text-sm font-medium text-gray-700 mb-2">Nouveau mot de passe</label>
-              <input
+              <Input
                 type="password"
                 value={newPassword}
                 onChange={(e: ChangeEvent<HTMLInputElement>) => setNewPassword(e.target.value)}
-                className="flex h-10 w-full rounded-xl border border-input bg-background px-3 py-2 text-sm"
                 minLength={8}
                 required
               />
@@ -165,11 +211,10 @@ export default function Profile() {
 
             <div className="mb-4">
               <label className="block text-sm font-medium text-gray-700 mb-2">Confirmer le nouveau mot de passe</label>
-              <input
+              <Input
                 type="password"
                 value={confirmPassword}
                 onChange={(e: ChangeEvent<HTMLInputElement>) => setConfirmPassword(e.target.value)}
-                className="flex h-10 w-full rounded-xl border border-input bg-background px-3 py-2 text-sm"
                 required
               />
             </div>
@@ -179,7 +224,68 @@ export default function Profile() {
             </Button>
           </form>
         </div>
+
+        {/* --- SECTION 3: DANGER ZONE --- */}
+        <div className="bg-red-50 rounded-xl border border-red-200 p-6">
+            <div className="flex items-center gap-3 mb-4">
+                <AlertTriangle className="h-6 w-6 text-red-600" />
+                <h2 className="text-xl font-semibold text-red-900">Zone de danger</h2>
+            </div>
+            
+            <p className="text-red-700 mb-6 text-sm">
+                La suppression de votre compte est irréversible. Toutes vos données (budgets dont vous êtes propriétaire, historique, paramètres) seront définitivement effacées de nos serveurs.
+            </p>
+
+            <Button 
+                variant="destructive" 
+                onClick={() => {
+                    setDeletePassword('');
+                    setDeleteDialogOpen(true);
+                }}
+                className="bg-red-600 hover:bg-red-700"
+            >
+                <Trash2 className="mr-2 h-4 w-4" /> Supprimer mon compte
+            </Button>
+        </div>
       </div>
+
+      {/* --- CONFIRMATION DIALOG --- */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-destructive font-bold">Supprimer définitivement le compte ?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Cette action ne peut pas être annulée. Cela supprimera définitivement votre compte et retirera toutes vos données de nos serveurs.<br/><br/>
+              <strong>Veuillez saisir votre mot de passe pour confirmer :</strong>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          
+          <div className="py-2">
+             <Input 
+                type="password"
+                placeholder="Votre mot de passe"
+                value={deletePassword}
+                onChange={(e) => setDeletePassword(e.target.value)}
+                className="border-red-200 focus-visible:ring-red-500"
+             />
+          </div>
+
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>Annuler</AlertDialogCancel>
+            <AlertDialogAction 
+                onClick={(e) => {
+                    e.preventDefault();
+                    handleDeleteAccount();
+                }}
+                className="bg-red-600 hover:bg-red-700 text-white"
+                disabled={deleting || !deletePassword}
+            >
+                {deleting ? 'Suppression...' : 'Confirmer la suppression'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
     </div>
   );
 }

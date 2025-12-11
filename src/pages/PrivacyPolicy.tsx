@@ -1,14 +1,15 @@
 import { BudgetNavbar } from '@/components/budget/BudgetNavbar';
 import { Footer } from '@/components/Footer';
-import { Shield, Lock, EyeOff, Server, Key } from 'lucide-react';
+import { Shield, Lock, EyeOff, Trash2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { Link } from 'react-router-dom';
 
 export default function PrivacyPolicy() {
   const { user } = useAuth();
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
-      <BudgetNavbar items={[]} userName={user?.name} />
+      <BudgetNavbar items={[]} userName={user?.name} userAvatar={user?.avatar} />
       
       <main className="flex-1 container mx-auto px-4 py-12 max-w-4xl">
         <div className="text-center mb-12">
@@ -63,9 +64,27 @@ export default function PrivacyPolicy() {
             Vos données sont hébergées sur des serveurs sécurisés en Europe, conformes aux normes RGPD.
           </p>
 
+          {/* NEW SECTION: Data Deletion */}
+          <h3>Suppression du compte et des données</h3>
+          <p>
+            Vous gardez le contrôle total de vos informations. Conformément à votre droit à l'oubli, vous pouvez supprimer votre compte et l'intégralité de vos données associées à tout moment.
+          </p>
+          
+          <div className="bg-red-50 p-4 rounded-lg border border-red-100 flex gap-3 not-prose my-6">
+            <Trash2 className="h-5 w-5 text-red-600 shrink-0 mt-0.5" />
+            <div>
+                <h4 className="font-semibold text-red-900 text-sm">Comment supprimer mes données ?</h4>
+                <p className="text-sm text-red-800 mt-1">
+                    Rendez-vous sur votre page <Link to="/profile" className="underline font-medium hover:text-red-950">Profil</Link>. 
+                    Tout en bas, dans la section "Zone de danger", cliquez sur "Supprimer mon compte". 
+                    Cette action est <strong>immédiate et irréversible</strong> : toutes vos données seront effacées de nos serveurs.
+                </p>
+            </div>
+          </div>
+
           <h3>Contact</h3>
           <p>
-            Pour toute question concernant vos données ou pour exercer vos droits d'accès et de suppression, vous pouvez contacter notre équipe :
+            Pour toute question concernant vos données ou pour exercer vos droits d'accès et de rectification, vous pouvez contacter notre équipe :
           </p>
           <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 mt-4 not-prose">
             <strong>Lovation</strong><br/>

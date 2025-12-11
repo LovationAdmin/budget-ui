@@ -58,6 +58,7 @@ interface ProfileUpdateData {
 interface PasswordChangeData { current_password: string; new_password: string; }
 interface BudgetCreateData { name: string; }
 interface BudgetUpdateData { data: unknown; } 
+interface DeleteAccountData { password: string; }
 
 export const authAPI = {
   signup: (data: AuthData): Promise<AxiosResponse<AuthResponse>> => api.post('/auth/signup', data),
@@ -68,6 +69,7 @@ export const authAPI = {
 export const userAPI = {
   updateProfile: (data: ProfileUpdateData) => api.put('/user/profile', data),
   changePassword: (data: PasswordChangeData) => api.put('/user/password', data),
+  deleteAccount: (data: DeleteAccountData) => api.delete('/user/account', { data }),
 };
 
 export const budgetAPI = {
