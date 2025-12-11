@@ -4,7 +4,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Plus, Trash2, Target, CheckCircle2, CalendarClock, X } from "lucide-react";
-import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
 import type { Project, YearlyData } from '@/utils/importConverter';
 
@@ -12,7 +11,7 @@ interface ProjectsSectionProps {
   projects: Project[];
   onProjectsChange: (projects: Project[]) => void;
   yearlyData?: YearlyData; 
-  currentYear?: number; // ADDED: Need this to check if budget months are in past
+  currentYear?: number;
 }
 
 const MONTHS = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
@@ -80,17 +79,33 @@ export default function ProjectsSection({ projects, onProjectsChange, yearlyData
 
   return (
     <Card className="glass-card animate-slide-up stagger-2">
-      <CardHeader className="pb-3">
-        <div className="flex items-center justify-between">
+      <CardHeader className="pb-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-secondary/10">
               <Target className="h-5 w-5 text-secondary" />
             </div>
             <div>
               <CardTitle className="font-display text-lg">Projets d'Épargne</CardTitle>
-              <p className="text-sm text-muted-foreground">
-                {projects.length} projet{projects.length > 1 ? 's' : ''}
-              </p>
+              <div className="flex items-center gap-2 mt-1">
+                 <p className="text-sm text-muted-foreground">
+                    {projects.length} projet{projects.length > 1 ? 's' : ''}
+                 </p>
+                 {/* GLOBAL LEGEND */}
+                 {projects.length > 0 && (
+                     <div className="hidden sm:flex items-center gap-3 text-[10px] bg-muted/40 px-2 py-0.5 rounded-md border border-border/50 ml-2">
+                        <span className="flex items-center gap-1.5" title="Argent déjà provisionné (Mois passés)">
+                            <div className="h-2 w-2 rounded-full bg-success shadow-[0_0_6px_rgba(34,197,94,0.4)]"></div>
+                            <span className="text-muted-foreground font-medium">En caisse</span>
+                        </span>
+                        <span className="h-3 w-px bg-border/50"></span>
+                        <span className="flex items-center gap-1.5" title="Argent prévu dans le futur">
+                            <div className="h-2 w-2 rounded-full bg-primary/30"></div>
+                            <span className="text-muted-foreground font-medium">Planifié</span>
+                        </span>
+                     </div>
+                 )}
+              </div>
             </div>
           </div>
           
@@ -106,6 +121,20 @@ export default function ProjectsSection({ projects, onProjectsChange, yearlyData
             </Button>
           )}
         </div>
+        
+        {/* Mobile Legend (Only visible on small screens) */}
+        {projects.length > 0 && (
+             <div className="flex sm:hidden items-center justify-center gap-4 text-[10px] mt-2 bg-muted/30 px-2 py-1.5 rounded-lg">
+                <span className="flex items-center gap-1.5">
+                    <div className="h-2 w-2 rounded-full bg-success"></div>
+                    <span>En caisse</span>
+                </span>
+                <span className="flex items-center gap-1.5">
+                    <div className="h-2 w-2 rounded-full bg-primary/30"></div>
+                    <span>Planifié</span>
+                </span>
+             </div>
+        )}
       </CardHeader>
 
       <CardContent>
@@ -161,10 +190,12 @@ export default function ProjectsSection({ projects, onProjectsChange, yearlyData
               const hasTarget = target > 0;
               
               // Progress reflects Realized Amount vs Target
-              // If no target, we just show 100% if there is money
               const progress = hasTarget ? Math.min((totalRealized / target) * 100, 100) : (totalRealized > 0 ? 100 : 0);
               
+              // Goal is reached if we have enough money realized
               const isGoalReached = hasTarget && totalRealized >= target;
+              
+              // Fully Scheduled means we PLANNED enough money, even if we haven't reached the date yet
               const isFullyScheduled = hasTarget && totalPlanned >= target && !isGoalReached;
 
               return (
@@ -173,7 +204,7 @@ export default function ProjectsSection({ projects, onProjectsChange, yearlyData
                   className={cn(
                     "group relative overflow-hidden rounded-xl border transition-all duration-200 p-4",
                     isGoalReached 
-                        ? "bg-success/10 border-success/30 shadow-sm" 
+                        ? "bg-success/5 border-success/30 shadow-sm" 
                         : "bg-card/50 border-border/50 hover:bg-card hover:shadow-md"
                   )}
                 >
@@ -183,9 +214,9 @@ export default function ProjectsSection({ projects, onProjectsChange, yearlyData
                     <div className="flex items-start justify-between gap-2">
                         <div className="flex items-center gap-2 flex-1 min-w-0">
                             <div className={cn(
-                                "flex h-8 w-8 shrink-0 items-center justify-center rounded-lg",
+                                "flex h-8 w-8 shrink-0 items-center justify-center rounded-lg transition-colors",
                                 isGoalReached ? "bg-success/20 text-success" : 
-                                isFullyScheduled ? "bg-blue-100 text-blue-600" : "bg-secondary/20 text-secondary"
+                                isFullyScheduled ? "bg-primary/20 text-primary" : "bg-secondary/20 text-secondary"
                             )}>
                                 {isGoalReached ? <CheckCircle2 className="h-4 w-4" /> : 
                                  isFullyScheduled ? <CalendarClock className="h-4 w-4" /> : <Target className="h-4 w-4" />}
@@ -224,9 +255,7 @@ export default function ProjectsSection({ projects, onProjectsChange, yearlyData
                         </div>
 
                         <div className="text-right">
-                            <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">
-                                {isGoalReached ? "Atteint" : "En Caisse"}
-                            </p>
+                            <p className="text-[10px] text-success font-medium uppercase tracking-wider">En Caisse</p>
                             <p className={cn(
                                 "text-sm font-bold",
                                 isGoalReached ? "text-success" : "text-foreground"
@@ -236,36 +265,41 @@ export default function ProjectsSection({ projects, onProjectsChange, yearlyData
                         </div>
                     </div>
 
-                    {/* Progress Bar */}
+                    {/* Progress Bar Area */}
                     {hasTarget && (
-                        <div className="space-y-1 mt-1">
-                            <div className="flex justify-between text-[10px] text-muted-foreground">
-                                <span>{progress.toFixed(0)}% réalisé</span>
+                        <div className="space-y-1.5 mt-1">
+                            <div className="flex justify-between items-end text-[10px]">
+                                <span className={cn("font-medium", isGoalReached ? "text-success" : "text-muted-foreground")}>
+                                    {isGoalReached ? "100%" : `${progress.toFixed(0)}%`}
+                                </span>
                                 {isGoalReached ? (
-                                    <span className="text-success font-medium flex items-center gap-1">
-                                        <CheckCircle2 className="h-3 w-3" /> Objectif atteint
-                                    </span>
-                                ) : isFullyScheduled ? (
-                                    <span className="text-blue-600 font-medium flex items-center gap-1">
-                                        <CalendarClock className="h-3 w-3" /> Planifié à 100%
+                                    <span className="text-success font-bold flex items-center gap-1">
+                                        <CheckCircle2 className="h-3 w-3" /> Terminé
                                     </span>
                                 ) : (
-                                    <span>Reste: {(target - totalRealized).toLocaleString()} €</span>
+                                    <span className="text-muted-foreground/70">
+                                        Reste: <span className="font-medium text-foreground">{(target - totalRealized).toLocaleString()} €</span>
+                                    </span>
                                 )}
                             </div>
-                            <div className="relative h-1.5 w-full bg-secondary/10 rounded-full overflow-hidden">
-                                {/* Plan Bar (Background) */}
+
+                            {/* Dual Layer Progress Bar */}
+                            <div className="relative h-2 w-full bg-muted rounded-full overflow-hidden">
+                                {/* 1. PLAN BAR (Background - Light Brand Color) */}
                                 <div 
-                                    className="absolute top-0 left-0 h-full bg-blue-200 transition-all duration-300"
+                                    className="absolute top-0 left-0 h-full bg-primary/20 transition-all duration-300"
                                     style={{ width: `${Math.min((totalPlanned / target) * 100, 100)}%` }}
+                                    title={`Planifié: ${totalPlanned.toLocaleString()} €`}
                                 />
-                                {/* Realized Bar (Foreground) */}
+                                
+                                {/* 2. REALIZED BAR (Foreground - Strong Success Color) */}
                                 <div 
                                     className={cn(
-                                        "absolute top-0 left-0 h-full transition-all duration-500",
-                                        isGoalReached ? "bg-success" : "bg-secondary"
+                                        "absolute top-0 left-0 h-full transition-all duration-500 shadow-[0_0_10px_rgba(34,197,94,0.4)]",
+                                        isGoalReached ? "bg-success" : "bg-success"
                                     )}
                                     style={{ width: `${progress}%` }}
+                                    title={`En caisse: ${totalRealized.toLocaleString()} €`}
                                 />
                             </div>
                         </div>
