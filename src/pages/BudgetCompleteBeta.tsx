@@ -28,11 +28,9 @@ import MonthlyTable from '../components/budget/MonthlyTable';
 import StatsSection from '../components/budget/StatsSection';
 import ActionsBar from '../components/budget/ActionsBar';
 import MemberManagementSection from '../components/budget/MemberManagementSection';
-
 // NEW COMPONENTS
 import { RealityCheck } from '../components/budget/RealityCheck'; 
 import { BankConnectionManager } from '../components/budget/BankConnectionManager';
-
 import { LayoutDashboard, Users, Receipt, Target, CalendarDays, FlaskConical } from "lucide-react";
 import { ToastAction } from '@/components/ui/toast';
 import {
@@ -120,7 +118,10 @@ export default function BudgetCompleteBeta() {
   // --- LOGIC: Fetch Bank Data (The "Reality") ---
   const refreshBankData = useCallback(async () => {
       try {
+          // If we wanted to allow members to see owner's data, we'd pass ?budget_id=${id} here.
+          // But per your request, we keep connections PRIVATE to the current user.
           const res = await api.get('/banking/connections');
+          
           // API returns "total_real_cash" calculated from accounts marked as "is_savings_pool"
           setRealBankBalance(res.data.total_real_cash || 0);
           
@@ -198,7 +199,7 @@ export default function BudgetCompleteBeta() {
       setLockedMonths(data.lockedMonths || {});
       loadedRef.current = true;
     } catch (error) { 
-        console.error(error); 
+        console.error(error);
         toast({ title: "Erreur", description: "Impossible de charger les données.", variant: "destructive" });
     } finally { 
         setLoading(false); 
@@ -214,8 +215,10 @@ export default function BudgetCompleteBeta() {
          setLastServerUpdate(budgetData.lastUpdated);
          if(!silent) toast({title: "Succès", description: "Budget sauvegardé !", variant: "success"}); 
      } 
-     catch(e) { console.error(e); if(!silent) toast({title: "Erreur", description: "Échec sauvegarde", variant: "destructive"}); } 
-     finally { if(!silent) setSaving(false); }
+     catch(e) { console.error(e);
+         if(!silent) toast({title: "Erreur", description: "Échec sauvegarde", variant: "destructive"}); } 
+     finally { if(!silent) setSaving(false);
+     }
   };
   
   const refreshMembersOnly = async () => { 
@@ -235,7 +238,6 @@ export default function BudgetCompleteBeta() {
       // Re-enabled for Beta testing purposes
       const commonData = { budgetTitle, currentYear, people, charges, projects, yearlyData, yearlyExpenses, oneTimeIncomes, monthComments, projectComments, lockedMonths };
       let dataToExport = format === 'old' ? convertNewFormatToOld(commonData as any) : { ...commonData, exportDate: new Date().toISOString(), version: '2.2-beta' };
-      
       const blob = new Blob([JSON.stringify(dataToExport, null, 2)], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -245,7 +247,7 @@ export default function BudgetCompleteBeta() {
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
-      toast({title: "Export Réussi", description: "Fichier JSON généré."}); 
+      toast({title: "Export Réussi", description: "Fichier JSON généré."});
   };
 
   const handleImport = (rawData: RawBudgetData) => { 
@@ -353,16 +355,17 @@ export default function BudgetCompleteBeta() {
       </div>
 
       {showInviteModal && id && (
-        <InviteModal budgetId={id} onClose={() => setShowInviteModal(false)} onInvited={() => { refreshMembersOnly(); toast({ title: "Invitation envoyée", variant: "success" }); }} />
+        <InviteModal budgetId={id} onClose={() => setShowInviteModal(false)} onInvited={() => { refreshMembersOnly();
+toast({ title: "Invitation envoyée", variant: "success" }); }} />
       )}
 
       {/* BANK MANAGER DIALOG */}
       <Dialog open={showBankManager} onOpenChange={setShowBankManager}>
-        <DialogContent className="sm:max-w-2xl">
+        <DialogContent className="sm:max-w-2xl max-h-[85vh] overflow-y-auto">
             <DialogHeader>
                 <DialogTitle>Gestion des Comptes Bancaires</DialogTitle>
                 <DialogDescription>
-                    Connectez vos banques et sélectionnez les comptes qui constituent votre épargne (Livret A, LDD, etc.).
+                     Connectez vos banques et sélectionnez les comptes qui constituent votre épargne (Livret A, LDD, etc.).
                 </DialogDescription>
             </DialogHeader>
             <BankConnectionManager onUpdate={refreshBankData} />
