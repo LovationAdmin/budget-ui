@@ -1,9 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
-import { usePlaidLink, PlaidLinkOnSuccess } from 'react-plaid-link';
-import api from '@/services/api'; // Ensure this points to your configured axios instance
+import { usePlaidLink, PlaidLinkOnSuccess, PlaidLinkOnSuccessMetadata } from 'react-plaid-link';
+import api from '@/services/api'; 
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import { Loader2, Plus, Building2, AlertCircle, RefreshCw } from "lucide-react";
+import { Loader2, Plus, Building2, RefreshCw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 
@@ -26,7 +26,7 @@ interface BankConnection {
 }
 
 interface BankManagerProps {
-    onUpdate: () => void; // Callback to refresh the parent page (Reality Check)
+    onUpdate: () => void; 
 }
 
 export function BankConnectionManager({ onUpdate }: BankManagerProps) {
@@ -52,7 +52,7 @@ export function BankConnectionManager({ onUpdate }: BankManagerProps) {
         fetchConnections();
     }, []);
 
-    // 2. Generate Link Token (Required to initialize Plaid)
+    // 2. Generate Link Token
     const generateToken = useCallback(async () => {
         try {
             const res = await api.post('/banking/plaid/link-token');
@@ -64,12 +64,11 @@ export function BankConnectionManager({ onUpdate }: BankManagerProps) {
     }, [toast]);
 
     useEffect(() => {
-        // Generate token immediately so the button is ready
         generateToken();
     }, [generateToken]);
 
-    // 3. Handle Plaid Success
-    const onSuccess = useCallback<PlaidLinkOnSuccess>(async (publicToken, metadata) => {
+    // 3. Handle Plaid Success (Explicitly Typed)
+    const onSuccess = useCallback(async (publicToken: string, metadata: PlaidLinkOnSuccessMetadata) => {
         setProcessing(true);
         try {
             await api.post('/banking/plaid/exchange', {
@@ -79,8 +78,8 @@ export function BankConnectionManager({ onUpdate }: BankManagerProps) {
             });
             
             toast({ title: "Succès", description: "Banque connectée avec succès !", variant: "success" });
-            await fetchConnections(); // Refresh list
-            onUpdate(); // Tell parent to refresh "Reality Check" total
+            await fetchConnections(); 
+            onUpdate(); 
         } catch (error) {
             console.error("Exchange failed", error);
             toast({ title: "Erreur", description: "Échec de la liaison avec la banque.", variant: "destructive" });
@@ -106,7 +105,7 @@ export function BankConnectionManager({ onUpdate }: BankManagerProps) {
 
         try {
             await api.put(`/banking/accounts/${accountId}`, { is_savings_pool: !currentStatus });
-            onUpdate(); // Refresh the global total calculation
+            onUpdate(); 
         } catch (error) {
             toast({ title: "Erreur", description: "Impossible de mettre à jour le compte.", variant: "destructive" });
             fetchConnections(); // Revert on error
