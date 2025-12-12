@@ -1,9 +1,9 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { budgetAPI } from '../services/api';
+import api, { budgetAPI } from '../services/api';
 import { 
   convertOldFormatToNew, 
-  convertNewFormatToOld, // Restored import
+  convertNewFormatToOld,
   type RawBudgetData,
   type Person,
   type Charge,
@@ -28,11 +28,20 @@ import MonthlyTable from '../components/budget/MonthlyTable';
 import StatsSection from '../components/budget/StatsSection';
 import ActionsBar from '../components/budget/ActionsBar';
 import MemberManagementSection from '../components/budget/MemberManagementSection';
-// NEW COMPONENT
+
+// NEW COMPONENTS
 import { RealityCheck } from '../components/budget/RealityCheck'; 
+import { BankConnectionManager } from '../components/budget/BankConnectionManager';
 
 import { LayoutDashboard, Users, Receipt, Target, CalendarDays, FlaskConical } from "lucide-react";
 import { ToastAction } from '@/components/ui/toast';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 
 // Updated Nav for Beta
 const BUDGET_NAV_ITEMS: NavItem[] = [
@@ -70,9 +79,10 @@ export default function BudgetCompleteBeta() {
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [lastServerUpdate, setLastServerUpdate] = useState<string>("");
 
-  // --- Mock Bank State (For Beta Testing) ---
-  const [isBankConnected, setIsBankConnected] = useState(false);
-  const [mockBankBalance, setMockBankBalance] = useState(0);
+  // --- BANKING STATE ---
+  const [showBankManager, setShowBankManager] = useState(false);
+  const [realBankBalance, setRealBankBalance] = useState(0);
+  const [hasActiveConnection, setHasActiveConnection] = useState(false);
 
   // --- Core Budget Data State ---
   const [budgetTitle, setBudgetTitle] = useState('');
@@ -89,7 +99,7 @@ export default function BudgetCompleteBeta() {
 
   const loadedRef = useRef(false);
 
-  // --- NEW LOGIC: Calculate Total Realized Cash ---
+  // --- LOGIC: Calculate Total Realized Cash (The "Plan") ---
   const today = new Date();
   const currentMonthIndex = today.getMonth();
   const currentRealYear = today.getFullYear();
@@ -99,7 +109,7 @@ export default function BudgetCompleteBeta() {
   if (currentYear <= currentRealYear) {
       projects.forEach(proj => {
           MONTHS.forEach((month, idx) => {
-              // Only sum months that have passed
+              // Only sum months that have passed or are current
               if (currentYear < currentRealYear || idx <= currentMonthIndex) {
                   totalGlobalRealized += (yearlyData[month]?.[proj.id] || 0);
               }
@@ -107,7 +117,27 @@ export default function BudgetCompleteBeta() {
       });
   }
 
-  // ... Load & Save Effects ...
+  // --- LOGIC: Fetch Bank Data (The "Reality") ---
+  const refreshBankData = useCallback(async () => {
+      try {
+          const res = await api.get('/banking/connections');
+          // API returns "total_real_cash" calculated from accounts marked as "is_savings_pool"
+          setRealBankBalance(res.data.total_real_cash || 0);
+          
+          const conns = res.data.connections || [];
+          setHasActiveConnection(conns.length > 0);
+      } catch (error) {
+          console.error("Failed to refresh bank data", error);
+          // Don't block UI, just default to 0
+      }
+  }, []);
+
+  // Fetch bank data on mount
+  useEffect(() => {
+      refreshBankData();
+  }, [refreshBankData]);
+
+  // --- Standard Load & Save Effects ---
   useEffect(() => {
     if (id) loadBudget();
   }, [id]);
@@ -118,56 +148,37 @@ export default function BudgetCompleteBeta() {
     return () => clearInterval(saveInterval);
   }, [budgetTitle, currentYear, people, charges, projects, yearlyData, yearlyExpenses, oneTimeIncomes, monthComments, projectComments, lockedMonths]);
 
-  // 2. Data Polling (Every 15s)
+  // Data Polling (Check for remote updates)
   useEffect(() => {
     if (!id || !loadedRef.current) return;
-
     const pollInterval = setInterval(async () => {
       try {
         const res = await budgetAPI.getData(id);
         const remoteData: RawBudgetData = res.data.data;
-        
-        if (
-            remoteData.lastUpdated && 
-            lastServerUpdate && 
-            remoteData.lastUpdated > lastServerUpdate && 
-            remoteData.updatedBy !== user?.name 
-        ) {
+        if (remoteData.lastUpdated && lastServerUpdate && remoteData.lastUpdated > lastServerUpdate && remoteData.updatedBy !== user?.name) {
           toast({
             title: "Mise à jour disponible",
             description: `Modifié par ${remoteData.updatedBy || 'un membre'}.`,
             variant: "default",
-            action: (
-              <ToastAction altText="Rafraîchir" onClick={() => loadBudget()}>
-                Rafraîchir
-              </ToastAction>
-            ),
+            action: <ToastAction altText="Rafraîchir" onClick={() => loadBudget()}>Rafraîchir</ToastAction>,
           });
         }
-      } catch (err) {
-        console.error("Polling error", err);
-      }
+      } catch (err) { console.error("Polling error", err); }
     }, 15000);
-
     return () => clearInterval(pollInterval);
   }, [id, lastServerUpdate, user?.name]);
 
-  // 3. Member List Polling
+  // Member Polling
   useEffect(() => {
     if (!id) return;
-    const memberInterval = setInterval(() => {
-        refreshMembersOnly();
-    }, 5000); 
+    const memberInterval = setInterval(() => { refreshMembersOnly(); }, 5000); 
     return () => clearInterval(memberInterval);
   }, [id]);
 
   const loadBudget = async () => {
     if (!id) return;
     try {
-      const [budgetRes, dataRes] = await Promise.all([
-        budgetAPI.getById(id),
-        budgetAPI.getData(id)
-      ]);
+      const [budgetRes, dataRes] = await Promise.all([budgetAPI.getById(id), budgetAPI.getData(id)]);
       setBudget(budgetRes.data);
       const rawData: RawBudgetData = dataRes.data.data;
       if (rawData.lastUpdated) setLastServerUpdate(rawData.lastUpdated);
@@ -220,64 +231,45 @@ export default function BudgetCompleteBeta() {
     } catch (error) { console.error(error); }
   };
 
-  // --- RESTORED REAL LOGIC FROM MAIN FILE ---
-  const handleExport = (formatType: 'new' | 'old' = 'new') => {
-    let dataToExport;
-    const commonData = {
-      budgetTitle, currentYear, people, charges, projects, yearlyData, yearlyExpenses, oneTimeIncomes, monthComments, projectComments, lockedMonths
-    };
-
-    if (formatType === 'old') {
-      dataToExport = convertNewFormatToOld(commonData);
-    } else {
-      dataToExport = { ...commonData, exportDate: new Date().toISOString(), version: '2.2-beta' };
-    }
-
-    const blob = new Blob([JSON.stringify(dataToExport, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `budget_${budgetTitle || 'export'}_${new Date().toISOString().split('T')[0]}_beta.json`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-    toast({ title: "Export terminé", description: "Fichier téléchargé.", variant: "default" });
+  const handleExport = (format: 'new'|'old') => { 
+      // Re-enabled for Beta testing purposes
+      const commonData = { budgetTitle, currentYear, people, charges, projects, yearlyData, yearlyExpenses, oneTimeIncomes, monthComments, projectComments, lockedMonths };
+      let dataToExport = format === 'old' ? convertNewFormatToOld(commonData as any) : { ...commonData, exportDate: new Date().toISOString(), version: '2.2-beta' };
+      
+      const blob = new Blob([JSON.stringify(dataToExport, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `budget_${budgetTitle || 'export'}_beta_${new Date().toISOString().split('T')[0]}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      toast({title: "Export Réussi", description: "Fichier JSON généré."}); 
   };
 
-  const handleImport = (rawData: RawBudgetData) => {
-    if (confirm('Importer ces données ? Cela remplacera le budget actuel.')) {
-      const data = convertOldFormatToNew(rawData);
-      setBudgetTitle(data.budgetTitle || '');
-      setCurrentYear(data.currentYear || new Date().getFullYear());
-      setPeople(data.people || []);
-      setCharges(data.charges || []);
-      setProjects(data.projects || []);
-      setYearlyData(data.yearlyData);
-      setYearlyExpenses(data.yearlyExpenses);
-      setOneTimeIncomes(data.oneTimeIncomes);
-      setMonthComments(data.monthComments);
-      setProjectComments(data.projectComments);
-      setLockedMonths(data.lockedMonths);
-      toast({ title: "Import réussi", description: "Données mises à jour.", variant: "success" });
-    }
+  const handleImport = (rawData: RawBudgetData) => { 
+      if (confirm('BÊTA: Importer ces données ?')) {
+        const data = convertOldFormatToNew(rawData);
+        setBudgetTitle(data.budgetTitle || '');
+        setCurrentYear(data.currentYear || new Date().getFullYear());
+        setPeople(data.people || []);
+        setCharges(data.charges || []);
+        setProjects(data.projects || []);
+        setYearlyData(data.yearlyData);
+        setYearlyExpenses(data.yearlyExpenses);
+        setOneTimeIncomes(data.oneTimeIncomes);
+        setMonthComments(data.monthComments);
+        setProjectComments(data.projectComments);
+        setLockedMonths(data.lockedMonths);
+        toast({ title: "Import réussi", variant: "success" });
+      }
   };
 
   const handleSectionChange = (section: string) => {
     const element = document.getElementById(section);
     if (element) element.scrollIntoView({ behavior: 'smooth', block: 'start' });
     else if (section === 'overview') window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
-  // --- BETA HANDLER: Connect Bank (Mock) ---
-  const handleConnectBank = () => {
-      if(confirm("BÊTA: Simuler une connexion bancaire ?\n\nCela va générer un solde aléatoire proche de votre montant théorique pour tester l'interface.")) {
-          setIsBankConnected(true);
-          // Simulate either a match or a slight discrepancy (50/50 chance)
-          const randomDiscrepancy = Math.random() > 0.5 ? 0 : -500; 
-          setMockBankBalance(Math.max(0, totalGlobalRealized + randomDiscrepancy));
-          toast({ title: "Banque Connectée (Simulation)", description: "Récupération des soldes...", variant: "default" });
-      }
   };
 
   if (loading) return <div className="min-h-screen flex items-center justify-center"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div></div>;
@@ -287,7 +279,7 @@ export default function BudgetCompleteBeta() {
       
       {/* BETA BANNER */}
       <div className="bg-indigo-600 text-white text-center text-xs py-1 font-medium">
-        ✨ Mode Bêta activé : Test de la fonctionnalité "Reality Check"
+        ✨ Mode Bêta activé : Test de la fonctionnalité "Reality Check" (Vrai Connexion Bancaire)
       </div>
 
       <BudgetNavbar 
@@ -310,10 +302,7 @@ export default function BudgetCompleteBeta() {
           <div className="p-4 bg-gray-50 border-t border-gray-200 flex justify-between items-center">
             <div className="flex items-center gap-3">
               {budget?.is_owner && (
-                <button 
-                  onClick={() => setShowInviteModal(true)} 
-                  className="bg-white hover:bg-gray-50 border border-gray-300 text-gray-700 px-4 py-2 rounded-lg font-medium transition"
-                >
+                <button onClick={() => setShowInviteModal(true)} className="bg-white hover:bg-gray-50 border border-gray-300 text-gray-700 px-4 py-2 rounded-lg font-medium transition">
                   👥 Inviter
                 </button>
               )}
@@ -322,12 +311,12 @@ export default function BudgetCompleteBeta() {
         </div>
         
         {budget && user && ( <div id="members"><MemberManagementSection budget={budget} currentUserId={user.id} onMemberChange={refreshMembersOnly} /></div> )}
-        <ActionsBar onSave={() => handleSave(false)} onExport={handleExport} onImport={handleImport} saving={saving} />
+        <ActionsBar onSave={() => handleSave(false)} onExport={() => handleExport('new')} onImport={handleImport} saving={saving} />
 
         <div id="people"><PeopleSection people={people} onPeopleChange={setPeople} /></div>
         <div id="charges" className="mt-6"><ChargesSection charges={charges} onChargesChange={setCharges} /></div>
         
-        {/* --- NEW SECTION: REALITY CHECK --- */}
+        {/* --- REALITY CHECK SECTION --- */}
         <div id="reality" className="mt-8">
             <h2 className="text-xl font-display font-semibold mb-4 flex items-center gap-2">
                 <FlaskConical className="h-5 w-5 text-indigo-600" /> 
@@ -336,9 +325,9 @@ export default function BudgetCompleteBeta() {
             </h2>
             <RealityCheck 
                 totalRealized={totalGlobalRealized}
-                bankBalance={mockBankBalance}
-                isBankConnected={isBankConnected}
-                onConnectBank={handleConnectBank}
+                bankBalance={realBankBalance}
+                isBankConnected={hasActiveConnection}
+                onConnectBank={() => setShowBankManager(true)}
             />
         </div>
 
@@ -364,15 +353,22 @@ export default function BudgetCompleteBeta() {
       </div>
 
       {showInviteModal && id && (
-        <InviteModal 
-          budgetId={id} 
-          onClose={() => setShowInviteModal(false)} 
-          onInvited={() => {
-            refreshMembersOnly();
-            toast({ title: "Invitation envoyée", description: "Le membre a été invité.", variant: "success" });
-          }} 
-        />
+        <InviteModal budgetId={id} onClose={() => setShowInviteModal(false)} onInvited={() => { refreshMembersOnly(); toast({ title: "Invitation envoyée", variant: "success" }); }} />
       )}
+
+      {/* BANK MANAGER DIALOG */}
+      <Dialog open={showBankManager} onOpenChange={setShowBankManager}>
+        <DialogContent className="sm:max-w-2xl">
+            <DialogHeader>
+                <DialogTitle>Gestion des Comptes Bancaires</DialogTitle>
+                <DialogDescription>
+                    Connectez vos banques et sélectionnez les comptes qui constituent votre épargne (Livret A, LDD, etc.).
+                </DialogDescription>
+            </DialogHeader>
+            <BankConnectionManager onUpdate={refreshBankData} />
+        </DialogContent>
+      </Dialog>
+
     </div>
   );
 }
