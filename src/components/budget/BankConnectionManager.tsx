@@ -1,11 +1,11 @@
-import { useState, useEffect, useCallback } from 'react';
-import { usePlaidLink, PlaidLinkOnSuccess, PlaidLinkOnSuccessMetadata } from 'react-plaid-link';
-import api from '@/services/api'; 
+import { useState, useEffect } from 'react';
+import api from '@/services/api';
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import { Loader2, Plus, Building2, RefreshCw } from "lucide-react";
+import { Loader2, Building2, Trash2, AlertCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 // Types matching your backend models
 interface BankAccount {
@@ -26,15 +26,13 @@ interface BankConnection {
 }
 
 interface BankManagerProps {
-    onUpdate: () => void; 
+    onUpdate: () => void;
 }
 
 export function BankConnectionManager({ onUpdate }: BankManagerProps) {
     const { toast } = useToast();
-    const [token, setToken] = useState<string | null>(null);
     const [connections, setConnections] = useState<BankConnection[]>([]);
     const [loading, setLoading] = useState(true);
-    const [processing, setProcessing] = useState(false);
 
     // 1. Fetch existing connections on mount
     const fetchConnections = async () => {
@@ -52,50 +50,7 @@ export function BankConnectionManager({ onUpdate }: BankManagerProps) {
         fetchConnections();
     }, []);
 
-    // 2. Generate Link Token
-    const generateToken = useCallback(async () => {
-        try {
-            const res = await api.post('/banking/plaid/link-token');
-            setToken(res.data.link_token);
-        } catch (error) {
-            console.error("Failed to create link token", error);
-            toast({ title: "Erreur", description: "Impossible d'initialiser la connexion bancaire.", variant: "destructive" });
-        }
-    }, [toast]);
-
-    useEffect(() => {
-        generateToken();
-    }, [generateToken]);
-
-    // 3. Handle Plaid Success (Explicitly Typed)
-    const onSuccess = useCallback(async (publicToken: string, metadata: PlaidLinkOnSuccessMetadata) => {
-        setProcessing(true);
-        try {
-            await api.post('/banking/plaid/exchange', {
-                public_token: publicToken,
-                institution_id: metadata.institution?.institution_id,
-                institution_name: metadata.institution?.name
-            });
-            
-            toast({ title: "Succès", description: "Banque connectée avec succès !", variant: "success" });
-            await fetchConnections(); 
-            onUpdate(); 
-        } catch (error) {
-            console.error("Exchange failed", error);
-            toast({ title: "Erreur", description: "Échec de la liaison avec la banque.", variant: "destructive" });
-        } finally {
-            setProcessing(false);
-        }
-    }, [onUpdate, toast]);
-
-    // 4. Plaid Hook Configuration
-    const config = {
-        token,
-        onSuccess,
-    };
-    const { open, ready } = usePlaidLink(config);
-
-    // 5. Toggle "Savings Pool" status
+    // 2. Toggle "Savings Pool" status
     const togglePoolStatus = async (accountId: string, currentStatus: boolean) => {
         // Optimistic UI update
         setConnections(prev => prev.map(c => ({
@@ -105,16 +60,16 @@ export function BankConnectionManager({ onUpdate }: BankManagerProps) {
 
         try {
             await api.put(`/banking/accounts/${accountId}`, { is_savings_pool: !currentStatus });
-            onUpdate(); 
+            onUpdate();
         } catch (error) {
             toast({ title: "Erreur", description: "Impossible de mettre à jour le compte.", variant: "destructive" });
             fetchConnections(); // Revert on error
         }
     };
 
-    // 6. Delete Connection
+    // 3. Delete Connection
     const deleteConnection = async (id: string) => {
-        if(!confirm("Supprimer cette connexion et tous les comptes associés ?")) return;
+        if (!confirm("Supprimer cette connexion et tous les comptes associés ?")) return;
         try {
             await api.delete(`/banking/connections/${id}`);
             setConnections(prev => prev.filter(c => c.id !== id));
@@ -125,11 +80,17 @@ export function BankConnectionManager({ onUpdate }: BankManagerProps) {
         }
     };
 
-    if (loading) return <div className="p-4 text-center"><Loader2 className="h-6 w-6 animate-spin mx-auto text-primary" /></div>;
+    if (loading) {
+        return (
+            <div className="p-4 text-center">
+                <Loader2 className="h-6 w-6 animate-spin mx-auto text-primary" />
+            </div>
+        );
+    }
 
     return (
         <div className="space-y-6">
-            {/* Header / Add Button */}
+            {/* Header */}
             <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 bg-primary/5 rounded-xl border border-primary/10">
                 <div className="flex items-center gap-3">
                     <div className="p-2 bg-white rounded-lg shadow-sm">
@@ -137,67 +98,95 @@ export function BankConnectionManager({ onUpdate }: BankManagerProps) {
                     </div>
                     <div>
                         <h3 className="font-semibold text-foreground">Mes Banques</h3>
-                        <p className="text-xs text-muted-foreground">Connectez vos comptes pour le Reality Check</p>
+                        <p className="text-xs text-muted-foreground">Gérez vos connexions bancaires</p>
                     </div>
                 </div>
-                <Button 
-                    onClick={() => open()} 
-                    disabled={!ready || processing}
-                    variant="default"
-                    className="w-full sm:w-auto shadow-md"
-                >
-                    {processing ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Plus className="h-4 w-4 mr-2" />}
-                    Ajouter une banque
-                </Button>
             </div>
 
-            {/* Connections List */}
+            {/* Feature Coming Soon Notice */}
+            <Alert className="bg-amber-50 border-amber-200">
+                <AlertCircle className="h-4 w-4 text-amber-600" />
+                <AlertDescription className="text-amber-800">
+                    <strong>Connexion bancaire en développement</strong>
+                    <p className="text-sm mt-1">
+                        L'intégration avec Bridge API est en cours. Vous pourrez bientôt connecter vos comptes automatiquement.
+                    </p>
+                </AlertDescription>
+            </Alert>
+
+            {/* Existing Connections */}
             <div className="space-y-4">
                 {connections.length === 0 ? (
-                    <div className="text-center py-8 text-muted-foreground text-sm border-2 border-dashed border-muted rounded-xl">
-                        Aucune banque connectée.
+                    <div className="text-center py-12 border-2 border-dashed rounded-xl">
+                        <Building2 className="h-12 w-12 mx-auto text-muted-foreground/50 mb-3" />
+                        <p className="text-muted-foreground font-medium">Aucune connexion bancaire</p>
+                        <p className="text-sm text-muted-foreground mt-1">
+                            La fonctionnalité sera bientôt disponible
+                        </p>
                     </div>
                 ) : (
                     connections.map((conn) => (
-                        <div key={conn.id} className="border rounded-xl overflow-hidden bg-card shadow-sm">
-                            {/* Bank Header */}
-                            <div className="flex items-center justify-between p-3 bg-muted/30 border-b">
-                                <span className="font-semibold text-sm flex items-center gap-2">
-                                    {conn.institution_name}
-                                    <Badge variant="outline" className="text-[10px] h-5 bg-green-50 text-green-700 border-green-200">Connecté</Badge>
-                                </span>
-                                <Button 
-                                    variant="ghost" 
-                                    size="sm" 
-                                    onClick={() => deleteConnection(conn.id)}
-                                    className="h-7 text-xs text-destructive hover:bg-destructive/10"
-                                >
-                                    Déconnecter
-                                </Button>
+                        <div key={conn.id} className="border rounded-xl overflow-hidden">
+                            <div className="bg-gray-50 px-4 py-3 flex items-center justify-between border-b">
+                                <div className="flex items-center gap-3">
+                                    <Building2 className="h-5 w-5 text-primary" />
+                                    <div>
+                                        <h4 className="font-semibold text-sm">{conn.institution_name}</h4>
+                                        <p className="text-xs text-muted-foreground">
+                                            Connecté le {new Date(conn.created_at).toLocaleDateString('fr-FR')}
+                                        </p>
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <Badge variant={conn.status === 'active' ? 'default' : 'secondary'}>
+                                        {conn.status === 'active' ? 'Actif' : 'Inactif'}
+                                    </Badge>
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => deleteConnection(conn.id)}
+                                        className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                                    >
+                                        <Trash2 className="h-4 w-4" />
+                                    </Button>
+                                </div>
                             </div>
 
                             {/* Accounts List */}
                             <div className="divide-y">
                                 {conn.accounts?.map((account) => (
-                                    <div key={account.id} className="p-3 flex items-center justify-between hover:bg-muted/10 transition-colors">
-                                        <div className="flex flex-col">
-                                            <span className="text-sm font-medium">{account.name} <span className="text-muted-foreground text-xs">••••{account.mask}</span></span>
-                                            <span className="text-xs font-mono text-muted-foreground mt-0.5">
-                                                {account.balance.toLocaleString('fr-FR', { style: 'currency', currency: account.currency })}
-                                            </span>
-                                        </div>
-                                        
-                                        <div className="flex items-center gap-3">
-                                            <div className="text-right mr-2 hidden sm:block">
-                                                <span className="block text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Compte Épargne ?</span>
-                                                <span className="text-[10px] text-muted-foreground/70">
-                                                    {account.is_savings_pool ? "Inclus dans Reality Check" : "Ignoré (Compte Courant)"}
-                                                </span>
+                                    <div key={account.id} className="p-4 hover:bg-gray-50 transition-colors">
+                                        <div className="flex items-center justify-between">
+                                            <div className="flex-1">
+                                                <div className="flex items-center gap-2">
+                                                    <span className="font-medium text-sm">{account.name}</span>
+                                                    <span className="text-xs text-muted-foreground">
+                                                        ••• {account.mask}
+                                                    </span>
+                                                </div>
+                                                <div className="flex items-center gap-3 mt-1">
+                                                    <span className="text-lg font-semibold">
+                                                        {account.balance.toLocaleString()} {account.currency}
+                                                    </span>
+                                                    <Badge 
+                                                        variant={account.is_savings_pool ? "default" : "secondary"}
+                                                        className="text-xs"
+                                                    >
+                                                        {account.is_savings_pool ? "✓ Épargne" : "Courant"}
+                                                    </Badge>
+                                                </div>
                                             </div>
-                                            <Switch 
-                                                checked={account.is_savings_pool}
-                                                onCheckedChange={() => togglePoolStatus(account.id, account.is_savings_pool)}
-                                            />
+                                            <div className="flex items-center gap-3">
+                                                <div className="text-right text-xs text-muted-foreground hidden sm:block">
+                                                    <span className="block">
+                                                        {account.is_savings_pool ? "Inclus dans Reality Check" : "Ignoré (Compte Courant)"}
+                                                    </span>
+                                                </div>
+                                                <Switch
+                                                    checked={account.is_savings_pool}
+                                                    onCheckedChange={() => togglePoolStatus(account.id, account.is_savings_pool)}
+                                                />
+                                            </div>
                                         </div>
                                     </div>
                                 ))}
