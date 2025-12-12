@@ -34,6 +34,7 @@ export function BankConnectionManager({ onUpdate }: BankManagerProps) {
     const [loading, setLoading] = useState(true);
     const [connecting, setConnecting] = useState(false);
     const [refreshing, setRefreshing] = useState(false);
+    const [syncing, setSyncing] = useState(false);
 
     // 1. Fetch existing connections on mount
     const fetchConnections = async () => {
@@ -62,20 +63,70 @@ export function BankConnectionManager({ onUpdate }: BankManagerProps) {
         try {
             const res = await api.post('/banking/bridge/connect');
             
-            // Bridge renvoie une URL de redirection vers leur interface
-            window.location.href = res.data.redirect_url;
-        } catch (error) {
+            // Ouvrir Bridge dans une nouvelle fenêtre
+            const bridgeWindow = window.open(
+                res.data.redirect_url,
+                'Bridge Connect',
+                'width=600,height=800,scrollbars=yes'
+            );
+
+            // Surveiller la fermeture de la fenêtre
+            const checkWindow = setInterval(() => {
+                if (bridgeWindow?.closed) {
+                    clearInterval(checkWindow);
+                    setConnecting(false);
+                    
+                    // Synchroniser les comptes après fermeture
+                    handleSync();
+                }
+            }, 1000);
+
+        } catch (error: any) {
             console.error("Failed to create connection", error);
+            const errorMessage = error.response?.data?.details || error.response?.data?.error || "Impossible de se connecter à Bridge.";
             toast({ 
                 title: "Erreur", 
-                description: "Impossible de se connecter à Bridge.", 
+                description: errorMessage, 
                 variant: "destructive" 
             });
             setConnecting(false);
         }
     };
 
-    // 3. Refresh balances
+    // 3. Sync accounts after Bridge connection
+    const handleSync = async () => {
+        setSyncing(true);
+        try {
+            const res = await api.post('/banking/bridge/sync');
+            
+            if (res.data.accounts_synced > 0) {
+                toast({ 
+                    title: "Succès", 
+                    description: `${res.data.accounts_synced} compte(s) synchronisé(s) !`, 
+                    variant: "default" 
+                });
+                await fetchConnections();
+                onUpdate();
+            } else {
+                toast({ 
+                    title: "Info", 
+                    description: "Aucun nouveau compte trouvé. Assurez-vous d'avoir complété la connexion Bridge.", 
+                    variant: "default" 
+                });
+            }
+        } catch (error) {
+            console.error("Failed to sync accounts", error);
+            toast({ 
+                title: "Erreur", 
+                description: "Impossible de synchroniser les comptes.", 
+                variant: "destructive" 
+            });
+        } finally {
+            setSyncing(false);
+        }
+    };
+
+    // 4. Refresh balances
     const handleRefresh = async () => {
         setRefreshing(true);
         try {
@@ -98,7 +149,7 @@ export function BankConnectionManager({ onUpdate }: BankManagerProps) {
         }
     };
 
-    // 4. Toggle "Savings Pool" status
+    // 5. Toggle "Savings Pool" status
     const togglePoolStatus = async (accountId: string, currentStatus: boolean) => {
         // Optimistic UI update
         setConnections(prev => prev.map(c => ({
@@ -121,7 +172,7 @@ export function BankConnectionManager({ onUpdate }: BankManagerProps) {
         }
     };
 
-    // 5. Delete Connection
+    // 6. Delete Connection
     const deleteConnection = async (id: string) => {
         if (!confirm("Supprimer cette connexion et tous les comptes associés ?")) return;
         
@@ -170,16 +221,29 @@ export function BankConnectionManager({ onUpdate }: BankManagerProps) {
                 
                 <div className="flex gap-2">
                     {connections.length > 0 && (
-                        <Button 
-                            onClick={handleRefresh}
-                            disabled={refreshing}
-                            variant="outline"
-                            size="sm"
-                            className="gap-2"
-                        >
-                            <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
-                            Rafraîchir
-                        </Button>
+                        <>
+                            <Button 
+                                onClick={handleSync}
+                                disabled={syncing}
+                                variant="outline"
+                                size="sm"
+                                className="gap-2"
+                            >
+                                <RefreshCw className={`h-4 w-4 ${syncing ? 'animate-spin' : ''}`} />
+                                {syncing ? 'Sync...' : 'Sync'}
+                            </Button>
+                            
+                            <Button 
+                                onClick={handleRefresh}
+                                disabled={refreshing}
+                                variant="outline"
+                                size="sm"
+                                className="gap-2"
+                            >
+                                <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
+                                Rafraîchir
+                            </Button>
+                        </>
                     )}
                     
                     <Button 
@@ -292,7 +356,7 @@ export function BankConnectionManager({ onUpdate }: BankManagerProps) {
                                     ))
                                 ) : (
                                     <div className="p-4 text-center text-sm text-muted-foreground">
-                                        Aucun compte trouvé
+                                        Aucun compte trouvé - Cliquez sur "Sync" pour synchroniser
                                     </div>
                                 )}
                             </div>
