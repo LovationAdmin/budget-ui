@@ -13,6 +13,7 @@ import NotFound from './pages/NotFound';
 import AcceptInvitation from './pages/AcceptInvitation';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import VerifyEmail from './pages/VerifyEmail';
+import BudgetCompleteBeta from './pages/BudgetCompleteBeta'; // Import the new page
 
 export default function App() {
   return (
@@ -35,6 +36,13 @@ export default function App() {
           </PrivateRoute>
         } />
         
+        {/* NEW BETA ROUTE */}
+        <Route path="/budget/:id/beta" element={
+          <PrivateRoute>
+            <BudgetCompleteBeta />
+          </PrivateRoute>
+        } />
+
         <Route path="/profile" element={
           <PrivateRoute>
             <Profile />
