@@ -14,6 +14,8 @@ import AcceptInvitation from './pages/AcceptInvitation';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import VerifyEmail from './pages/VerifyEmail';
 import BudgetCompleteBeta from './pages/BudgetCompleteBeta'; // Import the new page
+import { BankCallback } from './pages/BankCallback';
+
 
 export default function App() {
   return (
@@ -23,6 +25,7 @@ export default function App() {
         <Route path="/signup" element={<Signup />} />
         <Route path="/invitation/accept" element={<AcceptInvitation />} />
         <Route path="/privacy" element={<PrivacyPolicy />} />
+        <Route path="/bank-callback" element={<BankCallback />} />
 
         <Route path="/" element={
           <PrivateRoute>
