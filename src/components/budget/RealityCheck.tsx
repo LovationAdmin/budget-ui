@@ -1,11 +1,11 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Wallet, AlertTriangle, CheckCircle2, Link as LinkIcon, RefreshCw } from "lucide-react";
+import { Wallet, AlertTriangle, CheckCircle2, Link as LinkIcon, RefreshCw, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface RealityCheckProps {
-  totalRealized: number; // Calculated from MonthlyTable (Plan)
-  bankBalance?: number;  // From Bank API (Real Life)
+  totalRealized: number;
+  bankBalance?: number;
   isBankConnected?: boolean;
   onConnectBank?: () => void;
 }
@@ -17,11 +17,10 @@ export function RealityCheck({
   onConnectBank 
 }: RealityCheckProps) {
   
-  // Diff calculation
   const difference = bankBalance - totalRealized;
-  // Tolerance of 1€ to avoid floating point annoyance
-  const isBalanced = Math.abs(difference) < 1; 
-  const isDeficit = difference < 0; // Missing money
+  // Tolerance of 1€
+  const isBalanced = Math.abs(difference) < 1;
+  const isDeficit = difference < 0; 
 
   return (
     <Card className={cn(
@@ -70,7 +69,6 @@ export function RealityCheck({
                         <span className="text-sm font-medium uppercase tracking-wider">Réalité (Banque)</span>
                         <LinkIcon className="h-4 w-4" />
                     </div>
-                    {/* GENERIC LABEL UPDATE */}
                     <Button onClick={onConnectBank} variant="outline" size="sm" className="gap-2 border-primary/20 hover:border-primary/50 text-primary">
                         <LinkIcon className="h-4 w-4" />
                         Connecter mes Comptes
@@ -80,19 +78,30 @@ export function RealityCheck({
                 <div>
                     <div className="flex items-center justify-end gap-2 mb-1">
                         <span className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Réalité (Banque)</span>
-                        <LinkIcon className="h-4 w-4 text-primary" />
+                        
+                        {/* NEW: Manage Button (Visible when connected) */}
+                        <Button 
+                            variant="ghost" 
+                            size="icon-sm" 
+                            className="h-6 w-6 text-muted-foreground hover:text-primary" 
+                            onClick={onConnectBank}
+                            title="Gérer les connexions"
+                        >
+                            <Settings className="h-4 w-4" />
+                        </Button>
                     </div>
+                    
                     <div className={cn(
                         "text-2xl font-bold font-display flex items-center justify-end gap-2",
                         isBalanced ? "text-success" : "text-destructive"
                     )}>
                         {bankBalance.toLocaleString()} €
-                        {/* Fake refresh for demo */}
                         <RefreshCw className="h-4 w-4 opacity-30 hover:opacity-100 cursor-pointer" />
                     </div>
+                    
                     <p className={cn("text-xs font-medium mt-1", isDeficit ? "text-destructive" : "text-success")}>
                         {isBalanced 
-                            ? "Tout est à jour." 
+                            ? "Tout est à jour."
                             : isDeficit 
                                 ? `Manque ${Math.abs(difference).toLocaleString()} € sur vos comptes`
                                 : `Excédent de ${difference.toLocaleString()} € (Non alloué)`
@@ -104,10 +113,9 @@ export function RealityCheck({
 
       </CardContent>
       
-      {/* Progress Bar Visualizer (Only if connected) */}
+      {/* Progress Bar Visualizer */}
       {isBankConnected && (
           <div className="h-1 w-full bg-muted mt-0 relative overflow-hidden">
-             {/* Simple logic: if balanced, full green. If deficit, show gap. */}
              <div 
                 className={cn("h-full absolute top-0 left-0 transition-all duration-1000", isBalanced ? "bg-success" : "bg-destructive")} 
                 style={{ width: isDeficit ? `${Math.max(0, (bankBalance / (totalRealized || 1)) * 100)}%` : '100%' }} 
