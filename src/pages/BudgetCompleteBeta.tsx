@@ -33,6 +33,7 @@ import { TransactionMapper, MappedTransaction } from '../components/budget/Trans
 import { LayoutDashboard, Users, Receipt, Target, CalendarDays, FlaskConical } from "lucide-react";
 import { ToastAction } from '@/components/ui/toast';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { useTutorial } from '../contexts/TutorialContext'; // <--- AJOUT DE L'IMPORT MANQUANT
 
 const BUDGET_NAV_ITEMS: NavItem[] = [
   { id: "overview", label: "Vue d'ensemble", icon: LayoutDashboard },
@@ -65,7 +66,9 @@ export default function BudgetCompleteBeta() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { toast } = useToast(); 
+  const { toast } = useToast();
+  // CORRECTION ICI : Récupération des variables du contexte
+  const { hasSeenTutorial, startTutorial } = useTutorial(); 
 
   const [budget, setBudget] = useState<BudgetData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -73,10 +76,12 @@ export default function BudgetCompleteBeta() {
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [lastServerUpdate, setLastServerUpdate] = useState<string>("");
 
-  // --- BANKING & MAPPING STATE ---
+  // --- BANKING STATE ---
   const [showBankManager, setShowBankManager] = useState(false);
   const [realBankBalance, setRealBankBalance] = useState(0);
   const [hasActiveConnection, setHasActiveConnection] = useState(false);
+  
+  // --- MAPPING STATE ---
   const [showMapper, setShowMapper] = useState(false);
   const [chargeToMap, setChargeToMap] = useState<Charge | null>(null);
   const [chargeMappings, setChargeMappings] = useState<MappedTransaction[]>([]);
@@ -99,11 +104,9 @@ export default function BudgetCompleteBeta() {
   const notifiedProjectsRef = useRef<Set<string>>(new Set());
 
   // --- 0. SMART CALCULATOR: REALITY OVERRIDE ---
-  // Calcule le total des charges pour un mois donné en priorisant les transactions réelles mappées
   const getMonthlyChargeTotal = (monthIndex: number) => {
       let total = 0;
       charges.forEach(charge => {
-          // Trouver les transactions mappées pour cette charge CE mois-ci
           const mappedForThisMonth = chargeMappings.filter(m => {
               if (m.chargeId !== charge.id) return false;
               const date = new Date(m.date);
@@ -111,12 +114,9 @@ export default function BudgetCompleteBeta() {
           });
 
           if (mappedForThisMonth.length > 0) {
-              // UTILISER LE RÉEL (Somme des transactions)
               const sumReal = mappedForThisMonth.reduce((acc, curr) => acc + curr.amount, 0);
-              // Les transactions sortantes sont négatives chez Bridge, on prend la valeur absolue pour le calcul de charges
               total += Math.abs(sumReal);
           } else {
-              // UTILISER LE THÉORIQUE (si charge active ce mois-ci)
               const monthStart = new Date(currentYear, monthIndex, 1);
               const monthEnd = new Date(currentYear, monthIndex + 1, 0);
               let isActive = true;
@@ -134,7 +134,6 @@ export default function BudgetCompleteBeta() {
       return total;
   };
 
-  // Objet pour passer les totaux mappés à ChargesSection pour l'affichage visuel (Badge "Réel")
   const mappedTotalsByChargeId = charges.reduce((acc, charge) => {
       const total = chargeMappings
         .filter(m => m.chargeId === charge.id)
@@ -168,7 +167,7 @@ export default function BudgetCompleteBeta() {
   // Load Budget
   useEffect(() => { if (id) loadBudget(); }, [id]);
 
-  // Smart Auto-Save (30s, only if visible)
+  // Smart Auto-Save (30s)
   useEffect(() => {
     if (!loadedRef.current) return;
     const saveInterval = setInterval(() => {
