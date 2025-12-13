@@ -55,13 +55,15 @@ interface MonthlyTableProps {
   onMonthCommentsChange: (data: MonthComments) => void;
   onProjectCommentsChange: (data: ProjectComments) => void;
   onLockedMonthsChange: (data: LockedMonths) => void;
+  
+  // NEW: Fonction optionnelle pour surcharger le calcul des charges (Mode Bêta / Réel)
+  customChargeTotalCalculator?: (monthIndex: number) => number;
 }
 
 const MONTHS = [
   'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
   'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'
 ];
-
 const GENERAL_SAVINGS_ID = 'epargne';
 
 const isChargeActive = (charge: Charge, year: number, monthIndex: number): boolean => {
@@ -98,12 +100,13 @@ export default function MonthlyTable({
   onMonthCommentsChange,
   onProjectCommentsChange,
   onLockedMonthsChange,
+  customChargeTotalCalculator // Destructuring de la nouvelle prop
 }: MonthlyTableProps) {
   const [selectedMonth, setSelectedMonth] = useState<string | null>(null);
   const [commentDialogOpen, setCommentDialogOpen] = useState(false);
   const [tempComment, setTempComment] = useState('');
   
-  // Visibility States - UPDATED: Standard columns default to FALSE (hidden)
+  // Visibility States
   const [visibleProjectIds, setVisibleProjectIds] = useState<string[]>([]);
   const [showIncome, setShowIncome] = useState(false); 
   const [showOneTime, setShowOneTime] = useState(false);
@@ -120,7 +123,12 @@ export default function MonthlyTable({
   // --- Calculations ---
   const getMonthlyBaseIncome = () => people.reduce((sum, person) => sum + person.salary, 0);
   
+  // UPDATED: Use custom calculator if provided (for Reality Check)
   const getMonthlyChargesTotal = (monthIndex: number) => {
+    if (customChargeTotalCalculator) {
+        return customChargeTotalCalculator(monthIndex);
+    }
+    // Fallback: Calcul théorique standard
     return charges.reduce((sum, charge) => {
         return isChargeActive(charge, currentYear, monthIndex) ? sum + charge.amount : sum;
     }, 0);
@@ -131,7 +139,7 @@ export default function MonthlyTable({
   const getMonthlyAvailableSavings = (month: string, monthIndex: number) => {
     const baseIncome = getMonthlyBaseIncome();
     const oneTime = getMonthlyOneTimeIncome(month);
-    const chargesTotal = getMonthlyChargesTotal(monthIndex);
+    const chargesTotal = getMonthlyChargesTotal(monthIndex); // Uses the updated logic
     return baseIncome + oneTime - chargesTotal;
   };
 
@@ -232,7 +240,6 @@ export default function MonthlyTable({
   return (
     <>
       <Card className="glass-card overflow-hidden animate-fade-in shadow-lg border-t-4 border-t-primary/20">
-        
         <CardHeader className="flex flex-row items-center justify-between py-4 px-4 border-b border-border/40 bg-muted/20">
             <div className="flex items-center gap-2">
                 <CardTitle className="text-lg font-medium flex items-center gap-2">
@@ -256,32 +263,17 @@ export default function MonthlyTable({
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-64">
                     <DropdownMenuLabel>Colonnes Standards</DropdownMenuLabel>
-                    
-                    <DropdownMenuCheckboxItem 
-                        checked={showIncome} 
-                        onCheckedChange={setShowIncome}
-                        onSelect={(e) => e.preventDefault()}
-                    >
+                    <DropdownMenuCheckboxItem checked={showIncome} onCheckedChange={setShowIncome} onSelect={(e) => e.preventDefault()}>
                         Revenus (Salaires)
                     </DropdownMenuCheckboxItem>
-                    <DropdownMenuCheckboxItem 
-                        checked={showOneTime} 
-                        onCheckedChange={setShowOneTime}
-                        onSelect={(e) => e.preventDefault()}
-                    >
+                    <DropdownMenuCheckboxItem checked={showOneTime} onCheckedChange={setShowOneTime} onSelect={(e) => e.preventDefault()}>
                         Revenus (Ponctuels)
                     </DropdownMenuCheckboxItem>
-                    <DropdownMenuCheckboxItem 
-                        checked={showCharges} 
-                        onCheckedChange={setShowCharges}
-                        onSelect={(e) => e.preventDefault()}
-                    >
+                    <DropdownMenuCheckboxItem checked={showCharges} onCheckedChange={setShowCharges} onSelect={(e) => e.preventDefault()}>
                         Charges Fixes
                     </DropdownMenuCheckboxItem>
-
                     <DropdownMenuSeparator />
                     <DropdownMenuLabel>Projets</DropdownMenuLabel>
-                    
                     <div className="p-2 flex gap-2">
                         <Button variant="ghost" size="sm" className="flex-1 h-7 text-xs bg-muted/50" onClick={(e) => { e.preventDefault(); showAllProjects(); }}>
                             <CheckSquare className="h-3 w-3 mr-1" /> Tout
@@ -290,15 +282,9 @@ export default function MonthlyTable({
                             <Square className="h-3 w-3 mr-1" /> Aucun
                         </Button>
                     </div>
-
                     <div className="max-h-[200px] overflow-y-auto">
                         {standardProjects.map((project) => (
-                            <DropdownMenuCheckboxItem
-                                key={project.id}
-                                checked={visibleProjectIds.includes(project.id)}
-                                onCheckedChange={() => toggleProjectVisibility(project.id)}
-                                onSelect={(e) => e.preventDefault()}
-                            >
+                            <DropdownMenuCheckboxItem key={project.id} checked={visibleProjectIds.includes(project.id)} onCheckedChange={() => toggleProjectVisibility(project.id)} onSelect={(e) => e.preventDefault()}>
                                 {project.label}
                             </DropdownMenuCheckboxItem>
                         ))}
@@ -318,174 +304,84 @@ export default function MonthlyTable({
                       <span className="text-[9px] font-normal text-muted-foreground">Actions</span>
                     </div>
                   </th>
-                  
-                  {showIncome && (
-                    <th className="px-2 py-3 text-center font-medium text-success bg-success/5 border-b border-border border-r border-dashed border-border/50 min-w-[90px]">
-                        Revenus
-                    </th>
-                  )}
-                  {showOneTime && (
-                    <th className="px-2 py-3 text-center font-medium text-success bg-success/5 border-b border-border border-r border-dashed border-border/50 min-w-[100px]">
-                        Ponctuels
-                    </th>
-                  )}
-                  {showCharges && (
-                    <th className="px-2 py-3 text-center font-medium text-destructive bg-destructive/5 border-b border-border border-r border-dashed border-border/50 min-w-[90px]">
-                        Charges
-                    </th>
-                  )}
-                  <th className="px-2 py-3 text-center font-bold text-primary bg-primary/10 border-b border-border border-r-2 border-primary/20 min-w-[110px]">
-                    Disponible
-                  </th>
-
+                  {showIncome && <th className="px-2 py-3 text-center font-medium text-success bg-success/5 border-b border-border border-r border-dashed border-border/50 min-w-[90px]">Revenus</th>}
+                  {showOneTime && <th className="px-2 py-3 text-center font-medium text-success bg-success/5 border-b border-border border-r border-dashed border-border/50 min-w-[100px]">Ponctuels</th>}
+                  {showCharges && <th className="px-2 py-3 text-center font-medium text-destructive bg-destructive/5 border-b border-border border-r border-dashed border-border/50 min-w-[90px]">Charges</th>}
+                  <th className="px-2 py-3 text-center font-bold text-primary bg-primary/10 border-b border-border border-r-2 border-primary/20 min-w-[110px]">Disponible</th>
                   {visibleProjects.map((project) => (
                     <th key={project.id} className="px-2 py-3 text-center font-semibold text-foreground border-b border-r border-border border-dashed min-w-[160px] bg-background">
                       <div className="flex flex-col items-center gap-1">
                         <span className="truncate max-w-[140px]" title={project.label}>{project.label}</span>
                         <div className="grid grid-cols-2 gap-1 w-full text-[9px] font-normal text-muted-foreground bg-muted/50 rounded px-1 py-0.5">
-                          <span>Alloué</span>
-                          <span>Dépensé</span>
+                          <span>Alloué</span><span>Dépensé</span>
                         </div>
                       </div>
                     </th>
                   ))}
-
                   <th className="px-2 py-3 text-center font-bold text-primary bg-primary/5 border-b border-border min-w-[160px]">
-                      <div className="flex flex-col items-center gap-1">
+                     <div className="flex flex-col items-center gap-1">
                         <span>Épargne Générale</span>
                         <div className="grid grid-cols-2 gap-1 w-full text-[9px] font-normal text-primary/70 bg-primary/10 rounded px-1 py-0.5">
-                           <span>Auto</span>
-                           <span>Dépensé</span>
+                            <span>Auto</span><span>Dépensé</span>
                         </div>
                     </div>
                   </th>
                 </tr>
               </thead>
-
               <tbody className="divide-y divide-border/50 text-xs">
                 {MONTHS.map((month, monthIndex) => {
                   const isLocked = lockedMonths[month];
                   const hasComment = !!monthComments[month];
-                  
                   const chargesTotal = getMonthlyChargesTotal(monthIndex);
                   const availableToSave = getMonthlyAvailableSavings(month, monthIndex);
                   const genSavingsAllocation = getGeneralSavingsAllocation(month, monthIndex);
-                  
                   const genSavingsExpense = yearlyExpenses[month]?.[GENERAL_SAVINGS_ID] || 0;
                   const genSavingsCumulative = getCumulativeGeneralSavings(monthIndex);
                   const genSavingsComment = projectComments[month]?.[GENERAL_SAVINGS_ID];
 
                   return (
                     <tr key={month} className="hover:bg-muted/30 transition-colors group">
-                      
                       <td className="sticky left-0 z-20 bg-background group-hover:bg-background px-2 py-2 border-r border-border shadow-[4px_0_12px_-4px_rgba(0,0,0,0.1)]">
                         <div className="flex flex-col gap-1">
                             <div className="truncate text-sm font-semibold text-foreground" title={month}>{month}</div>
                             <div className="flex items-center gap-1">
-                                <Button
-                                    variant="ghost" size="icon-sm" onClick={() => toggleMonthLock(month)}
-                                    className={cn("h-5 w-5 rounded-md transition-all", isLocked ? "text-warning bg-warning/10" : "text-muted-foreground/50 hover:text-foreground")}
-                                >
+                                <Button variant="ghost" size="icon-sm" onClick={() => toggleMonthLock(month)} className={cn("h-5 w-5 rounded-md transition-all", isLocked ? "text-warning bg-warning/10" : "text-muted-foreground/50 hover:text-foreground")}>
                                     {isLocked ? <Lock className="h-3 w-3" /> : <Unlock className="h-3 w-3" />}
                                 </Button>
-                                <Button
-                                    variant="ghost" size="icon-sm" onClick={() => openCommentDialog(month)}
-                                    className={cn("h-5 w-5 rounded-md transition-all", hasComment ? "text-primary bg-primary/10" : "text-muted-foreground/50 hover:text-foreground")}
-                                >
+                                <Button variant="ghost" size="icon-sm" onClick={() => openCommentDialog(month)} className={cn("h-5 w-5 rounded-md transition-all", hasComment ? "text-primary bg-primary/10" : "text-muted-foreground/50 hover:text-foreground")}>
                                     <MessageCircle className="h-3 w-3" />
                                 </Button>
                             </div>
                         </div>
                       </td>
-
-                      {showIncome && (
-                        <td className="px-2 py-2 text-center bg-success/5 font-medium text-success border-r border-dashed border-border/50">
-                            +{getMonthlyBaseIncome().toLocaleString()}
-                        </td>
-                      )}
-
+                      {showIncome && <td className="px-2 py-2 text-center bg-success/5 font-medium text-success border-r border-dashed border-border/50">+{getMonthlyBaseIncome().toLocaleString()}</td>}
                       {showOneTime && (
                         <td className="px-2 py-2 bg-success/5 border-r border-dashed border-border/50">
-                            <Input
-                            type="number" min="0" value={oneTimeIncomes[month] || ''}
-                            onChange={(e) => updateOneTimeIncome(month, parseFloat(e.target.value) || 0)}
-                            disabled={isLocked}
-                            className={cn(
-                                "text-center h-7 text-xs font-medium border-success/20 focus-visible:ring-success/30 bg-background hover:bg-white shadow-sm p-1",
-                                oneTimeIncomes[month] ? "text-success font-bold" : "text-muted-foreground",
-                                isLocked && "opacity-50 cursor-not-allowed"
-                            )}
-                            placeholder="-"
-                            />
+                            <Input type="number" min="0" value={oneTimeIncomes[month] || ''} onChange={(e) => updateOneTimeIncome(month, parseFloat(e.target.value) || 0)} disabled={isLocked} className={cn("text-center h-7 text-xs font-medium border-success/20 focus-visible:ring-success/30 bg-background hover:bg-white shadow-sm p-1", oneTimeIncomes[month] ? "text-success font-bold" : "text-muted-foreground", isLocked && "opacity-50 cursor-not-allowed")} placeholder="-" />
                         </td>
                       )}
-
-                      {showCharges && (
-                        <td className="px-2 py-2 text-center bg-destructive/5 font-medium text-destructive border-r border-dashed border-border/50">
-                            -{chargesTotal.toLocaleString()}
-                        </td>
-                      )}
-
-                      <td className="px-2 py-2 text-center font-bold text-primary bg-primary/10 border-r-2 border-primary/20 text-sm">
-                        {availableToSave.toLocaleString()} €
-                      </td>
-
+                      {showCharges && <td className="px-2 py-2 text-center bg-destructive/5 font-medium text-destructive border-r border-dashed border-border/50">-{chargesTotal.toLocaleString()}</td>}
+                      <td className="px-2 py-2 text-center font-bold text-primary bg-primary/10 border-r-2 border-primary/20 text-sm">{availableToSave.toLocaleString()} €</td>
                       {visibleProjects.map((project) => {
                         const allocation = yearlyData[month]?.[project.id] || 0;
                         const expense = yearlyExpenses[month]?.[project.id] || 0;
                         const comment = projectComments[month]?.[project.id];
                         const cumulative = getCumulativeProjectTotal(project.id, monthIndex);
-
                         return (
                           <td key={project.id} className="px-1 py-2 border-r border-dashed border-border/50">
                             <div className="flex flex-col gap-1">
                               <div className="flex items-center gap-1">
-                                <Input
-                                  type="number" min="0" value={allocation || ''}
-                                  onChange={(e) => updateAllocation(month, project.id, parseFloat(e.target.value) || 0)}
-                                  disabled={isLocked}
-                                  className={cn(
-                                    "text-center h-7 text-xs px-1 font-medium bg-background border-primary/20 focus-visible:ring-primary/30 shadow-sm",
-                                    allocation > 0 && "text-primary font-bold bg-primary/5",
-                                    isLocked && "opacity-50"
-                                  )}
-                                  placeholder="0"
-                                />
-                                <Input
-                                  type="number" min="0" value={expense || ''}
-                                  onChange={(e) => updateExpense(month, project.id, parseFloat(e.target.value) || 0)}
-                                  disabled={isLocked}
-                                  className={cn(
-                                    "text-center h-7 text-xs px-1 font-medium bg-background border-destructive/20 focus-visible:ring-destructive/30 shadow-sm",
-                                    expense > 0 && "text-destructive font-bold bg-destructive/5",
-                                    isLocked && "opacity-50"
-                                  )}
-                                  placeholder="0"
-                                />
+                                <Input type="number" min="0" value={allocation || ''} onChange={(e) => updateAllocation(month, project.id, parseFloat(e.target.value) || 0)} disabled={isLocked} className={cn("text-center h-7 text-xs px-1 font-medium bg-background border-primary/20 focus-visible:ring-primary/30 shadow-sm", allocation > 0 && "text-primary font-bold bg-primary/5", isLocked && "opacity-50")} placeholder="0" />
+                                <Input type="number" min="0" value={expense || ''} onChange={(e) => updateExpense(month, project.id, parseFloat(e.target.value) || 0)} disabled={isLocked} className={cn("text-center h-7 text-xs px-1 font-medium bg-background border-destructive/20 focus-visible:ring-destructive/30 shadow-sm", expense > 0 && "text-destructive font-bold bg-destructive/5", isLocked && "opacity-50")} placeholder="0" />
                               </div>
-
                               <div className="flex items-center justify-between px-0.5">
                                 <div className="text-[10px] text-muted-foreground flex items-center gap-0.5 bg-muted/30 px-1 py-0 rounded" title="Total Cumulé">
-                                  <span>∑</span>
-                                  <span className={cumulative >= 0 ? "text-success font-medium" : "text-destructive font-medium"}>
-                                    {cumulative.toLocaleString()}
-                                  </span>
+                                  <span>∑</span><span className={cumulative >= 0 ? "text-success font-medium" : "text-destructive font-medium"}>{cumulative.toLocaleString()}</span>
                                 </div>
-
                                 <Popover>
-                                  <PopoverTrigger asChild>
-                                    <Button variant="ghost" size="icon" className={cn("h-4 w-4 rounded-full p-0", comment ? "text-primary" : "text-muted-foreground/30")}>
-                                       {comment ? <MessageCircle className="h-3 w-3" /> : <MessageSquarePlus className="h-3 w-3" />}
-                                    </Button>
-                                  </PopoverTrigger>
+                                  <PopoverTrigger asChild><Button variant="ghost" size="icon" className={cn("h-4 w-4 rounded-full p-0", comment ? "text-primary" : "text-muted-foreground/30")}>{comment ? <MessageCircle className="h-3 w-3" /> : <MessageSquarePlus className="h-3 w-3" />}</Button></PopoverTrigger>
                                   <PopoverContent className="w-64 p-3">
-                                    <div className="space-y-2">
-                                      <h4 className="font-medium text-xs text-muted-foreground mb-1">Note pour {project.label} ({month})</h4>
-                                      <Textarea 
-                                        value={comment || ''} onChange={(e) => updateProjectComment(month, project.id, e.target.value)}
-                                        placeholder="Détail..." className="h-20 text-sm resize-none"
-                                      />
-                                    </div>
+                                    <div className="space-y-2"><h4 className="font-medium text-xs text-muted-foreground mb-1">Note pour {project.label} ({month})</h4><Textarea value={comment || ''} onChange={(e) => updateProjectComment(month, project.id, e.target.value)} placeholder="Détail..." className="h-20 text-sm resize-none" /></div>
                                   </PopoverContent>
                                 </Popover>
                               </div>
@@ -493,48 +389,17 @@ export default function MonthlyTable({
                           </td>
                         );
                       })}
-
                       <td className="px-1 py-2 bg-primary/5">
                         <div className="flex flex-col gap-1">
                             <div className="flex items-center gap-1">
-                                <Input
-                                    type="text" value={genSavingsAllocation.toLocaleString()} disabled
-                                    className="text-center h-7 text-xs px-1 font-bold bg-primary/10 border-primary/20 text-primary cursor-default shadow-none"
-                                />
-                                <Input
-                                    type="number" min="0" value={genSavingsExpense || ''}
-                                    onChange={(e) => updateExpense(month, GENERAL_SAVINGS_ID, parseFloat(e.target.value) || 0)}
-                                    disabled={isLocked}
-                                    className={cn(
-                                        "text-center h-7 text-xs px-1 font-medium bg-background border-destructive/20 focus-visible:ring-destructive/30 shadow-sm",
-                                        genSavingsExpense > 0 && "text-destructive font-bold bg-destructive/5",
-                                        isLocked && "opacity-50"
-                                    )}
-                                    placeholder="0"
-                                />
+                                <Input type="text" value={genSavingsAllocation.toLocaleString()} disabled className="text-center h-7 text-xs px-1 font-bold bg-primary/10 border-primary/20 text-primary cursor-default shadow-none" />
+                                <Input type="number" min="0" value={genSavingsExpense || ''} onChange={(e) => updateExpense(month, GENERAL_SAVINGS_ID, parseFloat(e.target.value) || 0)} disabled={isLocked} className={cn("text-center h-7 text-xs px-1 font-medium bg-background border-destructive/20 focus-visible:ring-destructive/30 shadow-sm", genSavingsExpense > 0 && "text-destructive font-bold bg-destructive/5", isLocked && "opacity-50")} placeholder="0" />
                             </div>
                             <div className="flex items-center justify-between px-0.5">
-                                <div className="text-[10px] text-muted-foreground flex items-center gap-0.5 bg-muted/30 px-1 py-0 rounded">
-                                    <span>∑</span>
-                                    <span className={genSavingsCumulative >= 0 ? "text-success font-medium" : "text-destructive font-medium"}>
-                                    {genSavingsCumulative.toLocaleString()}
-                                    </span>
-                                </div>
+                                <div className="text-[10px] text-muted-foreground flex items-center gap-0.5 bg-muted/30 px-1 py-0 rounded"><span>∑</span><span className={genSavingsCumulative >= 0 ? "text-success font-medium" : "text-destructive font-medium"}>{genSavingsCumulative.toLocaleString()}</span></div>
                                 <Popover>
-                                    <PopoverTrigger asChild>
-                                    <Button variant="ghost" size="icon" className={cn("h-4 w-4 rounded-full p-0", genSavingsComment ? "text-primary" : "text-muted-foreground/30")}>
-                                        {genSavingsComment ? <MessageCircle className="h-3 w-3" /> : <MessageSquarePlus className="h-3 w-3" />}
-                                    </Button>
-                                    </PopoverTrigger>
-                                    <PopoverContent className="w-64 p-3">
-                                    <div className="space-y-2">
-                                        <h4 className="font-medium text-xs text-muted-foreground mb-1">Note pour Épargne Générale</h4>
-                                        <Textarea 
-                                        value={genSavingsComment || ''} onChange={(e) => updateProjectComment(month, GENERAL_SAVINGS_ID, e.target.value)}
-                                        placeholder="Détail..." className="h-20 text-sm resize-none"
-                                        />
-                                    </div>
-                                    </PopoverContent>
+                                    <PopoverTrigger asChild><Button variant="ghost" size="icon" className={cn("h-4 w-4 rounded-full p-0", genSavingsComment ? "text-primary" : "text-muted-foreground/30")}>{genSavingsComment ? <MessageCircle className="h-3 w-3" /> : <MessageSquarePlus className="h-3 w-3" />}</Button></PopoverTrigger>
+                                    <PopoverContent className="w-64 p-3"><div className="space-y-2"><h4 className="font-medium text-xs text-muted-foreground mb-1">Note pour Épargne Générale</h4><Textarea value={genSavingsComment || ''} onChange={(e) => updateProjectComment(month, GENERAL_SAVINGS_ID, e.target.value)} placeholder="Détail..." className="h-20 text-sm resize-none" /></div></PopoverContent>
                                 </Popover>
                             </div>
                         </div>
@@ -550,18 +415,9 @@ export default function MonthlyTable({
 
       <Dialog open={commentDialogOpen} onOpenChange={setCommentDialogOpen}>
         <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Commentaire - {selectedMonth}</DialogTitle>
-            <DialogDescription>Ajoutez une note générale pour ce mois.</DialogDescription>
-          </DialogHeader>
-          <Textarea
-            value={tempComment} onChange={(e) => setTempComment(e.target.value)}
-            placeholder="Écrivez votre commentaire ici..." rows={4} className="resize-none"
-          />
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setCommentDialogOpen(false)}>Annuler</Button>
-            <Button variant="gradient" onClick={saveComment}>Enregistrer</Button>
-          </DialogFooter>
+          <DialogHeader><DialogTitle>Commentaire - {selectedMonth}</DialogTitle><DialogDescription>Ajoutez une note générale pour ce mois.</DialogDescription></DialogHeader>
+          <Textarea value={tempComment} onChange={(e) => setTempComment(e.target.value)} placeholder="Écrivez votre commentaire ici..." rows={4} className="resize-none" />
+          <DialogFooter><Button variant="outline" onClick={() => setCommentDialogOpen(false)}>Annuler</Button><Button variant="gradient" onClick={saveComment}>Enregistrer</Button></DialogFooter>
         </DialogContent>
       </Dialog>
     </>

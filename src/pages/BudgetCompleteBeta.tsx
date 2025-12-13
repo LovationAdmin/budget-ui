@@ -28,15 +28,11 @@ import ActionsBar from '../components/budget/ActionsBar';
 import MemberManagementSection from '../components/budget/MemberManagementSection';
 import { RealityCheck } from '../components/budget/RealityCheck'; 
 import { BankConnectionManager } from '../components/budget/BankConnectionManager';
+import { TransactionMapper, MappedTransaction } from '../components/budget/TransactionMapper';
+
 import { LayoutDashboard, Users, Receipt, Target, CalendarDays, FlaskConical } from "lucide-react";
 import { ToastAction } from '@/components/ui/toast';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 
 const BUDGET_NAV_ITEMS: NavItem[] = [
   { id: "overview", label: "Vue d'ensemble", icon: LayoutDashboard },
@@ -48,6 +44,10 @@ const BUDGET_NAV_ITEMS: NavItem[] = [
 ];
 
 const MONTHS = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
+
+interface ExtendedBudgetData extends RawBudgetData {
+    chargeMappings?: MappedTransaction[];
+}
 
 interface BudgetMember {
   id: string;
@@ -73,10 +73,13 @@ export default function BudgetCompleteBeta() {
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [lastServerUpdate, setLastServerUpdate] = useState<string>("");
 
-  // --- BANKING STATE ---
+  // --- BANKING & MAPPING STATE ---
   const [showBankManager, setShowBankManager] = useState(false);
   const [realBankBalance, setRealBankBalance] = useState(0);
   const [hasActiveConnection, setHasActiveConnection] = useState(false);
+  const [showMapper, setShowMapper] = useState(false);
+  const [chargeToMap, setChargeToMap] = useState<Charge | null>(null);
+  const [chargeMappings, setChargeMappings] = useState<MappedTransaction[]>([]);
 
   // --- Core Budget Data State ---
   const [budgetTitle, setBudgetTitle] = useState('');
@@ -91,58 +94,90 @@ export default function BudgetCompleteBeta() {
   const [projectComments, setProjectComments] = useState<ProjectComments>({});
   const [lockedMonths, setLockedMonths] = useState<LockedMonths>({});
 
-  // NEW: Suggestions State
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
-
   const loadedRef = useRef(false);
+  const notifiedProjectsRef = useRef<Set<string>>(new Set());
 
-  // --- LOGIC: Calculate Total Realized Cash ---
-  const today = new Date();
-  const currentMonthIndex = today.getMonth();
-  const currentRealYear = today.getFullYear();
-
-  let totalGlobalRealized = 0;
-  if (currentYear <= currentRealYear) {
-      projects.forEach(proj => {
-          MONTHS.forEach((month, idx) => {
-              if (currentYear < currentRealYear || idx <= currentMonthIndex) {
-                  totalGlobalRealized += (yearlyData[month]?.[proj.id] || 0);
-              }
+  // --- 0. SMART CALCULATOR: REALITY OVERRIDE ---
+  // Calcule le total des charges pour un mois donné en priorisant les transactions réelles mappées
+  const getMonthlyChargeTotal = (monthIndex: number) => {
+      let total = 0;
+      charges.forEach(charge => {
+          // Trouver les transactions mappées pour cette charge CE mois-ci
+          const mappedForThisMonth = chargeMappings.filter(m => {
+              if (m.chargeId !== charge.id) return false;
+              const date = new Date(m.date);
+              return date.getMonth() === monthIndex && date.getFullYear() === currentYear;
           });
-      });
-  }
 
-  // --- LOGIC: Fetch Bank Data ---
+          if (mappedForThisMonth.length > 0) {
+              // UTILISER LE RÉEL (Somme des transactions)
+              const sumReal = mappedForThisMonth.reduce((acc, curr) => acc + curr.amount, 0);
+              // Les transactions sortantes sont négatives chez Bridge, on prend la valeur absolue pour le calcul de charges
+              total += Math.abs(sumReal);
+          } else {
+              // UTILISER LE THÉORIQUE (si charge active ce mois-ci)
+              const monthStart = new Date(currentYear, monthIndex, 1);
+              const monthEnd = new Date(currentYear, monthIndex + 1, 0);
+              let isActive = true;
+              if (charge.startDate) {
+                  const start = new Date(charge.startDate);
+                  if (start > monthEnd) isActive = false;
+              }
+              if (charge.endDate) {
+                  const end = new Date(charge.endDate);
+                  if (end < monthStart) isActive = false;
+              }
+              if (isActive) total += charge.amount;
+          }
+      });
+      return total;
+  };
+
+  // Objet pour passer les totaux mappés à ChargesSection pour l'affichage visuel (Badge "Réel")
+  const mappedTotalsByChargeId = charges.reduce((acc, charge) => {
+      const total = chargeMappings
+        .filter(m => m.chargeId === charge.id)
+        .reduce((sum, m) => sum + Math.abs(m.amount), 0);
+      if (total > 0) acc[charge.id] = total; 
+      return acc;
+  }, {} as Record<string, number>);
+
+  // --- 1. EFFECTS & LOGIC ---
+
+  // Auto Tutorial
+  useEffect(() => {
+    if (!loading && !hasSeenTutorial && loadedRef.current) {
+       const timer = setTimeout(() => startTutorial(), 1500); 
+       return () => clearTimeout(timer);
+    }
+  }, [loading, hasSeenTutorial, startTutorial]);
+
+  // Fetch Bank Data
   const refreshBankData = useCallback(async () => {
       try {
           const res = await api.get('/banking/connections');
           setRealBankBalance(res.data.total_real_cash || 0);
           const conns = res.data.connections || [];
           setHasActiveConnection(conns.length > 0);
-      } catch (error) {
-          console.error("Failed to refresh bank data", error);
-      }
+      } catch (error) { console.error("Failed to refresh bank data", error); }
   }, []);
 
-  useEffect(() => {
-      refreshBankData();
-  }, [refreshBankData]);
+  useEffect(() => { refreshBankData(); }, [refreshBankData]);
 
-  // --- Standard Load & Save Effects ---
-  useEffect(() => {
-    if (id) loadBudget();
-  }, [id]);
+  // Load Budget
+  useEffect(() => { if (id) loadBudget(); }, [id]);
 
-  // 1. SMART AUTO-SAVE (30s)
+  // Smart Auto-Save (30s, only if visible)
   useEffect(() => {
     if (!loadedRef.current) return;
     const saveInterval = setInterval(() => {
         if (document.visibilityState === 'visible') handleSave(true);
     }, 30000);
     return () => clearInterval(saveInterval);
-  }, [budgetTitle, currentYear, people, charges, projects, yearlyData, yearlyExpenses, oneTimeIncomes, monthComments, projectComments, lockedMonths]);
+  }, [budgetTitle, currentYear, people, charges, projects, yearlyData, yearlyExpenses, oneTimeIncomes, monthComments, projectComments, lockedMonths, chargeMappings]);
 
-  // 2. SMART DATA POLLING (30s)
+  // Smart Data Polling (30s)
   useEffect(() => {
     if (!id || !loadedRef.current) return;
     const pollInterval = setInterval(async () => {
@@ -163,7 +198,7 @@ export default function BudgetCompleteBeta() {
     return () => clearInterval(pollInterval);
   }, [id, lastServerUpdate, user?.name]);
 
-  // 3. MEMBER POLLING (60s)
+  // Smart Member Polling (60s)
   useEffect(() => {
     if (!id) return;
     const memberInterval = setInterval(() => { 
@@ -172,35 +207,34 @@ export default function BudgetCompleteBeta() {
     return () => clearInterval(memberInterval);
   }, [id]);
 
-  // 5. AFFILIATION INTELLIGENTE
+  // Achievement Checker
+  useEffect(() => {
+    if (!loadedRef.current) return;
+    projects.forEach(project => {
+        if (!project.targetAmount || project.targetAmount <= 0) return;
+        if (notifiedProjectsRef.current.has(project.id)) return;
+        let totalAllocated = 0;
+        MONTHS.forEach(month => { totalAllocated += yearlyData[month]?.[project.id] || 0; });
+        if (totalAllocated >= project.targetAmount) {
+            notifiedProjectsRef.current.add(project.id);
+            toast({ title: "🎉 Objectif Atteint !", description: `Projet "${project.label}" financé.`, className: "bg-success/10 border-success/50 text-success-foreground", duration: 5000 });
+        }
+    });
+  }, [projects, yearlyData]);
+
+  // Affiliation Intelligente
   useEffect(() => {
       if (charges.length > 0) {
           const newSuggestions: Suggestion[] = [];
           charges.forEach(c => {
-              // Mobile
               if (c.amount > 30 && (c.label.toLowerCase().includes('mobile') || c.label.toLowerCase().includes('sfr') || c.label.toLowerCase().includes('orange'))) {
                   newSuggestions.push({
-                      id: 'sug_mobile_' + c.id,
-                      chargeId: c.id,
-                      type: 'MOBILE',
-                      title: 'Forfait Mobile',
-                      message: `Vous payez ${c.amount}€/mois. Économisez en changeant d'opérateur.`,
-                      potentialSavings: (c.amount - 10) * 12,
-                      actionLink: 'https://www.ariase.com/mobile',
-                      canBeContacted: false
+                      id: 'sug_mobile_' + c.id, chargeId: c.id, type: 'MOBILE', title: 'Forfait Mobile', message: `Vous payez ${c.amount}€/mois. Économisez en changeant d'opérateur.`, potentialSavings: (c.amount - 10) * 12, actionLink: 'https://www.ariase.com/mobile', canBeContacted: false
                   });
               }
-              // Energie
               if (c.amount > 100 && (c.label.toLowerCase().includes('edf') || c.label.toLowerCase().includes('engie'))) {
                   newSuggestions.push({
-                      id: 'sug_energy_' + c.id,
-                      chargeId: c.id,
-                      type: 'ENERGY',
-                      title: 'Facture Énergie',
-                      message: `Comparez les fournisseurs pour réduire cette facture de ${c.amount}€.`,
-                      potentialSavings: (c.amount * 0.15) * 12,
-                      actionLink: 'https://www.papernest.com/energie/',
-                      canBeContacted: true
+                      id: 'sug_energy_' + c.id, chargeId: c.id, type: 'ENERGY', title: 'Facture Énergie', message: `Comparez les fournisseurs pour réduire cette facture de ${c.amount}€.`, potentialSavings: (c.amount * 0.15) * 12, actionLink: 'https://www.papernest.com/energie/', canBeContacted: true
                   });
               }
           });
@@ -208,12 +242,14 @@ export default function BudgetCompleteBeta() {
       }
   }, [charges]);
 
+  // --- ACTIONS ---
+
   const loadBudget = async () => {
     if (!id) return;
     try {
       const [budgetRes, dataRes] = await Promise.all([budgetAPI.getById(id), budgetAPI.getData(id)]);
       setBudget(budgetRes.data);
-      const rawData: RawBudgetData = dataRes.data.data;
+      const rawData: ExtendedBudgetData = dataRes.data.data;
       if (rawData.lastUpdated) setLastServerUpdate(rawData.lastUpdated);
       else setLastServerUpdate(new Date().toISOString());
 
@@ -229,25 +265,29 @@ export default function BudgetCompleteBeta() {
       setMonthComments(data.monthComments || {});
       setProjectComments(data.projectComments || {});
       setLockedMonths(data.lockedMonths || {});
+      
+      setChargeMappings(rawData.chargeMappings || []);
       loadedRef.current = true;
     } catch (error) { 
         console.error(error);
         toast({ title: "Erreur", description: "Impossible de charger les données.", variant: "destructive" });
-    } finally { 
-        setLoading(false); 
-    }
+    } finally { setLoading(false); }
   };
 
   const handleSave = async (silent = false) => {
      if(!id) return;
      if(!silent) setSaving(true);
-     const budgetData = { budgetTitle, currentYear, people, charges, projects, yearlyData, yearlyExpenses, oneTimeIncomes, monthComments, projectComments, lockedMonths, lastUpdated: new Date().toISOString(), updatedBy: user?.name, version: '2.2-beta' };
+     const budgetData = { 
+         budgetTitle, currentYear, people, charges, projects, yearlyData, yearlyExpenses, oneTimeIncomes, monthComments, projectComments, lockedMonths, 
+         chargeMappings, // Save mappings
+         lastUpdated: new Date().toISOString(), updatedBy: user?.name, version: '2.3-beta' 
+     };
      try { 
          await budgetAPI.updateData(id, { data: budgetData }); 
          setLastServerUpdate(budgetData.lastUpdated);
          if(!silent) toast({title: "Succès", description: "Budget sauvegardé !", variant: "success"}); 
      } 
-     catch(e) { console.error(e); if(!silent) toast({title: "Erreur", description: "Échec sauvegarde", variant: "destructive"}); } 
+     catch(e) { if(!silent) toast({title: "Erreur", description: "Échec sauvegarde", variant: "destructive"}); } 
      finally { if(!silent) setSaving(false); }
   };
   
@@ -256,117 +296,108 @@ export default function BudgetCompleteBeta() {
     try {
         const response = await budgetAPI.getById(id);
         setBudget(prev => {
-            if (JSON.stringify(prev?.members) !== JSON.stringify(response.data.members)) {
-                return response.data;
-            }
+            if (JSON.stringify(prev?.members) !== JSON.stringify(response.data.members)) return response.data;
             return prev;
         });
     } catch (error) { console.error(error); }
   };
 
-  const handleSectionChange = (section: string) => {
-    const element = document.getElementById(section);
-    if (element) element.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    else if (section === 'overview') window.scrollTo({ top: 0, behavior: 'smooth' });
+  const handleOpenMapper = (charge: Charge) => {
+      setChargeToMap(charge);
+      setShowMapper(true);
   };
+
+  const handleSaveMappings = (newLinks: MappedTransaction[]) => {
+      const others = chargeMappings.filter(m => m.chargeId !== chargeToMap?.id);
+      const updated = [...others, ...newLinks];
+      setChargeMappings(updated);
+      toast({ title: "Mappings mis à jour", description: `${newLinks.length} transactions liées.` });
+  };
+
+  // Reality Check realized calculation
+  let totalGlobalRealized = 0;
+  const today = new Date();
+  const currentMonthIndex = today.getMonth();
+  const currentRealYear = today.getFullYear();
+  if (currentYear <= currentRealYear) {
+      projects.forEach(proj => {
+          MONTHS.forEach((month, idx) => {
+              if (currentYear < currentRealYear || idx <= currentMonthIndex) {
+                  totalGlobalRealized += (yearlyData[month]?.[proj.id] || 0);
+              }
+          });
+      });
+  }
 
   if (loading) return <div className="min-h-screen flex items-center justify-center"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div></div>;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-purple-50">
+      <div className="bg-indigo-600 text-white text-center text-xs py-1 font-medium">✨ Mode Bêta activé : Test de la fonctionnalité "Reality Check"</div>
       
-      <div className="bg-indigo-600 text-white text-center text-xs py-1 font-medium">
-        ✨ Mode Bêta activé : Test de la fonctionnalité "Reality Check" (Vrai Connexion Bancaire)
-      </div>
-
-      <BudgetNavbar 
-        budgetTitle={budget?.name + " (Bêta)"} 
-        userName={user?.name}
-        userAvatar={user?.avatar}
-        items={BUDGET_NAV_ITEMS}
-        onSectionChange={handleSectionChange}
-        currentSection="overview"
-      />
+      <BudgetNavbar budgetTitle={budget?.name + " (Bêta)"} userName={user?.name} userAvatar={user?.avatar} items={BUDGET_NAV_ITEMS} onSectionChange={() => {}} currentSection="overview" />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <button onClick={() => navigate('/')} className="text-indigo-600 hover:text-indigo-700 mb-4 flex items-center gap-2 font-medium">
-          ← Retour
-        </button>
-
         <div className="bg-white rounded-xl shadow-lg overflow-hidden mb-6">
           <BudgetHeader budgetTitle={budgetTitle} onTitleChange={setBudgetTitle} currentYear={currentYear} onYearChange={setCurrentYear} />
           <div className="p-4 bg-gray-50 border-t border-gray-200 flex justify-between items-center">
             <div className="flex items-center gap-3">
-              {budget?.is_owner && (
-                <button onClick={() => setShowInviteModal(true)} className="bg-white hover:bg-gray-50 border border-gray-300 text-gray-700 px-4 py-2 rounded-lg font-medium transition">
-                  👥 Inviter
-                </button>
-              )}
+              {budget?.is_owner && (<button onClick={() => setShowInviteModal(true)} className="bg-white hover:bg-gray-50 border border-gray-300 text-gray-700 px-4 py-2 rounded-lg font-medium transition">👥 Inviter</button>)}
             </div>
           </div>
         </div>
         
         {budget && user && ( <div id="members"><MemberManagementSection budget={budget} currentUserId={user.id} onMemberChange={refreshMembersOnly} /></div> )}
         
-        {/* Cleaned ActionsBar (No export here) */}
         <ActionsBar onSave={() => handleSave(false)} saving={saving} />
 
         <div id="people"><PeopleSection people={people} onPeopleChange={setPeople} /></div>
         
-        <div id="charges" className="mt-6"><ChargesSection charges={charges} onChargesChange={setCharges} suggestions={suggestions} /></div>
+        <div id="charges" className="mt-6">
+            <ChargesSection 
+                charges={charges} 
+                onChargesChange={setCharges} 
+                suggestions={suggestions} 
+                onLinkTransaction={handleOpenMapper} 
+                mappedTotals={mappedTotalsByChargeId} 
+            />
+        </div>
         
         <div id="reality" className="mt-8">
-            <h2 className="text-xl font-display font-semibold mb-4 flex items-center gap-2">
-                <FlaskConical className="h-5 w-5 text-indigo-600" /> 
-                Reality Check
-                <span className="text-xs bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full">Bêta</span>
-            </h2>
-            <RealityCheck 
-                totalRealized={totalGlobalRealized}
-                bankBalance={realBankBalance}
-                isBankConnected={hasActiveConnection}
-                onConnectBank={() => setShowBankManager(true)}
-            />
+            <h2 className="text-xl font-display font-semibold mb-4 flex items-center gap-2"><FlaskConical className="h-5 w-5 text-indigo-600" /> Reality Check <span className="text-xs bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full">Bêta</span></h2>
+            <RealityCheck totalRealized={totalGlobalRealized} bankBalance={realBankBalance} isBankConnected={hasActiveConnection} onConnectBank={() => setShowBankManager(true)} />
         </div>
 
-        <div id="projects" className="mt-6">
-            <ProjectsSection 
-                projects={projects} 
-                onProjectsChange={setProjects}
-                yearlyData={yearlyData}
-                currentYear={currentYear}
-            />
-        </div>
-
-        <div className="mt-6">
-            <StatsSection people={people} charges={charges} projects={projects} yearlyData={yearlyData} oneTimeIncomes={oneTimeIncomes} currentYear={currentYear} />
-        </div>
+        <div id="projects" className="mt-6"><ProjectsSection projects={projects} onProjectsChange={setProjects} yearlyData={yearlyData} currentYear={currentYear} /></div>
+        <div className="mt-6"><StatsSection people={people} charges={charges} projects={projects} yearlyData={yearlyData} oneTimeIncomes={oneTimeIncomes} currentYear={currentYear} /></div>
 
         <div id="calendar" className="mt-6">
             <MonthlyTable 
                 currentYear={currentYear} people={people} charges={charges} projects={projects} yearlyData={yearlyData} yearlyExpenses={yearlyExpenses} oneTimeIncomes={oneTimeIncomes} monthComments={monthComments} projectComments={projectComments} lockedMonths={lockedMonths} 
-                onYearlyDataChange={setYearlyData} onYearlyExpensesChange={setYearlyExpenses} onOneTimeIncomesChange={setOneTimeIncomes} onMonthCommentsChange={setMonthComments} onProjectCommentsChange={setProjectComments} onLockedMonthsChange={setLockedMonths} 
+                onYearlyDataChange={setYearlyData} onYearlyExpensesChange={setYearlyExpenses} onOneTimeIncomesChange={setOneTimeIncomes} onMonthCommentsChange={setMonthComments} onProjectCommentsChange={setProjectComments} onLockedMonthsChange={setLockedMonths}
+                customChargeTotalCalculator={getMonthlyChargeTotal} // PASS SMART CALCULATOR
             />
         </div>
       </div>
 
-      {showInviteModal && id && (
-        <InviteModal budgetId={id} onClose={() => setShowInviteModal(false)} onInvited={() => { refreshMembersOnly();
-        toast({ title: "Invitation envoyée", variant: "success" }); }} />
-      )}
-
+      {showInviteModal && id && <InviteModal budgetId={id} onClose={() => setShowInviteModal(false)} onInvited={() => { refreshMembersOnly(); toast({ title: "Invitation envoyée", variant: "success" }); }} />}
+      
       <Dialog open={showBankManager} onOpenChange={setShowBankManager}>
         <DialogContent className="sm:max-w-2xl max-h-[85vh] overflow-y-auto">
-            <DialogHeader>
-                <DialogTitle>Gestion des Comptes Bancaires</DialogTitle>
-                <DialogDescription>
-                    Connectez vos banques et sélectionnez les comptes qui constituent votre épargne (Livret A, LDD, etc.).
-                </DialogDescription>
-            </DialogHeader>
+            <DialogHeader><DialogTitle>Gestion des Comptes Bancaires</DialogTitle><DialogDescription>Connectez vos banques et sélectionnez les comptes qui constituent votre épargne.</DialogDescription></DialogHeader>
             <BankConnectionManager onUpdate={refreshBankData} />
         </DialogContent>
       </Dialog>
 
+      {chargeToMap && (
+          <TransactionMapper 
+              isOpen={showMapper}
+              onClose={() => setShowMapper(false)}
+              charge={chargeToMap}
+              currentMappings={chargeMappings}
+              onSave={handleSaveMappings}
+          />
+      )}
     </div>
   );
 }
