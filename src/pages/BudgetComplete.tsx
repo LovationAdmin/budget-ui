@@ -246,7 +246,6 @@ export default function BudgetComplete() {
 
       const data = convertOldFormatToNew(rawData);
       
-      // Hydrate state specifically for current year from global structure
       hydrateStateFromGlobal(currentYear, rawData);
 
       setBudgetTitle(data.budgetTitle || '');
@@ -308,8 +307,12 @@ export default function BudgetComplete() {
           if (!globalDataRef.current.yearlyData) globalDataRef.current.yearlyData = {};
           if (!globalDataRef.current.oneTimeIncomes) globalDataRef.current.oneTimeIncomes = {};
           
-          globalDataRef.current.yearlyData[currentYear] = formattedCurrent.yearlyData[currentYear];
-          globalDataRef.current.oneTimeIncomes[currentYear] = formattedCurrent.oneTimeIncomes[currentYear];
+          // FIX: Add optional chaining and fallback
+          const sourceYearlyData = formattedCurrent.yearlyData || {};
+          const sourceOneTime = formattedCurrent.oneTimeIncomes || {};
+
+          globalDataRef.current.yearlyData[currentYear] = sourceYearlyData[currentYear];
+          globalDataRef.current.oneTimeIncomes[currentYear] = sourceOneTime[currentYear];
       }
 
       // 2. Switch
@@ -355,10 +358,14 @@ export default function BudgetComplete() {
     finalPayload.version = '2.2';
 
     if (!finalPayload.yearlyData) finalPayload.yearlyData = {};
-    finalPayload.yearlyData[currentYear] = formattedCurrent.yearlyData[currentYear];
-    
     if (!finalPayload.oneTimeIncomes) finalPayload.oneTimeIncomes = {};
-    finalPayload.oneTimeIncomes[currentYear] = formattedCurrent.oneTimeIncomes[currentYear];
+
+    // FIX: Add optional chaining/fallback
+    const sourceYearlyData = formattedCurrent.yearlyData || {};
+    const sourceOneTime = formattedCurrent.oneTimeIncomes || {};
+
+    finalPayload.yearlyData[currentYear] = sourceYearlyData[currentYear];
+    finalPayload.oneTimeIncomes[currentYear] = sourceOneTime[currentYear];
 
     try {
       await budgetAPI.updateData(id, { data: finalPayload });

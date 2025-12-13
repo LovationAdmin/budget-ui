@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import api, { budgetAPI } from '../services/api';
 import { 
   convertOldFormatToNew, 
-  convertNewFormatToOld, // Need this to merge year data
+  convertNewFormatToOld,
   type RawBudgetData,
   type Person,
   type Charge,
@@ -46,7 +46,6 @@ const BUDGET_NAV_ITEMS: NavItem[] = [
 ];
 
 const MONTHS = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
-const GENERAL_SAVINGS_ID = 'epargne';
 
 interface ExtendedBudgetData extends RawBudgetData {
     chargeMappings?: MappedTransaction[];
@@ -77,19 +76,20 @@ export default function BudgetCompleteBeta() {
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [lastServerUpdate, setLastServerUpdate] = useState<string>("");
 
-  // --- BANKING & MAPPING STATE ---
+  // --- BANKING STATE ---
   const [showBankManager, setShowBankManager] = useState(false);
   const [realBankBalance, setRealBankBalance] = useState(0);
   const [hasActiveConnection, setHasActiveConnection] = useState(false);
+  
+  // --- MAPPING STATE ---
   const [showMapper, setShowMapper] = useState(false);
   const [chargeToMap, setChargeToMap] = useState<Charge | null>(null);
   const [chargeMappings, setChargeMappings] = useState<MappedTransaction[]>([]);
 
   // --- DATA STORAGE ---
-  // Store the raw full data (all years) to handle switching
   const globalDataRef = useRef<any>(null);
 
-  // --- Core Budget Data State (Current Year View) ---
+  // --- Core Budget Data State ---
   const [budgetTitle, setBudgetTitle] = useState('');
   const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
   const [people, setPeople] = useState<Person[]>([]);
@@ -146,37 +146,24 @@ export default function BudgetCompleteBeta() {
       return acc;
   }, {} as Record<string, number>);
 
-  // Calculate Carry Over (Savings from previous years)
   const calculateCarryOvers = () => {
       const carryOvers: Record<string, number> = {};
       if (!globalDataRef.current || !globalDataRef.current.yearlyData) return carryOvers;
 
-      const rawYearlyData = globalDataRef.current.yearlyData; // Structure: { "2024": { months: [...], expenses: [...] }, "2025": ... }
+      const rawYearlyData = globalDataRef.current.yearlyData;
       
-      // Iterate over all years strictly less than currentYear
       Object.keys(rawYearlyData).forEach(yearStr => {
           const year = parseInt(yearStr);
           if (year < currentYear) {
               const yearData = rawYearlyData[yearStr];
-              
-              // Sum allocations vs expenses for this year
-              // Note: rawYearlyData structure from convertNewFormatToOld matches this
               if (yearData.months && yearData.expenses) {
                   yearData.months.forEach((monthAllocation: any, idx: number) => {
                       const monthExpense = yearData.expenses[idx] || {};
-                      
-                      // For each project in this month
                       Object.keys(monthAllocation).forEach(projectId => {
                           const allocated = monthAllocation[projectId] || 0;
                           const spent = monthExpense[projectId] || 0;
                           carryOvers[projectId] = (carryOvers[projectId] || 0) + (allocated - spent);
                       });
-
-                      // General Savings Logic (needs to be calculated from available)
-                      // This is tricky because raw data doesn't store "General Savings" explicitly in 'months' usually
-                      // If you implemented General Savings as a pseudo-project or implicit calc, 
-                      // we need to replicate getGeneralSavingsAllocation logic here based on historical data.
-                      // For simplicity in this beta, we focus on PROJECT carry over which is explicit in 'months'.
                   });
               }
           }
@@ -249,10 +236,7 @@ export default function BudgetCompleteBeta() {
     projects.forEach(project => {
         if (!project.targetAmount || project.targetAmount <= 0) return;
         if (notifiedProjectsRef.current.has(project.id)) return;
-        let totalAllocated = 0;
-        // Add carry over to total allocated for achievement check
-        totalAllocated += (projectCarryOvers[project.id] || 0);
-        
+        let totalAllocated = (projectCarryOvers[project.id] || 0); // Include carry over
         MONTHS.forEach(month => { totalAllocated += yearlyData[month]?.[project.id] || 0; });
         if (totalAllocated >= project.targetAmount) {
             notifiedProjectsRef.current.add(project.id);
@@ -289,21 +273,12 @@ export default function BudgetCompleteBeta() {
       setBudget(budgetRes.data);
       const rawData: ExtendedBudgetData = dataRes.data.data;
       
-      // Store Full Data
       globalDataRef.current = rawData;
 
       if (rawData.lastUpdated) setLastServerUpdate(rawData.lastUpdated);
       else setLastServerUpdate(new Date().toISOString());
 
-      // Convert only for the requested year (currentYear state might be updated by handleYearChange)
-      // Note: convertOldFormatToNew primarily extracts general data.
-      // We need to specifically look into rawData.yearlyData[currentYear] if it exists
-      
-      const data = convertOldFormatToNew(rawData); // This extracts "flat" structure if available
-      
-      // If we are switching years, we might need to dig into globalDataRef based on currentYear
-      // But convertOldFormatToNew typically defaults to loading the "root" structure or 1st year found.
-      // To properly support year switching, we need to hydrate state from globalDataRef manually if needed.
+      const data = convertOldFormatToNew(rawData);
       
       hydrateStateFromGlobal(currentYear, rawData);
 
@@ -323,7 +298,6 @@ export default function BudgetCompleteBeta() {
   };
 
   const hydrateStateFromGlobal = (year: number, rawData: any) => {
-      // 1. Check if year exists in nested structure
       if (rawData.yearlyData && rawData.yearlyData[year]) {
           const yearData = rawData.yearlyData[year];
           const newYearlyData: YearlyData = {};
@@ -349,7 +323,6 @@ export default function BudgetCompleteBeta() {
           setMonthComments(newMonthComments);
           setProjectComments(newProjectComments);
       } else {
-          // Reset if no data for this year
           setYearlyData({});
           setYearlyExpenses({});
           setOneTimeIncomes({});
@@ -358,30 +331,24 @@ export default function BudgetCompleteBeta() {
       }
   };
 
-  // Switch Year Logic
   const handleYearChange = (newYear: number) => {
-      // 1. Save current year state to global ref (memory)
       if (globalDataRef.current) {
-          // Prepare current year object using convertNewFormatToOld logic part
-          // We can reuse convertNewFormatToOld but it creates a whole object.
-          // Let's do a partial merge.
           const tempCurrentState = {
               budgetTitle, currentYear, people, charges, projects, yearlyData, yearlyExpenses, oneTimeIncomes, monthComments, projectComments, lockedMonths
           };
           const formattedCurrent = convertNewFormatToOld(tempCurrentState as any);
           
-          // Merge current year data into global
           if (!globalDataRef.current.yearlyData) globalDataRef.current.yearlyData = {};
           if (!globalDataRef.current.oneTimeIncomes) globalDataRef.current.oneTimeIncomes = {};
           
-          globalDataRef.current.yearlyData[currentYear] = formattedCurrent.yearlyData[currentYear];
-          globalDataRef.current.oneTimeIncomes[currentYear] = formattedCurrent.oneTimeIncomes[currentYear];
+          // FIX TS18048: Add fallbacks
+          const sourceYearlyData = formattedCurrent.yearlyData || {};
+          const sourceOneTime = formattedCurrent.oneTimeIncomes || {};
+
+          globalDataRef.current.yearlyData[currentYear] = sourceYearlyData[currentYear];
+          globalDataRef.current.oneTimeIncomes[currentYear] = sourceOneTime[currentYear];
       }
-
-      // 2. Change Year State
       setCurrentYear(newYear);
-
-      // 3. Hydrate View from global ref
       hydrateStateFromGlobal(newYear, globalDataRef.current);
   };
 
@@ -389,17 +356,14 @@ export default function BudgetCompleteBeta() {
      if(!id) return;
      if(!silent) setSaving(true);
      
-     // 1. Create a FRESH export of the CURRENT view
      const currentViewData = { 
          budgetTitle, currentYear, people, charges, projects, yearlyData, yearlyExpenses, 
          oneTimeIncomes, monthComments, projectComments, lockedMonths 
      };
      const formattedCurrent = convertNewFormatToOld(currentViewData as any);
 
-     // 2. MERGE with Global Data (History) to ensure we don't lose other years
      const finalPayload = { ...globalDataRef.current };
      
-     // Update basic info
      finalPayload.budgetTitle = budgetTitle;
      finalPayload.people = people;
      finalPayload.charges = charges;
@@ -409,17 +373,19 @@ export default function BudgetCompleteBeta() {
      finalPayload.updatedBy = user?.name;
      finalPayload.version = '2.3-beta';
 
-     // Merge specific year data
      if (!finalPayload.yearlyData) finalPayload.yearlyData = {};
-     finalPayload.yearlyData[currentYear] = formattedCurrent.yearlyData[currentYear];
-     
      if (!finalPayload.oneTimeIncomes) finalPayload.oneTimeIncomes = {};
-     finalPayload.oneTimeIncomes[currentYear] = formattedCurrent.oneTimeIncomes[currentYear];
+
+     // FIX TS18048: Add fallbacks
+     const sourceYearlyData = formattedCurrent.yearlyData || {};
+     const sourceOneTime = formattedCurrent.oneTimeIncomes || {};
+
+     finalPayload.yearlyData[currentYear] = sourceYearlyData[currentYear];
+     finalPayload.oneTimeIncomes[currentYear] = sourceOneTime[currentYear];
 
      try { 
          await budgetAPI.updateData(id, { data: finalPayload }); 
          setLastServerUpdate(finalPayload.lastUpdated);
-         // Update global ref to match what we just saved
          globalDataRef.current = finalPayload;
          if(!silent) toast({title: "Succès", description: "Budget sauvegardé !", variant: "success"}); 
      } 
@@ -451,6 +417,10 @@ export default function BudgetCompleteBeta() {
   };
 
   // Reality Check realized calculation
+  // FIX TS2552/2304: Define variables before use
+  const today = new Date();
+  const currentMonthIndex = today.getMonth();
+  const currentRealYear = today.getFullYear();
   let totalGlobalRealized = 0;
   if (currentYear <= currentRealYear) {
       projects.forEach(proj => {
@@ -466,18 +436,34 @@ export default function BudgetCompleteBeta() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-purple-50">
-      <div className="bg-indigo-600 text-white text-center text-xs py-1 font-medium">✨ Mode Bêta activé : Test de la fonctionnalité "Reality Check"</div>
       
-      <BudgetNavbar budgetTitle={budget?.name + " (Bêta)"} userName={user?.name} userAvatar={user?.avatar} items={BUDGET_NAV_ITEMS} onSectionChange={() => {}} currentSection="overview" />
+      <div className="bg-indigo-600 text-white text-center text-xs py-1 font-medium">
+        ✨ Mode Bêta activé : Test de la fonctionnalité "Reality Check" (Vrai Connexion Bancaire)
+      </div>
+
+      <BudgetNavbar 
+        budgetTitle={budget?.name + " (Bêta)"} 
+        userName={user?.name}
+        userAvatar={user?.avatar}
+        items={BUDGET_NAV_ITEMS}
+        onSectionChange={handleSectionChange}
+        currentSection="overview"
+      />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <button onClick={() => navigate('/')} className="text-indigo-600 hover:text-indigo-700 mb-4 flex items-center gap-2 font-medium">
+          ← Retour
+        </button>
+
         <div className="bg-white rounded-xl shadow-lg overflow-hidden mb-6">
-          {/* PASS onYearChange HANDLER */}
           <BudgetHeader budgetTitle={budgetTitle} onTitleChange={setBudgetTitle} currentYear={currentYear} onYearChange={handleYearChange} />
-          
           <div className="p-4 bg-gray-50 border-t border-gray-200 flex justify-between items-center">
             <div className="flex items-center gap-3">
-              {budget?.is_owner && (<button onClick={() => setShowInviteModal(true)} className="bg-white hover:bg-gray-50 border border-gray-300 text-gray-700 px-4 py-2 rounded-lg font-medium transition">👥 Inviter</button>)}
+              {budget?.is_owner && (
+                <button onClick={() => setShowInviteModal(true)} className="bg-white hover:bg-gray-50 border border-gray-300 text-gray-700 px-4 py-2 rounded-lg font-medium transition">
+                  👥 Inviter
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -499,31 +485,56 @@ export default function BudgetCompleteBeta() {
         </div>
         
         <div id="reality" className="mt-8">
-            <h2 className="text-xl font-display font-semibold mb-4 flex items-center gap-2"><FlaskConical className="h-5 w-5 text-indigo-600" /> Reality Check <span className="text-xs bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full">Bêta</span></h2>
-            <RealityCheck totalRealized={totalGlobalRealized} bankBalance={realBankBalance} isBankConnected={hasActiveConnection} onConnectBank={() => setShowBankManager(true)} />
+            <h2 className="text-xl font-display font-semibold mb-4 flex items-center gap-2">
+                <FlaskConical className="h-5 w-5 text-indigo-600" /> 
+                Reality Check
+                <span className="text-xs bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full">Bêta</span>
+            </h2>
+            <RealityCheck 
+                totalRealized={totalGlobalRealized}
+                bankBalance={realBankBalance}
+                isBankConnected={hasActiveConnection}
+                onConnectBank={() => setShowBankManager(true)}
+            />
         </div>
 
-        <div id="projects" className="mt-6"><ProjectsSection projects={projects} onProjectsChange={setProjects} yearlyData={yearlyData} currentYear={currentYear} /></div>
-        <div className="mt-6"><StatsSection people={people} charges={charges} projects={projects} yearlyData={yearlyData} oneTimeIncomes={oneTimeIncomes} currentYear={currentYear} /></div>
+        <div id="projects" className="mt-6">
+            <ProjectsSection 
+                projects={projects} 
+                onProjectsChange={setProjects}
+                yearlyData={yearlyData}
+                currentYear={currentYear}
+            />
+        </div>
+
+        <div className="mt-6">
+            <StatsSection people={people} charges={charges} projects={projects} yearlyData={yearlyData} oneTimeIncomes={oneTimeIncomes} currentYear={currentYear} />
+        </div>
 
         <div id="calendar" className="mt-6">
             <MonthlyTable 
                 currentYear={currentYear} people={people} charges={charges} projects={projects} yearlyData={yearlyData} yearlyExpenses={yearlyExpenses} oneTimeIncomes={oneTimeIncomes} monthComments={monthComments} projectComments={projectComments} lockedMonths={lockedMonths} 
-                onYearlyDataChange={setYearlyData} onYearlyExpensesChange={setYearlyExpenses} onOneTimeIncomesChange={setOneTimeIncomes} onMonthCommentsChange={setMonthComments} onProjectCommentsChange={setProjectComments} onLockedMonthsChange={setLockedMonths}
-                
-                // NEW PROPS FOR COHERENCE
-                customChargeTotalCalculator={getMonthlyChargeTotal} 
-                onYearChange={handleYearChange} // Navigation inside table
-                projectCarryOvers={projectCarryOvers} // Cumulative from previous years
+                onYearlyDataChange={setYearlyData} onYearlyExpensesChange={setYearlyExpenses} onOneTimeIncomesChange={setOneTimeIncomes} onMonthCommentsChange={setMonthComments} onProjectCommentsChange={setProjectComments} onLockedMonthsChange={setLockedMonths} 
+                customChargeTotalCalculator={getMonthlyChargeTotal}
+                onYearChange={handleYearChange}
+                projectCarryOvers={projectCarryOvers}
             />
         </div>
       </div>
 
-      {showInviteModal && id && <InviteModal budgetId={id} onClose={() => setShowInviteModal(false)} onInvited={() => { refreshMembersOnly(); toast({ title: "Invitation envoyée", variant: "success" }); }} />}
-      
+      {showInviteModal && id && (
+        <InviteModal budgetId={id} onClose={() => setShowInviteModal(false)} onInvited={() => { refreshMembersOnly();
+        toast({ title: "Invitation envoyée", variant: "success" }); }} />
+      )}
+
       <Dialog open={showBankManager} onOpenChange={setShowBankManager}>
         <DialogContent className="sm:max-w-2xl max-h-[85vh] overflow-y-auto">
-            <DialogHeader><DialogTitle>Gestion des Comptes Bancaires</DialogTitle><DialogDescription>Connectez vos banques et sélectionnez les comptes qui constituent votre épargne.</DialogDescription></DialogHeader>
+            <DialogHeader>
+                <DialogTitle>Gestion des Comptes Bancaires</DialogTitle>
+                <DialogDescription>
+                    Connectez vos banques et sélectionnez les comptes qui constituent votre épargne (Livret A, LDD, etc.).
+                </DialogDescription>
+            </DialogHeader>
             <BankConnectionManager onUpdate={refreshBankData} />
         </DialogContent>
       </Dialog>
@@ -539,4 +550,4 @@ export default function BudgetCompleteBeta() {
       )}
     </div>
   );
-}
+} 
