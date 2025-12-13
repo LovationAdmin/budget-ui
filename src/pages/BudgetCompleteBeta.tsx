@@ -3,7 +3,6 @@ import { useParams, useNavigate } from 'react-router-dom';
 import api, { budgetAPI } from '../services/api';
 import { 
   convertOldFormatToNew, 
-  convertNewFormatToOld,
   type RawBudgetData,
   type Person,
   type Charge,
@@ -19,16 +18,14 @@ import { useToast } from '@/hooks/use-toast';
 import { BudgetNavbar, NavItem } from '@/components/budget/BudgetNavbar';
 import InviteModal from '../components/InviteModal';
 
-// Components
 import BudgetHeader from '../components/budget/BudgetHeader';
 import PeopleSection from '../components/budget/PeopleSection';
-import ChargesSection from '../components/budget/ChargesSection';
+import ChargesSection, { Suggestion } from '../components/budget/ChargesSection';
 import ProjectsSection from '../components/budget/ProjectsSection';
 import MonthlyTable from '../components/budget/MonthlyTable';
 import StatsSection from '../components/budget/StatsSection';
 import ActionsBar from '../components/budget/ActionsBar';
 import MemberManagementSection from '../components/budget/MemberManagementSection';
-// NEW COMPONENTS
 import { RealityCheck } from '../components/budget/RealityCheck'; 
 import { BankConnectionManager } from '../components/budget/BankConnectionManager';
 import { LayoutDashboard, Users, Receipt, Target, CalendarDays, FlaskConical } from "lucide-react";
@@ -41,12 +38,11 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 
-// Updated Nav for Beta
 const BUDGET_NAV_ITEMS: NavItem[] = [
   { id: "overview", label: "Vue d'ensemble", icon: LayoutDashboard },
   { id: "members", label: "Membres", icon: Users },
   { id: "charges", label: "Charges", icon: Receipt },
-  { id: "reality", label: "Reality Check (Bêta)", icon: FlaskConical }, // Highlighted new feature
+  { id: "reality", label: "Reality Check (Bêta)", icon: FlaskConical },
   { id: "projects", label: "Projets", icon: Target },
   { id: "calendar", label: "Tableau Mensuel", icon: CalendarDays },
 ];
@@ -95,19 +91,20 @@ export default function BudgetCompleteBeta() {
   const [projectComments, setProjectComments] = useState<ProjectComments>({});
   const [lockedMonths, setLockedMonths] = useState<LockedMonths>({});
 
+  // NEW: Suggestions State
+  const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
+
   const loadedRef = useRef(false);
 
-  // --- LOGIC: Calculate Total Realized Cash (The "Plan") ---
+  // --- LOGIC: Calculate Total Realized Cash ---
   const today = new Date();
   const currentMonthIndex = today.getMonth();
   const currentRealYear = today.getFullYear();
 
   let totalGlobalRealized = 0;
-  // If viewing current year or past year
   if (currentYear <= currentRealYear) {
       projects.forEach(proj => {
           MONTHS.forEach((month, idx) => {
-              // Only sum months that have passed or are current
               if (currentYear < currentRealYear || idx <= currentMonthIndex) {
                   totalGlobalRealized += (yearlyData[month]?.[proj.id] || 0);
               }
@@ -115,25 +112,18 @@ export default function BudgetCompleteBeta() {
       });
   }
 
-  // --- LOGIC: Fetch Bank Data (The "Reality") ---
+  // --- LOGIC: Fetch Bank Data ---
   const refreshBankData = useCallback(async () => {
       try {
-          // If we wanted to allow members to see owner's data, we'd pass ?budget_id=${id} here.
-          // But per your request, we keep connections PRIVATE to the current user.
           const res = await api.get('/banking/connections');
-          
-          // API returns "total_real_cash" calculated from accounts marked as "is_savings_pool"
           setRealBankBalance(res.data.total_real_cash || 0);
-          
           const conns = res.data.connections || [];
           setHasActiveConnection(conns.length > 0);
       } catch (error) {
           console.error("Failed to refresh bank data", error);
-          // Don't block UI, just default to 0
       }
   }, []);
 
-  // Fetch bank data on mount
   useEffect(() => {
       refreshBankData();
   }, [refreshBankData]);
@@ -149,7 +139,6 @@ export default function BudgetCompleteBeta() {
     return () => clearInterval(saveInterval);
   }, [budgetTitle, currentYear, people, charges, projects, yearlyData, yearlyExpenses, oneTimeIncomes, monthComments, projectComments, lockedMonths]);
 
-  // Data Polling (Check for remote updates)
   useEffect(() => {
     if (!id || !loadedRef.current) return;
     const pollInterval = setInterval(async () => {
@@ -169,12 +158,33 @@ export default function BudgetCompleteBeta() {
     return () => clearInterval(pollInterval);
   }, [id, lastServerUpdate, user?.name]);
 
-  // Member Polling
   useEffect(() => {
     if (!id) return;
     const memberInterval = setInterval(() => { refreshMembersOnly(); }, 5000); 
     return () => clearInterval(memberInterval);
   }, [id]);
+
+  // 5. SMART TIPS ANALYZER (Mocked)
+  useEffect(() => {
+      if (charges.length > 0) {
+          const newSuggestions: Suggestion[] = [];
+          charges.forEach(c => {
+              if (c.amount > 30 && (c.label.toLowerCase().includes('mobile') || c.label.toLowerCase().includes('sfr'))) {
+                  newSuggestions.push({
+                      id: 'sug_' + c.id,
+                      chargeId: c.id,
+                      type: 'MOBILE',
+                      title: 'Forfait Mobile',
+                      message: `Vous payez ${c.amount}€/mois. Économisez en changeant d'opérateur.`,
+                      potentialSavings: (c.amount - 10) * 12,
+                      actionLink: 'https://www.ariase.com/mobile',
+                      canBeContacted: false
+                  });
+              }
+          });
+          setSuggestions(newSuggestions);
+      }
+  }, [charges]);
 
   const loadBudget = async () => {
     if (!id) return;
@@ -215,10 +225,8 @@ export default function BudgetCompleteBeta() {
          setLastServerUpdate(budgetData.lastUpdated);
          if(!silent) toast({title: "Succès", description: "Budget sauvegardé !", variant: "success"}); 
      } 
-     catch(e) { console.error(e);
-         if(!silent) toast({title: "Erreur", description: "Échec sauvegarde", variant: "destructive"}); } 
-     finally { if(!silent) setSaving(false);
-     }
+     catch(e) { console.error(e); if(!silent) toast({title: "Erreur", description: "Échec sauvegarde", variant: "destructive"}); } 
+     finally { if(!silent) setSaving(false); }
   };
   
   const refreshMembersOnly = async () => { 
@@ -234,40 +242,6 @@ export default function BudgetCompleteBeta() {
     } catch (error) { console.error(error); }
   };
 
-  const handleExport = (format: 'new'|'old') => { 
-      // Re-enabled for Beta testing purposes
-      const commonData = { budgetTitle, currentYear, people, charges, projects, yearlyData, yearlyExpenses, oneTimeIncomes, monthComments, projectComments, lockedMonths };
-      let dataToExport = format === 'old' ? convertNewFormatToOld(commonData as any) : { ...commonData, exportDate: new Date().toISOString(), version: '2.2-beta' };
-      const blob = new Blob([JSON.stringify(dataToExport, null, 2)], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `budget_${budgetTitle || 'export'}_beta_${new Date().toISOString().split('T')[0]}.json`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-      toast({title: "Export Réussi", description: "Fichier JSON généré."});
-  };
-
-  const handleImport = (rawData: RawBudgetData) => { 
-      if (confirm('BÊTA: Importer ces données ?')) {
-        const data = convertOldFormatToNew(rawData);
-        setBudgetTitle(data.budgetTitle || '');
-        setCurrentYear(data.currentYear || new Date().getFullYear());
-        setPeople(data.people || []);
-        setCharges(data.charges || []);
-        setProjects(data.projects || []);
-        setYearlyData(data.yearlyData);
-        setYearlyExpenses(data.yearlyExpenses);
-        setOneTimeIncomes(data.oneTimeIncomes);
-        setMonthComments(data.monthComments);
-        setProjectComments(data.projectComments);
-        setLockedMonths(data.lockedMonths);
-        toast({ title: "Import réussi", variant: "success" });
-      }
-  };
-
   const handleSectionChange = (section: string) => {
     const element = document.getElementById(section);
     if (element) element.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -279,7 +253,6 @@ export default function BudgetCompleteBeta() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-purple-50">
       
-      {/* BETA BANNER */}
       <div className="bg-indigo-600 text-white text-center text-xs py-1 font-medium">
         ✨ Mode Bêta activé : Test de la fonctionnalité "Reality Check" (Vrai Connexion Bancaire)
       </div>
@@ -298,7 +271,6 @@ export default function BudgetCompleteBeta() {
           ← Retour
         </button>
 
-        {/* ... Header & Actions ... */}
         <div className="bg-white rounded-xl shadow-lg overflow-hidden mb-6">
           <BudgetHeader budgetTitle={budgetTitle} onTitleChange={setBudgetTitle} currentYear={currentYear} onYearChange={setCurrentYear} />
           <div className="p-4 bg-gray-50 border-t border-gray-200 flex justify-between items-center">
@@ -313,12 +285,13 @@ export default function BudgetCompleteBeta() {
         </div>
         
         {budget && user && ( <div id="members"><MemberManagementSection budget={budget} currentUserId={user.id} onMemberChange={refreshMembersOnly} /></div> )}
-        <ActionsBar onSave={() => handleSave(false)} onExport={() => handleExport('new')} onImport={handleImport} saving={saving} />
+        
+        <ActionsBar onSave={() => handleSave(false)} saving={saving} />
 
         <div id="people"><PeopleSection people={people} onPeopleChange={setPeople} /></div>
-        <div id="charges" className="mt-6"><ChargesSection charges={charges} onChargesChange={setCharges} /></div>
         
-        {/* --- REALITY CHECK SECTION --- */}
+        <div id="charges" className="mt-6"><ChargesSection charges={charges} onChargesChange={setCharges} suggestions={suggestions} /></div>
+        
         <div id="reality" className="mt-8">
             <h2 className="text-xl font-display font-semibold mb-4 flex items-center gap-2">
                 <FlaskConical className="h-5 w-5 text-indigo-600" /> 
@@ -356,16 +329,15 @@ export default function BudgetCompleteBeta() {
 
       {showInviteModal && id && (
         <InviteModal budgetId={id} onClose={() => setShowInviteModal(false)} onInvited={() => { refreshMembersOnly();
-toast({ title: "Invitation envoyée", variant: "success" }); }} />
+        toast({ title: "Invitation envoyée", variant: "success" }); }} />
       )}
 
-      {/* BANK MANAGER DIALOG */}
       <Dialog open={showBankManager} onOpenChange={setShowBankManager}>
         <DialogContent className="sm:max-w-2xl max-h-[85vh] overflow-y-auto">
             <DialogHeader>
                 <DialogTitle>Gestion des Comptes Bancaires</DialogTitle>
                 <DialogDescription>
-                     Connectez vos banques et sélectionnez les comptes qui constituent votre épargne (Livret A, LDD, etc.).
+                    Connectez vos banques et sélectionnez les comptes qui constituent votre épargne (Livret A, LDD, etc.).
                 </DialogDescription>
             </DialogHeader>
             <BankConnectionManager onUpdate={refreshBankData} />

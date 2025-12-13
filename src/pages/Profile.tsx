@@ -1,14 +1,14 @@
 import { useState, FormEvent, ChangeEvent } from 'react';
-import { userAPI } from '../services/api';
+import { userAPI, budgetAPI } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import { BudgetNavbar } from '../components/budget/BudgetNavbar';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, AlertTriangle, Trash2, HelpCircle } from 'lucide-react';
+import { ArrowLeft, AlertTriangle, Trash2, HelpCircle, FileJson, Download } from 'lucide-react';
 import { AvatarPicker } from '../components/ui/avatar-picker';
-import { useTutorial } from '../contexts/TutorialContext'; // IMPORT
+import { useTutorial } from '../contexts/TutorialContext';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -24,7 +24,7 @@ export default function Profile() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { startTutorial } = useTutorial(); // HOOK
+  const { startTutorial } = useTutorial();
   
   // Profile State
   const [name, setName] = useState(user?.name || '');
@@ -43,6 +43,7 @@ export default function Profile() {
   const [updating, setUpdating] = useState(false);
   const [changingPassword, setChangingPassword] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [exporting, setExporting] = useState(false);
 
   // 1. Update Profile Logic
   const handleUpdateProfile = async (e: FormEvent) => {
@@ -51,9 +52,7 @@ export default function Profile() {
 
     try {
       await userAPI.updateProfile({ name, avatar });
-      
       if (user) {
-        // Update local storage so the navbar updates immediately
         const updatedUser = { ...user, name, avatar };
         localStorage.setItem('user', JSON.stringify(updatedUser));
         window.location.reload();
@@ -74,7 +73,6 @@ export default function Profile() {
   const handleChangePassword = async (e: FormEvent) => {
     e.preventDefault();
     setChangingPassword(true);
-
     if (newPassword !== confirmPassword) {
       toast({ title: "Erreur", description: 'Les mots de passe ne correspondent pas', variant: "destructive" });
       setChangingPassword(false);
@@ -105,16 +103,13 @@ export default function Profile() {
   const handleDeleteAccount = async () => {
     if (!deletePassword) return;
     setDeleting(true);
-    
     try {
       await userAPI.deleteAccount({ password: deletePassword });
-      
       toast({ 
         title: "Compte supprimé", 
         description: "Vos données ont été effacées. Au revoir !", 
         variant: "default" 
       });
-      
       logout();
       navigate('/login');
     } catch (err: any) {
@@ -125,6 +120,50 @@ export default function Profile() {
       });
       setDeleting(false); 
     }
+  };
+
+  // 4. GDPR Export Logic
+  const handleGDPRExport = async () => {
+      setExporting(true);
+      try {
+          const listRes = await budgetAPI.list();
+          const budgets = Array.isArray(listRes.data) ? listRes.data : [];
+          
+          const fullExport = {
+              user: { name: user?.name, email: user?.email, id: user?.id },
+              exportDate: new Date().toISOString(),
+              budgets: [] as any[]
+          };
+
+          for (const b of budgets) {
+              try {
+                  const dataRes = await budgetAPI.getData(b.id);
+                  fullExport.budgets.push({
+                      meta: b,
+                      data: dataRes.data.data
+                  });
+              } catch (e) {
+                  console.error("Failed to fetch budget data for export", b.id);
+              }
+          }
+
+          const blob = new Blob([JSON.stringify(fullExport, null, 2)], { type: 'application/json' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `budget_famille_full_export_${user?.id}.json`;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+
+          toast({ title: "Données exportées", description: "L'archive complète a été téléchargée.", variant: "default" });
+
+      } catch (error) {
+          toast({ title: "Erreur", description: "Impossible de générer l'export.", variant: "destructive" });
+      } finally {
+          setExporting(false);
+      }
   };
 
   return (
@@ -143,10 +182,9 @@ export default function Profile() {
 
         <h1 className="text-3xl font-bold text-gray-900 mb-8">Mon Profil</h1>
 
-        {/* --- SECTION 1: PROFILE INFO --- */}
+        {/* PROFILE INFO */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
           <h2 className="text-xl font-semibold text-gray-900 mb-6">Informations</h2>
-          
           <form onSubmit={handleUpdateProfile}>
             <div className="flex flex-col items-center mb-8">
                 <AvatarPicker 
@@ -183,7 +221,7 @@ export default function Profile() {
           </form>
         </div>
 
-        {/* --- SECTION 2: CHANGE PASSWORD --- */}
+        {/* CHANGE PASSWORD */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
           <h2 className="text-xl font-semibold text-gray-900 mb-4">Changer le mot de passe</h2>
           <form onSubmit={handleChangePassword}>
@@ -196,7 +234,6 @@ export default function Profile() {
                 required
               />
             </div>
-
             <div className="mb-4">
               <label className="block text-sm font-medium text-gray-700 mb-2">Nouveau mot de passe</label>
               <Input
@@ -207,7 +244,6 @@ export default function Profile() {
                 required
               />
             </div>
-
             <div className="mb-4">
               <label className="block text-sm font-medium text-gray-700 mb-2">Confirmer le nouveau mot de passe</label>
               <Input
@@ -217,18 +253,33 @@ export default function Profile() {
                 required
               />
             </div>
-
             <Button type="submit" variant="default" disabled={changingPassword}>
               {changingPassword ? 'Changement...' : 'Changer le mot de passe'}
             </Button>
           </form>
         </div>
 
-        {/* --- SECTION 3: TUTORIAL --- */}
+        {/* GDPR / DATA */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
+            <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                <FileJson className="h-5 w-5 text-blue-600" />
+                Données & Confidentialité
+            </h2>
+            <p className="text-muted-foreground text-sm mb-4">
+                Conformément au RGPD, vous avez le droit à la portabilité de vos données. 
+                Vous pouvez télécharger une archive complète de tous vos budgets et informations personnelles au format JSON.
+            </p>
+            <Button variant="outline" onClick={handleGDPRExport} disabled={exporting} className="w-full sm:w-auto gap-2">
+                {exporting ? <Download className="h-4 w-4 animate-bounce" /> : <Download className="h-4 w-4" />}
+                {exporting ? "Génération de l'archive..." : "Télécharger mes données (JSON)"}
+            </Button>
+        </div>
+
+        {/* TUTORIAL */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
             <h2 className="text-xl font-semibold text-gray-900 mb-4">Aide & Tutoriel</h2>
             <p className="text-muted-foreground text-sm mb-4">
-                Besoin d'un rappel sur le fonctionnement de l'application ?
+              Besoin d'un rappel sur le fonctionnement de l'application ?
             </p>
             <Button variant="outline" onClick={startTutorial} className="w-full sm:w-auto gap-2">
                 <HelpCircle className="h-4 w-4" />
@@ -236,17 +287,16 @@ export default function Profile() {
             </Button>
         </div>
 
-        {/* --- SECTION 4: DANGER ZONE --- */}
+        {/* DANGER ZONE */}
         <div className="bg-red-50 rounded-xl border border-red-200 p-6">
             <div className="flex items-center gap-3 mb-4">
                 <AlertTriangle className="h-6 w-6 text-red-600" />
                 <h2 className="text-xl font-semibold text-red-900">Zone de danger</h2>
             </div>
-            
             <p className="text-red-700 mb-6 text-sm">
-                La suppression de votre compte est irréversible. Toutes vos données (budgets dont vous êtes propriétaire, historique, paramètres) seront définitivement effacées de nos serveurs.
+              La suppression de votre compte est irréversible.
+              Toutes vos données seront définitivement effacées de nos serveurs.
             </p>
-
             <Button 
                 variant="destructive" 
                 onClick={() => {
@@ -260,17 +310,15 @@ export default function Profile() {
         </div>
       </div>
 
-      {/* --- CONFIRMATION DIALOG --- */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle className="text-destructive font-bold">Supprimer définitivement le compte ?</AlertDialogTitle>
             <AlertDialogDescription>
-              Cette action ne peut pas être annulée. Cela supprimera définitivement votre compte et retirera toutes vos données de nos serveurs.<br/><br/>
+              Cette action ne peut pas être annulée.<br/><br/>
               <strong>Veuillez saisir votre mot de passe pour confirmer :</strong>
             </AlertDialogDescription>
           </AlertDialogHeader>
-          
           <div className="py-2">
              <Input 
                 type="password"
@@ -280,7 +328,6 @@ export default function Profile() {
                 className="border-red-200 focus-visible:ring-red-500"
              />
           </div>
-
           <AlertDialogFooter>
             <AlertDialogCancel disabled={deleting}>Annuler</AlertDialogCancel>
             <AlertDialogAction 
@@ -296,7 +343,6 @@ export default function Profile() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-
     </div>
   );
 }

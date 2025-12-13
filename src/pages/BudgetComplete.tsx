@@ -3,13 +3,11 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { budgetAPI } from '../services/api';
 import { 
   convertOldFormatToNew, 
-  convertNewFormatToOld,
   type RawBudgetData,
   type Person,
   type Charge,
   type Project,
   type YearlyData,
-  // REMOVED: type YearlyExpenses (it is the same structure as YearlyData)
   type OneTimeIncomes,
   type MonthComments,
   type ProjectComments,
@@ -22,7 +20,7 @@ import InviteModal from '../components/InviteModal';
 
 import BudgetHeader from '../components/budget/BudgetHeader';
 import PeopleSection from '../components/budget/PeopleSection';
-import ChargesSection from '../components/budget/ChargesSection';
+import ChargesSection, { Suggestion } from '../components/budget/ChargesSection';
 import ProjectsSection from '../components/budget/ProjectsSection';
 import MonthlyTable from '../components/budget/MonthlyTable';
 import StatsSection from '../components/budget/StatsSection';
@@ -40,15 +38,13 @@ const BUDGET_NAV_ITEMS: NavItem[] = [
   { id: "calendar", label: "Tableau Mensuel", icon: CalendarDays },
 ];
 
-const MONTHS = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
-
 interface BudgetMember {
   id: string;
   user: { 
     id: string; 
     name: string; 
     email: string;
-    avatar?: string; 
+    avatar?: string;
   };
   role: 'owner' | 'member';
 }
@@ -65,7 +61,7 @@ export default function BudgetComplete() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { toast } = useToast(); 
-  const { hasSeenTutorial, startTutorial } = useTutorial(); 
+  const { hasSeenTutorial, startTutorial } = useTutorial();
 
   const [budget, setBudget] = useState<BudgetData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -79,18 +75,17 @@ export default function BudgetComplete() {
   const [people, setPeople] = useState<Person[]>([]);
   const [charges, setCharges] = useState<Charge[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
-  
-  // Data Matrices
-  const [yearlyData, setYearlyData] = useState<YearlyData>({});         // Allocations
-  const [yearlyExpenses, setYearlyExpenses] = useState<YearlyData>({}); // Expenses
-  
+  const [yearlyData, setYearlyData] = useState<YearlyData>({});         
+  const [yearlyExpenses, setYearlyExpenses] = useState<YearlyData>({});
   const [oneTimeIncomes, setOneTimeIncomes] = useState<OneTimeIncomes>({});
   const [monthComments, setMonthComments] = useState<MonthComments>({});
   const [projectComments, setProjectComments] = useState<ProjectComments>({});
   const [lockedMonths, setLockedMonths] = useState<LockedMonths>({});
 
+  // NEW: Suggestions State
+  const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
+
   const loadedRef = useRef(false);
-  // Ref to prevent spamming congratulations on every render
   const notifiedProjectsRef = useRef<Set<string>>(new Set());
 
   // 0. AUTO TUTORIAL START
@@ -98,7 +93,7 @@ export default function BudgetComplete() {
     if (!loading && !hasSeenTutorial && loadedRef.current) {
        const timer = setTimeout(() => {
            startTutorial();
-       }, 1500); // Small delay to let page settle
+       }, 1500); 
        return () => clearTimeout(timer);
     }
   }, [loading, hasSeenTutorial, startTutorial]);
@@ -114,10 +109,9 @@ export default function BudgetComplete() {
     return () => clearInterval(saveInterval);
   }, [budgetTitle, currentYear, people, charges, projects, yearlyData, yearlyExpenses, oneTimeIncomes, monthComments, projectComments, lockedMonths]);
 
-  // 2. Data Polling (Every 15s)
+  // 2. Data Polling
   useEffect(() => {
     if (!id || !loadedRef.current) return;
-
     const pollInterval = setInterval(async () => {
       try {
         const res = await budgetAPI.getData(id);
@@ -144,11 +138,10 @@ export default function BudgetComplete() {
         console.error("Polling error", err);
       }
     }, 15000);
-
     return () => clearInterval(pollInterval);
   }, [id, lastServerUpdate, user?.name]);
 
-  // 3. Member List Polling (Every 5s)
+  // 3. Member Polling
   useEffect(() => {
     if (!id) return;
     const memberInterval = setInterval(() => {
@@ -157,17 +150,15 @@ export default function BudgetComplete() {
     return () => clearInterval(memberInterval);
   }, [id]);
 
-  // 4. ACHIEVEMENT CHECKER
+  // 4. Achievement Checker
   useEffect(() => {
     if (!loadedRef.current) return;
-
+    const MONTHS = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
+    
     projects.forEach(project => {
         if (!project.targetAmount || project.targetAmount <= 0) return;
-        
-        // Prevent notifying twice for the same project in this session
         if (notifiedProjectsRef.current.has(project.id)) return;
 
-        // Calculate total allocated
         let totalAllocated = 0;
         MONTHS.forEach(month => {
             totalAllocated += yearlyData[month]?.[project.id] || 0;
@@ -175,8 +166,6 @@ export default function BudgetComplete() {
 
         if (totalAllocated >= project.targetAmount) {
             notifiedProjectsRef.current.add(project.id);
-
-            // Trigger Celebration Toast
             toast({
                 title: "🎉 Objectif Atteint !",
                 description: `Félicitations ! Le projet "${project.label}" est entièrement financé.`,
@@ -187,6 +176,43 @@ export default function BudgetComplete() {
     });
   }, [projects, yearlyData]);
 
+  // 5. SMART TIPS ANALYZER (Mocked until backend service ready)
+  useEffect(() => {
+      if (charges.length > 0) {
+          // In a real scenario, this would call `api.post('/budgets/:id/analyze', { charges, people })`
+          // Here we perform basic client-side analysis to populate suggestions for demonstration
+          const newSuggestions: Suggestion[] = [];
+          
+          charges.forEach(c => {
+              if (c.amount > 30 && (c.label.toLowerCase().includes('mobile') || c.label.toLowerCase().includes('sfr') || c.label.toLowerCase().includes('orange'))) {
+                  newSuggestions.push({
+                      id: 'sug_' + c.id,
+                      chargeId: c.id,
+                      type: 'MOBILE',
+                      title: 'Forfait Mobile Optimisable',
+                      message: `Vous payez ${c.amount}€/mois. Des offres 100Go existent dès 10€.`,
+                      potentialSavings: (c.amount - 10) * 12,
+                      actionLink: 'https://www.ariase.com/mobile',
+                      canBeContacted: false
+                  });
+              }
+              if (c.amount > 50 && (c.label.toLowerCase().includes('edf') || c.label.toLowerCase().includes('engie'))) {
+                  newSuggestions.push({
+                      id: 'sug_' + c.id,
+                      chargeId: c.id,
+                      type: 'ENERGY',
+                      title: 'Facture Énergie',
+                      message: `Comparez les fournisseurs pour réduire cette facture de ${c.amount}€.`,
+                      potentialSavings: (c.amount * 0.15) * 12,
+                      actionLink: 'https://www.papernest.com/energie/',
+                      canBeContacted: true
+                  });
+              }
+          });
+          setSuggestions(newSuggestions);
+      }
+  }, [charges]);
+
   const loadBudget = async () => {
     if (!id) return;
     try {
@@ -194,7 +220,6 @@ export default function BudgetComplete() {
         budgetAPI.getById(id),
         budgetAPI.getData(id)
       ]);
-
       setBudget(budgetRes.data);
       const rawData: RawBudgetData = dataRes.data.data;
       
@@ -209,7 +234,7 @@ export default function BudgetComplete() {
       setCharges(data.charges || []);
       setProjects(data.projects || []);
       setYearlyData(data.yearlyData || {});
-      setYearlyExpenses(data.yearlyExpenses || {}); 
+      setYearlyExpenses(data.yearlyExpenses || {});
       setOneTimeIncomes(data.oneTimeIncomes || {});
       setMonthComments(data.monthComments || {});
       setProjectComments(data.projectComments || {});
@@ -242,7 +267,6 @@ export default function BudgetComplete() {
   const handleSave = async (silent = false) => {
     if (!id) return;
     if (!silent) setSaving(true);
-
     const now = new Date().toISOString();
     const budgetData = {
       budgetTitle,
@@ -270,48 +294,6 @@ export default function BudgetComplete() {
       if (!silent) toast({ title: "Erreur", description: "Échec de la sauvegarde.", variant: "destructive" });
     } finally {
       if (!silent) setSaving(false);
-    }
-  };
-
-  const handleExport = (formatType: 'new' | 'old' = 'new') => {
-    let dataToExport;
-    const commonData = {
-      budgetTitle, currentYear, people, charges, projects, yearlyData, yearlyExpenses, oneTimeIncomes, monthComments, projectComments, lockedMonths
-    };
-
-    if (formatType === 'old') {
-      dataToExport = convertNewFormatToOld(commonData);
-    } else {
-      dataToExport = { ...commonData, exportDate: new Date().toISOString(), version: '2.2' };
-    }
-
-    const blob = new Blob([JSON.stringify(dataToExport, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `budget_${budgetTitle || 'export'}_${new Date().toISOString().split('T')[0]}.json`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-    toast({ title: "Export terminé", description: "Fichier téléchargé.", variant: "default" });
-  };
-
-  const handleImport = (rawData: RawBudgetData) => {
-    if (confirm('Importer ces données ? Cela remplacera le budget actuel.')) {
-      const data = convertOldFormatToNew(rawData);
-      setBudgetTitle(data.budgetTitle || '');
-      setCurrentYear(data.currentYear || new Date().getFullYear());
-      setPeople(data.people || []);
-      setCharges(data.charges || []);
-      setProjects(data.projects || []);
-      setYearlyData(data.yearlyData);
-      setYearlyExpenses(data.yearlyExpenses);
-      setOneTimeIncomes(data.oneTimeIncomes);
-      setMonthComments(data.monthComments);
-      setProjectComments(data.projectComments);
-      setLockedMonths(data.lockedMonths);
-      toast({ title: "Import réussi", description: "Données mises à jour.", variant: "success" });
     }
   };
 
@@ -381,10 +363,14 @@ export default function BudgetComplete() {
             </div>
         )}
 
-        <ActionsBar onSave={() => handleSave(false)} onExport={handleExport} onImport={handleImport} saving={saving} />
+        {/* Removed Export/Import props here */}
+        <ActionsBar onSave={() => handleSave(false)} saving={saving} />
 
         <div id="people"><PeopleSection people={people} onPeopleChange={setPeople} /></div>
-        <div id="charges" className="mt-6"><ChargesSection charges={charges} onChargesChange={setCharges} /></div>
+        
+        {/* Pass Suggestions here */}
+        <div id="charges" className="mt-6"><ChargesSection charges={charges} onChargesChange={setCharges} suggestions={suggestions} /></div>
+        
         <div id="projects" className="mt-6">
             <ProjectsSection 
                 projects={projects} 

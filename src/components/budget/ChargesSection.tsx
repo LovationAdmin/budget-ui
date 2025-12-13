@@ -8,75 +8,49 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-// Ajout des icônes pour les suggestions
 import { Plus, Trash2, Receipt, Calendar, Clock, Lightbulb, ExternalLink, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Charge } from '@/utils/importConverter';
 import { budgetAPI } from '@/services/api';
 
+// Structure des suggestions venant du backend
+export interface Suggestion {
+    id: string;
+    chargeId?: string; // Si liée à une charge spécifique
+    type: string;
+    title: string;
+    message: string;
+    potentialSavings: number;
+    actionLink: string;
+    canBeContacted: boolean;
+}
+
 interface ChargesSectionProps {
   charges: Charge[];
   onChargesChange: (charges: Charge[]) => void;
+  suggestions?: Suggestion[]; // Dynamic Suggestions
 }
 
-// Configuration des Offres d'Affiliation (Exemples Réalistes)
-// Vous pourrez remplacer les liens par vos vrais liens Awin/Effinity plus tard
-const OFFERS: Record<string, { title: string; text: string; link: string; color: string }> = {
-    'ENERGY': {
-        title: "Électricité / Gaz",
-        text: "Les prix ont baissé. Comparez pour économiser jusqu'à 200€/an.",
-        link: "https://www.papernest.com/energie/", 
-        color: "text-yellow-600 bg-yellow-50 border-yellow-200"
-    },
-    'MOBILE': {
-        title: "Forfait Mobile",
-        text: "Des forfaits 50Go existent dès 10€/mois sans engagement.",
-        link: "https://www.ariase.com/mobile",
-        color: "text-blue-600 bg-blue-50 border-blue-200"
-    },
-    'INTERNET': {
-        title: "Box Internet",
-        text: "Vous payez cher votre box. Vérifiez les offres fibre actuelles.",
-        link: "https://www.ariase.com/box",
-        color: "text-indigo-600 bg-indigo-50 border-indigo-200"
-    },
-    'INSURANCE': {
-        title: "Assurance",
-        text: "N'hésitez pas à remettre en concurrence votre assureur.",
-        link: "https://reassurez-moi.fr/",
-        color: "text-green-600 bg-green-50 border-green-200"
-    },
-    'LOAN': {
-        title: "Crédit",
-        text: "Avez-vous pensé à renégocier votre taux ou votre assurance emprunteur ?",
-        link: "https://www.meilleurtaux.com/",
-        color: "text-purple-600 bg-purple-50 border-purple-200"
-    }
-};
-
-export default function ChargesSection({ charges, onChargesChange }: ChargesSectionProps) {
+export default function ChargesSection({ charges, onChargesChange, suggestions = [] }: ChargesSectionProps) {
   const [newChargeLabel, setNewChargeLabel] = useState('');
   const [newChargeAmount, setNewChargeAmount] = useState('');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [showAddForm, setShowAddForm] = useState(false);
-
+  
   // IA State
   const [detectedCategory, setDetectedCategory] = useState<string>('');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
 
-  // Déclenché quand l'utilisateur quitte le champ "Libellé"
   const handleLabelBlur = async () => {
-      // Ne pas appeler l'IA pour des textes trop courts
       if (!newChargeLabel.trim() || newChargeLabel.length < 3) return;
-      
       setIsAnalyzing(true);
       try {
           const res = await budgetAPI.categorize(newChargeLabel);
           if (res.data.category && res.data.category !== 'OTHER') {
               setDetectedCategory(res.data.category);
           } else {
-              setDetectedCategory(''); // Reset si OTHER
+              setDetectedCategory('');
           }
       } catch (err) {
           console.error("AI Categorization failed", err);
@@ -88,20 +62,16 @@ export default function ChargesSection({ charges, onChargesChange }: ChargesSect
   const addCharge = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newChargeLabel.trim()) return;
-
     const newCharge: Charge = {
       id: Date.now().toString(),
       label: newChargeLabel.trim(),
       amount: parseFloat(newChargeAmount) || 0,
       startDate: startDate || undefined,
       endDate: endDate || undefined,
-      // On sauvegarde la catégorie trouvée par l'IA
       category: detectedCategory || undefined, 
     };
 
     onChargesChange([...charges, newCharge]);
-    
-    // Reset complet
     setNewChargeLabel('');
     setNewChargeAmount('');
     setStartDate('');
@@ -139,7 +109,6 @@ export default function ChargesSection({ charges, onChargesChange }: ChargesSect
               </p>
             </div>
           </div>
-          
           {!showAddForm && (
             <Button
               variant="ghost"
@@ -155,7 +124,7 @@ export default function ChargesSection({ charges, onChargesChange }: ChargesSect
       </CardHeader>
 
       <CardContent>
-        {/* FORMULAIRE D'AJOUT */}
+        {/* ADD FORM */}
         {showAddForm && (
           <form onSubmit={addCharge} className="mb-4 p-3 rounded-xl border border-destructive/20 bg-destructive/5 animate-scale-in">
             <div className="flex flex-col gap-3">
@@ -167,13 +136,12 @@ export default function ChargesSection({ charges, onChargesChange }: ChargesSect
                         id="charge-label"
                         value={newChargeLabel}
                         onChange={(e) => setNewChargeLabel(e.target.value)}
-                        onBlur={handleLabelBlur} // Trigger AI
+                        onBlur={handleLabelBlur}
                         placeholder="Ex: Forfait Sosh, EDF..."
                         className="h-9 bg-white pr-10"
                         required
                         autoFocus
                       />
-                      {/* Indicateur visuel d'analyse */}
                       <div className="absolute right-3 top-1/2 -translate-y-1/2">
                           {isAnalyzing ? (
                               <span className="flex h-2 w-2 relative">
@@ -183,13 +151,12 @@ export default function ChargesSection({ charges, onChargesChange }: ChargesSect
                           ) : detectedCategory ? (
                               <span className="text-[9px] font-bold text-green-700 bg-green-100 border border-green-200 px-1.5 py-0.5 rounded-full flex items-center gap-1 shadow-sm animate-fade-in">
                                   <Sparkles className="h-2 w-2" />
-                                  {OFFERS[detectedCategory]?.title || detectedCategory}
+                                  {detectedCategory}
                               </span>
                           ) : null}
                       </div>
                   </div>
                 </div>
-                
                 <div className="w-full sm:w-32 space-y-1.5">
                   <Label htmlFor="charge-amount" className="text-xs">Montant</Label>
                   <Input
@@ -203,7 +170,6 @@ export default function ChargesSection({ charges, onChargesChange }: ChargesSect
                   />
                 </div>
               </div>
-
               <div className="flex flex-col sm:flex-row gap-3 items-end">
                  <div className="w-full space-y-1.5">
                     <Label htmlFor="start-date" className="text-xs text-muted-foreground">Début (Optionnel)</Label>
@@ -220,7 +186,6 @@ export default function ChargesSection({ charges, onChargesChange }: ChargesSect
                     />
                  </div>
               </div>
-
               <div className="flex gap-2 justify-end pt-2">
                 <Button type="button" size="sm" variant="ghost" onClick={() => setShowAddForm(false)} className="h-8 text-xs">Annuler</Button>
                 <Button type="submit" size="sm" variant="destructive" className="h-8 text-xs">
@@ -231,7 +196,7 @@ export default function ChargesSection({ charges, onChargesChange }: ChargesSect
           </form>
         )}
 
-        {/* LISTE DES CHARGES */}
+        {/* LIST */}
         {charges.length === 0 ? (
           <div className="text-center py-6 text-muted-foreground text-sm">
             Aucune charge récurrente.
@@ -242,8 +207,8 @@ export default function ChargesSection({ charges, onChargesChange }: ChargesSect
               const hasDates = charge.startDate || charge.endDate;
               const dateText = hasDates ? 'Dates définies' : null;
               
-              // Est-ce qu'on a une offre pour cette catégorie ?
-              const offer = charge.category ? OFFERS[charge.category] : null;
+              // FIND DYNAMIC SUGGESTION FOR THIS CHARGE
+              const suggestion = suggestions.find(s => s.chargeId === charge.id);
 
               return (
                 <div
@@ -270,11 +235,9 @@ export default function ChargesSection({ charges, onChargesChange }: ChargesSect
                       />
                       <span className="text-xs">€</span>
                     </div>
-                    
-                    {/* Badge Dates */}
                     {hasDates && (
                         <div className="flex items-center gap-1 mt-1 text-[10px] text-muted-foreground bg-muted/30 px-1.5 py-0.5 rounded w-fit">
-                           <Clock className="h-3 w-3" />
+                          <Clock className="h-3 w-3" />
                            <span className="truncate max-w-[120px]">{dateText}</span>
                         </div>
                     )}
@@ -283,14 +246,14 @@ export default function ChargesSection({ charges, onChargesChange }: ChargesSect
                   {/* Actions Column */}
                   <div className="flex flex-col gap-1 items-end">
                       
-                      {/* BOUTON SUGGESTION (Affiché si offre dispo) */}
-                      {offer && (
+                      {/* DYNAMIC SUGGESTION BUTTON */}
+                      {suggestion && (
                           <Popover>
                               <PopoverTrigger asChild>
-                                  <Button 
+                                   <Button 
                                       variant="ghost" 
                                       size="icon-sm" 
-                                      className={cn("h-7 w-7 transition-colors", offer.color, "bg-opacity-20 hover:bg-opacity-30")}
+                                      className="h-7 w-7 transition-colors text-yellow-600 bg-yellow-50 hover:bg-yellow-100"
                                       title="Optimiser cette dépense"
                                   >
                                       <Lightbulb className="h-3.5 w-3.5" />
@@ -298,32 +261,28 @@ export default function ChargesSection({ charges, onChargesChange }: ChargesSect
                               </PopoverTrigger>
                               <PopoverContent className="w-72 border-none shadow-xl" align="end">
                                   <div className="space-y-3">
-                                      <div className="flex items-center gap-2 border-b pb-2 border-border/50">
-                                          <div className={cn("p-1.5 rounded-full bg-opacity-20", offer.color)}>
-                                            <Sparkles className="h-4 w-4" />
+                                     <div className="flex items-center gap-2 border-b pb-2 border-border/50">
+                                          <div className="p-1.5 rounded-full bg-yellow-100 text-yellow-600">
+                                             <Sparkles className="h-4 w-4" />
                                           </div>
-                                          <h4 className="font-semibold text-sm">Opportunité : {offer.title}</h4>
+                                          <h4 className="font-semibold text-sm">{suggestion.title}</h4>
                                       </div>
-                                      
                                       <p className="text-xs text-muted-foreground leading-relaxed">
-                                          {offer.text}
+                                          {suggestion.message}
                                       </p>
+                                      {suggestion.potentialSavings > 0 && (
+                                          <p className="text-xs font-bold text-green-600">
+                                              Économie potentielle : {suggestion.potentialSavings.toLocaleString()}€ / an
+                                          </p>
+                                      )}
                                       
                                       <a 
-                                          href={offer.link} 
+                                          href={suggestion.actionLink} 
                                           target="_blank" 
                                           rel="noreferrer"
-                                          className={cn(
-                                              "flex items-center justify-center gap-2 w-full py-2.5 rounded-lg text-xs font-bold transition-all shadow-sm hover:shadow", 
-                                              offer.color, 
-                                              "text-white bg-opacity-100 hover:opacity-90" // Bouton plein
-                                          )}
-                                          // Note: Pour que la classe dynamique bg fonctionne bien, s'assurer que offer.color contient des classes valides
-                                          // Dans l'objet OFFERS ci-dessus, j'ai mis des classes de texte/bordure.
-                                          // Pour le bouton plein, on force un style inline si besoin ou on adapte les classes.
-                                          style={{ backgroundColor: 'currentColor' }} 
+                                          className="flex items-center justify-center gap-2 w-full py-2.5 rounded-lg text-xs font-bold transition-all shadow-sm hover:shadow text-white bg-blue-600 hover:bg-blue-700"
                                       >
-                                          <span className="text-white">Voir les offres</span>
+                                          <span className="text-white">Voir l'offre</span>
                                           <ExternalLink className="h-3 w-3 text-white" />
                                       </a>
                                   </div>
@@ -331,7 +290,6 @@ export default function ChargesSection({ charges, onChargesChange }: ChargesSect
                           </Popover>
                       )}
 
-                      {/* Date Button */}
                       <Popover>
                         <PopoverTrigger asChild>
                             <Button variant="ghost" size="icon-sm" className={cn("h-7 w-7 text-muted-foreground hover:text-primary", hasDates && "text-primary")}>
