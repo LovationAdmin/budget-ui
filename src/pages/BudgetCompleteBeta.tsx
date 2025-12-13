@@ -341,7 +341,6 @@ export default function BudgetCompleteBeta() {
           if (!globalDataRef.current.yearlyData) globalDataRef.current.yearlyData = {};
           if (!globalDataRef.current.oneTimeIncomes) globalDataRef.current.oneTimeIncomes = {};
           
-          // FIX TS18048: Add fallbacks
           const sourceYearlyData = formattedCurrent.yearlyData || {};
           const sourceOneTime = formattedCurrent.oneTimeIncomes || {};
 
@@ -376,7 +375,6 @@ export default function BudgetCompleteBeta() {
      if (!finalPayload.yearlyData) finalPayload.yearlyData = {};
      if (!finalPayload.oneTimeIncomes) finalPayload.oneTimeIncomes = {};
 
-     // FIX TS18048: Add fallbacks
      const sourceYearlyData = formattedCurrent.yearlyData || {};
      const sourceOneTime = formattedCurrent.oneTimeIncomes || {};
 
@@ -416,8 +414,7 @@ export default function BudgetCompleteBeta() {
       toast({ title: "Mappings mis à jour", description: `${newLinks.length} transactions liées.` });
   };
 
-  // Reality Check realized calculation
-  // FIX TS2552/2304: Define variables before use
+  // --- 0. SMART CALCULATOR: REALITY OVERRIDE ---
   const today = new Date();
   const currentMonthIndex = today.getMonth();
   const currentRealYear = today.getFullYear();
@@ -431,6 +428,17 @@ export default function BudgetCompleteBeta() {
           });
       });
   }
+
+  // --- SECTION CHANGE HANDLER (FIX: Added this function) ---
+  const handleSectionChange = (section: string) => {
+    if (section === 'settings' || section === 'notifications') return;
+    const element = document.getElementById(section);
+    if (element) {
+        element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } else if (section === 'overview') {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
 
   if (loading) return <div className="min-h-screen flex items-center justify-center"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div></div>;
 
@@ -446,7 +454,7 @@ export default function BudgetCompleteBeta() {
         userName={user?.name}
         userAvatar={user?.avatar}
         items={BUDGET_NAV_ITEMS}
-        onSectionChange={handleSectionChange}
+        onSectionChange={handleSectionChange} // <--- Passed Correctly
         currentSection="overview"
       />
 
@@ -514,7 +522,8 @@ export default function BudgetCompleteBeta() {
         <div id="calendar" className="mt-6">
             <MonthlyTable 
                 currentYear={currentYear} people={people} charges={charges} projects={projects} yearlyData={yearlyData} yearlyExpenses={yearlyExpenses} oneTimeIncomes={oneTimeIncomes} monthComments={monthComments} projectComments={projectComments} lockedMonths={lockedMonths} 
-                onYearlyDataChange={setYearlyData} onYearlyExpensesChange={setYearlyExpenses} onOneTimeIncomesChange={setOneTimeIncomes} onMonthCommentsChange={setMonthComments} onProjectCommentsChange={setProjectComments} onLockedMonthsChange={setLockedMonths} 
+                onYearlyDataChange={setYearlyData} onYearlyExpensesChange={setYearlyExpenses} onOneTimeIncomesChange={setOneTimeIncomes} onMonthCommentsChange={setMonthComments} onProjectCommentsChange={setProjectComments} onLockedMonthsChange={setLockedMonths}
+                
                 customChargeTotalCalculator={getMonthlyChargeTotal}
                 onYearChange={handleYearChange}
                 projectCarryOvers={projectCarryOvers}
@@ -550,4 +559,4 @@ export default function BudgetCompleteBeta() {
       )}
     </div>
   );
-} 
+}
