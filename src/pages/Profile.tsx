@@ -122,7 +122,7 @@ export default function Profile() {
     }
   };
 
-// 4. GDPR Export Logic (OPTIMISÉ : Suppression des champs tiers)
+  // 4. GDPR Export Logic (STRICT : Uniquement l'utilisateur courant)
   const handleGDPRExport = async () => {
       setExporting(true);
       try {
@@ -140,31 +140,14 @@ export default function Profile() {
               try {
                   const dataRes = await budgetAPI.getData(b.id);
                   
-                  // --- SANITIZATION LOGIC ---
-                  const sanitizedMembers = b.members.map((m: any) => {
-                      // CAS 1 : C'est moi (le demandeur)
-                      // -> Je garde toutes mes données
-                      if (m.user && m.user.id === user?.id) {
-                          return m;
-                      }
-
-                      // CAS 2 : C'est un autre membre
-                      // -> Je garde le membre pour la cohérence du budget (savoir qui est là)
-                      // -> MAIS je retire physiquement le champ 'email' et l'id interne
-                      if (m.user) {
-                          // On extrait email et id pour les jeter, on garde le reste (name, avatar) dans safeUser
-                          const { email, id, ...safeUser } = m.user;
-                          return {
-                              ...m,
-                              user: safeUser // Ne contient plus que { name, avatar }
-                          };
-                      }
-                      
-                      // Cas membre fantôme (invitation en attente ou supprimé)
-                      return m;
+                  // --- SANITIZATION LOGIC STRICTE ---
+                  // On filtre le tableau des membres pour ne garder QUE l'utilisateur qui fait la demande.
+                  // Toutes les autres entrées sont supprimées.
+                  const sanitizedMembers = b.members.filter((m: any) => {
+                      return m.user && m.user.id === user?.id;
                   });
 
-                  // On reconstruit l'objet budget avec la liste nettoyée
+                  // On reconstruit l'objet budget avec la liste nettoyée (taille = 1)
                   const sanitizedMeta = {
                       ...b,
                       members: sanitizedMembers
@@ -191,7 +174,7 @@ export default function Profile() {
           document.body.removeChild(a);
           URL.revokeObjectURL(url);
 
-          toast({ title: "Données exportées", description: "L'archive nettoyée a été téléchargée.", variant: "default" });
+          toast({ title: "Données exportées", description: "L'archive personnelle (sans tiers) a été téléchargée.", variant: "default" });
 
       } catch (error) {
           console.error(error);
@@ -302,7 +285,11 @@ export default function Profile() {
             </h2>
             <p className="text-muted-foreground text-sm mb-4">
                 Conformément au RGPD, vous avez le droit à la portabilité de vos données. 
-                Vous pouvez télécharger une archive complète de tous vos budgets et informations personnelles au format JSON.
+                Vous pouvez télécharger une archive complète de vos budgets au format JSON.
+                <br/>
+                <span className="text-xs font-medium text-blue-600 mt-2 block">
+                    Note : Ce fichier contient uniquement VOS informations personnelles. Les données des autres membres sont exclues de cet export.
+                </span>
             </p>
             <Button variant="outline" onClick={handleGDPRExport} disabled={exporting} className="w-full sm:w-auto gap-2">
                 {exporting ? <Download className="h-4 w-4 animate-bounce" /> : <Download className="h-4 w-4" />}
