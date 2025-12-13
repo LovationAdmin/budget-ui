@@ -12,38 +12,48 @@ interface ProjectsSectionProps {
   onProjectsChange: (projects: Project[]) => void;
   yearlyData?: YearlyData; 
   currentYear?: number;
+  projectCarryOvers?: Record<string, number>; // <--- NEW PROP: Historique des années passées
 }
 
 const MONTHS = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
 
-export default function ProjectsSection({ projects, onProjectsChange, yearlyData = {}, currentYear = new Date().getFullYear() }: ProjectsSectionProps) {
+export default function ProjectsSection({ 
+    projects, 
+    onProjectsChange, 
+    yearlyData = {}, 
+    currentYear = new Date().getFullYear(),
+    projectCarryOvers = {} // Valeur par défaut vide
+}: ProjectsSectionProps) {
+  
   const [newProjectLabel, setNewProjectLabel] = useState('');
   const [newProjectTarget, setNewProjectTarget] = useState('');
   const [showAddForm, setShowAddForm] = useState(false);
 
-  // Helper: Get today's month index (0-11)
   const today = new Date();
   const currentMonthIndex = today.getMonth();
   const currentRealYear = today.getFullYear();
 
   const getProjectStats = (projectId: string) => {
-    let totalPlanned = 0;
-    let totalRealized = 0;
+    // 1. Initialisation avec le report des années précédentes (Net : Alloué - Dépensé)
+    const carryOver = projectCarryOvers[projectId] || 0;
+    
+    let totalPlanned = carryOver;   // Le planifié inclut ce qu'on a déjà mis de côté avant
+    let totalRealized = carryOver;  // Ce qui a été mis de côté avant est forcément "réalisé" (passé)
 
+    // 2. Ajout des données de l'année en cours
     MONTHS.forEach((month, index) => {
         const amount = yearlyData[month]?.[projectId] || 0;
         totalPlanned += amount;
 
-        // "Realized" logic:
-        // 1. If budget year is in the past (< currentRealYear), ALL months are realized.
-        // 2. If budget year is current year, months <= currentMonthIndex are realized.
-        // 3. If budget year is future, nothing is realized.
-        
+        // Logique "Réalisé" pour l'année affichée
         if (currentYear < currentRealYear) {
+            // Si on regarde une année passée (ex: 2023), tout est réalisé
             totalRealized += amount;
         } else if (currentYear === currentRealYear && index <= currentMonthIndex) {
+            // Si on regarde l'année en cours, seuls les mois passés + mois actuel comptent
             totalRealized += amount;
         }
+        // Si année future, on n'ajoute rien au réalisé
     });
 
     return { totalPlanned, totalRealized };
@@ -52,7 +62,6 @@ export default function ProjectsSection({ projects, onProjectsChange, yearlyData
   const addProject = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newProjectLabel.trim()) return;
-
     const newProject: Project = {
       id: Date.now().toString(),
       label: newProjectLabel.trim(),
@@ -91,10 +100,9 @@ export default function ProjectsSection({ projects, onProjectsChange, yearlyData
                  <p className="text-sm text-muted-foreground">
                     {projects.length} projet{projects.length > 1 ? 's' : ''}
                  </p>
-                 {/* GLOBAL LEGEND */}
                  {projects.length > 0 && (
                      <div className="hidden sm:flex items-center gap-3 text-[10px] bg-muted/40 px-2 py-0.5 rounded-md border border-border/50 ml-2">
-                        <span className="flex items-center gap-1.5" title="Argent déjà provisionné (Mois passés)">
+                        <span className="flex items-center gap-1.5" title="Argent déjà provisionné (Années préc. + Mois passés)">
                             <div className="h-2 w-2 rounded-full bg-success shadow-[0_0_6px_rgba(34,197,94,0.4)]"></div>
                             <span className="text-muted-foreground font-medium">En caisse</span>
                         </span>
@@ -122,7 +130,6 @@ export default function ProjectsSection({ projects, onProjectsChange, yearlyData
           )}
         </div>
         
-        {/* Mobile Legend (Only visible on small screens) */}
         {projects.length > 0 && (
              <div className="flex sm:hidden items-center justify-center gap-4 text-[10px] mt-2 bg-muted/30 px-2 py-1.5 rounded-lg">
                 <span className="flex items-center gap-1.5">
@@ -177,7 +184,7 @@ export default function ProjectsSection({ projects, onProjectsChange, yearlyData
           </form>
         )}
 
-        {/* Projects List - GRID VIEW */}
+        {/* Projects List */}
         {projects.length === 0 ? (
           <div className="text-center py-6 text-muted-foreground text-sm">
             Aucun projet d'épargne.
@@ -190,12 +197,9 @@ export default function ProjectsSection({ projects, onProjectsChange, yearlyData
               const hasTarget = target > 0;
               
               // Progress reflects Realized Amount vs Target
+              // Note: If totalRealized > target, we cap at 100% for visual bar, but display correct numbers
               const progress = hasTarget ? Math.min((totalRealized / target) * 100, 100) : (totalRealized > 0 ? 100 : 0);
-              
-              // Goal is reached if we have enough money realized
               const isGoalReached = hasTarget && totalRealized >= target;
-              
-              // Fully Scheduled means we PLANNED enough money, even if we haven't reached the date yet
               const isFullyScheduled = hasTarget && totalPlanned >= target && !isGoalReached;
 
               return (
@@ -210,7 +214,7 @@ export default function ProjectsSection({ projects, onProjectsChange, yearlyData
                 >
                   <div className="relative flex flex-col gap-3">
                     
-                    {/* Header Row */}
+                    {/* Header */}
                     <div className="flex items-start justify-between gap-2">
                         <div className="flex items-center gap-2 flex-1 min-w-0">
                             <div className={cn(
@@ -227,7 +231,6 @@ export default function ProjectsSection({ projects, onProjectsChange, yearlyData
                                 className="h-7 text-sm font-medium bg-transparent border-0 p-0 focus-visible:ring-0 px-1 -ml-1 truncate font-display"
                             />
                         </div>
-                        
                         <Button
                             variant="ghost"
                             size="icon-sm"
@@ -265,10 +268,9 @@ export default function ProjectsSection({ projects, onProjectsChange, yearlyData
                         </div>
                     </div>
 
-                    {/* Progress Bar Area */}
+                    {/* Progress Bar */}
                     {hasTarget && (
                         <div className="space-y-1.5 mt-1">
-                            {/* HERE IS THE CHANGE: Explicitly adding "% réalisé" */}
                             <div className="flex justify-between items-end text-[10px]">
                                 <span className={cn("font-medium", isGoalReached ? "text-success" : "text-muted-foreground")}>
                                     {isGoalReached ? "100% réalisé" : `${progress.toFixed(0)}% réalisé`}
@@ -286,14 +288,13 @@ export default function ProjectsSection({ projects, onProjectsChange, yearlyData
 
                             {/* Dual Layer Progress Bar */}
                             <div className="relative h-2 w-full bg-muted rounded-full overflow-hidden">
-                                {/* 1. PLAN BAR (Background - Light Brand Color) */}
+                                {/* 1. PLAN BAR (Light) */}
                                 <div 
                                     className="absolute top-0 left-0 h-full bg-primary/20 transition-all duration-300"
                                     style={{ width: `${Math.min((totalPlanned / target) * 100, 100)}%` }}
                                     title={`Planifié: ${totalPlanned.toLocaleString()} €`}
                                 />
-                                
-                                {/* 2. REALIZED BAR (Foreground - Strong Success Color) */}
+                                {/* 2. REALIZED BAR (Dark Success) */}
                                 <div 
                                     className={cn(
                                         "absolute top-0 left-0 h-full transition-all duration-500 shadow-[0_0_10px_rgba(34,197,94,0.4)]",

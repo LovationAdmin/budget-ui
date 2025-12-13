@@ -458,6 +458,7 @@ export default function BudgetComplete() {
                 onProjectsChange={setProjects}
                 yearlyData={yearlyData}
                 currentYear={currentYear}
+                projectCarryOvers={projectCarryOvers}
             />
         </div>
 
