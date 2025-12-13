@@ -40,12 +40,7 @@ const BUDGET_NAV_ITEMS: NavItem[] = [
 
 interface BudgetMember {
   id: string;
-  user: { 
-    id: string; 
-    name: string; 
-    email: string;
-    avatar?: string;
-  };
+  user: { id: string; name: string; email: string; avatar?: string; };
   role: 'owner' | 'member';
 }
 
@@ -82,7 +77,7 @@ export default function BudgetComplete() {
   const [projectComments, setProjectComments] = useState<ProjectComments>({});
   const [lockedMonths, setLockedMonths] = useState<LockedMonths>({});
 
-  // NEW: Suggestions State
+  // NEW: Suggestions State (Smart Tips)
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
 
   const loadedRef = useRef(false);
@@ -102,51 +97,66 @@ export default function BudgetComplete() {
     if (id) loadBudget();
   }, [id]);
 
-  // 1. Data Auto-Save (Every 30s)
+  // 1. SMART AUTO-SAVE (30s) - Seulement si la page est visible
   useEffect(() => {
     if (!loadedRef.current) return;
-    const saveInterval = setInterval(() => handleSave(true), 30000);
+    
+    const saveInterval = setInterval(() => {
+        // PERF: On ne sauvegarde pas si l'utilisateur est sur un autre onglet
+        if (document.visibilityState === 'visible') {
+            handleSave(true);
+        }
+    }, 30000);
+    
     return () => clearInterval(saveInterval);
   }, [budgetTitle, currentYear, people, charges, projects, yearlyData, yearlyExpenses, oneTimeIncomes, monthComments, projectComments, lockedMonths]);
 
-  // 2. Data Polling
+  // 2. SMART DATA POLLING - Intervalle augmenté à 30s + Check visibilité
   useEffect(() => {
     if (!id || !loadedRef.current) return;
-    const pollInterval = setInterval(async () => {
-      try {
-        const res = await budgetAPI.getData(id);
-        const remoteData: RawBudgetData = res.data.data;
-        
-        if (
-            remoteData.lastUpdated && 
-            lastServerUpdate && 
-            remoteData.lastUpdated > lastServerUpdate && 
-            remoteData.updatedBy !== user?.name 
-        ) {
-          toast({
-            title: "Mise à jour disponible",
-            description: `Modifié par ${remoteData.updatedBy || 'un membre'}.`,
-            variant: "default",
-            action: (
-              <ToastAction altText="Rafraîchir" onClick={() => loadBudget()}>
-                Rafraîchir
-              </ToastAction>
-            ),
-          });
+
+    const pollData = async () => {
+        // PERF: On ne poll pas si l'utilisateur ne regarde pas
+        if (document.visibilityState !== 'visible') return;
+
+        try {
+            const res = await budgetAPI.getData(id);
+            const remoteData: RawBudgetData = res.data.data;
+            
+            if (
+                remoteData.lastUpdated && 
+                lastServerUpdate && 
+                remoteData.lastUpdated > lastServerUpdate && 
+                remoteData.updatedBy !== user?.name 
+            ) {
+                toast({
+                    title: "Mise à jour disponible",
+                    description: `Modifié par ${remoteData.updatedBy || 'un membre'}.`,
+                    variant: "default",
+                    action: (
+                    <ToastAction altText="Rafraîchir" onClick={() => loadBudget()}>
+                        Rafraîchir
+                    </ToastAction>
+                    ),
+                });
+            }
+        } catch (err) {
+            console.error("Polling error", err);
         }
-      } catch (err) {
-        console.error("Polling error", err);
-      }
-    }, 15000);
+    };
+
+    const pollInterval = setInterval(pollData, 30000); // 30 secondes au lieu de 15
     return () => clearInterval(pollInterval);
   }, [id, lastServerUpdate, user?.name]);
 
-  // 3. Member Polling
+  // 3. MEMBER POLLING - Intervalle augmenté à 60s
   useEffect(() => {
     if (!id) return;
     const memberInterval = setInterval(() => {
-        refreshMembersOnly();
-    }, 5000); 
+        if (document.visibilityState === 'visible') {
+            refreshMembersOnly();
+        }
+    }, 60000); // 1 minute
     return () => clearInterval(memberInterval);
   }, [id]);
 
@@ -176,36 +186,50 @@ export default function BudgetComplete() {
     });
   }, [projects, yearlyData]);
 
-  // 5. SMART TIPS ANALYZER (Mocked until backend service ready)
+  // 5. AFFILIATION INTELLIGENTE (Logique Client-Side)
+  // Cette partie analyse les charges pour proposer des affiliations
   useEffect(() => {
       if (charges.length > 0) {
-          // In a real scenario, this would call `api.post('/budgets/:id/analyze', { charges, people })`
-          // Here we perform basic client-side analysis to populate suggestions for demonstration
           const newSuggestions: Suggestion[] = [];
           
           charges.forEach(c => {
-              if (c.amount > 30 && (c.label.toLowerCase().includes('mobile') || c.label.toLowerCase().includes('sfr') || c.label.toLowerCase().includes('orange'))) {
+              // FORFAIT MOBILE (> 25€)
+              if (c.amount > 25 && (c.label.toLowerCase().includes('mobile') || c.label.toLowerCase().includes('sfr') || c.label.toLowerCase().includes('orange') || c.label.toLowerCase().includes('bouygues'))) {
                   newSuggestions.push({
-                      id: 'sug_' + c.id,
+                      id: 'sug_mobile_' + c.id,
                       chargeId: c.id,
                       type: 'MOBILE',
                       title: 'Forfait Mobile Optimisable',
-                      message: `Vous payez ${c.amount}€/mois. Des offres 100Go existent dès 10€.`,
+                      message: `Vous payez ${c.amount}€/mois. Des forfaits 50Go existent dès 10€.`,
                       potentialSavings: (c.amount - 10) * 12,
                       actionLink: 'https://www.ariase.com/mobile',
                       canBeContacted: false
                   });
               }
-              if (c.amount > 50 && (c.label.toLowerCase().includes('edf') || c.label.toLowerCase().includes('engie'))) {
+              // ENERGIE (> 100€)
+              if (c.amount > 100 && (c.label.toLowerCase().includes('edf') || c.label.toLowerCase().includes('engie') || c.label.toLowerCase().includes('total energie'))) {
                   newSuggestions.push({
-                      id: 'sug_' + c.id,
+                      id: 'sug_energy_' + c.id,
                       chargeId: c.id,
                       type: 'ENERGY',
-                      title: 'Facture Énergie',
-                      message: `Comparez les fournisseurs pour réduire cette facture de ${c.amount}€.`,
+                      title: 'Facture Énergie Élevée',
+                      message: `Le montant est élevé (${c.amount}€). Comparez les fournisseurs pour économiser.`,
                       potentialSavings: (c.amount * 0.15) * 12,
                       actionLink: 'https://www.papernest.com/energie/',
                       canBeContacted: true
+                  });
+              }
+              // INTERNET (> 45€)
+              if (c.amount > 45 && (c.label.toLowerCase().includes('box') || c.label.toLowerCase().includes('fibre') || c.label.toLowerCase().includes('internet'))) {
+                  newSuggestions.push({
+                      id: 'sug_box_' + c.id,
+                      chargeId: c.id,
+                      type: 'INTERNET',
+                      title: 'Offre Internet',
+                      message: `Plus de 45€/mois ? La fibre commence à 20€ la première année.`,
+                      potentialSavings: (c.amount - 25) * 12,
+                      actionLink: 'https://www.ariase.com/box',
+                      canBeContacted: false
                   });
               }
           });
@@ -269,20 +293,9 @@ export default function BudgetComplete() {
     if (!silent) setSaving(true);
     const now = new Date().toISOString();
     const budgetData = {
-      budgetTitle,
-      currentYear,
-      people,
-      charges,
-      projects,
-      yearlyData,      
-      yearlyExpenses, 
-      oneTimeIncomes,
-      monthComments,
-      projectComments,
-      lockedMonths,
-      lastUpdated: now,
-      updatedBy: user?.name, 
-      version: '2.2'
+      budgetTitle, currentYear, people, charges, projects, yearlyData, yearlyExpenses, 
+      oneTimeIncomes, monthComments, projectComments, lockedMonths,
+      lastUpdated: now, updatedBy: user?.name, version: '2.2'
     };
 
     try {
@@ -290,7 +303,6 @@ export default function BudgetComplete() {
       setLastServerUpdate(now);
       if (!silent) toast({ title: "Succès", description: "Budget sauvegardé !", variant: "success" });
     } catch (error) {
-      console.error('Error saving:', error);
       if (!silent) toast({ title: "Erreur", description: "Échec de la sauvegarde.", variant: "destructive" });
     } finally {
       if (!silent) setSaving(false);
@@ -308,12 +320,7 @@ export default function BudgetComplete() {
   };
 
   if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <BudgetNavbar items={[]} />
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
-      </div>
-    );
+    return <div className="min-h-screen bg-gray-50 flex items-center justify-center"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div></div>;
   }
 
   return (
@@ -363,12 +370,12 @@ export default function BudgetComplete() {
             </div>
         )}
 
-        {/* Removed Export/Import props here */}
+        {/* Cleaned ActionsBar */}
         <ActionsBar onSave={() => handleSave(false)} saving={saving} />
 
         <div id="people"><PeopleSection people={people} onPeopleChange={setPeople} /></div>
         
-        {/* Pass Suggestions here */}
+        {/* Pass Suggestions to ChargesSection */}
         <div id="charges" className="mt-6"><ChargesSection charges={charges} onChargesChange={setCharges} suggestions={suggestions} /></div>
         
         <div id="projects" className="mt-6">

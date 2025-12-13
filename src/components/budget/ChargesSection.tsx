@@ -13,10 +13,10 @@ import { cn } from "@/lib/utils";
 import type { Charge } from '@/utils/importConverter';
 import { budgetAPI } from '@/services/api';
 
-// Structure des suggestions venant du backend
+// Structure exportée pour être utilisée par les pages parentes
 export interface Suggestion {
     id: string;
-    chargeId?: string; // Si liée à une charge spécifique
+    chargeId?: string;
     type: string;
     title: string;
     message: string;
@@ -28,7 +28,7 @@ export interface Suggestion {
 interface ChargesSectionProps {
   charges: Charge[];
   onChargesChange: (charges: Charge[]) => void;
-  suggestions?: Suggestion[]; // Dynamic Suggestions
+  suggestions?: Suggestion[]; // Les suggestions viennent du parent
 }
 
 export default function ChargesSection({ charges, onChargesChange, suggestions = [] }: ChargesSectionProps) {
@@ -38,7 +38,7 @@ export default function ChargesSection({ charges, onChargesChange, suggestions =
   const [endDate, setEndDate] = useState('');
   const [showAddForm, setShowAddForm] = useState(false);
   
-  // IA State
+  // État local pour l'IA (catégorisation à la volée)
   const [detectedCategory, setDetectedCategory] = useState<string>('');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
 
@@ -62,6 +62,7 @@ export default function ChargesSection({ charges, onChargesChange, suggestions =
   const addCharge = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newChargeLabel.trim()) return;
+    
     const newCharge: Charge = {
       id: Date.now().toString(),
       label: newChargeLabel.trim(),
@@ -72,6 +73,8 @@ export default function ChargesSection({ charges, onChargesChange, suggestions =
     };
 
     onChargesChange([...charges, newCharge]);
+    
+    // Reset du formulaire
     setNewChargeLabel('');
     setNewChargeAmount('');
     setStartDate('');
@@ -109,6 +112,7 @@ export default function ChargesSection({ charges, onChargesChange, suggestions =
               </p>
             </div>
           </div>
+          
           {!showAddForm && (
             <Button
               variant="ghost"
@@ -124,7 +128,7 @@ export default function ChargesSection({ charges, onChargesChange, suggestions =
       </CardHeader>
 
       <CardContent>
-        {/* ADD FORM */}
+        {/* FORMULAIRE D'AJOUT */}
         {showAddForm && (
           <form onSubmit={addCharge} className="mb-4 p-3 rounded-xl border border-destructive/20 bg-destructive/5 animate-scale-in">
             <div className="flex flex-col gap-3">
@@ -142,6 +146,7 @@ export default function ChargesSection({ charges, onChargesChange, suggestions =
                         required
                         autoFocus
                       />
+                      {/* Indicateur visuel d'analyse */}
                       <div className="absolute right-3 top-1/2 -translate-y-1/2">
                           {isAnalyzing ? (
                               <span className="flex h-2 w-2 relative">
@@ -157,6 +162,7 @@ export default function ChargesSection({ charges, onChargesChange, suggestions =
                       </div>
                   </div>
                 </div>
+                
                 <div className="w-full sm:w-32 space-y-1.5">
                   <Label htmlFor="charge-amount" className="text-xs">Montant</Label>
                   <Input
@@ -170,6 +176,7 @@ export default function ChargesSection({ charges, onChargesChange, suggestions =
                   />
                 </div>
               </div>
+
               <div className="flex flex-col sm:flex-row gap-3 items-end">
                  <div className="w-full space-y-1.5">
                     <Label htmlFor="start-date" className="text-xs text-muted-foreground">Début (Optionnel)</Label>
@@ -186,6 +193,7 @@ export default function ChargesSection({ charges, onChargesChange, suggestions =
                     />
                  </div>
               </div>
+
               <div className="flex gap-2 justify-end pt-2">
                 <Button type="button" size="sm" variant="ghost" onClick={() => setShowAddForm(false)} className="h-8 text-xs">Annuler</Button>
                 <Button type="submit" size="sm" variant="destructive" className="h-8 text-xs">
@@ -196,7 +204,7 @@ export default function ChargesSection({ charges, onChargesChange, suggestions =
           </form>
         )}
 
-        {/* LIST */}
+        {/* LISTE DES CHARGES */}
         {charges.length === 0 ? (
           <div className="text-center py-6 text-muted-foreground text-sm">
             Aucune charge récurrente.
@@ -207,7 +215,7 @@ export default function ChargesSection({ charges, onChargesChange, suggestions =
               const hasDates = charge.startDate || charge.endDate;
               const dateText = hasDates ? 'Dates définies' : null;
               
-              // FIND DYNAMIC SUGGESTION FOR THIS CHARGE
+              // RECHERCHE D'UNE SUGGESTION (Affiliation) POUR CETTE CHARGE
               const suggestion = suggestions.find(s => s.chargeId === charge.id);
 
               return (
@@ -246,7 +254,7 @@ export default function ChargesSection({ charges, onChargesChange, suggestions =
                   {/* Actions Column */}
                   <div className="flex flex-col gap-1 items-end">
                       
-                      {/* DYNAMIC SUGGESTION BUTTON */}
+                      {/* BOUTON SUGGESTION INTELLIGENT */}
                       {suggestion && (
                           <Popover>
                               <PopoverTrigger asChild>
@@ -267,9 +275,11 @@ export default function ChargesSection({ charges, onChargesChange, suggestions =
                                           </div>
                                           <h4 className="font-semibold text-sm">{suggestion.title}</h4>
                                       </div>
+                                      
                                       <p className="text-xs text-muted-foreground leading-relaxed">
                                           {suggestion.message}
                                       </p>
+                                      
                                       {suggestion.potentialSavings > 0 && (
                                           <p className="text-xs font-bold text-green-600">
                                               Économie potentielle : {suggestion.potentialSavings.toLocaleString()}€ / an
@@ -290,6 +300,7 @@ export default function ChargesSection({ charges, onChargesChange, suggestions =
                           </Popover>
                       )}
 
+                      {/* Date Button */}
                       <Popover>
                         <PopoverTrigger asChild>
                             <Button variant="ghost" size="icon-sm" className={cn("h-7 w-7 text-muted-foreground hover:text-primary", hasDates && "text-primary")}>

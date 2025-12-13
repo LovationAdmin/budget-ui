@@ -133,15 +133,20 @@ export default function BudgetCompleteBeta() {
     if (id) loadBudget();
   }, [id]);
 
+  // 1. SMART AUTO-SAVE (30s)
   useEffect(() => {
     if (!loadedRef.current) return;
-    const saveInterval = setInterval(() => handleSave(true), 30000);
+    const saveInterval = setInterval(() => {
+        if (document.visibilityState === 'visible') handleSave(true);
+    }, 30000);
     return () => clearInterval(saveInterval);
   }, [budgetTitle, currentYear, people, charges, projects, yearlyData, yearlyExpenses, oneTimeIncomes, monthComments, projectComments, lockedMonths]);
 
+  // 2. SMART DATA POLLING (30s)
   useEffect(() => {
     if (!id || !loadedRef.current) return;
     const pollInterval = setInterval(async () => {
+      if (document.visibilityState !== 'visible') return;
       try {
         const res = await budgetAPI.getData(id);
         const remoteData: RawBudgetData = res.data.data;
@@ -154,24 +159,28 @@ export default function BudgetCompleteBeta() {
           });
         }
       } catch (err) { console.error("Polling error", err); }
-    }, 15000);
+    }, 30000);
     return () => clearInterval(pollInterval);
   }, [id, lastServerUpdate, user?.name]);
 
+  // 3. MEMBER POLLING (60s)
   useEffect(() => {
     if (!id) return;
-    const memberInterval = setInterval(() => { refreshMembersOnly(); }, 5000); 
+    const memberInterval = setInterval(() => { 
+        if (document.visibilityState === 'visible') refreshMembersOnly(); 
+    }, 60000); 
     return () => clearInterval(memberInterval);
   }, [id]);
 
-  // 5. SMART TIPS ANALYZER (Mocked)
+  // 5. AFFILIATION INTELLIGENTE
   useEffect(() => {
       if (charges.length > 0) {
           const newSuggestions: Suggestion[] = [];
           charges.forEach(c => {
-              if (c.amount > 30 && (c.label.toLowerCase().includes('mobile') || c.label.toLowerCase().includes('sfr'))) {
+              // Mobile
+              if (c.amount > 30 && (c.label.toLowerCase().includes('mobile') || c.label.toLowerCase().includes('sfr') || c.label.toLowerCase().includes('orange'))) {
                   newSuggestions.push({
-                      id: 'sug_' + c.id,
+                      id: 'sug_mobile_' + c.id,
                       chargeId: c.id,
                       type: 'MOBILE',
                       title: 'Forfait Mobile',
@@ -179,6 +188,19 @@ export default function BudgetCompleteBeta() {
                       potentialSavings: (c.amount - 10) * 12,
                       actionLink: 'https://www.ariase.com/mobile',
                       canBeContacted: false
+                  });
+              }
+              // Energie
+              if (c.amount > 100 && (c.label.toLowerCase().includes('edf') || c.label.toLowerCase().includes('engie'))) {
+                  newSuggestions.push({
+                      id: 'sug_energy_' + c.id,
+                      chargeId: c.id,
+                      type: 'ENERGY',
+                      title: 'Facture Énergie',
+                      message: `Comparez les fournisseurs pour réduire cette facture de ${c.amount}€.`,
+                      potentialSavings: (c.amount * 0.15) * 12,
+                      actionLink: 'https://www.papernest.com/energie/',
+                      canBeContacted: true
                   });
               }
           });
@@ -286,6 +308,7 @@ export default function BudgetCompleteBeta() {
         
         {budget && user && ( <div id="members"><MemberManagementSection budget={budget} currentUserId={user.id} onMemberChange={refreshMembersOnly} /></div> )}
         
+        {/* Cleaned ActionsBar (No export here) */}
         <ActionsBar onSave={() => handleSave(false)} saving={saving} />
 
         <div id="people"><PeopleSection people={people} onPeopleChange={setPeople} /></div>
