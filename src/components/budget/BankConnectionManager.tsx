@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import api from '@/services/api';
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -35,6 +35,9 @@ export function BankConnectionManager({ budgetId, onUpdate }: BankManagerProps) 
     const [connecting, setConnecting] = useState(false);
     const [refreshing, setRefreshing] = useState(false);
     const [syncing, setSyncing] = useState(false);
+    
+    // Ref pour éviter les doubles appels de sync
+    const syncInProgress = useRef(false);
 
     const fetchConnections = useCallback(async () => {
         try {
@@ -51,71 +54,84 @@ export function BankConnectionManager({ budgetId, onUpdate }: BankManagerProps) 
         if (budgetId) fetchConnections();
     }, [budgetId, fetchConnections]);
 
-    // --- LOGIC SYNC ---
-    const handleSync = async () => {
+    const handleSync = async (silent = false) => {
+        if (syncInProgress.current) return;
+        syncInProgress.current = true;
         setSyncing(true);
+        
         try {
             const res = await api.post(`/budgets/${budgetId}/banking/sync`);
             if (res.data.accounts_synced > 0) {
                 toast({ title: "Succès", description: `${res.data.accounts_synced} compte(s) synchronisé(s) !`, variant: "success" });
                 await fetchConnections();
                 onUpdate();
-            } else {
-                // Si on force manuellement et qu'il n'y a rien
+            } else if (!silent) {
                 toast({ title: "Info", description: "Comptes à jour.", variant: "default" });
             }
         } catch (error) {
-            toast({ title: "Erreur", description: "Impossible de synchroniser les comptes.", variant: "destructive" });
+            if (!silent) toast({ title: "Erreur", description: "Impossible de synchroniser.", variant: "destructive" });
         } finally {
             setSyncing(false);
+            syncInProgress.current = false;
         }
     };
 
-    // --- LOGIC CONNECT (Listener) ---
+    // --- LISTENER POST MESSAGE ---
     useEffect(() => {
         const handleMessage = (event: MessageEvent) => {
-            // Vérifier l'origine pour la sécurité (optionnel en dev, recommandé en prod)
             if (event.data && event.data.type === 'BRIDGE_CONNECT_SUCCESS') {
                 console.log("Bridge Success Signal Received!", event.data);
-                
-                // Fermer l'état de chargement du bouton
                 setConnecting(false);
-
-                toast({ 
-                    title: "Connexion établie", 
-                    description: "Récupération de vos comptes en cours...", 
-                    variant: "default" 
-                });
-
-                // Attendre 2 secondes que Bridge indexe les données côté serveur, puis lancer la sync
-                setTimeout(() => {
-                    handleSync();
-                }, 2000);
+                toast({ title: "Connexion établie", description: "Récupération des comptes...", variant: "default" });
+                
+                // Petit délai pour laisser le backend de Bridge indexer
+                setTimeout(() => handleSync(), 1500);
             }
         };
-
         window.addEventListener('message', handleMessage);
         return () => window.removeEventListener('message', handleMessage);
-    }, []); // eslint-disable-line react-hooks/exhaustive-deps
+    }, []); // eslint-disable-line
 
+    // --- CONNECT LOGIC (Hybrid: PostMessage + Interval) ---
     const handleConnect = async () => {
         setConnecting(true);
         try {
-            const res = await api.post('/banking/bridge/connect');
+            // URL de retour dynamique
+            const callbackUrl = `${window.location.origin}/bank-callback`;
             
-            // Calculer la position pour centrer le popup
+            const res = await api.post('/banking/bridge/connect', { 
+                redirect_url: callbackUrl 
+            });
+            
             const width = 500;
             const height = 800;
             const left = window.screen.width / 2 - width / 2;
             const top = window.screen.height / 2 - height / 2;
 
-            window.open(
+            const bridgeWindow = window.open(
                 res.data.redirect_url,
                 'Bridge Connect',
                 `width=${width},height=${height},top=${top},left=${left},scrollbars=yes,resizable=yes`
             );
-            
-            // Note: On ne met plus de setInterval ici, c'est le "message" listener qui gère la suite.
+
+            // FALLBACK: Surveiller la fermeture de la fenêtre
+            // Si l'utilisateur ferme la fenêtre manuellement (ou si la redirection échoue mais qu'il ferme)
+            // on lance quand même une synchro pour voir.
+            const checkWindow = setInterval(() => {
+                if (bridgeWindow?.closed) {
+                    clearInterval(checkWindow);
+                    // Si on est toujours en "connecting", c'est qu'on n'a pas reçu le PostMessage
+                    // Donc on tente une synchro "au cas où"
+                    setConnecting(prev => {
+                        if (prev) {
+                            handleSync(true); // Silent sync
+                            return false;
+                        }
+                        return prev;
+                    });
+                }
+            }, 1000);
+
         } catch (error: any) {
             toast({ title: "Erreur", description: "Impossible de lancer la connexion.", variant: "destructive" });
             setConnecting(false);
@@ -137,30 +153,28 @@ export function BankConnectionManager({ budgetId, onUpdate }: BankManagerProps) 
     };
 
     const togglePoolStatus = async (accountId: string, currentStatus: boolean) => {
-        // Optimistic UI
         setConnections(prev => prev.map(c => ({
             ...c,
             accounts: c.accounts?.map(a => a.id === accountId ? { ...a, is_savings_pool: !currentStatus } : a)
         })));
-        
         try {
             await api.put(`/banking/accounts/${accountId}`, { is_savings_pool: !currentStatus });
-            onUpdate(); // Refresh global balance
+            onUpdate();
         } catch (error) {
-            toast({ title: "Erreur", description: "Mise à jour échouée.", variant: "destructive" });
-            fetchConnections(); // Revert
+            toast({ title: "Erreur", description: "Impossible de mettre à jour le compte.", variant: "destructive" });
+            fetchConnections();
         }
     };
 
     const deleteConnection = async (id: string) => {
-        if (!confirm("Supprimer cette connexion ?")) return;
+        if (!confirm("Supprimer cette connexion et tous les comptes associés ?")) return;
         try {
             await api.delete(`/banking/connections/${id}`);
             setConnections(prev => prev.filter(c => c.id !== id));
             onUpdate();
-            toast({ title: "Supprimé", description: "Connexion retirée.", variant: "default" });
+            toast({ title: "Supprimé", description: "Connexion supprimée avec succès.", variant: "default" });
         } catch (error) {
-            toast({ title: "Erreur", description: "Impossible de supprimer.", variant: "destructive" });
+            toast({ title: "Erreur", description: "Impossible de supprimer la connexion.", variant: "destructive" });
         }
     };
 
@@ -173,7 +187,7 @@ export function BankConnectionManager({ budgetId, onUpdate }: BankManagerProps) 
             <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 bg-primary/5 rounded-xl border border-primary/10">
                 <div className="flex items-center gap-3">
                     <div className="p-2 bg-white rounded-lg shadow-sm"><Building2 className="h-5 w-5 text-primary" /></div>
-                    <div><h3 className="font-semibold text-foreground">Mes Banques</h3><p className="text-xs text-muted-foreground">Connectez vos comptes via Bridge</p></div>
+                    <div><h3 className="font-semibold text-foreground">Mes Banques</h3><p className="text-xs text-muted-foreground">Connectez vos comptes via Bridge (270+ banques)</p></div>
                 </div>
                 <div className="flex gap-2">
                     {connections.length > 0 && (
@@ -196,8 +210,8 @@ export function BankConnectionManager({ budgetId, onUpdate }: BankManagerProps) 
                 {connections.length === 0 ? (
                     <div className="text-center py-12 border-2 border-dashed rounded-xl">
                         <Building2 className="h-12 w-12 mx-auto text-muted-foreground/50 mb-3" />
-                        <p className="text-muted-foreground font-medium">Aucune connexion</p>
-                        <p className="text-sm text-muted-foreground mt-1">Ajoutez une banque pour commencer le Reality Check</p>
+                        <p className="text-muted-foreground font-medium">Aucune connexion bancaire</p>
+                        <p className="text-sm text-muted-foreground mt-1">Cliquez sur "Ajouter une banque" pour commencer</p>
                     </div>
                 ) : (
                     connections.map((conn) => (
@@ -205,11 +219,11 @@ export function BankConnectionManager({ budgetId, onUpdate }: BankManagerProps) 
                             <div className="bg-gray-50 px-4 py-3 flex items-center justify-between border-b">
                                 <div className="flex items-center gap-3">
                                     <Building2 className="h-5 w-5 text-primary" />
-                                    <div><h4 className="font-semibold text-sm">{conn.institution_name}</h4><p className="text-xs text-muted-foreground">Connecté le {new Date(conn.created_at).toLocaleDateString()}</p></div>
+                                    <div><h4 className="font-semibold text-sm">{conn.institution_name}</h4><p className="text-xs text-muted-foreground">Connecté le {new Date(conn.created_at).toLocaleDateString('fr-FR')}</p></div>
                                 </div>
                                 <div className="flex items-center gap-2">
                                     <Badge variant={conn.status === 'active' ? 'default' : 'secondary'}>{conn.status === 'active' ? 'Actif' : 'Inactif'}</Badge>
-                                    <Button variant="ghost" size="sm" onClick={() => deleteConnection(conn.id)} className="text-destructive hover:bg-destructive/10"><Trash2 className="h-4 w-4" /></Button>
+                                    <Button variant="ghost" size="sm" onClick={() => deleteConnection(conn.id)} className="text-destructive hover:text-destructive hover:bg-destructive/10"><Trash2 className="h-4 w-4" /></Button>
                                 </div>
                             </div>
                             <div className="divide-y">
@@ -220,19 +234,19 @@ export function BankConnectionManager({ budgetId, onUpdate }: BankManagerProps) 
                                                 <div className="flex-1">
                                                     <div className="flex items-center gap-2"><span className="font-medium text-sm">{account.name}</span><span className="text-xs text-muted-foreground">••• {account.mask}</span></div>
                                                     <div className="flex items-center gap-3 mt-1">
-                                                        <span className="text-lg font-semibold">{account.balance.toLocaleString('fr-FR', { minimumFractionDigits: 2 })} {account.currency}</span>
+                                                        <span className="text-lg font-semibold">{account.balance.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {account.currency}</span>
                                                         <Badge variant={account.is_savings_pool ? "default" : "secondary"} className="text-xs">{account.is_savings_pool ? "✓ Épargne" : "Courant"}</Badge>
                                                     </div>
                                                 </div>
                                                 <div className="flex items-center gap-3">
-                                                    <div className="text-right text-xs text-muted-foreground hidden sm:block"><span className="block">{account.is_savings_pool ? "Compte Épargne" : "Compte Courant"}</span></div>
+                                                    <div className="text-right text-xs text-muted-foreground hidden sm:block"><span className="block">{account.is_savings_pool ? "Inclus dans Reality Check" : "Ignoré (Compte Courant)"}</span></div>
                                                     <Switch checked={account.is_savings_pool} onCheckedChange={() => togglePoolStatus(account.id, account.is_savings_pool)} />
                                                 </div>
                                             </div>
                                         </div>
                                     ))
                                 ) : (
-                                    <div className="p-4 text-center text-sm text-muted-foreground">Aucun compte visible - Cliquez sur "Sync"</div>
+                                    <div className="p-4 text-center text-sm text-muted-foreground">Aucun compte trouvé - Cliquez sur "Sync" pour synchroniser</div>
                                 )}
                             </div>
                         </div>
