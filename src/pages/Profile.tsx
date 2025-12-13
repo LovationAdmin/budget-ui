@@ -122,11 +122,12 @@ export default function Profile() {
     }
   };
 
-  // 4. GDPR Export Logic
+// 4. GDPR Export Logic (OPTIMISÉ : Suppression des champs tiers)
   const handleGDPRExport = async () => {
       setExporting(true);
       try {
           const listRes = await budgetAPI.list();
+          // S'assurer qu'on a bien un tableau
           const budgets = Array.isArray(listRes.data) ? listRes.data : [];
           
           const fullExport = {
@@ -138,8 +139,40 @@ export default function Profile() {
           for (const b of budgets) {
               try {
                   const dataRes = await budgetAPI.getData(b.id);
+                  
+                  // --- SANITIZATION LOGIC ---
+                  const sanitizedMembers = b.members.map((m: any) => {
+                      // CAS 1 : C'est moi (le demandeur)
+                      // -> Je garde toutes mes données
+                      if (m.user && m.user.id === user?.id) {
+                          return m;
+                      }
+
+                      // CAS 2 : C'est un autre membre
+                      // -> Je garde le membre pour la cohérence du budget (savoir qui est là)
+                      // -> MAIS je retire physiquement le champ 'email' et l'id interne
+                      if (m.user) {
+                          // On extrait email et id pour les jeter, on garde le reste (name, avatar) dans safeUser
+                          const { email, id, ...safeUser } = m.user;
+                          return {
+                              ...m,
+                              user: safeUser // Ne contient plus que { name, avatar }
+                          };
+                      }
+                      
+                      // Cas membre fantôme (invitation en attente ou supprimé)
+                      return m;
+                  });
+
+                  // On reconstruit l'objet budget avec la liste nettoyée
+                  const sanitizedMeta = {
+                      ...b,
+                      members: sanitizedMembers
+                  };
+                  // --------------------------
+
                   fullExport.budgets.push({
-                      meta: b,
+                      meta: sanitizedMeta,
                       data: dataRes.data.data
                   });
               } catch (e) {
@@ -147,19 +180,21 @@ export default function Profile() {
               }
           }
 
+          // Génération du fichier
           const blob = new Blob([JSON.stringify(fullExport, null, 2)], { type: 'application/json' });
           const url = URL.createObjectURL(blob);
           const a = document.createElement('a');
           a.href = url;
-          a.download = `budget_famille_full_export_${user?.id}.json`;
+          a.download = `budget_famille_export_${user?.id}_${new Date().toISOString().split('T')[0]}.json`;
           document.body.appendChild(a);
           a.click();
           document.body.removeChild(a);
           URL.revokeObjectURL(url);
 
-          toast({ title: "Données exportées", description: "L'archive complète a été téléchargée.", variant: "default" });
+          toast({ title: "Données exportées", description: "L'archive nettoyée a été téléchargée.", variant: "default" });
 
       } catch (error) {
+          console.error(error);
           toast({ title: "Erreur", description: "Impossible de générer l'export.", variant: "destructive" });
       } finally {
           setExporting(false);
