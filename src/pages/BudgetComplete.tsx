@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { budgetAPI } from '../services/api';
 import { 
   convertOldFormatToNew, 
+  convertNewFormatToOld,
   type RawBudgetData,
   type Person,
   type Charge,
@@ -38,6 +39,9 @@ const BUDGET_NAV_ITEMS: NavItem[] = [
   { id: "calendar", label: "Tableau Mensuel", icon: CalendarDays },
 ];
 
+const MONTHS = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
+const GENERAL_SAVINGS_ID = 'epargne';
+
 interface BudgetMember {
   id: string;
   user: { id: string; name: string; email: string; avatar?: string; };
@@ -64,6 +68,9 @@ export default function BudgetComplete() {
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [lastServerUpdate, setLastServerUpdate] = useState<string>("");
 
+  // --- DATA STORAGE (For Year Switching) ---
+  const globalDataRef = useRef<any>(null);
+
   // --- Core Budget Data State ---
   const [budgetTitle, setBudgetTitle] = useState('');
   const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
@@ -77,13 +84,41 @@ export default function BudgetComplete() {
   const [projectComments, setProjectComments] = useState<ProjectComments>({});
   const [lockedMonths, setLockedMonths] = useState<LockedMonths>({});
 
-  // NEW: Suggestions State (Smart Tips)
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
-
   const loadedRef = useRef(false);
   const notifiedProjectsRef = useRef<Set<string>>(new Set());
 
-  // 0. AUTO TUTORIAL START
+  // --- LOGIC: Carry Over Calculation ---
+  const calculateCarryOvers = () => {
+      const carryOvers: Record<string, number> = {};
+      if (!globalDataRef.current || !globalDataRef.current.yearlyData) return carryOvers;
+
+      const rawYearlyData = globalDataRef.current.yearlyData;
+      
+      Object.keys(rawYearlyData).forEach(yearStr => {
+          const year = parseInt(yearStr);
+          if (year < currentYear) {
+              const yearData = rawYearlyData[yearStr];
+              if (yearData.months && yearData.expenses) {
+                  yearData.months.forEach((monthAllocation: any, idx: number) => {
+                      const monthExpense = yearData.expenses[idx] || {};
+                      Object.keys(monthAllocation).forEach(projectId => {
+                          const allocated = monthAllocation[projectId] || 0;
+                          const spent = monthExpense[projectId] || 0;
+                          carryOvers[projectId] = (carryOvers[projectId] || 0) + (allocated - spent);
+                      });
+                  });
+              }
+          }
+      });
+      return carryOvers;
+  };
+
+  const projectCarryOvers = calculateCarryOvers();
+
+  // --- 1. EFFECTS ---
+
+  // Auto Tutorial
   useEffect(() => {
     if (!loading && !hasSeenTutorial && loadedRef.current) {
        const timer = setTimeout(() => {
@@ -97,79 +132,59 @@ export default function BudgetComplete() {
     if (id) loadBudget();
   }, [id]);
 
-  // 1. SMART AUTO-SAVE (30s) - Seulement si la page est visible
+  // Smart Auto-Save (30s)
   useEffect(() => {
     if (!loadedRef.current) return;
-    
     const saveInterval = setInterval(() => {
-        // PERF: On ne sauvegarde pas si l'utilisateur est sur un autre onglet
-        if (document.visibilityState === 'visible') {
-            handleSave(true);
-        }
+        if (document.visibilityState === 'visible') handleSave(true);
     }, 30000);
-    
     return () => clearInterval(saveInterval);
   }, [budgetTitle, currentYear, people, charges, projects, yearlyData, yearlyExpenses, oneTimeIncomes, monthComments, projectComments, lockedMonths]);
 
-  // 2. SMART DATA POLLING - Intervalle augmenté à 30s + Check visibilité
+  // Smart Data Polling (30s)
   useEffect(() => {
     if (!id || !loadedRef.current) return;
-
-    const pollData = async () => {
-        // PERF: On ne poll pas si l'utilisateur ne regarde pas
-        if (document.visibilityState !== 'visible') return;
-
-        try {
-            const res = await budgetAPI.getData(id);
-            const remoteData: RawBudgetData = res.data.data;
-            
-            if (
-                remoteData.lastUpdated && 
-                lastServerUpdate && 
-                remoteData.lastUpdated > lastServerUpdate && 
-                remoteData.updatedBy !== user?.name 
-            ) {
-                toast({
-                    title: "Mise à jour disponible",
-                    description: `Modifié par ${remoteData.updatedBy || 'un membre'}.`,
-                    variant: "default",
-                    action: (
-                    <ToastAction altText="Rafraîchir" onClick={() => loadBudget()}>
-                        Rafraîchir
-                    </ToastAction>
-                    ),
-                });
-            }
-        } catch (err) {
-            console.error("Polling error", err);
+    const pollInterval = setInterval(async () => {
+      if (document.visibilityState !== 'visible') return;
+      try {
+        const res = await budgetAPI.getData(id);
+        const remoteData: RawBudgetData = res.data.data;
+        if (remoteData.lastUpdated && lastServerUpdate && remoteData.lastUpdated > lastServerUpdate && remoteData.updatedBy !== user?.name) {
+          toast({
+            title: "Mise à jour disponible",
+            description: `Modifié par ${remoteData.updatedBy || 'un membre'}.`,
+            variant: "default",
+            action: (
+              <ToastAction altText="Rafraîchir" onClick={() => loadBudget()}>
+                Rafraîchir
+              </ToastAction>
+            ),
+          });
         }
-    };
-
-    const pollInterval = setInterval(pollData, 30000); // 30 secondes au lieu de 15
+      } catch (err) {
+        console.error("Polling error", err);
+      }
+    }, 30000);
     return () => clearInterval(pollInterval);
   }, [id, lastServerUpdate, user?.name]);
 
-  // 3. MEMBER POLLING - Intervalle augmenté à 60s
+  // Smart Member Polling (60s)
   useEffect(() => {
     if (!id) return;
     const memberInterval = setInterval(() => {
-        if (document.visibilityState === 'visible') {
-            refreshMembersOnly();
-        }
-    }, 60000); // 1 minute
+        if (document.visibilityState === 'visible') refreshMembersOnly();
+    }, 60000); 
     return () => clearInterval(memberInterval);
   }, [id]);
 
-  // 4. Achievement Checker
+  // Achievement Checker
   useEffect(() => {
     if (!loadedRef.current) return;
-    const MONTHS = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
-    
     projects.forEach(project => {
         if (!project.targetAmount || project.targetAmount <= 0) return;
         if (notifiedProjectsRef.current.has(project.id)) return;
 
-        let totalAllocated = 0;
+        let totalAllocated = (projectCarryOvers[project.id] || 0); // Include past years
         MONTHS.forEach(month => {
             totalAllocated += yearlyData[month]?.[project.id] || 0;
         });
@@ -184,58 +199,34 @@ export default function BudgetComplete() {
             });
         }
     });
-  }, [projects, yearlyData]);
+  }, [projects, yearlyData, projectCarryOvers]);
 
-  // 5. AFFILIATION INTELLIGENTE (Logique Client-Side)
-  // Cette partie analyse les charges pour proposer des affiliations
+  // Affiliation Intelligente
   useEffect(() => {
       if (charges.length > 0) {
           const newSuggestions: Suggestion[] = [];
-          
           charges.forEach(c => {
-              // FORFAIT MOBILE (> 25€)
               if (c.amount > 25 && (c.label.toLowerCase().includes('mobile') || c.label.toLowerCase().includes('sfr') || c.label.toLowerCase().includes('orange') || c.label.toLowerCase().includes('bouygues'))) {
                   newSuggestions.push({
-                      id: 'sug_mobile_' + c.id,
-                      chargeId: c.id,
-                      type: 'MOBILE',
-                      title: 'Forfait Mobile Optimisable',
-                      message: `Vous payez ${c.amount}€/mois. Des forfaits 50Go existent dès 10€.`,
-                      potentialSavings: (c.amount - 10) * 12,
-                      actionLink: 'https://www.ariase.com/mobile',
-                      canBeContacted: false
+                      id: 'sug_mobile_' + c.id, chargeId: c.id, type: 'MOBILE', title: 'Forfait Mobile Optimisable', message: `Vous payez ${c.amount}€/mois. Des forfaits 50Go existent dès 10€.`, potentialSavings: (c.amount - 10) * 12, actionLink: 'https://www.ariase.com/mobile', canBeContacted: false
                   });
               }
-              // ENERGIE (> 100€)
               if (c.amount > 100 && (c.label.toLowerCase().includes('edf') || c.label.toLowerCase().includes('engie') || c.label.toLowerCase().includes('total energie'))) {
                   newSuggestions.push({
-                      id: 'sug_energy_' + c.id,
-                      chargeId: c.id,
-                      type: 'ENERGY',
-                      title: 'Facture Énergie Élevée',
-                      message: `Le montant est élevé (${c.amount}€). Comparez les fournisseurs pour économiser.`,
-                      potentialSavings: (c.amount * 0.15) * 12,
-                      actionLink: 'https://www.papernest.com/energie/',
-                      canBeContacted: true
+                      id: 'sug_energy_' + c.id, chargeId: c.id, type: 'ENERGY', title: 'Facture Énergie Élevée', message: `Le montant est élevé (${c.amount}€). Comparez les fournisseurs pour économiser.`, potentialSavings: (c.amount * 0.15) * 12, actionLink: 'https://www.papernest.com/energie/', canBeContacted: true
                   });
               }
-              // INTERNET (> 45€)
               if (c.amount > 45 && (c.label.toLowerCase().includes('box') || c.label.toLowerCase().includes('fibre') || c.label.toLowerCase().includes('internet'))) {
                   newSuggestions.push({
-                      id: 'sug_box_' + c.id,
-                      chargeId: c.id,
-                      type: 'INTERNET',
-                      title: 'Offre Internet',
-                      message: `Plus de 45€/mois ? La fibre commence à 20€ la première année.`,
-                      potentialSavings: (c.amount - 25) * 12,
-                      actionLink: 'https://www.ariase.com/box',
-                      canBeContacted: false
+                      id: 'sug_box_' + c.id, chargeId: c.id, type: 'INTERNET', title: 'Offre Internet', message: `Plus de 45€/mois ? La fibre commence à 20€ la première année.`, potentialSavings: (c.amount - 25) * 12, actionLink: 'https://www.ariase.com/box', canBeContacted: false
                   });
               }
           });
           setSuggestions(newSuggestions);
       }
   }, [charges]);
+
+  // --- ACTIONS ---
 
   const loadBudget = async () => {
     if (!id) return;
@@ -247,22 +238,21 @@ export default function BudgetComplete() {
       setBudget(budgetRes.data);
       const rawData: RawBudgetData = dataRes.data.data;
       
+      // Store Full Data
+      globalDataRef.current = rawData;
+
       if (rawData.lastUpdated) setLastServerUpdate(rawData.lastUpdated);
       else setLastServerUpdate(new Date().toISOString());
 
       const data = convertOldFormatToNew(rawData);
+      
+      // Hydrate state specifically for current year from global structure
+      hydrateStateFromGlobal(currentYear, rawData);
 
       setBudgetTitle(data.budgetTitle || '');
-      setCurrentYear(data.currentYear || new Date().getFullYear());
       setPeople(data.people || []);
       setCharges(data.charges || []);
       setProjects(data.projects || []);
-      setYearlyData(data.yearlyData || {});
-      setYearlyExpenses(data.yearlyExpenses || {});
-      setOneTimeIncomes(data.oneTimeIncomes || {});
-      setMonthComments(data.monthComments || {});
-      setProjectComments(data.projectComments || {});
-      setLockedMonths(data.lockedMonths || {});
       
       loadedRef.current = true;
     } catch (error) {
@@ -271,6 +261,60 @@ export default function BudgetComplete() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const hydrateStateFromGlobal = (year: number, rawData: any) => {
+      if (rawData.yearlyData && rawData.yearlyData[year]) {
+          const yearData = rawData.yearlyData[year];
+          const newYearlyData: YearlyData = {};
+          const newYearlyExpenses: YearlyData = {};
+          const newOneTime: OneTimeIncomes = {};
+          const newMonthComments: MonthComments = {};
+          const newProjectComments: ProjectComments = {};
+
+          MONTHS.forEach((month, idx) => {
+              if (yearData.months && yearData.months[idx]) newYearlyData[month] = yearData.months[idx];
+              if (yearData.expenses && yearData.expenses[idx]) newYearlyExpenses[month] = yearData.expenses[idx];
+              if (yearData.monthComments && yearData.monthComments[idx]) newMonthComments[month] = yearData.monthComments[idx];
+              if (yearData.expenseComments && yearData.expenseComments[idx]) newProjectComments[month] = yearData.expenseComments[idx];
+              
+              if (rawData.oneTimeIncomes && rawData.oneTimeIncomes[year] && rawData.oneTimeIncomes[year][idx]) {
+                  newOneTime[month] = Number(rawData.oneTimeIncomes[year][idx].amount || 0);
+              }
+          });
+
+          setYearlyData(newYearlyData);
+          setYearlyExpenses(newYearlyExpenses);
+          setOneTimeIncomes(newOneTime);
+          setMonthComments(newMonthComments);
+          setProjectComments(newProjectComments);
+      } else {
+          setYearlyData({});
+          setYearlyExpenses({});
+          setOneTimeIncomes({});
+          setMonthComments({});
+          setProjectComments({});
+      }
+  };
+
+  const handleYearChange = (newYear: number) => {
+      // 1. Save current view to memory
+      if (globalDataRef.current) {
+          const tempCurrentState = {
+              budgetTitle, currentYear, people, charges, projects, yearlyData, yearlyExpenses, oneTimeIncomes, monthComments, projectComments, lockedMonths
+          };
+          const formattedCurrent = convertNewFormatToOld(tempCurrentState as any);
+          
+          if (!globalDataRef.current.yearlyData) globalDataRef.current.yearlyData = {};
+          if (!globalDataRef.current.oneTimeIncomes) globalDataRef.current.oneTimeIncomes = {};
+          
+          globalDataRef.current.yearlyData[currentYear] = formattedCurrent.yearlyData[currentYear];
+          globalDataRef.current.oneTimeIncomes[currentYear] = formattedCurrent.oneTimeIncomes[currentYear];
+      }
+
+      // 2. Switch
+      setCurrentYear(newYear);
+      hydrateStateFromGlobal(newYear, globalDataRef.current);
   };
 
   const refreshMembersOnly = async () => {
@@ -291,18 +335,38 @@ export default function BudgetComplete() {
   const handleSave = async (silent = false) => {
     if (!id) return;
     if (!silent) setSaving(true);
-    const now = new Date().toISOString();
-    const budgetData = {
-      budgetTitle, currentYear, people, charges, projects, yearlyData, yearlyExpenses, 
-      oneTimeIncomes, monthComments, projectComments, lockedMonths,
-      lastUpdated: now, updatedBy: user?.name, version: '2.2'
+    
+    // 1. Snapshot current year
+    const currentViewData = { 
+        budgetTitle, currentYear, people, charges, projects, yearlyData, yearlyExpenses, 
+        oneTimeIncomes, monthComments, projectComments, lockedMonths 
     };
+    const formattedCurrent = convertNewFormatToOld(currentViewData as any);
+
+    // 2. Merge with Global History
+    const finalPayload = { ...globalDataRef.current };
+    
+    finalPayload.budgetTitle = budgetTitle;
+    finalPayload.people = people;
+    finalPayload.charges = charges;
+    finalPayload.projects = projects;
+    finalPayload.lastUpdated = new Date().toISOString();
+    finalPayload.updatedBy = user?.name;
+    finalPayload.version = '2.2';
+
+    if (!finalPayload.yearlyData) finalPayload.yearlyData = {};
+    finalPayload.yearlyData[currentYear] = formattedCurrent.yearlyData[currentYear];
+    
+    if (!finalPayload.oneTimeIncomes) finalPayload.oneTimeIncomes = {};
+    finalPayload.oneTimeIncomes[currentYear] = formattedCurrent.oneTimeIncomes[currentYear];
 
     try {
-      await budgetAPI.updateData(id, { data: budgetData });
-      setLastServerUpdate(now);
+      await budgetAPI.updateData(id, { data: finalPayload });
+      setLastServerUpdate(finalPayload.lastUpdated);
+      globalDataRef.current = finalPayload;
       if (!silent) toast({ title: "Succès", description: "Budget sauvegardé !", variant: "success" });
     } catch (error) {
+      console.error('Error saving:', error);
       if (!silent) toast({ title: "Erreur", description: "Échec de la sauvegarde.", variant: "destructive" });
     } finally {
       if (!silent) setSaving(false);
@@ -320,7 +384,12 @@ export default function BudgetComplete() {
   };
 
   if (loading) {
-    return <div className="min-h-screen bg-gray-50 flex items-center justify-center"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div></div>;
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <BudgetNavbar items={[]} />
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+      </div>
+    );
   }
 
   return (
@@ -344,7 +413,7 @@ export default function BudgetComplete() {
             budgetTitle={budgetTitle} 
             onTitleChange={setBudgetTitle} 
             currentYear={currentYear} 
-            onYearChange={setCurrentYear} 
+            onYearChange={handleYearChange} // Navigation enabled
           />
           <div className="p-4 bg-gray-50 border-t border-gray-200 flex justify-between items-center">
             <div className="flex items-center gap-3">
@@ -370,12 +439,10 @@ export default function BudgetComplete() {
             </div>
         )}
 
-        {/* Cleaned ActionsBar */}
         <ActionsBar onSave={() => handleSave(false)} saving={saving} />
 
         <div id="people"><PeopleSection people={people} onPeopleChange={setPeople} /></div>
         
-        {/* Pass Suggestions to ChargesSection */}
         <div id="charges" className="mt-6"><ChargesSection charges={charges} onChargesChange={setCharges} suggestions={suggestions} /></div>
         
         <div id="projects" className="mt-6">
@@ -416,6 +483,10 @@ export default function BudgetComplete() {
                 onMonthCommentsChange={setMonthComments} 
                 onProjectCommentsChange={setProjectComments} 
                 onLockedMonthsChange={setLockedMonths} 
+                
+                // Navigation & Coherence
+                onYearChange={handleYearChange}
+                projectCarryOvers={projectCarryOvers}
             />
         </div>
       </div>

@@ -25,7 +25,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Lock, Unlock, MessageCircle, MessageSquarePlus, Settings2, Eye, CheckSquare, Square } from "lucide-react";
+import { Lock, Unlock, MessageCircle, MessageSquarePlus, Settings2, Eye, CheckSquare, Square, ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type {
   Person,
@@ -56,7 +56,9 @@ interface MonthlyTableProps {
   onProjectCommentsChange: (data: ProjectComments) => void;
   onLockedMonthsChange: (data: LockedMonths) => void;
   
-  // NEW: Fonction optionnelle pour surcharger le calcul des charges (Mode Bêta / Réel)
+  // NEW: Navigation & Coherence Props
+  onYearChange: (year: number) => void;
+  projectCarryOvers?: Record<string, number>; // Montant cumulé des années précédentes
   customChargeTotalCalculator?: (monthIndex: number) => number;
 }
 
@@ -100,7 +102,9 @@ export default function MonthlyTable({
   onMonthCommentsChange,
   onProjectCommentsChange,
   onLockedMonthsChange,
-  customChargeTotalCalculator // Destructuring de la nouvelle prop
+  onYearChange, // <--- Destructured
+  projectCarryOvers = {}, // <--- Destructured with default
+  customChargeTotalCalculator
 }: MonthlyTableProps) {
   const [selectedMonth, setSelectedMonth] = useState<string | null>(null);
   const [commentDialogOpen, setCommentDialogOpen] = useState(false);
@@ -123,12 +127,10 @@ export default function MonthlyTable({
   // --- Calculations ---
   const getMonthlyBaseIncome = () => people.reduce((sum, person) => sum + person.salary, 0);
   
-  // UPDATED: Use custom calculator if provided (for Reality Check)
   const getMonthlyChargesTotal = (monthIndex: number) => {
     if (customChargeTotalCalculator) {
         return customChargeTotalCalculator(monthIndex);
     }
-    // Fallback: Calcul théorique standard
     return charges.reduce((sum, charge) => {
         return isChargeActive(charge, currentYear, monthIndex) ? sum + charge.amount : sum;
     }, 0);
@@ -139,7 +141,7 @@ export default function MonthlyTable({
   const getMonthlyAvailableSavings = (month: string, monthIndex: number) => {
     const baseIncome = getMonthlyBaseIncome();
     const oneTime = getMonthlyOneTimeIncome(month);
-    const chargesTotal = getMonthlyChargesTotal(monthIndex); // Uses the updated logic
+    const chargesTotal = getMonthlyChargesTotal(monthIndex);
     return baseIncome + oneTime - chargesTotal;
   };
 
@@ -154,8 +156,11 @@ export default function MonthlyTable({
     return available - totalAllocatedToProjects;
   };
 
+  // UPDATED: Now includes carryOver from previous years
   const getCumulativeProjectTotal = (projectId: string, upToMonthIndex: number) => {
-    let total = 0;
+    // Start with the carry over from previous years (Dec 2025 -> Jan 2026)
+    let total = projectCarryOvers[projectId] || 0;
+    
     for (let i = 0; i <= upToMonthIndex; i++) {
       const monthName = MONTHS[i];
       const allocation = yearlyData[monthName]?.[projectId] || 0;
@@ -165,8 +170,10 @@ export default function MonthlyTable({
     return total;
   };
 
+  // UPDATED: Now includes carryOver for general savings too
   const getCumulativeGeneralSavings = (upToMonthIndex: number) => {
-    let total = 0;
+    let total = projectCarryOvers[GENERAL_SAVINGS_ID] || 0;
+    
     for (let i = 0; i <= upToMonthIndex; i++) {
       const monthName = MONTHS[i];
       const allocation = getGeneralSavingsAllocation(monthName, i);
@@ -246,9 +253,31 @@ export default function MonthlyTable({
                     <Settings2 className="h-5 w-5 text-primary" />
                     <span className="hidden sm:inline">Tableau de Gestion</span>
                 </CardTitle>
-                <Badge variant="outline" className="font-normal text-muted-foreground">
-                    {currentYear}
-                </Badge>
+                
+                {/* NEW: Year Navigation in Table */}
+                <div className="flex items-center gap-1 bg-background rounded-lg border p-0.5">
+                    <Button 
+                        variant="ghost" 
+                        size="icon-sm" 
+                        className="h-6 w-6" 
+                        onClick={() => onYearChange(currentYear - 1)}
+                        title="Année précédente"
+                    >
+                        <ChevronLeft className="h-3 w-3" />
+                    </Button>
+                    <Badge variant="secondary" className="h-6 px-2 font-mono text-xs">
+                        {currentYear}
+                    </Badge>
+                    <Button 
+                        variant="ghost" 
+                        size="icon-sm" 
+                        className="h-6 w-6" 
+                        onClick={() => onYearChange(currentYear + 1)}
+                        title="Année suivante"
+                    >
+                        <ChevronRight className="h-3 w-3" />
+                    </Button>
+                </div>
             </div>
 
             <DropdownMenu>
@@ -329,6 +358,10 @@ export default function MonthlyTable({
                 </tr>
               </thead>
               <tbody className="divide-y divide-border/50 text-xs">
+                {/* Ligne de Report (Carry Over) affichée uniquement si on n'est pas en Janvier, 
+                    ou plus simplement, on l'intègre directement dans le cumul des mois.
+                    Ici, on garde le format simple, le cumul (∑) inclut le report.
+                */}
                 {MONTHS.map((month, monthIndex) => {
                   const isLocked = lockedMonths[month];
                   const hasComment = !!monthComments[month];
@@ -375,7 +408,7 @@ export default function MonthlyTable({
                                 <Input type="number" min="0" value={expense || ''} onChange={(e) => updateExpense(month, project.id, parseFloat(e.target.value) || 0)} disabled={isLocked} className={cn("text-center h-7 text-xs px-1 font-medium bg-background border-destructive/20 focus-visible:ring-destructive/30 shadow-sm", expense > 0 && "text-destructive font-bold bg-destructive/5", isLocked && "opacity-50")} placeholder="0" />
                               </div>
                               <div className="flex items-center justify-between px-0.5">
-                                <div className="text-[10px] text-muted-foreground flex items-center gap-0.5 bg-muted/30 px-1 py-0 rounded" title="Total Cumulé">
+                                <div className="text-[10px] text-muted-foreground flex items-center gap-0.5 bg-muted/30 px-1 py-0 rounded" title="Total Cumulé (incluant années précédentes)">
                                   <span>∑</span><span className={cumulative >= 0 ? "text-success font-medium" : "text-destructive font-medium"}>{cumulative.toLocaleString()}</span>
                                 </div>
                                 <Popover>
