@@ -184,7 +184,7 @@ export default function BudgetCompleteBeta() {
 
   const refreshBankData = useCallback(async () => {
       try {
-          const res = await api.get('/banking/connections');
+          const res = await api.get(`/budgets/${id}/banking/connections`);
           setRealBankBalance(res.data.total_real_cash || 0);
           const conns = res.data.connections || [];
           setHasActiveConnection(conns.length > 0);
@@ -545,7 +545,7 @@ export default function BudgetCompleteBeta() {
                     Connectez vos banques et sélectionnez les comptes qui constituent votre épargne (Livret A, LDD, etc.).
                 </DialogDescription>
             </DialogHeader>
-            <BankConnectionManager onUpdate={refreshBankData} />
+            <BankConnectionManager budgetId={id!} onUpdate={refreshBankData} />
         </DialogContent>
       </Dialog>
 
