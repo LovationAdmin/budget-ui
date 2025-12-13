@@ -3,7 +3,6 @@ export interface Person {
   id: string;
   name: string;
   salary: number;
-  // NEW: Date limits for people (e.g. start/end of contract)
   startDate?: string; // Format: "YYYY-MM-DD"
   endDate?: string;   // Format: "YYYY-MM-DD"
 }
@@ -12,15 +11,15 @@ export interface Charge {
   id: string;
   label: string;
   amount: number;
-  // Date limits for charges
   startDate?: string; 
-  endDate?: string;   
+  endDate?: string;
+  // NOUVEAU CHAMP : La catégorie détectée par l'IA
+  category?: string; // ex: 'ENERGY', 'MOBILE', 'INSURANCE'
 }
 
 export interface Project {
   id: string;
   label: string;
-  // NEW: Target amount for the project goal
   targetAmount?: number;
 }
 
@@ -149,7 +148,6 @@ export function convertOldFormatToNew(oldData: RawBudgetData): ConvertedBudgetDa
 
 export function convertNewFormatToOld(newData: ConvertedBudgetData): RawBudgetData {
   const year = newData.currentYear || new Date().getFullYear();
-  
   const oldData: any = {
     budgetTitle: newData.budgetTitle,
     currentYear: year,

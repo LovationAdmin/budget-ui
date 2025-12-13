@@ -38,7 +38,7 @@ export interface User {
   id: string;
   name: string;
   email: string;
-  avatar?: string; // Added avatar field
+  avatar?: string;
 }
 
 export interface AuthResponse {
@@ -46,15 +46,15 @@ export interface AuthResponse {
   user: User;
 }
 
-// Internal types
-interface AuthData { name?: string; email: string; password: string; }
-
-// UPDATED: Added avatar optional field
-interface ProfileUpdateData { 
-    name: string; 
-    avatar?: string; 
+// Response type for AI Categorization
+export interface CategorizeResponse {
+    label: string;
+    category: string;
 }
 
+// Internal types
+interface AuthData { name?: string; email: string; password: string; }
+interface ProfileUpdateData { name: string; avatar?: string; }
 interface PasswordChangeData { current_password: string; new_password: string; }
 interface BudgetCreateData { name: string; }
 interface BudgetUpdateData { data: unknown; } 
@@ -84,6 +84,9 @@ export const budgetAPI = {
   getInvitations: (id: string) => api.get(`/budgets/${id}/invitations`),
   cancelInvitation: (budgetId: string, invitationId: string) => api.delete(`/budgets/${budgetId}/invitations/${invitationId}`),
   removeMember: (budgetId: string, memberId: string) => api.delete(`/budgets/${budgetId}/members/${memberId}`),
+  
+  // NEW: AI Categorization Endpoint
+  categorize: (label: string): Promise<AxiosResponse<CategorizeResponse>> => api.post('/categorize', { label }),
 };
 
 export const invitationAPI = {
