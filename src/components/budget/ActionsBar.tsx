@@ -11,34 +11,32 @@ export default function ActionsBar({
   saving = false,
 }: ActionsBarProps) {
   return (
-    <div className="glass-card p-4 mb-6 animate-fade-in">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        
-        {/* Info text */}
-        <div className="hidden sm:block text-sm text-muted-foreground">
-          💾 Sauvegarde automatique toutes les 30 secondes
-        </div>
-
-        {/* Save Button */}
-        <Button
-          variant="gradient"
-          onClick={onSave}
-          disabled={saving}
-          className="gap-2 ml-auto"
-        >
-          {saving ? (
-            <>
-              <Loader2 className="h-4 w-4 animate-spin" />
-              Sauvegarde...
-            </>
-          ) : (
-            <>
-              <Save className="h-4 w-4" />
-              Sauvegarder
-            </>
-          )}
-        </Button>
+    <div className="glass-card p-4 mb-6 animate-fade-in flex items-center justify-between">
+      
+      {/* Information discrète à gauche */}
+      <div className="hidden sm:block text-sm text-muted-foreground flex-1">
+        💾 Sauvegarde automatique active (toutes les 30s)
       </div>
+
+      {/* Bouton Sauvegarder à droite */}
+      <Button
+        variant="gradient"
+        onClick={onSave}
+        disabled={saving}
+        className="gap-2 ml-auto shadow-lg hover:shadow-xl transition-all"
+      >
+        {saving ? (
+          <>
+            <Loader2 className="h-4 w-4 animate-spin" />
+            Sauvegarde...
+          </>
+        ) : (
+          <>
+            <Save className="h-4 w-4" />
+            Sauvegarder
+          </>
+        )}
+      </Button>
     </div>
   );
 }
