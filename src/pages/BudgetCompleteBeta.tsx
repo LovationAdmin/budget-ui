@@ -184,13 +184,12 @@ export default function BudgetCompleteBeta() {
 
   const refreshBankData = useCallback(async () => {
       try {
-          if (!id) return;
           const res = await api.get(`/budgets/${id}/banking/connections`);
           setRealBankBalance(res.data.total_real_cash || 0);
           const conns = res.data.connections || [];
           setHasActiveConnection(conns.length > 0);
       } catch (error) { console.error("Failed to refresh bank data", error); }
-  }, [id]);
+  }, []);
 
   useEffect(() => { refreshBankData(); }, [refreshBankData]);
 
@@ -274,32 +273,19 @@ export default function BudgetCompleteBeta() {
       setBudget(budgetRes.data);
       const rawData: ExtendedBudgetData = dataRes.data.data;
       
-      // Store Full Data reference for later saves/switches
       globalDataRef.current = rawData;
 
       if (rawData.lastUpdated) setLastServerUpdate(rawData.lastUpdated);
       else setLastServerUpdate(new Date().toISOString());
 
-      // 1. Convert Data to standard format
       const data = convertOldFormatToNew(rawData);
       
-      // 2. SET STATE DIRECTLY FROM CONVERTER (Do not use hydrateStateFromGlobal here to avoid overwrite)
+      hydrateStateFromGlobal(currentYear, rawData);
+
       setBudgetTitle(data.budgetTitle || '');
-      // Ensure we use the saved year, or default to current
-      const savedYear = data.currentYear || new Date().getFullYear();
-      setCurrentYear(savedYear);
-      
       setPeople(data.people || []);
       setCharges(data.charges || []);
       setProjects(data.projects || []);
-      
-      setYearlyData(data.yearlyData || {});
-      setYearlyExpenses(data.yearlyExpenses || {});
-      setOneTimeIncomes(data.oneTimeIncomes || {});
-      setMonthComments(data.monthComments || {});
-      setProjectComments(data.projectComments || {});
-      setLockedMonths(data.lockedMonths || {});
-
       setChargeMappings(rawData.chargeMappings || []);
       
       loadedRef.current = true;
@@ -311,7 +297,6 @@ export default function BudgetCompleteBeta() {
     }
   };
 
-  // Helper to switch years from the Global Reference
   const hydrateStateFromGlobal = (year: number, rawData: any) => {
       if (rawData.yearlyData && rawData.yearlyData[year]) {
           const yearData = rawData.yearlyData[year];
@@ -338,7 +323,6 @@ export default function BudgetCompleteBeta() {
           setMonthComments(newMonthComments);
           setProjectComments(newProjectComments);
       } else {
-          // If no data exists for this year, start fresh
           setYearlyData({});
           setYearlyExpenses({});
           setOneTimeIncomes({});
@@ -348,7 +332,6 @@ export default function BudgetCompleteBeta() {
   };
 
   const handleYearChange = (newYear: number) => {
-      // 1. Save current view to memory before switching
       if (globalDataRef.current) {
           const tempCurrentState = {
               budgetTitle, currentYear, people, charges, projects, yearlyData, yearlyExpenses, oneTimeIncomes, monthComments, projectComments, lockedMonths
@@ -361,15 +344,10 @@ export default function BudgetCompleteBeta() {
           const sourceYearlyData = formattedCurrent.yearlyData || {};
           const sourceOneTime = formattedCurrent.oneTimeIncomes || {};
 
-          // Store current year data into global ref
           globalDataRef.current.yearlyData[currentYear] = sourceYearlyData[currentYear];
           globalDataRef.current.oneTimeIncomes[currentYear] = sourceOneTime[currentYear];
       }
-
-      // 2. Switch Year State
       setCurrentYear(newYear);
-      
-      // 3. Load data for the new year from memory
       hydrateStateFromGlobal(newYear, globalDataRef.current);
   };
 
@@ -441,27 +419,17 @@ export default function BudgetCompleteBeta() {
   const currentMonthIndex = today.getMonth();
   const currentRealYear = today.getFullYear();
   let totalGlobalRealized = 0;
-  
-  // Calculate total realized for Reality Check
-  // Logic: Sum of (Allocation - Expenses) for all past months + current month
-  // NOTE: This should technically use projectCarryOvers + current year realized
   if (currentYear <= currentRealYear) {
       projects.forEach(proj => {
-          // Add historical carry over
-          totalGlobalRealized += (projectCarryOvers[proj.id] || 0);
-          
-          // Add current year up to now
           MONTHS.forEach((month, idx) => {
               if (currentYear < currentRealYear || idx <= currentMonthIndex) {
-                   const allocation = yearlyData[month]?.[proj.id] || 0;
-                   const expense = yearlyExpenses[month]?.[proj.id] || 0;
-                   totalGlobalRealized += (allocation - expense);
+                  totalGlobalRealized += (yearlyData[month]?.[proj.id] || 0);
               }
           });
       });
   }
 
-  // --- SECTION CHANGE HANDLER ---
+  // --- SECTION CHANGE HANDLER (FIX: Added this function) ---
   const handleSectionChange = (section: string) => {
     if (section === 'settings' || section === 'notifications') return;
     const element = document.getElementById(section);
@@ -486,7 +454,7 @@ export default function BudgetCompleteBeta() {
         userName={user?.name}
         userAvatar={user?.avatar}
         items={BUDGET_NAV_ITEMS}
-        onSectionChange={handleSectionChange}
+        onSectionChange={handleSectionChange} // <--- Passed Correctly
         currentSection="overview"
       />
 
