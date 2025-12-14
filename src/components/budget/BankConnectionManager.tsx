@@ -62,9 +62,12 @@ export function BankConnectionManager({ budgetId, onUpdate }: BankManagerProps) 
         try {
             const res = await api.post(`/budgets/${budgetId}/banking/sync`);
             if (res.data.accounts_synced > 0) {
-                toast({ title: "Succès", description: `${res.data.accounts_synced} compte(s) synchronisé(s) !`, variant: "success" });
-                await fetchConnections();
-                onUpdate();
+                if (!silent) toast({ title: "Succès", description: `${res.data.accounts_synced} compte(s) synchronisé(s) !`, variant: "success" });
+                
+                // FORCE REFRESH CHAIN
+                await fetchConnections(); // 1. Met à jour la liste dans la popup
+                onUpdate();               // 2. Met à jour le "Reality Check" (solde global) dans le parent
+                
             } else if (!silent) {
                 toast({ title: "Info", description: "Comptes à jour.", variant: "default" });
             }
