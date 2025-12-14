@@ -244,14 +244,24 @@ export default function BudgetComplete() {
       if (rawData.lastUpdated) setLastServerUpdate(rawData.lastUpdated);
       else setLastServerUpdate(new Date().toISOString());
 
+      // FIX: Use convertOldFormatToNew directly for initial load
       const data = convertOldFormatToNew(rawData);
       
-      hydrateStateFromGlobal(currentYear, rawData);
-
       setBudgetTitle(data.budgetTitle || '');
+      const savedYear = data.currentYear || new Date().getFullYear();
+      setCurrentYear(savedYear);
+      
       setPeople(data.people || []);
       setCharges(data.charges || []);
       setProjects(data.projects || []);
+      
+      // Direct assignment
+      setYearlyData(data.yearlyData || {});
+      setYearlyExpenses(data.yearlyExpenses || {});
+      setOneTimeIncomes(data.oneTimeIncomes || {});
+      setMonthComments(data.monthComments || {});
+      setProjectComments(data.projectComments || {});
+      setLockedMonths(data.lockedMonths || {});
       
       loadedRef.current = true;
     } catch (error) {
@@ -307,7 +317,6 @@ export default function BudgetComplete() {
           if (!globalDataRef.current.yearlyData) globalDataRef.current.yearlyData = {};
           if (!globalDataRef.current.oneTimeIncomes) globalDataRef.current.oneTimeIncomes = {};
           
-          // FIX: Add optional chaining and fallback
           const sourceYearlyData = formattedCurrent.yearlyData || {};
           const sourceOneTime = formattedCurrent.oneTimeIncomes || {};
 
@@ -360,7 +369,6 @@ export default function BudgetComplete() {
     if (!finalPayload.yearlyData) finalPayload.yearlyData = {};
     if (!finalPayload.oneTimeIncomes) finalPayload.oneTimeIncomes = {};
 
-    // FIX: Add optional chaining/fallback
     const sourceYearlyData = formattedCurrent.yearlyData || {};
     const sourceOneTime = formattedCurrent.oneTimeIncomes || {};
 
