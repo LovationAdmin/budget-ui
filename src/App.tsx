@@ -15,8 +15,8 @@ import PrivacyPolicy from './pages/PrivacyPolicy';
 import VerifyEmail from './pages/VerifyEmail';
 import BudgetCompleteBeta from './pages/BudgetCompleteBeta'; // Bridge API
 import { BankCallback } from './pages/BankCallback';
-import Beta2Page from '@/pages/Beta2Page'; // Enable Banking
-import EnableBankingCallbackPage from '@/pages/EnableBankingCallbackPage';
+import Beta2Page from './pages/Beta2Page'; // Enable Banking
+import EnableBankingCallbackPage from './pages/EnableBankingCallbackPage';
 
 export default function App() {
   return (
