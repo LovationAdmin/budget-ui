@@ -13,9 +13,10 @@ import NotFound from './pages/NotFound';
 import AcceptInvitation from './pages/AcceptInvitation';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import VerifyEmail from './pages/VerifyEmail';
-import BudgetCompleteBeta from './pages/BudgetCompleteBeta'; // Import the new page
+import BudgetCompleteBeta from './pages/BudgetCompleteBeta'; // Bridge API
 import { BankCallback } from './pages/BankCallback';
-
+import Beta2Page from '@/pages/Beta2Page'; // Enable Banking
+import EnableBankingCallbackPage from '@/pages/EnableBankingCallbackPage';
 
 export default function App() {
   return (
@@ -39,12 +40,23 @@ export default function App() {
           </PrivateRoute>
         } />
         
-        {/* NEW BETA ROUTE */}
+        {/* BETA ROUTES */}
+        {/* Beta 1 - Bridge API */}
         <Route path="/budget/:id/beta" element={
           <PrivateRoute>
             <BudgetCompleteBeta />
           </PrivateRoute>
         } />
+        
+        {/* Beta 2 - Enable Banking */}
+        <Route path="/beta2/:id" element={
+          <PrivateRoute>
+            <Beta2Page />
+          </PrivateRoute>
+        } />
+        
+        {/* Enable Banking Callback (public route) */}
+        <Route path="/beta2/callback" element={<EnableBankingCallbackPage />} />
 
         <Route path="/profile" element={
           <PrivateRoute>
