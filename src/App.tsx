@@ -48,6 +48,8 @@ export default function App() {
           </PrivateRoute>
         } />
         
+        {/* Enable Banking Callback (public route) */}
+        <Route path="/beta2/callback" element={<EnableBankingCallbackPage />} />
         {/* Beta 2 - Enable Banking */}
         <Route path="/beta2/:id" element={
           <PrivateRoute>
@@ -55,9 +57,6 @@ export default function App() {
           </PrivateRoute>
         } />
         
-        {/* Enable Banking Callback (public route) */}
-        <Route path="/beta2/callback" element={<EnableBankingCallbackPage />} />
-
         <Route path="/profile" element={
           <PrivateRoute>
             <Profile />
