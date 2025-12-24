@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api, { budgetAPI } from '../services/api';
 import { 
@@ -109,7 +109,7 @@ export default function Beta2Page() {
 
   // --- 0. SMART LOGIC ---
 
-  const getMonthlyChargeTotal = (monthIndex: number) => {
+  const getMonthlyChargeTotal = useCallback((monthIndex: number) => {
       let total = 0;
       charges.forEach(charge => {
           const mappedForThisMonth = chargeMappings.filter(m => {
@@ -137,15 +137,17 @@ export default function Beta2Page() {
           }
       });
       return total;
-  };
+  }, [charges, chargeMappings, currentYear]);
 
-  const mappedTotalsByChargeId = charges.reduce((acc, charge) => {
+  const mappedTotalsByChargeId = useMemo(() => {
+    return charges.reduce((acc, charge) => {
       const total = chargeMappings
         .filter(m => m.chargeId === charge.id)
         .reduce((sum, m) => sum + Math.abs(m.amount), 0);
       if (total > 0) acc[charge.id] = total; 
       return acc;
-  }, {} as Record<string, number>);
+    }, {} as Record<string, number>);
+  }, [charges, chargeMappings]);
 
   const calculateCarryOvers = () => {
       const carryOvers: Record<string, number> = {};
@@ -172,7 +174,9 @@ export default function Beta2Page() {
       return carryOvers;
   };
 
-  const projectCarryOvers = calculateCarryOvers();
+  const projectCarryOvers = useMemo(() => {
+    return calculateCarryOvers();
+  }, [currentYear, yearlyData, yearlyExpenses]);
 
   // --- 1. EFFECTS ---
 
