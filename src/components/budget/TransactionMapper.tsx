@@ -1,3 +1,6 @@
+// TransactionMapper.tsx - VERSION MISE À JOUR
+// Supporte à la fois Bridge API et Enable Banking API
+
 import { useState, useEffect, useMemo } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -9,10 +12,10 @@ import { Loader2, Search, Link as LinkIcon, Layers } from "lucide-react";
 import api from '@/services/api';
 import { cn } from "@/lib/utils";
 
-// Types
+// Types (inchangés)
 export interface BridgeTransaction {
-    id: number;
-    account_id: number;
+    id: string;  // Changé de number à string pour supporter "eb-1" et "123"
+    account_id: string;
     amount: number;
     clean_description: string;
     date: string;
@@ -20,19 +23,18 @@ export interface BridgeTransaction {
 
 export interface MappedTransaction {
     chargeId: string;
-    transactionId: number;
+    transactionId: string;  // Changé de number à string
     amount: number;
     date: string;
     description: string;
 }
 
-// Grouped Transaction for Display
 interface GroupedTransaction {
     description: string;
     count: number;
     totalAmount: number;
     averageAmount: number;
-    transactions: BridgeTransaction[]; // Keep track of all raw IDs
+    transactions: BridgeTransaction[];
 }
 
 interface TransactionMapperProps {
@@ -47,8 +49,7 @@ export function TransactionMapper({ isOpen, onClose, charge, currentMappings, on
     const [rawTransactions, setRawTransactions] = useState<BridgeTransaction[]>([]);
     const [loading, setLoading] = useState(false);
     const [search, setSearch] = useState("");
-    
-    // Store selected DESCRIPTIONS instead of IDs to enable "Pattern Mapping"
+    const [source, setSource] = useState<'all' | 'bridge' | 'enablebanking'>('all');
     const [selectedDescriptions, setSelectedDescriptions] = useState<Set<string>>(new Set());
 
     // 1. Fetch Data on Open
@@ -56,16 +57,21 @@ export function TransactionMapper({ isOpen, onClose, charge, currentMappings, on
         if (isOpen) {
             fetchTransactions();
         }
-    }, [isOpen]);
+    }, [isOpen, source]);
 
     // 2. Pre-select based on existing mappings
     useEffect(() => {
         if (isOpen && rawTransactions.length > 0) {
-            const mappedTxIds = new Set(currentMappings.filter(m => m.chargeId === charge.id).map(m => m.transactionId));
+            const mappedTxIds = new Set(
+                currentMappings
+                    .filter(m => m.chargeId === charge.id)
+                    .map(m => String(m.transactionId))
+            );
+            
             const descriptionsToSelect = new Set<string>();
 
             rawTransactions.forEach(tx => {
-                if (mappedTxIds.has(tx.id)) {
+                if (mappedTxIds.has(String(tx.id))) {
                     descriptionsToSelect.add(tx.clean_description);
                 }
             });
@@ -76,8 +82,44 @@ export function TransactionMapper({ isOpen, onClose, charge, currentMappings, on
     const fetchTransactions = async () => {
         setLoading(true);
         try {
-            const res = await api.get('/banking/bridge/transactions');
-            setRawTransactions(res.data.transactions || []);
+            let allTransactions: BridgeTransaction[] = [];
+
+            if (source === 'all' || source === 'bridge') {
+                // Récupérer les transactions Bridge
+                try {
+                    const bridgeRes = await api.get('/banking/bridge/transactions');
+                    const bridgeTxs = (bridgeRes.data.transactions || []).map((tx: any) => ({
+                        ...tx,
+                        id: String(tx.id),  // Convertir en string
+                        account_id: String(tx.account_id)
+                    }));
+                    allTransactions = [...allTransactions, ...bridgeTxs];
+                } catch (error) {
+                    console.warn("Bridge transactions unavailable:", error);
+                }
+            }
+
+            if (source === 'all' || source === 'enablebanking') {
+                // Récupérer les transactions Enable Banking
+                try {
+                    const ebRes = await api.get('/banking/enablebanking/transactions');
+                    const ebTxs = (ebRes.data.transactions || []).map((tx: any) => ({
+                        ...tx,
+                        id: String(tx.id),  // Déjà string "eb-1", "eb-2"...
+                        account_id: String(tx.account_id)
+                    }));
+                    allTransactions = [...allTransactions, ...ebTxs];
+                } catch (error) {
+                    console.warn("Enable Banking transactions unavailable:", error);
+                }
+            }
+
+            // Dédupliquer par ID (au cas où)
+            const uniqueTransactions = Array.from(
+                new Map(allTransactions.map(tx => [tx.id, tx])).values()
+            );
+
+            setRawTransactions(uniqueTransactions);
         } catch (error) {
             console.error("Failed to load transactions", error);
         } finally {
@@ -92,7 +134,6 @@ export function TransactionMapper({ isOpen, onClose, charge, currentMappings, on
         rawTransactions.forEach(tx => {
             const desc = tx.clean_description || "Transaction Inconnue";
             
-            // Filter by Search Term
             if (search && !desc.toLowerCase().includes(search.toLowerCase())) return;
 
             if (!groups[desc]) {
@@ -110,12 +151,11 @@ export function TransactionMapper({ isOpen, onClose, charge, currentMappings, on
             groups[desc].transactions.push(tx);
         });
 
-        // Calculate averages
         Object.values(groups).forEach(g => {
             g.averageAmount = g.totalAmount / g.count;
         });
 
-        return Object.values(groups).sort((a, b) => b.count - a.count); // Most frequent first
+        return Object.values(groups).sort((a, b) => b.count - a.count);
     }, [rawTransactions, search]);
 
     const handleToggleGroup = (group: GroupedTransaction) => {
@@ -129,15 +169,14 @@ export function TransactionMapper({ isOpen, onClose, charge, currentMappings, on
     };
 
     const handleSave = () => {
-        // Expand selected descriptions back into individual transaction mappings
         const newMappings: MappedTransaction[] = [];
 
         rawTransactions.forEach(tx => {
             if (selectedDescriptions.has(tx.clean_description)) {
                 newMappings.push({
                     chargeId: charge.id,
-                    transactionId: tx.id,
-                    amount: tx.amount, // Keep negative if it's a debit
+                    transactionId: String(tx.id),  // Assurer que c'est string
+                    amount: tx.amount,
                     date: tx.date,
                     description: tx.clean_description
                 });
@@ -147,6 +186,17 @@ export function TransactionMapper({ isOpen, onClose, charge, currentMappings, on
         onSave(newMappings);
         onClose();
     };
+
+    // Statistiques
+    const selectedCount = Array.from(selectedDescriptions).reduce((sum, desc) => {
+        const group = groupedTransactions.find(g => g.description === desc);
+        return sum + (group?.count || 0);
+    }, 0);
+
+    const selectedTotal = Array.from(selectedDescriptions).reduce((sum, desc) => {
+        const group = groupedTransactions.find(g => g.description === desc);
+        return sum + (group?.totalAmount || 0);
+    }, 0);
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
@@ -158,85 +208,118 @@ export function TransactionMapper({ isOpen, onClose, charge, currentMappings, on
                     </DialogTitle>
                     <DialogDescription>
                         Associez des dépenses réelles à la charge : <strong>{charge.label}</strong> ({charge.amount}€).
-                        <br/>
-                        <span className="text-xs text-muted-foreground">Les transactions sont regroupées par nom pour simplifier la sélection.</span>
+                        Les transactions identiques seront automatiquement incluses dans les prochains imports.
                     </DialogDescription>
                 </DialogHeader>
 
-                <div className="relative">
-                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                    <Input
-                        placeholder="Rechercher (ex: Gym, Netflix...)"
-                        className="pl-9"
-                        value={search}
-                        onChange={(e) => setSearch(e.target.value)}
-                    />
+                {/* Filtres */}
+                <div className="flex gap-2">
+                    <div className="relative flex-1">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                        <Input 
+                            placeholder="Rechercher une description..." 
+                            value={search}
+                            onChange={(e) => setSearch(e.target.value)}
+                            className="pl-10"
+                        />
+                    </div>
+                    
+                    <select 
+                        value={source} 
+                        onChange={(e) => setSource(e.target.value as 'all' | 'bridge' | 'enablebanking')}
+                        className="border rounded-md px-3 py-2 text-sm"
+                    >
+                        <option value="all">Toutes sources</option>
+                        <option value="bridge">Bridge uniquement</option>
+                        <option value="enablebanking">Enable Banking uniquement</option>
+                    </select>
                 </div>
 
-                <div className="flex-1 overflow-hidden border rounded-md bg-gray-50/50">
+                {/* Liste des transactions groupées */}
+                <ScrollArea className="flex-1 border rounded-md">
                     {loading ? (
-                        <div className="flex h-full items-center justify-center">
-                            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                        <div className="flex items-center justify-center h-40">
+                            <Loader2 className="h-8 w-8 animate-spin text-indigo-600" />
+                        </div>
+                    ) : groupedTransactions.length === 0 ? (
+                        <div className="text-center py-12 text-gray-500">
+                            <Layers className="h-12 w-12 mx-auto mb-2 opacity-30" />
+                            <p>Aucune transaction trouvée</p>
+                            <p className="text-sm mt-1">Connectez une banque ou modifiez votre recherche</p>
                         </div>
                     ) : (
-                        <ScrollArea className="h-full">
-                            <div className="divide-y bg-white">
-                                {groupedTransactions.map(group => {
-                                    const isSelected = selectedDescriptions.has(group.description);
-                                    return (
-                                        <div 
-                                            key={group.description} 
-                                            className={cn(
-                                                "flex items-center justify-between p-4 hover:bg-muted/50 cursor-pointer transition-colors",
-                                                isSelected && "bg-indigo-50 hover:bg-indigo-100"
-                                            )}
-                                            onClick={() => handleToggleGroup(group)}
-                                        >
-                                            <div className="flex items-center gap-3 overflow-hidden">
-                                                <Checkbox checked={isSelected} className="border-indigo-600 data-[state=checked]:bg-indigo-600" />
-                                                <div className="min-w-0">
-                                                    <p className="font-medium text-sm truncate">{group.description}</p>
-                                                    <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5">
-                                                        <Badge variant="secondary" className="text-[10px] px-1.5 h-5 font-normal">
-                                                            <Layers className="h-3 w-3 mr-1" />
-                                                            {group.count}x trouvés
-                                                        </Badge>
-                                                        <span>Moyenne: {Math.abs(group.averageAmount).toFixed(2)}€</span>
-                                                    </div>
+                        <div className="p-4 space-y-2">
+                            {groupedTransactions.map((group) => {
+                                const isSelected = selectedDescriptions.has(group.description);
+                                const isExpense = group.averageAmount < 0;
+
+                                return (
+                                    <div 
+                                        key={group.description}
+                                        onClick={() => handleToggleGroup(group)}
+                                        className={cn(
+                                            "p-3 border rounded-lg cursor-pointer transition-all",
+                                            isSelected 
+                                                ? "bg-indigo-50 border-indigo-300 shadow-sm" 
+                                                : "hover:bg-gray-50 border-gray-200"
+                                        )}
+                                    >
+                                        <div className="flex items-start gap-3">
+                                            <Checkbox checked={isSelected} className="mt-1" />
+                                            <div className="flex-1 min-w-0">
+                                                <div className="flex items-center gap-2 mb-1">
+                                                    <span className="font-medium text-sm truncate">
+                                                        {group.description}
+                                                    </span>
+                                                    <Badge variant={isExpense ? "destructive" : "default"} className="shrink-0">
+                                                        {group.count}x
+                                                    </Badge>
+                                                </div>
+                                                <div className="flex items-center gap-3 text-xs text-gray-600">
+                                                    <span>
+                                                        Moyen: <strong className={isExpense ? "text-red-600" : "text-green-600"}>
+                                                            {group.averageAmount.toFixed(2)}€
+                                                        </strong>
+                                                    </span>
+                                                    <span>•</span>
+                                                    <span>
+                                                        Total: <strong className={isExpense ? "text-red-600" : "text-green-600"}>
+                                                            {group.totalAmount.toFixed(2)}€
+                                                        </strong>
+                                                    </span>
                                                 </div>
                                             </div>
-                                            <div className="text-right whitespace-nowrap pl-2">
-                                                <span className={cn(
-                                                    "font-bold text-sm",
-                                                    group.totalAmount < 0 ? "text-destructive" : "text-success"
-                                                )}>
-                                                    {group.totalAmount.toFixed(2)} €
-                                                </span>
-                                                <p className="text-[10px] text-muted-foreground">Total (40j)</p>
-                                            </div>
                                         </div>
-                                    );
-                                })}
-                                {groupedTransactions.length === 0 && (
-                                    <div className="p-8 text-center text-muted-foreground text-sm">
-                                        Aucune transaction trouvée ces 40 derniers jours.
                                     </div>
-                                )}
-                            </div>
-                        </ScrollArea>
+                                );
+                            })}
+                        </div>
                     )}
-                </div>
+                </ScrollArea>
 
-                <DialogFooter className="flex justify-between items-center border-t pt-4">
-                    <div className="text-xs text-muted-foreground">
-                        {selectedDescriptions.size} groupe(s) sélectionné(s)
+                {/* Footer avec statistiques */}
+                <DialogFooter className="flex-col sm:flex-row gap-2">
+                    <div className="flex-1 text-sm text-gray-600">
+                        <strong>{selectedCount}</strong> transaction{selectedCount > 1 ? 's' : ''} sélectionnée{selectedCount > 1 ? 's' : ''}
+                        {selectedCount > 0 && (
+                            <span className="ml-2">
+                                • Total: <strong className={selectedTotal < 0 ? "text-red-600" : "text-green-600"}>
+                                    {Math.abs(selectedTotal).toFixed(2)}€
+                                </strong>
+                            </span>
+                        )}
                     </div>
-                    <div className="flex gap-2">
-                        <Button variant="outline" onClick={onClose}>Annuler</Button>
-                        <Button onClick={handleSave} className="bg-indigo-600 hover:bg-indigo-700">
-                            Enregistrer
-                        </Button>
-                    </div>
+                    <Button variant="outline" onClick={onClose}>
+                        Annuler
+                    </Button>
+                    <Button 
+                        onClick={handleSave} 
+                        disabled={selectedCount === 0}
+                        className="bg-indigo-600 hover:bg-indigo-700"
+                    >
+                        <LinkIcon className="h-4 w-4 mr-2" />
+                        Enregistrer {selectedCount > 0 && `(${selectedCount})`}
+                    </Button>
                 </DialogFooter>
             </DialogContent>
         </Dialog>
