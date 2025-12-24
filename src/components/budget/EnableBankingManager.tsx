@@ -12,8 +12,8 @@ interface Bank {
     country: string;
     logo: string;
     sandbox: boolean;
-    ais_support: boolean;
-    pis_support: boolean;
+    bic?: string;
+    beta: boolean;
 }
 
 interface Account {
@@ -57,9 +57,9 @@ export function EnableBankingManager({ budgetId, onUpdate }: EnableBankingManage
         setLoading(true);
         try {
             const res = await api.get('/banking/enablebanking/banks?country=FR');
-            // Filtrer pour n'afficher que les banques supportant AIS
-            const supportedBanks = res.data.banks.filter((b: Bank) => b.ais_support);
-            setBanks(supportedBanks);
+            // Toutes les banques retournées par Enable Banking supportent AIS
+            // Pas besoin de filtrer
+            setBanks(res.data.banks || []);
         } catch (error) {
             toast({ 
                 title: "Erreur", 
@@ -76,7 +76,7 @@ export function EnableBankingManager({ budgetId, onUpdate }: EnableBankingManage
             const res = await api.get(`/budgets/${budgetId}/banking/connections`);
             // Filtrer uniquement les connexions Enable Banking
             const enableConnections = res.data.filter((c: Connection) => 
-                c.provider === 'enablebanking-managed'
+                c.provider === 'enablebanking-managed' || c.provider === 'Enable Banking'
             );
             setConnections(enableConnections);
         } catch (error) {
@@ -86,6 +86,7 @@ export function EnableBankingManager({ budgetId, onUpdate }: EnableBankingManage
 
     const handleConnect = async (bankId: string) => {
         setConnecting(true);
+        setSelectedBank(bankId);
         try {
             // 1. Créer la demande d'autorisation
             const res = await api.post('/banking/enablebanking/connect', {
@@ -134,6 +135,9 @@ export function EnableBankingManager({ budgetId, onUpdate }: EnableBankingManage
                             description: error.response?.data?.error || "Échec de la synchronisation",
                             variant: "destructive"
                         });
+                    } finally {
+                        setConnecting(false);
+                        setSelectedBank("");
                     }
                 }
             };
@@ -146,6 +150,7 @@ export function EnableBankingManager({ budgetId, onUpdate }: EnableBankingManage
                     clearInterval(checkWindow);
                     window.removeEventListener('message', handleMessage);
                     setConnecting(false);
+                    setSelectedBank("");
                 }
             }, 1000);
 
@@ -156,21 +161,20 @@ export function EnableBankingManager({ budgetId, onUpdate }: EnableBankingManage
                 variant: "destructive" 
             });
             setConnecting(false);
+            setSelectedBank("");
         }
     };
 
     const handleRefresh = async (connectionId: string) => {
         try {
-            await api.post('/banking/enablebanking/refresh', {
-                connection_id: connectionId
+            await api.post('/banking/enablebanking/refresh', { connection_id: connectionId });
+            toast({ 
+                title: "Succès", 
+                description: "Soldes mis à jour.", 
+                variant: "default" 
             });
             await loadConnections();
             onUpdate();
-            toast({ 
-                title: "Succès", 
-                description: "Soldes mis à jour !", 
-                variant: "default" 
-            });
         } catch (error) {
             toast({ 
                 title: "Erreur", 
@@ -180,17 +184,18 @@ export function EnableBankingManager({ budgetId, onUpdate }: EnableBankingManage
         }
     };
 
-    const deleteConnection = async (id: string) => {
-        if (!confirm("Supprimer cette connexion et tous les comptes associés ?")) return;
+    const handleDelete = async (connectionId: string) => {
+        if (!confirm("Supprimer cette connexion ?")) return;
+        
         try {
-            await api.delete(`/banking/enablebanking/connections/${id}`);
-            await loadConnections();
-            onUpdate();
+            await api.delete(`/banking/enablebanking/connections/${connectionId}`);
             toast({ 
-                title: "Supprimé", 
-                description: "Connexion supprimée avec succès.", 
+                title: "Succès", 
+                description: "Connexion supprimée.", 
                 variant: "default" 
             });
+            await loadConnections();
+            onUpdate();
         } catch (error) {
             toast({ 
                 title: "Erreur", 
@@ -265,11 +270,16 @@ export function EnableBankingManager({ budgetId, onUpdate }: EnableBankingManage
                                 onChange={(e) => setSearchTerm(e.target.value)}
                             />
                             <div className="max-h-96 overflow-y-auto space-y-2">
+                                {filteredBanks.length === 0 && (
+                                    <p className="text-center text-muted-foreground py-8">
+                                        Aucune banque trouvée
+                                    </p>
+                                )}
                                 {filteredBanks.map(bank => (
                                     <div
                                         key={bank.id}
-                                        className="flex items-center justify-between p-3 border rounded-lg hover:bg-accent cursor-pointer"
-                                        onClick={() => handleConnect(bank.id)}
+                                        className="flex items-center justify-between p-3 border rounded-lg hover:bg-accent cursor-pointer transition-colors"
+                                        onClick={() => !connecting && handleConnect(bank.id)}
                                     >
                                         <div className="flex items-center gap-3">
                                             {bank.logo && (
@@ -288,6 +298,11 @@ export function EnableBankingManager({ budgetId, onUpdate }: EnableBankingManage
                                                     {bank.sandbox && (
                                                         <Badge variant="secondary" className="text-xs">
                                                             Sandbox
+                                                        </Badge>
+                                                    )}
+                                                    {bank.beta && (
+                                                        <Badge variant="secondary" className="text-xs text-orange-600">
+                                                            Beta
                                                         </Badge>
                                                     )}
                                                 </div>
@@ -312,9 +327,14 @@ export function EnableBankingManager({ budgetId, onUpdate }: EnableBankingManage
                         <Card key={connection.id}>
                             <CardHeader className="pb-3">
                                 <div className="flex items-center justify-between">
-                                    <CardTitle className="text-base">
-                                        {connection.institution_name}
-                                    </CardTitle>
+                                    <div>
+                                        <CardTitle className="text-base">{connection.institution_name}</CardTitle>
+                                        {connection.last_synced && (
+                                            <CardDescription className="text-xs">
+                                                Dernière sync: {new Date(connection.last_synced).toLocaleDateString()}
+                                            </CardDescription>
+                                        )}
+                                    </div>
                                     <div className="flex gap-2">
                                         <Button
                                             size="sm"
@@ -325,21 +345,16 @@ export function EnableBankingManager({ budgetId, onUpdate }: EnableBankingManage
                                         </Button>
                                         <Button
                                             size="sm"
-                                            variant="destructive"
-                                            onClick={() => deleteConnection(connection.id)}
+                                            variant="outline"
+                                            onClick={() => handleDelete(connection.id)}
                                         >
                                             <Trash2 className="h-4 w-4" />
                                         </Button>
                                     </div>
                                 </div>
-                                {connection.last_synced && (
-                                    <CardDescription className="text-xs">
-                                        Dernière synchro : {new Date(connection.last_synced).toLocaleString('fr-FR')}
-                                    </CardDescription>
-                                )}
                             </CardHeader>
-                            <CardContent>
-                                {connection.accounts && connection.accounts.length > 0 ? (
+                            {connection.accounts && connection.accounts.length > 0 && (
+                                <CardContent>
                                     <div className="space-y-2">
                                         {connection.accounts.map(account => (
                                             <div
@@ -367,11 +382,10 @@ export function EnableBankingManager({ budgetId, onUpdate }: EnableBankingManage
                                                         >
                                                             {account.is_savings_pool ? (
                                                                 <span className="flex items-center gap-1">
-                                                                    <Check className="h-3 w-3" />
-                                                                    Compte d'épargne
+                                                                    <Check className="h-3 w-3" /> Épargne
                                                                 </span>
                                                             ) : (
-                                                                'Marquer comme épargne'
+                                                                "Marquer comme épargne"
                                                             )}
                                                         </button>
                                                     </div>
@@ -379,12 +393,8 @@ export function EnableBankingManager({ budgetId, onUpdate }: EnableBankingManage
                                             </div>
                                         ))}
                                     </div>
-                                ) : (
-                                    <p className="text-sm text-muted-foreground">
-                                        Aucun compte synchronisé
-                                    </p>
-                                )}
-                            </CardContent>
+                                </CardContent>
+                            )}
                         </Card>
                     ))}
                 </div>
