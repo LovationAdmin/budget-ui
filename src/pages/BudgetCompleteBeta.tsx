@@ -584,6 +584,7 @@ export default function BudgetCompleteBeta() {
               charge={chargeToMap}
               currentMappings={chargeMappings}
               onSave={handleSaveMappings}
+              budgetId={id!}
           />
       )}
     </div>
