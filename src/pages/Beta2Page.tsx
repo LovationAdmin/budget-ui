@@ -36,6 +36,11 @@ import { ToastAction } from '@/components/ui/toast';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { useTutorial } from '../contexts/TutorialContext';
 
+import { DEMO_TRANSACTIONS, DEMO_BANK_BALANCE } from '@/constants/demoData';
+import { DemoModePrompt } from '@/components/budget/DemoModePrompt';
+import { DemoBanner } from '@/components/budget/DemoBanner';
+import { Eye, Crown } from "lucide-react";
+
 const BUDGET_NAV_ITEMS: NavItem[] = [
   { id: "overview", label: "Vue d'ensemble", icon: LayoutDashboard },
   { id: "members", label: "Membres", icon: Users },
@@ -86,6 +91,10 @@ export default function Beta2Page() {
   const [showMapper, setShowMapper] = useState(false);
   const [chargeToMap, setChargeToMap] = useState<Charge | null>(null);
   const [chargeMappings, setChargeMappings] = useState<MappedTransaction[]>([]);
+
+  const [isDemoMode, setIsDemoMode] = useState(false);
+  const [demoTransactions, setDemoTransactions] = useState<BridgeTransaction[]>([]);
+  const [demoBankBalance, setDemoBankBalance] = useState(0);
 
   // --- DATA STORAGE ---
   const globalDataRef = useRef<any>(null);
@@ -188,6 +197,12 @@ export default function Beta2Page() {
   }, [loading, hasSeenTutorial, startTutorial]);
 
   const refreshBankData = useCallback(async () => {
+      // MODE DÉMO: Utiliser données fictives
+      if (isDemoMode) {
+          setRealBankBalance(DEMO_BANK_BALANCE);
+          setHasActiveConnection(true);
+          return;
+      }
       try {
           if (!id) return;
           // Enable Banking endpoint
@@ -482,6 +497,48 @@ export default function Beta2Page() {
       });
   };
 
+  const enableDemoMode = () => {
+      setDemoTransactions(DEMO_TRANSACTIONS);
+      setDemoBankBalance(DEMO_BANK_BALANCE);
+      setIsDemoMode(true);
+      setHasActiveConnection(true);
+      
+      toast({
+          title: "🎭 Mode Démo Activé",
+          description: "Vous utilisez des données bancaires fictives pour tester Reality Check.",
+          duration: 5000
+      });
+  };
+
+  const disableDemoMode = () => {
+      setIsDemoMode(false);
+      setDemoTransactions([]);
+      setDemoBankBalance(0);
+      setHasActiveConnection(false);
+      
+      toast({
+          title: "Mode Démo Désactivé",
+          description: "Les données de démonstration ont été effacées.",
+          variant: "default"
+      });
+  };
+
+  const goToPremium = () => {
+      navigate('/premium');
+  };
+
+  const handleOpenBankManager = () => {
+      if (isDemoMode) {
+          toast({
+              title: "Mode Démonstration",
+              description: "Vous utilisez des données fictives. Passez Premium pour connecter votre vraie banque.",
+              duration: 7000
+          });
+          return;
+      }
+      setShowBankManager(true);
+  };
+
   // --- REALITY CHECK CALCULATION ---
   const today = new Date();
   const currentMonthIndex = today.getMonth();
@@ -615,7 +672,15 @@ export default function Beta2Page() {
         </div>
         
         <div id="reality" className="mt-8">
-            <div className="bg-gradient-to-r from-indigo-500 to-purple-600 rounded-t-xl p-4 text-white">
+            {/* ✅ Banner de démo si mode actif */}
+            {isDemoMode && (
+                <DemoBanner 
+                    onDisable={disableDemoMode}
+                    onGoToPremium={goToPremium}
+                />
+            )}
+            
+            <div className="bg-gradient-to-r from-indigo-500 to-purple-600 rounded-t-xl p-4 text-white mt-4">
               <div className="flex items-center gap-3">
                 <FlaskConical className="h-6 w-6" /> 
                 <div>
@@ -630,12 +695,23 @@ export default function Beta2Page() {
             </div>
             
             <div className="bg-white rounded-b-xl shadow-lg p-6 border-t-4 border-indigo-500">
-              <RealityCheck 
-                  totalRealized={totalGlobalRealized}
-                  bankBalance={realBankBalance}
-                  isBankConnected={hasActiveConnection}
-                  onConnectBank={() => setShowBankManager(true)}
-              />
+                {/* ✅ Prompt pour activer le mode démo si pas de connexion */}
+                {!hasActiveConnection && !isDemoMode && (
+                    <DemoModePrompt 
+                        onEnableDemoMode={enableDemoMode}
+                        onGoToPremium={goToPremium}
+                    />
+                )}
+                
+                {/* ✅ Afficher Reality Check si connecté OU en mode démo */}
+                {(hasActiveConnection || isDemoMode) && (
+                    <RealityCheck 
+                        totalRealized={totalGlobalRealized}
+                        bankBalance={isDemoMode ? demoBankBalance : realBankBalance}
+                        isBankConnected={hasActiveConnection}
+                        onConnectBank={handleOpenBankManager}
+                    />
+                )}
             </div>
         </div>
 
@@ -724,6 +800,7 @@ export default function Beta2Page() {
               currentMappings={chargeMappings}
               onSave={handleSaveMappings}
               budgetId={id!}
+              demoTransactions={isDemoMode ? demoTransactions : undefined}
           />
       )}
     </div>

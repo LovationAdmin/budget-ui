@@ -17,6 +17,7 @@ import BudgetCompleteBeta from './pages/BudgetCompleteBeta'; // Bridge API
 import { BankCallback } from './pages/BankCallback';
 import Beta2Page from './pages/Beta2Page'; // Enable Banking
 import EnableBankingCallbackPage from './pages/EnableBankingCallbackPage';
+import PremiumPage from './pages/PremiumPage';
 
 export default function App() {
   return (
@@ -63,6 +64,7 @@ export default function App() {
           </PrivateRoute>
         } />
 
+        <Route path="/premium" element={<PremiumPage />} />
         <Route path="/404" element={<NotFound />} />
         <Route path="*" element={<Navigate to="/404" replace />} />
         <Route path="/verify-email" element={<VerifyEmail />} />

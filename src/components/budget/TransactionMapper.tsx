@@ -42,6 +42,7 @@ interface TransactionMapperProps {
     currentMappings: MappedTransaction[];
     onSave: (newMappings: MappedTransaction[]) => void;
     budgetId: string;
+    demoTransactions?: BridgeTransaction[]; // ✅ NOUVELLE PROP POUR MODE DÉMO
 }
 
 export function TransactionMapper({ 
@@ -50,7 +51,8 @@ export function TransactionMapper({
     charge, 
     currentMappings, 
     onSave, 
-    budgetId 
+    budgetId,
+    demoTransactions // ✅ DESTRUCTURER LA NOUVELLE PROP
 }: TransactionMapperProps) {
     const [rawTransactions, setRawTransactions] = useState<BridgeTransaction[]>([]);
     const [loading, setLoading] = useState(false);
@@ -88,6 +90,14 @@ export function TransactionMapper({
     const fetchTransactions = async () => {
         setLoading(true);
         try {
+            // ✅ MODE DÉMO : Utiliser les transactions fournies
+            if (demoTransactions && demoTransactions.length > 0) {
+                setRawTransactions(demoTransactions);
+                setLoading(false);
+                return;
+            }
+
+            // MODE NORMAL : Récupérer depuis les APIs
             let allTransactions: BridgeTransaction[] = [];
 
             if (source === 'all' || source === 'bridge') {
@@ -251,15 +261,18 @@ export function TransactionMapper({
                         />
                     </div>
                     
-                    <select 
-                        value={source} 
-                        onChange={(e) => setSource(e.target.value as 'all' | 'bridge' | 'enablebanking')}
-                        className="border rounded-md px-3 py-2 text-sm"
-                    >
-                        <option value="all">Toutes sources</option>
-                        <option value="bridge">Bridge uniquement</option>
-                        <option value="enablebanking">Enable Banking uniquement</option>
-                    </select>
+                    {/* ✅ Cacher le sélecteur de source en mode démo */}
+                    {!demoTransactions && (
+                        <select 
+                            value={source} 
+                            onChange={(e) => setSource(e.target.value as 'all' | 'bridge' | 'enablebanking')}
+                            className="border rounded-md px-3 py-2 text-sm"
+                        >
+                            <option value="all">Toutes sources</option>
+                            <option value="bridge">Bridge uniquement</option>
+                            <option value="enablebanking">Enable Banking uniquement</option>
+                        </select>
+                    )}
                 </div>
 
                 {/* Liste des transactions groupées */}
