@@ -5,13 +5,14 @@ import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Loader2, Search, Link as LinkIcon, Layers } from "lucide-react";
+import { Loader2, Search, Link as LinkIcon, Layers, Trash2, AlertCircle } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import api from '@/services/api';
 import { cn } from "@/lib/utils";
 
 // Types
 export interface BridgeTransaction {
-    id: string;  // Changé de number à string pour supporter "eb-1" et "123"
+    id: string;
     account_id: string;
     amount: number;
     clean_description: string;
@@ -40,10 +41,17 @@ interface TransactionMapperProps {
     charge: { id: string; label: string; amount: number };
     currentMappings: MappedTransaction[];
     onSave: (newMappings: MappedTransaction[]) => void;
-    budgetId: string; // ✅ FIX 1: Add budgetId to props
+    budgetId: string;
 }
 
-export function TransactionMapper({ isOpen, onClose, charge, currentMappings, onSave, budgetId }: TransactionMapperProps) { // ✅ FIX 2: Destructure budgetId
+export function TransactionMapper({ 
+    isOpen, 
+    onClose, 
+    charge, 
+    currentMappings, 
+    onSave, 
+    budgetId 
+}: TransactionMapperProps) {
     const [rawTransactions, setRawTransactions] = useState<BridgeTransaction[]>([]);
     const [loading, setLoading] = useState(false);
     const [search, setSearch] = useState("");
@@ -83,7 +91,6 @@ export function TransactionMapper({ isOpen, onClose, charge, currentMappings, on
             let allTransactions: BridgeTransaction[] = [];
 
             if (source === 'all' || source === 'bridge') {
-                // Récupérer les transactions Bridge
                 try {
                     const bridgeRes = await api.get('/banking/bridge/transactions');
                     const bridgeTxs = (bridgeRes.data.transactions || []).map((tx: any) => ({
@@ -98,9 +105,7 @@ export function TransactionMapper({ isOpen, onClose, charge, currentMappings, on
             }
 
             if (source === 'all' || source === 'enablebanking') {
-                // Récupérer les transactions Enable Banking
                 try {
-                    // ✅ FIX 3: Pass budget_id in the API call
                     const ebRes = await api.get(`/banking/enablebanking/transactions?budget_id=${budgetId}`);
                     const ebTxs = (ebRes.data.transactions || []).map((tx: any) => ({
                         ...tx,
@@ -113,7 +118,6 @@ export function TransactionMapper({ isOpen, onClose, charge, currentMappings, on
                 }
             }
 
-            // Dédupliquer par ID (au cas où)
             const uniqueTransactions = Array.from(
                 new Map(allTransactions.map(tx => [tx.id, tx])).values()
             );
@@ -186,7 +190,18 @@ export function TransactionMapper({ isOpen, onClose, charge, currentMappings, on
         onClose();
     };
 
+    // ✅ NOUVELLE FONCTIONNALITÉ: Effacer tous les mappings
+    const handleClearAll = () => {
+        if (confirm(`Voulez-vous vraiment effacer tous les mappings pour la charge "${charge.label}" ?`)) {
+            setSelectedDescriptions(new Set());
+            onSave([]); // Enregistrer un tableau vide
+            onClose();
+        }
+    };
+
     // Statistiques
+    const alreadyMappedCount = currentMappings.filter(m => m.chargeId === charge.id).length;
+    
     const selectedCount = Array.from(selectedDescriptions).reduce((sum, desc) => {
         const group = groupedTransactions.find(g => g.description === desc);
         return sum + (group?.count || 0);
@@ -205,9 +220,22 @@ export function TransactionMapper({ isOpen, onClose, charge, currentMappings, on
                         <LinkIcon className="h-5 w-5 text-indigo-600" />
                         Lier des transactions
                     </DialogTitle>
-                    <DialogDescription>
-                        Associez des dépenses réelles à la charge : <strong>{charge.label}</strong> ({charge.amount}€).
-                        Les transactions identiques seront automatiquement incluses dans les prochains imports.
+                    <DialogDescription className="space-y-2">
+                        <div>
+                            Associez des dépenses réelles à la charge : <strong>{charge.label}</strong> ({charge.amount}€).
+                        </div>
+                        {alreadyMappedCount > 0 && (
+                            <Alert className="bg-indigo-50 border-indigo-200">
+                                <AlertCircle className="h-4 w-4 text-indigo-600" />
+                                <AlertDescription className="text-xs text-indigo-700">
+                                    <strong>{alreadyMappedCount} transaction(s)</strong> actuellement liée(s). 
+                                    Les descriptions cochées ci-dessous seront automatiquement incluses lors des prochaines synchronisations.
+                                </AlertDescription>
+                            </Alert>
+                        )}
+                        <p className="text-xs text-muted-foreground">
+                            Les transactions identiques seront automatiquement incluses dans les prochains imports.
+                        </p>
                     </DialogDescription>
                 </DialogHeader>
 
@@ -296,7 +324,7 @@ export function TransactionMapper({ isOpen, onClose, charge, currentMappings, on
                     )}
                 </ScrollArea>
 
-                {/* Footer avec statistiques */}
+                {/* Footer avec statistiques et actions */}
                 <DialogFooter className="flex-col sm:flex-row gap-2">
                     <div className="flex-1 text-sm text-gray-600">
                         <strong>{selectedCount}</strong> transaction{selectedCount > 1 ? 's' : ''} sélectionnée{selectedCount > 1 ? 's' : ''}
@@ -308,12 +336,26 @@ export function TransactionMapper({ isOpen, onClose, charge, currentMappings, on
                             </span>
                         )}
                     </div>
+                    
+                    {/* ✅ BOUTON EFFACER (visible seulement s'il y a des mappings) */}
+                    {alreadyMappedCount > 0 && (
+                        <Button 
+                            variant="outline" 
+                            onClick={handleClearAll}
+                            className="text-red-600 hover:bg-red-50 hover:text-red-700 border-red-200"
+                        >
+                            <Trash2 className="h-4 w-4 mr-2" />
+                            Effacer tout
+                        </Button>
+                    )}
+                    
                     <Button variant="outline" onClick={onClose}>
                         Annuler
                     </Button>
+                    
                     <Button 
                         onClick={handleSave} 
-                        disabled={selectedCount === 0}
+                        disabled={selectedCount === 0 && alreadyMappedCount === 0}
                         className="bg-indigo-600 hover:bg-indigo-700"
                     >
                         <LinkIcon className="h-4 w-4 mr-2" />
