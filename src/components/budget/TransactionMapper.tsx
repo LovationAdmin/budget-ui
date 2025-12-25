@@ -1,6 +1,3 @@
-// TransactionMapper.tsx - VERSION MISE À JOUR
-// Supporte à la fois Bridge API et Enable Banking API
-
 import { useState, useEffect, useMemo } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -12,7 +9,7 @@ import { Loader2, Search, Link as LinkIcon, Layers } from "lucide-react";
 import api from '@/services/api';
 import { cn } from "@/lib/utils";
 
-// Types (inchangés)
+// Types
 export interface BridgeTransaction {
     id: string;  // Changé de number à string pour supporter "eb-1" et "123"
     account_id: string;
@@ -23,7 +20,7 @@ export interface BridgeTransaction {
 
 export interface MappedTransaction {
     chargeId: string;
-    transactionId: string;  // Changé de number à string
+    transactionId: string;
     amount: number;
     date: string;
     description: string;
@@ -43,9 +40,10 @@ interface TransactionMapperProps {
     charge: { id: string; label: string; amount: number };
     currentMappings: MappedTransaction[];
     onSave: (newMappings: MappedTransaction[]) => void;
+    budgetId: string; // ✅ FIX 1: Add budgetId to props
 }
 
-export function TransactionMapper({ isOpen, onClose, charge, currentMappings, onSave }: TransactionMapperProps) {
+export function TransactionMapper({ isOpen, onClose, charge, currentMappings, onSave, budgetId }: TransactionMapperProps) { // ✅ FIX 2: Destructure budgetId
     const [rawTransactions, setRawTransactions] = useState<BridgeTransaction[]>([]);
     const [loading, setLoading] = useState(false);
     const [search, setSearch] = useState("");
@@ -90,7 +88,7 @@ export function TransactionMapper({ isOpen, onClose, charge, currentMappings, on
                     const bridgeRes = await api.get('/banking/bridge/transactions');
                     const bridgeTxs = (bridgeRes.data.transactions || []).map((tx: any) => ({
                         ...tx,
-                        id: String(tx.id),  // Convertir en string
+                        id: String(tx.id),
                         account_id: String(tx.account_id)
                     }));
                     allTransactions = [...allTransactions, ...bridgeTxs];
@@ -102,10 +100,11 @@ export function TransactionMapper({ isOpen, onClose, charge, currentMappings, on
             if (source === 'all' || source === 'enablebanking') {
                 // Récupérer les transactions Enable Banking
                 try {
-                    const ebRes = await api.get('/banking/enablebanking/transactions');
+                    // ✅ FIX 3: Pass budget_id in the API call
+                    const ebRes = await api.get(`/banking/enablebanking/transactions?budget_id=${budgetId}`);
                     const ebTxs = (ebRes.data.transactions || []).map((tx: any) => ({
                         ...tx,
-                        id: String(tx.id),  // Déjà string "eb-1", "eb-2"...
+                        id: String(tx.id),
                         account_id: String(tx.account_id)
                     }));
                     allTransactions = [...allTransactions, ...ebTxs];
@@ -175,7 +174,7 @@ export function TransactionMapper({ isOpen, onClose, charge, currentMappings, on
             if (selectedDescriptions.has(tx.clean_description)) {
                 newMappings.push({
                     chargeId: charge.id,
-                    transactionId: String(tx.id),  // Assurer que c'est string
+                    transactionId: String(tx.id),
                     amount: tx.amount,
                     date: tx.date,
                     description: tx.clean_description

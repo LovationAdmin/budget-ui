@@ -723,6 +723,7 @@ export default function Beta2Page() {
               charge={chargeToMap}
               currentMappings={chargeMappings}
               onSave={handleSaveMappings}
+              budgetId={id!}
           />
       )}
     </div>
