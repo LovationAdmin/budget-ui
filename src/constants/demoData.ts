@@ -134,16 +134,16 @@ export const DEMO_TRANSACTIONS: BridgeTransaction[] = [
   {
     id: "demo-c7d8e",
     account_id: "demo-account",
-    amount: 1000.00,
-    clean_description: "Vir Inst M Doe John",
-    date: "2024-12-22"
+    amount: -69.79,
+    clean_description: "Prlv Edf Clients Particuliers",
+    date: "2024-12-25"
   },
   {
     id: "demo-f9g0h",
     account_id: "demo-account",
-    amount: -69.79,
-    clean_description: "Prlv Edf Clients Particuliers",
-    date: "2024-12-25"
+    amount: -120.00,
+    clean_description: "Vir Loyer Mme Dupont",
+    date: "2024-12-26"
   }
 ];
 
@@ -151,38 +151,13 @@ export const DEMO_TRANSACTIONS: BridgeTransaction[] = [
 // SOLDE BANCAIRE DE DÉMONSTRATION
 // ============================================================================
 
-export const DEMO_BANK_BALANCE = 5130.00;
+export const DEMO_BANK_BALANCE = 5130;
 
 // ============================================================================
-// CONNEXION BANCAIRE DE DÉMONSTRATION
+// DONNÉES COMBINÉES POUR EXPORT
 // ============================================================================
 
-export const DEMO_BANK_CONNECTION = {
-  id: "demo-connection",
-  institution_name: "Banque Démo",
-  provider: "demo",
-  account_count: 1,
-  created_at: new Date().toISOString(),
-  accounts: [
-    {
-      id: "demo-account",
-      name: "Compte Courant Démo",
-      mask: "****1234",
-      balance: 5130.00,
-      currency: "EUR",
-      is_savings_pool: false
-    }
-  ]
-};
-
-// ============================================================================
-// HELPER : Vérifier si une connexion est en mode démo
-// ============================================================================
-
-export const isDemoConnection = (connectionId?: string): boolean => {
-  return connectionId === "demo-connection" || connectionId?.startsWith("demo-");
-};
-
-export const isDemoTransaction = (transactionId?: string): boolean => {
-  return transactionId?.startsWith("demo-");
+export const DEMO_BANKING_DATA = {
+  transactions: DEMO_TRANSACTIONS,
+  balance: DEMO_BANK_BALANCE
 };
