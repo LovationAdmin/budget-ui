@@ -30,6 +30,7 @@ import MemberManagementSection from '../components/budget/MemberManagementSectio
 import { LayoutDashboard, Users, Receipt, Target, CalendarDays } from "lucide-react";
 import { ToastAction } from '@/components/ui/toast';
 import { useTutorial } from '../contexts/TutorialContext';
+import EnhancedSuggestions from '@/components/budget/EnhancedSuggestions';
 
 const BUDGET_NAV_ITEMS: NavItem[] = [
   { id: "overview", label: "Vue d'ensemble", icon: LayoutDashboard },
@@ -460,6 +461,13 @@ export default function BudgetComplete() {
         
         <div id="charges" className="mt-6"><ChargesSection charges={charges} onChargesChange={setCharges} suggestions={suggestions} /></div>
         
+        <div id="suggestions" className="mt-6">
+          <EnhancedSuggestions 
+            budgetId={id!} 
+            charges={charges} 
+          />
+        </div>
+          
         <div id="projects" className="mt-6">
             <ProjectsSection 
                 projects={projects} 

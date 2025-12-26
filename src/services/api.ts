@@ -60,6 +60,48 @@ interface BudgetCreateData { name: string; }
 interface BudgetUpdateData { data: unknown; } 
 interface DeleteAccountData { password: string; }
 
+export interface Competitor {
+  name: string;
+  typical_price: number;
+  best_offer: string;
+  potential_savings: number;
+  affiliate_link?: string;
+  pros: string[];
+  cons: string[];
+  contact_available: boolean;
+}
+
+export interface MarketSuggestion {
+  id: string;
+  category: string;
+  country: string;
+  merchant_name?: string;
+  competitors: Competitor[];
+  last_updated: string;
+  expires_at: string;
+}
+
+export interface BulkAnalyzeRequest {
+  charges: Array<{
+    id: string;
+    category: string;
+    label: string;
+    amount: number;
+    merchant_name?: string;
+  }>;
+}
+
+export interface BulkAnalyzeResponse {
+  suggestions: Array<{
+    charge_id: string;
+    charge_label: string;
+    suggestion: MarketSuggestion;
+  }>;
+  cache_hits: number;
+  ai_calls_made: number;
+  total_potential_savings: number;
+}
+
 export const authAPI = {
   signup: (data: AuthData): Promise<AxiosResponse<AuthResponse>> => api.post('/auth/signup', data),
   login: (data: AuthData): Promise<AxiosResponse<AuthResponse>> => api.post('/auth/login', data),
@@ -87,6 +129,24 @@ export const budgetAPI = {
   
   // NEW: AI Categorization Endpoint
   categorize: (label: string): Promise<AxiosResponse<CategorizeResponse>> => api.post('/categorize', { label }),
+  // Nouvelle méthode pour l'analyse bulk
+  bulkAnalyzeSuggestions: (
+    budgetId: string, 
+    data: BulkAnalyzeRequest
+  ): Promise<AxiosResponse<BulkAnalyzeResponse>> => 
+    api.post(`/budgets/${budgetId}/suggestions/bulk-analyze`, data),
+  
+  // Analyse d'une charge individuelle
+  analyzeSingleCharge: (data: {
+    category: string;
+    merchant_name?: string;
+    current_amount: number;
+  }): Promise<AxiosResponse<MarketSuggestion>> =>
+    api.post('/suggestions/analyze', data),
+    
+  // Récupérer suggestions en cache pour une catégorie
+  getCategorySuggestions: (category: string): Promise<AxiosResponse<MarketSuggestion>> =>
+    api.get(`/suggestions/category/${category}`),
 };
 
 export const invitationAPI = {
