@@ -31,7 +31,7 @@ interface EnhancedSuggestionsProps {
 }
 
 // ============================================================================
-// COMPOSANT PRINCIPAL
+// COMPOSANT PRINCIPAL - COLLAPSIBLE PAR DÉFAUT
 // ============================================================================
 
 export default function EnhancedSuggestions({ budgetId, charges }: EnhancedSuggestionsProps) {
@@ -40,6 +40,9 @@ export default function EnhancedSuggestions({ budgetId, charges }: EnhancedSugge
   const [error, setError] = useState<string | null>(null);
   const [cacheStats, setCacheStats] = useState({ hits: 0, aiCalls: 0 });
   const [totalSavings, setTotalSavings] = useState(0);
+  
+  // ⭐ NOUVEAU: État pour collapse/expand
+  const [isExpanded, setIsExpanded] = useState(false);
 
   // Charger les suggestions au montage
   useEffect(() => {
@@ -124,42 +127,106 @@ export default function EnhancedSuggestions({ budgetId, charges }: EnhancedSugge
     return null; // Pas de suggestions à afficher
   }
 
+  // ============================================================================
+  // VERSION COLLAPSIBLE - Affichage condensé par défaut
+  // ============================================================================
+
   return (
     <div className="mt-6 space-y-4">
-      {/* Header avec statistiques */}
-      <Card className="border-green-200 bg-green-50/50">
+      {/* Header avec toggle - Toujours visible */}
+      <Card 
+        className="border-green-200 bg-green-50/50 cursor-pointer hover:bg-green-50 transition-colors"
+        onClick={() => setIsExpanded(!isExpanded)}
+      >
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 flex-1">
               <Sparkles className="h-6 w-6 text-green-600" />
-              <div>
-                <CardTitle className="text-green-900">
-                  Opportunités d'Économies Détectées
-                </CardTitle>
-                <CardDescription className="text-green-700">
-                  {suggestions.length} charge{suggestions.length > 1 ? 's' : ''} analysée
-                  {suggestions.length > 1 ? 's' : ''} • 
-                  Économies potentielles: <strong>{totalSavings.toFixed(0)}€/an</strong>
+              <div className="flex-1">
+                <div className="flex items-center gap-2">
+                  <CardTitle className="text-green-900">
+                    💡 Opportunités d'Économies Détectées
+                  </CardTitle>
+                  <Badge variant="outline" className="bg-green-100 text-green-800 border-green-300">
+                    {suggestions.length}
+                  </Badge>
+                </div>
+                <CardDescription className="text-green-700 mt-1">
+                  {isExpanded ? (
+                    <>
+                      {suggestions.length} charge{suggestions.length > 1 ? 's' : ''} analysée{suggestions.length > 1 ? 's' : ''} • 
+                      Économies potentielles: <strong>{totalSavings.toFixed(0)}€/an</strong>
+                    </>
+                  ) : (
+                    <>
+                      Cliquez pour voir {suggestions.length} suggestion{suggestions.length > 1 ? 's' : ''} • 
+                      <strong>~{totalSavings.toFixed(0)}€/an d'économies</strong>
+                    </>
+                  )}
                 </CardDescription>
               </div>
             </div>
-            {cacheStats.hits > 0 && (
-              <Badge variant="outline" className="text-xs">
-                {cacheStats.hits} réponse{cacheStats.hits > 1 ? 's' : ''} en cache
-              </Badge>
-            )}
+
+            {/* Bouton expand/collapse */}
+            <Button
+              variant="ghost"
+              size="sm"
+              className="ml-2"
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsExpanded(!isExpanded);
+              }}
+            >
+              {isExpanded ? (
+                <>
+                  <ChevronUp className="h-4 w-4 mr-1" />
+                  Réduire
+                </>
+              ) : (
+                <>
+                  <ChevronDown className="h-4 w-4 mr-1" />
+                  Voir les détails
+                </>
+              )}
+            </Button>
           </div>
+
+          {/* Stats en mode collapsed */}
+          {!isExpanded && cacheStats.hits > 0 && (
+            <div className="mt-2 text-xs text-green-600">
+              ⚡ {cacheStats.hits} réponse{cacheStats.hits > 1 ? 's' : ''} instantanée{cacheStats.hits > 1 ? 's' : ''}
+            </div>
+          )}
         </CardHeader>
       </Card>
 
-      {/* Liste des suggestions */}
-      {suggestions.map((item) => (
-        <SuggestionCard
-          key={item.charge_id}
-          chargeSuggestion={item}
-          onRefresh={loadSuggestions}
-        />
-      ))}
+      {/* Contenu détaillé - Affiché uniquement si expanded */}
+      {isExpanded && (
+        <>
+          {/* Stats détaillées */}
+          {cacheStats.hits > 0 && (
+            <div className="flex items-center gap-2 text-sm text-muted-foreground px-1">
+              <Badge variant="outline" className="text-xs">
+                {cacheStats.hits} réponse{cacheStats.hits > 1 ? 's' : ''} en cache
+              </Badge>
+              {cacheStats.aiCalls > 0 && (
+                <Badge variant="outline" className="text-xs">
+                  {cacheStats.aiCalls} nouvelle{cacheStats.aiCalls > 1 ? 's' : ''} analyse{cacheStats.aiCalls > 1 ? 's' : ''}
+                </Badge>
+              )}
+            </div>
+          )}
+
+          {/* Liste des suggestions */}
+          {suggestions.map((item) => (
+            <SuggestionCard
+              key={item.charge_id}
+              chargeSuggestion={item}
+              onRefresh={loadSuggestions}
+            />
+          ))}
+        </>
+      )}
     </div>
   );
 }
