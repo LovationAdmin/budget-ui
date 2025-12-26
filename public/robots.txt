@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /budget/*/complete
+Disallow: /beta2/
+
+Sitemap: https://budgetfamille.com/sitemap.xml
