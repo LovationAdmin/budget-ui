@@ -125,6 +125,7 @@ export function TransactionMapper({
                     description: desc,
                     count: 0,
                     totalAmount: 0,
+                    averageAmount: 0,
                     transactions: []
                 };
             }

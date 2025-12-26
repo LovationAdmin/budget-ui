@@ -266,7 +266,7 @@ export default function Beta2Page() {
       setMonthComments(convertedData.monthComments);
       setProjectComments(convertedData.projectComments);
       setLockedMonths(convertedData.lockedMonths || {});
-      setLastServerUpdate(convertedData.lastUpdated);
+      setLastServerUpdate(convertedData.lastUpdated || "");
       
       loadedRef.current = true;
       
@@ -673,6 +673,7 @@ export default function Beta2Page() {
         <div id="calendar" className="mt-8">
             <MonthlyTable 
                 currentYear={currentYear}
+                onYearChange={handleYearChange}
                 people={people}
                 charges={charges}
                 projects={projects}
@@ -699,7 +700,6 @@ export default function Beta2Page() {
                 charges={charges}
                 projects={projects}
                 yearlyData={yearlyData}
-                yearlyExpenses={yearlyExpenses}
                 oneTimeIncomes={oneTimeIncomes}
             />
         </div>
