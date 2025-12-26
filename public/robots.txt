@@ -1,7 +1,25 @@
+# Budget Famille - robots.txt
+# https://budgetfamille.com/robots.txt
+
 User-agent: *
 Allow: /
-Disallow: /api/
-Disallow: /budget/*/complete
-Disallow: /beta2/
+Allow: /login
+Allow: /signup
+Allow: /privacy
+Allow: /premium
 
+# Bloquer les pages privées
+Disallow: /api/
+Disallow: /budget/
+Disallow: /beta2/
+Disallow: /profile
+Disallow: /invitation/
+Disallow: /verify-email
+
+# Bloquer les ressources inutiles
+Disallow: /*.json$
+Disallow: /src/
+Disallow: /node_modules/
+
+# Sitemap
 Sitemap: https://budgetfamille.com/sitemap.xml
