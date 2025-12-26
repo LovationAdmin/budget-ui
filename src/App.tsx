@@ -61,6 +61,7 @@ export default function App() {
       </Routes>
 
       {/* Ce composant est indispensable pour les notifications */}
+      
       <Toaster />
     </>
   );
