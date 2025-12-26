@@ -1,8 +1,7 @@
 {
+  "framework": "vite",
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
-  "framework": "vite",
-  "rewrites": [],
   "headers": [
     {
       "source": "/sitemap.xml",
@@ -31,14 +30,10 @@
       ]
     }
   ],
-  "routes": [
+  "rewrites": [
     {
-      "src": "/sitemap.xml",
-      "dest": "/sitemap.xml"
-    },
-    {
-      "src": "/robots.txt",
-      "dest": "/robots.txt"
+      "source": "/((?!assets/|favicon.ico|site.webmanifest|sitemap.xml|robots.txt).*)",
+      "destination": "/index.html"
     }
   ]
 }
