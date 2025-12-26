@@ -1,15 +1,15 @@
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { AlertTriangle, X, Crown } from "lucide-react";
+import { AlertTriangle, X, Sparkles } from "lucide-react";
 
 interface DemoBannerProps {
   onDisable: () => void;
-  onGoToPremium: () => void;
+  onGoToPremium?: () => void;
 }
 
-export function DemoBanner({ onDisable, onGoToPremium }: DemoBannerProps) {
+export function DemoBanner({ onDisable }: DemoBannerProps) {
   return (
-    <Alert className="bg-gradient-to-r from-amber-50 to-orange-50 border-2 border-amber-300 shadow-md relative">
+    <Alert className="bg-gradient-to-r from-amber-50 to-orange-50 border-2 border-amber-300 shadow-md relative animate-in slide-in-from-top-2 duration-300">
       <div className="flex items-start gap-3 pr-8">
         <AlertTriangle className="h-5 w-5 text-amber-600 flex-shrink-0 mt-0.5" />
         <div className="flex-1">
@@ -19,16 +19,9 @@ export function DemoBanner({ onDisable, onGoToPremium }: DemoBannerProps) {
                 <strong className="font-bold">Mode Démonstration Actif</strong>
                 <p className="text-sm mt-1">
                   Vous utilisez des données bancaires fictives pour tester Reality Check.
+                  Toutes les fonctionnalités sont disponibles avec des transactions de démo.
                 </p>
               </div>
-              <Button
-                onClick={onGoToPremium}
-                size="sm"
-                className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white shadow-sm whitespace-nowrap"
-              >
-                <Crown className="h-4 w-4 mr-2" />
-                Passer Premium
-              </Button>
             </div>
           </AlertDescription>
         </div>

@@ -10,7 +10,10 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import api from '@/services/api';
 import { cn } from "@/lib/utils";
 
-// Types
+// ============================================================================
+// TYPES
+// ============================================================================
+
 export interface BridgeTransaction {
     id: string;
     account_id: string;
@@ -42,8 +45,12 @@ interface TransactionMapperProps {
     currentMappings: MappedTransaction[];
     onSave: (newMappings: MappedTransaction[]) => void;
     budgetId: string;
-    demoTransactions?: BridgeTransaction[]; // ✅ NOUVELLE PROP POUR MODE DÉMO
+    demoTransactions?: BridgeTransaction[];
 }
+
+// ============================================================================
+// COMPONENT
+// ============================================================================
 
 export function TransactionMapper({ 
     isOpen, 
@@ -52,7 +59,7 @@ export function TransactionMapper({
     currentMappings, 
     onSave, 
     budgetId,
-    demoTransactions // ✅ DESTRUCTURER LA NOUVELLE PROP
+    demoTransactions
 }: TransactionMapperProps) {
     const [rawTransactions, setRawTransactions] = useState<BridgeTransaction[]>([]);
     const [loading, setLoading] = useState(false);
@@ -60,156 +67,133 @@ export function TransactionMapper({
     const [source, setSource] = useState<'all' | 'bridge' | 'enablebanking'>('all');
     const [selectedDescriptions, setSelectedDescriptions] = useState<Set<string>>(new Set());
 
-    // 1. Fetch Data on Open
+    // ============================================================================
+    // DATA FETCHING
+    // ============================================================================
+
     useEffect(() => {
         if (isOpen) {
             fetchTransactions();
         }
     }, [isOpen, source]);
 
-    // 2. Pre-select based on existing mappings
-    useEffect(() => {
-        if (isOpen && rawTransactions.length > 0) {
-            const mappedTxIds = new Set(
-                currentMappings
-                    .filter(m => m.chargeId === charge.id)
-                    .map(m => String(m.transactionId))
-            );
-            
-            const descriptionsToSelect = new Set<string>();
-
-            rawTransactions.forEach(tx => {
-                if (mappedTxIds.has(String(tx.id))) {
-                    descriptionsToSelect.add(tx.clean_description);
-                }
-            });
-            setSelectedDescriptions(descriptionsToSelect);
-        }
-    }, [isOpen, rawTransactions, currentMappings, charge.id]);
-
     const fetchTransactions = async () => {
         setLoading(true);
         try {
-            // ✅ MODE DÉMO : Utiliser les transactions fournies
-            if (demoTransactions && demoTransactions.length > 0) {
+            if (demoTransactions) {
+                // Simuler un délai réseau pour plus de réalisme en mode démo
+                await new Promise(resolve => setTimeout(resolve, 800));
                 setRawTransactions(demoTransactions);
-                setLoading(false);
-                return;
+            } else {
+                const params = source !== 'all' ? { source } : {};
+                const response = await api.get(`/banking/budgets/${budgetId}/transactions`, { params });
+                setRawTransactions(response.data.transactions || []);
             }
-
-            // MODE NORMAL : Récupérer depuis les APIs
-            let allTransactions: BridgeTransaction[] = [];
-
-            if (source === 'all' || source === 'bridge') {
-                try {
-                    const bridgeRes = await api.get('/banking/bridge/transactions');
-                    const bridgeTxs = (bridgeRes.data.transactions || []).map((tx: any) => ({
-                        ...tx,
-                        id: String(tx.id),
-                        account_id: String(tx.account_id)
-                    }));
-                    allTransactions = [...allTransactions, ...bridgeTxs];
-                } catch (error) {
-                    console.warn("Bridge transactions unavailable:", error);
-                }
-            }
-
-            if (source === 'all' || source === 'enablebanking') {
-                try {
-                    const ebRes = await api.get(`/banking/enablebanking/transactions?budget_id=${budgetId}`);
-                    const ebTxs = (ebRes.data.transactions || []).map((tx: any) => ({
-                        ...tx,
-                        id: String(tx.id),
-                        account_id: String(tx.account_id)
-                    }));
-                    allTransactions = [...allTransactions, ...ebTxs];
-                } catch (error) {
-                    console.warn("Enable Banking transactions unavailable:", error);
-                }
-            }
-
-            const uniqueTransactions = Array.from(
-                new Map(allTransactions.map(tx => [tx.id, tx])).values()
-            );
-
-            setRawTransactions(uniqueTransactions);
         } catch (error) {
-            console.error("Failed to load transactions", error);
+            console.error('[TransactionMapper] Error fetching transactions:', error);
+            setRawTransactions([]);
         } finally {
             setLoading(false);
         }
     };
 
-    // 3. AGGREGATION LOGIC (Distinct)
+    // ============================================================================
+    // INITIAL SELECTION
+    // ============================================================================
+
+    useEffect(() => {
+        if (!isOpen || rawTransactions.length === 0) return;
+
+        const alreadyLinked = currentMappings
+            .filter(m => m.chargeId === charge.id)
+            .map(m => m.description);
+
+        setSelectedDescriptions(new Set(alreadyLinked));
+    }, [isOpen, rawTransactions, currentMappings, charge.id]);
+
+    // ============================================================================
+    // GROUPING & FILTERING
+    // ============================================================================
+
     const groupedTransactions = useMemo(() => {
-        const groups: Record<string, GroupedTransaction> = {};
-
-        rawTransactions.forEach(tx => {
-            const desc = tx.clean_description || "Transaction Inconnue";
-            
-            if (search && !desc.toLowerCase().includes(search.toLowerCase())) return;
-
-            if (!groups[desc]) {
-                groups[desc] = {
+        const negativeTransactions = rawTransactions.filter(t => t.amount < 0);
+        
+        const grouped = negativeTransactions.reduce((acc, transaction) => {
+            const desc = transaction.clean_description;
+            if (!acc[desc]) {
+                acc[desc] = {
                     description: desc,
                     count: 0,
                     totalAmount: 0,
-                    averageAmount: 0,
                     transactions: []
                 };
             }
+            acc[desc].count += 1;
+            acc[desc].totalAmount += Math.abs(transaction.amount);
+            acc[desc].transactions.push(transaction);
+            return acc;
+        }, {} as Record<string, GroupedTransaction>);
 
-            groups[desc].count += 1;
-            groups[desc].totalAmount += tx.amount;
-            groups[desc].transactions.push(tx);
-        });
+        const groupedArray: GroupedTransaction[] = Object.values(grouped).map(g => ({
+            ...g,
+            averageAmount: g.totalAmount / g.count
+        }));
 
-        Object.values(groups).forEach(g => {
-            g.averageAmount = g.totalAmount / g.count;
-        });
+        const searchLower = search.toLowerCase();
+        const filtered = searchLower 
+            ? groupedArray.filter(g => g.description.toLowerCase().includes(searchLower))
+            : groupedArray;
 
-        return Object.values(groups).sort((a, b) => b.count - a.count);
+        return filtered.sort((a, b) => b.totalAmount - a.totalAmount);
     }, [rawTransactions, search]);
 
-    const handleToggleGroup = (group: GroupedTransaction) => {
-        const newSet = new Set(selectedDescriptions);
-        if (newSet.has(group.description)) {
-            newSet.delete(group.description);
-        } else {
-            newSet.add(group.description);
-        }
-        setSelectedDescriptions(newSet);
+    // ============================================================================
+    // HANDLERS
+    // ============================================================================
+
+    const toggleDescription = (description: string) => {
+        setSelectedDescriptions(prev => {
+            const newSet = new Set(prev);
+            if (newSet.has(description)) {
+                newSet.delete(description);
+            } else {
+                newSet.add(description);
+            }
+            return newSet;
+        });
     };
 
     const handleSave = () => {
         const newMappings: MappedTransaction[] = [];
 
-        rawTransactions.forEach(tx => {
-            if (selectedDescriptions.has(tx.clean_description)) {
-                newMappings.push({
-                    chargeId: charge.id,
-                    transactionId: String(tx.id),
-                    amount: tx.amount,
-                    date: tx.date,
-                    description: tx.clean_description
+        groupedTransactions.forEach(group => {
+            if (selectedDescriptions.has(group.description)) {
+                group.transactions.forEach(transaction => {
+                    newMappings.push({
+                        chargeId: charge.id,
+                        transactionId: transaction.id,
+                        amount: Math.abs(transaction.amount),
+                        date: transaction.date,
+                        description: transaction.clean_description
+                    });
                 });
             }
         });
-        
+
         onSave(newMappings);
         onClose();
     };
 
-    // ✅ NOUVELLE FONCTIONNALITÉ: Effacer tous les mappings
-    const handleClearAll = () => {
-        if (confirm(`Voulez-vous vraiment effacer tous les mappings pour la charge "${charge.label}" ?`)) {
-            setSelectedDescriptions(new Set());
-            onSave([]); // Enregistrer un tableau vide
-            onClose();
-        }
+    const handleCancel = () => {
+        setSelectedDescriptions(new Set());
+        setSearch("");
+        onClose();
     };
 
-    // Statistiques
+    // ============================================================================
+    // COMPUTED VALUES
+    // ============================================================================
+
     const alreadyMappedCount = currentMappings.filter(m => m.chargeId === charge.id).length;
     
     const selectedCount = Array.from(selectedDescriptions).reduce((sum, desc) => {
@@ -222,6 +206,10 @@ export function TransactionMapper({
         return sum + (group?.totalAmount || 0);
     }, 0);
 
+    // ============================================================================
+    // RENDER
+    // ============================================================================
+
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
             <DialogContent className="sm:max-w-xl h-[80vh] flex flex-col">
@@ -232,7 +220,7 @@ export function TransactionMapper({
                     </DialogTitle>
                     <DialogDescription className="space-y-2">
                         <div>
-                            Associez des dépenses réelles à la charge : <strong>{charge.label}</strong> ({charge.amount}€).
+                            Associez des dépenses réelles à la charge : <strong>{charge.label}</strong> ({charge.amount.toLocaleString('fr-FR', { minimumFractionDigits: 2 })}€).
                         </div>
                         {alreadyMappedCount > 0 && (
                             <Alert className="bg-indigo-50 border-indigo-200">
@@ -261,7 +249,6 @@ export function TransactionMapper({
                         />
                     </div>
                     
-                    {/* ✅ Cacher le sélecteur de source en mode démo */}
                     {!demoTransactions && (
                         <select 
                             value={source} 
@@ -282,99 +269,72 @@ export function TransactionMapper({
                             <Loader2 className="h-8 w-8 animate-spin text-indigo-600" />
                         </div>
                     ) : groupedTransactions.length === 0 ? (
-                        <div className="text-center py-12 text-gray-500">
-                            <Layers className="h-12 w-12 mx-auto mb-2 opacity-30" />
-                            <p>Aucune transaction trouvée</p>
-                            <p className="text-sm mt-1">Connectez une banque ou modifiez votre recherche</p>
+                        <div className="flex flex-col items-center justify-center h-40 text-gray-500">
+                            <Layers className="h-12 w-12 mb-2 opacity-30" />
+                            <p className="text-sm">Aucune transaction trouvée</p>
                         </div>
                     ) : (
                         <div className="p-4 space-y-2">
-                            {groupedTransactions.map((group) => {
-                                const isSelected = selectedDescriptions.has(group.description);
-                                const isExpense = group.averageAmount < 0;
-
-                                return (
-                                    <div 
-                                        key={group.description}
-                                        onClick={() => handleToggleGroup(group)}
-                                        className={cn(
-                                            "p-3 border rounded-lg cursor-pointer transition-all",
-                                            isSelected 
-                                                ? "bg-indigo-50 border-indigo-300 shadow-sm" 
-                                                : "hover:bg-gray-50 border-gray-200"
-                                        )}
-                                    >
-                                        <div className="flex items-start gap-3">
-                                            <Checkbox checked={isSelected} className="mt-1" />
-                                            <div className="flex-1 min-w-0">
-                                                <div className="flex items-center gap-2 mb-1">
-                                                    <span className="font-medium text-sm truncate">
-                                                        {group.description}
-                                                    </span>
-                                                    <Badge variant={isExpense ? "destructive" : "default"} className="shrink-0">
-                                                        {group.count}x
-                                                    </Badge>
-                                                </div>
-                                                <div className="flex items-center gap-3 text-xs text-gray-600">
-                                                    <span>
-                                                        Moyen: <strong className={isExpense ? "text-red-600" : "text-green-600"}>
-                                                            {group.averageAmount.toFixed(2)}€
-                                                        </strong>
-                                                    </span>
-                                                    <span>•</span>
-                                                    <span>
-                                                        Total: <strong className={isExpense ? "text-red-600" : "text-green-600"}>
-                                                            {group.totalAmount.toFixed(2)}€
-                                                        </strong>
-                                                    </span>
-                                                </div>
-                                            </div>
+                            {groupedTransactions.map((group) => (
+                                <label
+                                    key={group.description}
+                                    className={cn(
+                                        "flex items-start gap-3 p-3 border rounded-lg cursor-pointer transition-all hover:bg-gray-50",
+                                        selectedDescriptions.has(group.description) && "bg-indigo-50 border-indigo-300"
+                                    )}
+                                >
+                                    <Checkbox
+                                        checked={selectedDescriptions.has(group.description)}
+                                        onCheckedChange={() => toggleDescription(group.description)}
+                                        className="mt-1"
+                                    />
+                                    <div className="flex-1 min-w-0">
+                                        <div className="font-medium text-sm text-gray-900 truncate">
+                                            {group.description}
+                                        </div>
+                                        <div className="flex items-center gap-2 mt-1">
+                                            <Badge variant="outline" className="text-xs">
+                                                {group.count} transaction{group.count > 1 ? 's' : ''}
+                                            </Badge>
+                                            <span className="text-xs text-gray-500">
+                                                Total: {group.totalAmount.toLocaleString('fr-FR', { minimumFractionDigits: 2 })}€
+                                            </span>
+                                        </div>
+                                        <div className="text-xs text-gray-400 mt-1">
+                                            Moyenne: {group.averageAmount.toLocaleString('fr-FR', { minimumFractionDigits: 2 })}€
                                         </div>
                                     </div>
-                                );
-                            })}
+                                </label>
+                            ))}
                         </div>
                     )}
                 </ScrollArea>
 
-                {/* Footer avec statistiques et actions */}
-                <DialogFooter className="flex-col sm:flex-row gap-2">
-                    <div className="flex-1 text-sm text-gray-600">
-                        <strong>{selectedCount}</strong> transaction{selectedCount > 1 ? 's' : ''} sélectionnée{selectedCount > 1 ? 's' : ''}
-                        {selectedCount > 0 && (
-                            <span className="ml-2">
-                                • Total: <strong className={selectedTotal < 0 ? "text-red-600" : "text-green-600"}>
-                                    {Math.abs(selectedTotal).toFixed(2)}€
-                                </strong>
-                            </span>
-                        )}
+                {/* Footer avec statistiques */}
+                <div className="border-t pt-3">
+                    <div className="flex justify-between items-center mb-3 text-sm">
+                        <span className="text-gray-600">
+                            {selectedCount} transaction{selectedCount !== 1 ? 's' : ''} sélectionnée{selectedCount !== 1 ? 's' : ''}
+                        </span>
+                        <span className="font-semibold text-indigo-600">
+                            Total: {selectedTotal.toLocaleString('fr-FR', { minimumFractionDigits: 2 })}€
+                        </span>
                     </div>
                     
-                    {/* ✅ BOUTON EFFACER (visible seulement s'il y a des mappings) */}
-                    {alreadyMappedCount > 0 && (
-                        <Button 
-                            variant="outline" 
-                            onClick={handleClearAll}
-                            className="text-red-600 hover:bg-red-50 hover:text-red-700 border-red-200"
-                        >
-                            <Trash2 className="h-4 w-4 mr-2" />
-                            Effacer tout
+                    <DialogFooter className="gap-2">
+                        <Button variant="outline" onClick={handleCancel}>
+                            Annuler
                         </Button>
-                    )}
-                    
-                    <Button variant="outline" onClick={onClose}>
-                        Annuler
-                    </Button>
-                    
-                    <Button 
-                        onClick={handleSave} 
-                        disabled={selectedCount === 0 && alreadyMappedCount === 0}
-                        className="bg-indigo-600 hover:bg-indigo-700"
-                    >
-                        <LinkIcon className="h-4 w-4 mr-2" />
-                        Enregistrer {selectedCount > 0 && `(${selectedCount})`}
-                    </Button>
-                </DialogFooter>
+                        <Button 
+                            onClick={handleSave}
+                            disabled={selectedCount === 0}
+                            className="bg-indigo-600 hover:bg-indigo-700"
+                        >
+                            <LinkIcon className="h-4 w-4 mr-2" />
+                            Enregistrer ({selectedCount})
+                        </Button>
+                    </DialogFooter>
+                </div>
             </DialogContent>
         </Dialog>
     );

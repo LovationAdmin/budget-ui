@@ -36,10 +36,9 @@ import { ToastAction } from '@/components/ui/toast';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { useTutorial } from '../contexts/TutorialContext';
 
-import { DEMO_TRANSACTIONS, DEMO_BANK_BALANCE } from '@/constants/demoData';
+import { DEMO_TRANSACTIONS, DEMO_BANK_BALANCE, DEMO_MODE_LIMITS } from '@/constants/demoData';
 import { DemoModePrompt } from '@/components/budget/DemoModePrompt';
 import { DemoBanner } from '@/components/budget/DemoBanner';
-import { Eye, Crown } from "lucide-react";
 
 const BUDGET_NAV_ITEMS: NavItem[] = [
   { id: "overview", label: "Vue d'ensemble", icon: LayoutDashboard },
@@ -92,6 +91,7 @@ export default function Beta2Page() {
   const [chargeToMap, setChargeToMap] = useState<Charge | null>(null);
   const [chargeMappings, setChargeMappings] = useState<MappedTransaction[]>([]);
 
+  // --- DEMO MODE STATE ---
   const [isDemoMode, setIsDemoMode] = useState(false);
   const [demoTransactions, setDemoTransactions] = useState<BridgeTransaction[]>([]);
   const [demoBankBalance, setDemoBankBalance] = useState(0);
@@ -116,246 +116,204 @@ export default function Beta2Page() {
   const loadedRef = useRef(false);
   const notifiedProjectsRef = useRef<Set<string>>(new Set());
 
-  // --- 0. SMART LOGIC ---
-
-  const getMonthlyChargeTotal = useCallback((monthIndex: number) => {
-      let total = 0;
-      charges.forEach(charge => {
-          const mappedForThisMonth = chargeMappings.filter(m => {
-              if (m.chargeId !== charge.id) return false;
-              const date = new Date(m.date);
-              return date.getMonth() === monthIndex && date.getFullYear() === currentYear;
-          });
-
-          if (mappedForThisMonth.length > 0) {
-              const sumReal = mappedForThisMonth.reduce((acc, curr) => acc + curr.amount, 0);
-              total += Math.abs(sumReal);
-          } else {
-              const monthStart = new Date(currentYear, monthIndex, 1);
-              const monthEnd = new Date(currentYear, monthIndex + 1, 0);
-              let isActive = true;
-              if (charge.startDate) {
-                  const start = new Date(charge.startDate);
-                  if (start > monthEnd) isActive = false;
-              }
-              if (charge.endDate) {
-                  const end = new Date(charge.endDate);
-                  if (end < monthStart) isActive = false;
-              }
-              if (isActive) total += charge.amount;
-          }
-      });
-      return total;
-  }, [charges, chargeMappings, currentYear]);
-
-  const mappedTotalsByChargeId = useMemo(() => {
-    return charges.reduce((acc, charge) => {
-      const total = chargeMappings
-        .filter(m => m.chargeId === charge.id)
-        .reduce((sum, m) => sum + Math.abs(m.amount), 0);
-      if (total > 0) acc[charge.id] = total; 
-      return acc;
-    }, {} as Record<string, number>);
-  }, [charges, chargeMappings]);
-
-  const calculateCarryOvers = () => {
+  // --- COMPUTED VALUES ---
+  const projectCarryOvers = useMemo(() => {
       const carryOvers: Record<string, number> = {};
-      if (!globalDataRef.current || !globalDataRef.current.yearlyData) return carryOvers;
-
-      const rawYearlyData = globalDataRef.current.yearlyData;
-      
-      Object.keys(rawYearlyData).forEach(yearStr => {
-          const year = parseInt(yearStr);
-          if (year < currentYear) {
-              const yearData = rawYearlyData[yearStr];
-              if (yearData.months && yearData.expenses) {
-                  yearData.months.forEach((monthAllocation: any, idx: number) => {
-                      const monthExpense = yearData.expenses[idx] || {};
-                      Object.keys(monthAllocation).forEach(projectId => {
-                          const allocated = monthAllocation[projectId] || 0;
-                          const spent = monthExpense[projectId] || 0;
-                          carryOvers[projectId] = (carryOvers[projectId] || 0) + (allocated - spent);
-                      });
-                  });
-              }
-          }
+      projects.forEach(proj => {
+          let total = 0;
+          MONTHS.forEach(month => {
+              const allocation = yearlyData[month]?.[proj.id] || 0;
+              const expense = yearlyExpenses[month]?.[proj.id] || 0;
+              total += (allocation - expense);
+          });
+          carryOvers[proj.id] = total;
       });
       return carryOvers;
+  }, [projects, yearlyData, yearlyExpenses]);
+
+  const mappedTotalsByChargeId = useMemo(() => {
+      const totals: Record<string, number> = {};
+      charges.forEach(ch => {
+          const mapped = chargeMappings.filter(m => m.chargeId === ch.id);
+          totals[ch.id] = mapped.reduce((sum, m) => sum + Math.abs(m.amount), 0);
+      });
+      return totals;
+  }, [charges, chargeMappings]);
+
+  // ============================================================================
+  // DEMO MODE - PERSISTANCE & RESTORATION
+  // ============================================================================
+  
+  const getDemoStorageKey = () => `demo-mode-${id}`;
+  const getDemoTimestampKey = () => `demo-timestamp-${id}`;
+
+  // Restaurer le mode démo au chargement
+  useEffect(() => {
+    if (!id) return;
+    
+    const demoEnabled = localStorage.getItem(getDemoStorageKey()) === 'true';
+    const demoTimestamp = localStorage.getItem(getDemoTimestampKey());
+    
+    if (demoEnabled && demoTimestamp) {
+      const daysSinceActivation = (Date.now() - parseInt(demoTimestamp)) / (1000 * 60 * 60 * 24);
+      
+      if (daysSinceActivation < DEMO_MODE_LIMITS.EXPIRE_AFTER_DAYS) {
+        console.log('[Demo Mode] Restoring demo mode from localStorage');
+        setDemoTransactions(DEMO_TRANSACTIONS);
+        setDemoBankBalance(DEMO_BANK_BALANCE);
+        setIsDemoMode(true);
+        setHasActiveConnection(true);
+      } else {
+        console.log('[Demo Mode] Demo mode expired after 7 days, cleaning up');
+        disableDemoMode();
+      }
+    }
+  }, [id]);
+
+  // ============================================================================
+  // DEMO MODE - ACTIONS
+  // ============================================================================
+
+  const enableDemoMode = () => {
+    if (!id) return;
+    
+    setDemoTransactions(DEMO_TRANSACTIONS);
+    setDemoBankBalance(DEMO_BANK_BALANCE);
+    setIsDemoMode(true);
+    setHasActiveConnection(true);
+    
+    // Persister dans localStorage
+    localStorage.setItem(getDemoStorageKey(), 'true');
+    localStorage.setItem(getDemoTimestampKey(), Date.now().toString());
+    
+    // Analytics tracking
+    if (typeof window !== 'undefined' && (window as any).gtag) {
+      (window as any).gtag('event', 'demo_mode_enabled', {
+        budget_id: id,
+        user_id: user?.id
+      });
+    }
+    
+    toast({
+      title: "🎭 Mode Démo Activé",
+      description: "Vous utilisez des données bancaires fictives pour tester Reality Check.",
+      duration: 5000
+    });
   };
 
-  const projectCarryOvers = useMemo(() => {
-    return calculateCarryOvers();
-  }, [currentYear, yearlyData, yearlyExpenses]);
-
-  // --- 1. EFFECTS ---
-
-  useEffect(() => {
-    if (!loading && !hasSeenTutorial && loadedRef.current) {
-       const timer = setTimeout(() => startTutorial(), 1500); 
-       return () => clearTimeout(timer);
-    }
-  }, [loading, hasSeenTutorial, startTutorial]);
-
-  const refreshBankData = useCallback(async () => {
-      // MODE DÉMO: Utiliser données fictives
-      if (isDemoMode) {
-          setRealBankBalance(DEMO_BANK_BALANCE);
-          setHasActiveConnection(true);
-          return;
-      }
-      try {
-          if (!id) return;
-          // Enable Banking endpoint
-          const res = await api.get(`/budgets/${id}/banking/enablebanking/connections`);
-          setRealBankBalance(res.data.total_real_cash || 0);
-          const conns = res.data.connections || [];
-          setHasActiveConnection(conns.length > 0);
-      } catch (error) { 
-          console.error("Failed to refresh Enable Banking data", error); 
-      }
-  }, [id]);
-
-  useEffect(() => { refreshBankData(); }, [refreshBankData]);
-
-  useEffect(() => { if (id) loadBudget(); }, [id]);
-
-  useEffect(() => {
-    if (!loadedRef.current) return;
-    const saveInterval = setInterval(() => {
-        if (document.visibilityState === 'visible') handleSave(true);
-    }, 30000);
-    return () => clearInterval(saveInterval);
-  }, [budgetTitle, currentYear, people, charges, projects, yearlyData, yearlyExpenses, oneTimeIncomes, monthComments, projectComments, lockedMonths, chargeMappings]);
-
-  useEffect(() => {
-    if (!id || !loadedRef.current) return;
-    const pollInterval = setInterval(async () => {
-      if (document.visibilityState !== 'visible') return;
-      try {
-        const res = await budgetAPI.getData(id);
-        const remoteData: RawBudgetData = res.data.data;
-        if (remoteData.lastUpdated && lastServerUpdate && remoteData.lastUpdated > lastServerUpdate && remoteData.updatedBy !== user?.name) {
-          toast({
-            title: "Mise à jour disponible",
-            description: `Modifié par ${remoteData.updatedBy || 'un membre'}.`,
-            variant: "default",
-            action: <ToastAction altText="Rafraîchir" onClick={() => loadBudget()}>Rafraîchir</ToastAction>,
-          });
-        }
-      } catch (err) { console.error("Polling error", err); }
-    }, 30000);
-    return () => clearInterval(pollInterval);
-  }, [id, lastServerUpdate, user?.name]);
-
-  useEffect(() => {
+  const disableDemoMode = () => {
     if (!id) return;
-    const memberInterval = setInterval(() => { 
-        if (document.visibilityState === 'visible') refreshMembersOnly(); 
-    }, 60000); 
-    return () => clearInterval(memberInterval);
-  }, [id]);
-
-  useEffect(() => {
-    if (!loadedRef.current) return;
-    projects.forEach(project => {
-        if (!project.targetAmount || project.targetAmount <= 0) return;
-        if (notifiedProjectsRef.current.has(project.id)) return;
-        let totalAllocated = (projectCarryOvers[project.id] || 0);
-        MONTHS.forEach(month => { totalAllocated += yearlyData[month]?.[project.id] || 0; });
-        if (totalAllocated >= project.targetAmount) {
-            notifiedProjectsRef.current.add(project.id);
-            toast({ 
-                title: "🎉 Objectif Atteint !", 
-                description: `Projet "${project.label}" financé.`, 
-                className: "bg-success/10 border-success/50 text-success-foreground", 
-                duration: 5000 
-            });
-        }
+    
+    setIsDemoMode(false);
+    setDemoTransactions([]);
+    setDemoBankBalance(0);
+    setHasActiveConnection(false);
+    
+    // Nettoyer localStorage
+    localStorage.removeItem(getDemoStorageKey());
+    localStorage.removeItem(getDemoTimestampKey());
+    
+    toast({
+      title: "Mode Démo Désactivé",
+      description: "Les données de démonstration ont été effacées.",
+      variant: "default"
     });
-  }, [projects, yearlyData, projectCarryOvers]);
+  };
+
+  // ============================================================================
+  // INITIAL DATA LOADING
+  // ============================================================================
 
   useEffect(() => {
-      if (charges.length > 0) {
-          const newSuggestions: Suggestion[] = [];
-          charges.forEach(c => {
-              if (c.amount > 30 && (c.label.toLowerCase().includes('mobile') || c.label.toLowerCase().includes('sfr') || c.label.toLowerCase().includes('orange'))) {
-                  newSuggestions.push({
-                      id: 'sug_mobile_' + c.id, 
-                      chargeId: c.id, 
-                      type: 'MOBILE', 
-                      title: 'Forfait Mobile', 
-                      message: `Vous payez ${c.amount}€/mois. Économisez en changeant d'opérateur.`, 
-                      potentialSavings: (c.amount - 10) * 12, 
-                      actionLink: 'https://www.ariase.com/mobile', 
-                      canBeContacted: false
-                  });
-              }
-              if (c.amount > 100 && (c.label.toLowerCase().includes('edf') || c.label.toLowerCase().includes('engie'))) {
-                  newSuggestions.push({
-                      id: 'sug_energy_' + c.id, 
-                      chargeId: c.id, 
-                      type: 'ENERGY', 
-                      title: 'Facture Énergie', 
-                      message: `Comparez les fournisseurs pour réduire cette facture de ${c.amount}€.`, 
-                      potentialSavings: (c.amount * 0.15) * 12, 
-                      actionLink: 'https://www.papernest.com/energie/', 
-                      canBeContacted: true
-                  });
-              }
-          });
-          setSuggestions(newSuggestions);
-      }
-  }, [charges]);
+    loadBudgetData();
+  }, [id]);
 
-  // --- ACTIONS ---
+  const loadBudgetData = async () => {
+    if (!id || loadedRef.current) return;
+    setLoading(true);
 
-  const loadBudget = async () => {
-    if (!id) return;
     try {
-      const [budgetRes, dataRes] = await Promise.all([
-          budgetAPI.getById(id), 
-          budgetAPI.getData(id)
+      const [budgetResponse, dataResponse] = await Promise.all([
+        budgetAPI.getById(id),
+        budgetAPI.getData(id)
       ]);
-      
-      setBudget(budgetRes.data);
-      const rawData: ExtendedBudgetData = dataRes.data.data;
-      
-      globalDataRef.current = rawData;
 
-      if (rawData.lastUpdated) setLastServerUpdate(rawData.lastUpdated);
-      else setLastServerUpdate(new Date().toISOString());
+      setBudget(budgetResponse.data);
+      const raw = dataResponse.data as ExtendedBudgetData;
+      
+      setChargeMappings(raw.chargeMappings || []);
+      
+      const isNewFormat = raw.yearlyData && 
+                         Object.keys(raw.yearlyData).some(key => /^\d{4}$/.test(key));
 
-      const data = convertOldFormatToNew(rawData);
-      
-      setBudgetTitle(data.budgetTitle || '');
-      const savedYear = data.currentYear || new Date().getFullYear();
-      setCurrentYear(savedYear);
-      
-      setPeople(data.people || []);
-      setCharges(data.charges || []);
-      setProjects(data.projects || []);
-      
-      setYearlyData(data.yearlyData || {});
-      setYearlyExpenses(data.yearlyExpenses || {});
-      setOneTimeIncomes(data.oneTimeIncomes || {});
-      setMonthComments(data.monthComments || {});
-      setProjectComments(data.projectComments || {});
-      setLockedMonths(data.lockedMonths || {});
+      let convertedData;
+      if (isNewFormat) {
+          convertedData = convertOldFormatToNew(raw);
+      } else {
+          convertedData = convertOldFormatToNew(raw);
+      }
 
-      setChargeMappings(rawData.chargeMappings || []);
+      globalDataRef.current = raw;
+      
+      setBudgetTitle(convertedData.budgetTitle);
+      setCurrentYear(convertedData.currentYear);
+      setPeople(convertedData.people);
+      setCharges(convertedData.charges);
+      setProjects(convertedData.projects);
+      setYearlyData(convertedData.yearlyData);
+      setYearlyExpenses(convertedData.yearlyExpenses);
+      setOneTimeIncomes(convertedData.oneTimeIncomes);
+      setMonthComments(convertedData.monthComments);
+      setProjectComments(convertedData.projectComments);
+      setLockedMonths(convertedData.lockedMonths || {});
+      setLastServerUpdate(convertedData.lastUpdated);
       
       loadedRef.current = true;
-    } catch (error) { 
-        console.error(error);
-        toast({ 
-            title: "Erreur", 
-            description: "Impossible de charger les données.", 
-            variant: "destructive" 
-        });
-    } finally { 
-        setLoading(false); 
+      
+      if (!hasSeenTutorial) {
+          setTimeout(() => startTutorial(), 500);
+      }
+      
+      // Charger les données bancaires
+      refreshBankData();
+      
+    } catch (error: any) {
+      console.error('Error loading budget:', error);
+      if (error.response?.status === 404) {
+          navigate('/404');
+      }
+      toast({ 
+        title: "Erreur", 
+        description: "Impossible de charger le budget", 
+        variant: "destructive" 
+      });
+    } finally {
+      setLoading(false);
     }
   };
+
+  // ============================================================================
+  // BANK DATA MANAGEMENT
+  // ============================================================================
+
+  const refreshBankData = async () => {
+      if (!id || isDemoMode) return;
+      
+      try {
+          const response = await api.get(`/banking/budgets/${id}/reality-check`);
+          const { total_real_cash } = response.data;
+          
+          setRealBankBalance(total_real_cash || 0);
+          setHasActiveConnection(total_real_cash > 0);
+      } catch (error) {
+          console.error('[Reality Check] Error fetching bank data:', error);
+          setHasActiveConnection(false);
+      }
+  };
+
+  // ============================================================================
+  // YEAR MANAGEMENT
+  // ============================================================================
 
   const hydrateStateFromGlobal = (year: number, rawData: any) => {
       if (rawData.yearlyData && rawData.yearlyData[year]) {
@@ -413,6 +371,10 @@ export default function Beta2Page() {
       setCurrentYear(newYear);
       hydrateStateFromGlobal(newYear, globalDataRef.current);
   };
+
+  // ============================================================================
+  // SAVE MANAGEMENT
+  // ============================================================================
 
   const handleSave = async (silent = false) => {
      if(!id) return;
@@ -482,6 +444,10 @@ export default function Beta2Page() {
     }
   };
 
+  // ============================================================================
+  // TRANSACTION MAPPING
+  // ============================================================================
+
   const handleOpenMapper = (charge: Charge) => {
       setChargeToMap(charge);
       setShowMapper(true);
@@ -491,55 +457,29 @@ export default function Beta2Page() {
       const others = chargeMappings.filter(m => m.chargeId !== chargeToMap?.id);
       const updated = [...others, ...newLinks];
       setChargeMappings(updated);
+      
       toast({ 
           title: "Mappings mis à jour", 
-          description: `${newLinks.length} transactions liées.` 
+          description: `${newLinks.length} transaction(s) liée(s).` 
       });
-  };
-
-  const enableDemoMode = () => {
-      setDemoTransactions(DEMO_TRANSACTIONS);
-      setDemoBankBalance(DEMO_BANK_BALANCE);
-      setIsDemoMode(true);
-      setHasActiveConnection(true);
-      
-      toast({
-          title: "🎭 Mode Démo Activé",
-          description: "Vous utilisez des données bancaires fictives pour tester Reality Check.",
-          duration: 5000
-      });
-  };
-
-  const disableDemoMode = () => {
-      setIsDemoMode(false);
-      setDemoTransactions([]);
-      setDemoBankBalance(0);
-      setHasActiveConnection(false);
-      
-      toast({
-          title: "Mode Démo Désactivé",
-          description: "Les données de démonstration ont été effacées.",
-          variant: "default"
-      });
-  };
-
-  const goToPremium = () => {
-      navigate('/premium');
   };
 
   const handleOpenBankManager = () => {
       if (isDemoMode) {
           toast({
               title: "Mode Démonstration",
-              description: "Vous utilisez des données fictives. Passez Premium pour connecter votre vraie banque.",
-              duration: 7000
+              description: "Vous utilisez des données fictives. Les vraies connexions bancaires seront disponibles prochainement.",
+              duration: 5000
           });
           return;
       }
       setShowBankManager(true);
   };
 
-  // --- REALITY CHECK CALCULATION ---
+  // ============================================================================
+  // REALITY CHECK CALCULATION
+  // ============================================================================
+
   const today = new Date();
   const currentMonthIndex = today.getMonth();
   const currentRealYear = today.getFullYear();
@@ -559,7 +499,10 @@ export default function Beta2Page() {
       });
   }
 
-  // --- SECTION CHANGE HANDLER ---
+  // ============================================================================
+  // SECTION NAVIGATION
+  // ============================================================================
+
   const handleSectionChange = (section: string) => {
     if (section === 'settings' || section === 'notifications') return;
     const element = document.getElementById(section);
@@ -569,6 +512,10 @@ export default function Beta2Page() {
         window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
+
+  // ============================================================================
+  // RENDER
+  // ============================================================================
 
   if (loading) {
       return (
@@ -671,12 +618,13 @@ export default function Beta2Page() {
             />
         </div>
         
+        {/* ============================================================================ */}
+        {/* REALITY CHECK SECTION */}
+        {/* ============================================================================ */}
         <div id="reality" className="mt-8">
-            {/* ✅ Banner de démo si mode actif */}
             {isDemoMode && (
                 <DemoBanner 
                     onDisable={disableDemoMode}
-                    onGoToPremium={goToPremium}
                 />
             )}
             
@@ -695,92 +643,81 @@ export default function Beta2Page() {
             </div>
             
             <div className="bg-white rounded-b-xl shadow-lg p-6 border-t-4 border-indigo-500">
-                {/* ✅ Prompt pour activer le mode démo si pas de connexion */}
                 {!hasActiveConnection && !isDemoMode && (
                     <DemoModePrompt 
                         onEnableDemoMode={enableDemoMode}
-                        onGoToPremium={goToPremium}
                     />
                 )}
                 
-                {/* ✅ Afficher Reality Check si connecté OU en mode démo */}
                 {(hasActiveConnection || isDemoMode) && (
                     <RealityCheck 
                         totalRealized={totalGlobalRealized}
                         bankBalance={isDemoMode ? demoBankBalance : realBankBalance}
                         isBankConnected={hasActiveConnection}
                         onConnectBank={handleOpenBankManager}
+                        isDemoMode={isDemoMode}
                     />
                 )}
             </div>
         </div>
 
-        <div id="projects" className="mt-6">
+        <div id="projects" className="mt-8">
             <ProjectsSection 
                 projects={projects} 
                 onProjectsChange={setProjects}
-                yearlyData={yearlyData}
+                projectCarryOvers={projectCarryOvers}
                 currentYear={currentYear}
-                projectCarryOvers={projectCarryOvers}
             />
         </div>
 
-        <div className="mt-6">
-            <StatsSection 
-                people={people} 
-                charges={charges} 
-                projects={projects} 
-                yearlyData={yearlyData} 
-                oneTimeIncomes={oneTimeIncomes} 
-                currentYear={currentYear} 
-            />
-        </div>
-
-        <div id="calendar" className="mt-6">
+        <div id="calendar" className="mt-8">
             <MonthlyTable 
-                currentYear={currentYear} 
-                people={people} 
-                charges={charges} 
-                projects={projects} 
-                yearlyData={yearlyData} 
-                yearlyExpenses={yearlyExpenses} 
-                oneTimeIncomes={oneTimeIncomes} 
-                monthComments={monthComments} 
-                projectComments={projectComments} 
-                lockedMonths={lockedMonths} 
-                onYearlyDataChange={setYearlyData} 
-                onYearlyExpensesChange={setYearlyExpenses} 
-                onOneTimeIncomesChange={setOneTimeIncomes} 
-                onMonthCommentsChange={setMonthComments} 
-                onProjectCommentsChange={setProjectComments} 
+                currentYear={currentYear}
+                people={people}
+                charges={charges}
+                projects={projects}
+                yearlyData={yearlyData}
+                yearlyExpenses={yearlyExpenses}
+                oneTimeIncomes={oneTimeIncomes}
+                monthComments={monthComments}
+                projectComments={projectComments}
+                lockedMonths={lockedMonths}
+                onYearlyDataChange={setYearlyData}
+                onYearlyExpensesChange={setYearlyExpenses}
+                onOneTimeIncomesChange={setOneTimeIncomes}
+                onMonthCommentsChange={setMonthComments}
+                onProjectCommentsChange={setProjectComments}
                 onLockedMonthsChange={setLockedMonths}
-                customChargeTotalCalculator={getMonthlyChargeTotal}
-                onYearChange={handleYearChange}
                 projectCarryOvers={projectCarryOvers}
+            />
+        </div>
+
+        <div id="overview" className="mt-8">
+            <StatsSection 
+                currentYear={currentYear}
+                people={people}
+                charges={charges}
+                projects={projects}
+                yearlyData={yearlyData}
+                yearlyExpenses={yearlyExpenses}
+                oneTimeIncomes={oneTimeIncomes}
             />
         </div>
       </div>
 
-      {showInviteModal && id && (
+      {showInviteModal && (
         <InviteModal 
-          budgetId={id} 
+          budgetId={id!} 
           onClose={() => setShowInviteModal(false)} 
-          onInvited={() => { 
-            refreshMembersOnly();
-            toast({ title: "Invitation envoyée", variant: "success" }); 
-          }} 
         />
       )}
 
       <Dialog open={showBankManager} onOpenChange={setShowBankManager}>
-        <DialogContent className="sm:max-w-3xl max-h-[85vh] overflow-y-auto">
+        <DialogContent className="sm:max-w-2xl max-h-[80vh] overflow-y-auto">
             <DialogHeader>
-                <DialogTitle className="text-xl font-semibold flex items-center gap-2">
-                  <FlaskConical className="h-5 w-5 text-indigo-600" />
-                  Connexion Bancaire - Enable Banking
-                </DialogTitle>
+                <DialogTitle>Gestion des Connexions Bancaires</DialogTitle>
                 <DialogDescription>
-                    Connectez vos comptes bancaires européens via Enable Banking (2500+ banques).
+                    Connectez vos comptes bancaires via Enable Banking (2500+ banques européennes).
                     Sélectionnez ensuite les comptes d'épargne pour le calcul du Reality Check.
                 </DialogDescription>
             </DialogHeader>

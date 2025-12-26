@@ -1,10 +1,19 @@
 import { BridgeTransaction } from '@/components/budget/TransactionMapper';
 
 // ============================================================================
+// DEMO MODE CONFIGURATION
+// ============================================================================
+
+export const DEMO_MODE_LIMITS = {
+  EXPIRE_AFTER_DAYS: 7          // Le mode démo expire après 7 jours
+};
+
+// ============================================================================
 // TRANSACTIONS DE DÉMONSTRATION
 // ============================================================================
 
 export const DEMO_TRANSACTIONS: BridgeTransaction[] = [
+  // NOVEMBRE 2024
   {
     id: "demo-a1b2c",
     account_id: "demo-account",
@@ -75,6 +84,8 @@ export const DEMO_TRANSACTIONS: BridgeTransaction[] = [
     clean_description: "Prlv Edf Clients Particuliers",
     date: "2024-11-25"
   },
+  
+  // DÉCEMBRE 2024
   {
     id: "demo-e1f2g",
     account_id: "demo-account",
@@ -159,5 +170,52 @@ export const DEMO_BANK_BALANCE = 5130;
 
 export const DEMO_BANKING_DATA = {
   transactions: DEMO_TRANSACTIONS,
-  balance: DEMO_BANK_BALANCE
+  balance: DEMO_BANK_BALANCE,
+  limits: DEMO_MODE_LIMITS
 };
+
+// ============================================================================
+// HELPER FUNCTIONS
+// ============================================================================
+
+/**
+ * Vérifie si le mode démo a expiré
+ */
+export function isDemoExpired(timestampMs: number): boolean {
+  const daysSinceActivation = (Date.now() - timestampMs) / (1000 * 60 * 60 * 24);
+  return daysSinceActivation >= DEMO_MODE_LIMITS.EXPIRE_AFTER_DAYS;
+}
+
+/**
+ * Obtient les jours restants du mode démo
+ */
+export function getDaysRemaining(timestampMs: number): number {
+  const daysSinceActivation = (Date.now() - timestampMs) / (1000 * 60 * 60 * 24);
+  const remaining = DEMO_MODE_LIMITS.EXPIRE_AFTER_DAYS - daysSinceActivation;
+  return Math.max(0, Math.ceil(remaining));
+}
+
+/**
+ * Calcule les statistiques des transactions de démo
+ */
+export function getDemoStats() {
+  const totalRevenue = DEMO_TRANSACTIONS
+    .filter(t => t.amount > 0)
+    .reduce((sum, t) => sum + t.amount, 0);
+  
+  const totalExpenses = DEMO_TRANSACTIONS
+    .filter(t => t.amount < 0)
+    .reduce((sum, t) => sum + Math.abs(t.amount), 0);
+  
+  const transactionCount = DEMO_TRANSACTIONS.length;
+  const expenseCount = DEMO_TRANSACTIONS.filter(t => t.amount < 0).length;
+  
+  return {
+    totalRevenue,
+    totalExpenses,
+    netBalance: totalRevenue - totalExpenses,
+    transactionCount,
+    expenseCount,
+    finalBalance: DEMO_BANK_BALANCE
+  };
+}
