@@ -11,43 +11,13 @@ import {
   XCircle,
   Loader2,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  AlertCircle
 } from "lucide-react";
-import { budgetAPI } from '@/services/api';
+import { budgetAPI, ChargeSuggestion, Competitor, MarketSuggestion } from '@/services/api';
 
 // ============================================================================
 // TYPES
-// ============================================================================
-
-interface Competitor {
-  name: string;
-  typical_price: number;
-  best_offer: string;
-  potential_savings: number;
-  affiliate_link?: string;
-  pros: string[];
-  cons: string[];
-  contact_available: boolean;
-}
-
-interface MarketSuggestion {
-  id: string;
-  category: string;
-  country: string;
-  merchant_name?: string;
-  competitors: Competitor[];
-  last_updated: string;
-  expires_at: string;
-}
-
-interface ChargeSuggestion {
-  charge_id: string;
-  charge_label: string;
-  suggestion: MarketSuggestion;
-}
-
-// ============================================================================
-// COMPOSANT PRINCIPAL
 // ============================================================================
 
 interface EnhancedSuggestionsProps {
@@ -60,9 +30,14 @@ interface EnhancedSuggestionsProps {
   }>;
 }
 
+// ============================================================================
+// COMPOSANT PRINCIPAL
+// ============================================================================
+
 export default function EnhancedSuggestions({ budgetId, charges }: EnhancedSuggestionsProps) {
   const [suggestions, setSuggestions] = useState<ChargeSuggestion[]>([]);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [cacheStats, setCacheStats] = useState({ hits: 0, aiCalls: 0 });
   const [totalSavings, setTotalSavings] = useState(0);
 
@@ -73,8 +48,10 @@ export default function EnhancedSuggestions({ budgetId, charges }: EnhancedSugge
 
   const loadSuggestions = async () => {
     setLoading(true);
+    setError(null);
+    
     try {
-      // Préparer les charges pertinentes
+      // Préparer les charges pertinentes (avec catégorie)
       const relevantCharges = charges
         .filter(c => c.category && isRelevantCategory(c.category))
         .map(c => ({
@@ -91,6 +68,8 @@ export default function EnhancedSuggestions({ budgetId, charges }: EnhancedSugge
         return;
       }
 
+      console.log('[EnhancedSuggestions] Analyzing', relevantCharges.length, 'charges');
+
       // Appel API bulk analyze
       const response = await budgetAPI.bulkAnalyzeSuggestions(budgetId, {
         charges: relevantCharges
@@ -103,8 +82,11 @@ export default function EnhancedSuggestions({ budgetId, charges }: EnhancedSugge
       });
       setTotalSavings(response.data.total_potential_savings || 0);
 
-    } catch (error) {
-      console.error('Failed to load suggestions:', error);
+      console.log('[EnhancedSuggestions] Loaded', response.data.suggestions?.length || 0, 'suggestions');
+
+    } catch (err: any) {
+      console.error('Failed to load suggestions:', err);
+      setError(err.response?.data?.error || 'Erreur lors du chargement des suggestions');
     } finally {
       setLoading(false);
     }
@@ -112,10 +94,10 @@ export default function EnhancedSuggestions({ budgetId, charges }: EnhancedSugge
 
   if (loading) {
     return (
-      <Card className="mt-6">
+      <Card className="mt-6 border-blue-200 bg-blue-50/30">
         <CardContent className="pt-6">
           <div className="flex items-center justify-center py-8">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
             <span className="ml-3 text-muted-foreground">
               Analyse de vos charges en cours...
             </span>
@@ -125,15 +107,28 @@ export default function EnhancedSuggestions({ budgetId, charges }: EnhancedSugge
     );
   }
 
+  if (error) {
+    return (
+      <Card className="mt-6 border-red-200 bg-red-50/30">
+        <CardContent className="pt-6">
+          <div className="flex items-center gap-3 text-red-700">
+            <AlertCircle className="h-5 w-5" />
+            <p>{error}</p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
   if (suggestions.length === 0) {
-    return null;
+    return null; // Pas de suggestions à afficher
   }
 
   return (
     <div className="mt-6 space-y-4">
       {/* Header avec statistiques */}
       <Card className="border-green-200 bg-green-50/50">
-        <CardHeader>
+        <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <Sparkles className="h-6 w-6 text-green-600" />
@@ -150,7 +145,7 @@ export default function EnhancedSuggestions({ budgetId, charges }: EnhancedSugge
             </div>
             {cacheStats.hits > 0 && (
               <Badge variant="outline" className="text-xs">
-                {cacheStats.hits} réponses en cache
+                {cacheStats.hits} réponse{cacheStats.hits > 1 ? 's' : ''} en cache
               </Badge>
             )}
           </div>
@@ -178,7 +173,7 @@ interface SuggestionCardProps {
   onRefresh: () => void;
 }
 
-function SuggestionCard({ chargeSuggestion, onRefresh }: SuggestionCardProps) {
+function SuggestionCard({ chargeSuggestion }: SuggestionCardProps) {
   const [expanded, setExpanded] = useState(false);
   const { charge_label, suggestion } = chargeSuggestion;
   const bestCompetitor = suggestion.competitors[0]; // Le meilleur est toujours en premier
@@ -186,8 +181,8 @@ function SuggestionCard({ chargeSuggestion, onRefresh }: SuggestionCardProps) {
   if (!bestCompetitor) return null;
 
   return (
-    <Card className="border-orange-200">
-      <CardHeader>
+    <Card className="border-orange-200 hover:border-orange-300 transition-colors">
+      <CardHeader className="pb-3">
         <div className="flex items-start justify-between">
           <div className="flex-1">
             <div className="flex items-center gap-2 mb-1">
@@ -195,21 +190,24 @@ function SuggestionCard({ chargeSuggestion, onRefresh }: SuggestionCardProps) {
               <CardTitle className="text-lg">{charge_label}</CardTitle>
             </div>
             <CardDescription>
-              Catégorie: {getCategoryLabel(suggestion.category)} • 
-              {suggestion.merchant_name && ` Actuel: ${suggestion.merchant_name}`}
+              Catégorie: {getCategoryLabel(suggestion.category)}
+              {suggestion.merchant_name && ` • Actuel: ${suggestion.merchant_name}`}
             </CardDescription>
           </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setExpanded(!expanded)}
-          >
-            {expanded ? (
-              <ChevronUp className="h-4 w-4" />
-            ) : (
-              <ChevronDown className="h-4 w-4" />
-            )}
-          </Button>
+          {suggestion.competitors.length > 1 && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setExpanded(!expanded)}
+              className="ml-2"
+            >
+              {expanded ? (
+                <ChevronUp className="h-4 w-4" />
+              ) : (
+                <ChevronDown className="h-4 w-4" />
+              )}
+            </Button>
+          )}
         </div>
       </CardHeader>
 
@@ -258,7 +256,7 @@ interface CompetitorCardProps {
   category: string;
 }
 
-function CompetitorCard({ competitor, isBest, category }: CompetitorCardProps) {
+function CompetitorCard({ competitor, isBest }: CompetitorCardProps) {
   return (
     <div className={`p-4 rounded-lg border-2 ${
       isBest 
@@ -287,7 +285,7 @@ function CompetitorCard({ competitor, isBest, category }: CompetitorCardProps) {
         </div>
 
         {competitor.potential_savings > 0 && (
-          <div className="text-right">
+          <div className="text-right ml-4">
             <div className="text-sm text-muted-foreground">Économie annuelle</div>
             <div className="text-xl font-bold text-green-600">
               +{competitor.potential_savings.toFixed(0)}€
@@ -345,7 +343,7 @@ function CompetitorCard({ competitor, isBest, category }: CompetitorCardProps) {
             size="sm"
             variant="outline"
             className="flex-1"
-            onClick={() => handleContactRequest(competitor.name, category)}
+            onClick={() => handleContactRequest(competitor.name)}
           >
             <Phone className="h-4 w-4 mr-2" />
             Être rappelé
@@ -361,7 +359,8 @@ function CompetitorCard({ competitor, isBest, category }: CompetitorCardProps) {
 // ============================================================================
 
 function isRelevantCategory(category: string): boolean {
-  return ['ENERGY', 'INTERNET', 'MOBILE', 'INSURANCE', 'LOAN', 'BANK'].includes(category);
+  const relevant = ['ENERGY', 'INTERNET', 'MOBILE', 'INSURANCE', 'LOAN', 'BANK'];
+  return relevant.includes(category.toUpperCase());
 }
 
 function extractMerchantName(label: string): string {
@@ -395,7 +394,7 @@ function getCategoryLabel(category: string): string {
   return labels[category] || category;
 }
 
-function handleContactRequest(providerName: string, category: string) {
+function handleContactRequest(providerName: string) {
   // TODO: Implémenter la logique de demande de rappel
-  alert(`Demande de rappel pour ${providerName} (${category}) - Fonctionnalité à venir`);
+  alert(`Demande de rappel pour ${providerName} - Fonctionnalité à venir`);
 }

@@ -48,17 +48,13 @@ export interface AuthResponse {
 
 // Response type for AI Categorization
 export interface CategorizeResponse {
-    label: string;
-    category: string;
+  label: string;
+  category: string;
 }
 
-// Internal types
-interface AuthData { name?: string; email: string; password: string; }
-interface ProfileUpdateData { name: string; avatar?: string; }
-interface PasswordChangeData { current_password: string; new_password: string; }
-interface BudgetCreateData { name: string; }
-interface BudgetUpdateData { data: unknown; } 
-interface DeleteAccountData { password: string; }
+// ============================================================================
+// ⭐ NOUVEAUX TYPES - Market Suggestions
+// ============================================================================
 
 export interface Competitor {
   name: string;
@@ -81,6 +77,12 @@ export interface MarketSuggestion {
   expires_at: string;
 }
 
+export interface ChargeSuggestion {
+  charge_id: string;
+  charge_label: string;
+  suggestion: MarketSuggestion;
+}
+
 export interface BulkAnalyzeRequest {
   charges: Array<{
     id: string;
@@ -92,26 +94,57 @@ export interface BulkAnalyzeRequest {
 }
 
 export interface BulkAnalyzeResponse {
-  suggestions: Array<{
-    charge_id: string;
-    charge_label: string;
-    suggestion: MarketSuggestion;
-  }>;
+  suggestions: ChargeSuggestion[];
   cache_hits: number;
   ai_calls_made: number;
   total_potential_savings: number;
 }
 
+// Internal types
+interface AuthData { 
+  name?: string; 
+  email: string; 
+  password: string; 
+}
+
+interface ProfileUpdateData { 
+  name: string; 
+  avatar?: string; 
+}
+
+interface PasswordChangeData { 
+  current_password: string; 
+  new_password: string; 
+}
+
+interface BudgetCreateData { 
+  name: string; 
+}
+
+interface BudgetUpdateData { 
+  data: unknown; 
+}
+
+interface DeleteAccountData { 
+  password: string; 
+}
+
 export const authAPI = {
-  signup: (data: AuthData): Promise<AxiosResponse<AuthResponse>> => api.post('/auth/signup', data),
-  login: (data: AuthData): Promise<AxiosResponse<AuthResponse>> => api.post('/auth/login', data),
-  resendVerification: (email: string) => api.post('/auth/verify/resend', { email }),
+  signup: (data: AuthData): Promise<AxiosResponse<AuthResponse>> => 
+    api.post('/auth/signup', data),
+  login: (data: AuthData): Promise<AxiosResponse<AuthResponse>> => 
+    api.post('/auth/login', data),
+  resendVerification: (email: string) => 
+    api.post('/auth/verify/resend', { email }),
 };
 
 export const userAPI = {
-  updateProfile: (data: ProfileUpdateData) => api.put('/user/profile', data),
-  changePassword: (data: PasswordChangeData) => api.put('/user/password', data),
-  deleteAccount: (data: DeleteAccountData) => api.delete('/user/account', { data }),
+  updateProfile: (data: ProfileUpdateData) => 
+    api.put('/user/profile', data),
+  changePassword: (data: PasswordChangeData) => 
+    api.put('/user/password', data),
+  deleteAccount: (data: DeleteAccountData) => 
+    api.delete('/user/account', { data }),
 };
 
 export const budgetAPI = {
@@ -121,37 +154,44 @@ export const budgetAPI = {
   update: (id: string, data: unknown) => api.put(`/budgets/${id}`, data),
   delete: (id: string) => api.delete(`/budgets/${id}`),
   getData: (id: string) => api.get(`/budgets/${id}/data`),
-  updateData: (id: string, data: BudgetUpdateData) => api.put(`/budgets/${id}/data`, data),
-  inviteMember: (id: string, email: string) => api.post(`/budgets/${id}/invite`, { email }),
-  getInvitations: (id: string) => api.get(`/budgets/${id}/invitations`),
-  cancelInvitation: (budgetId: string, invitationId: string) => api.delete(`/budgets/${budgetId}/invitations/${invitationId}`),
-  removeMember: (budgetId: string, memberId: string) => api.delete(`/budgets/${budgetId}/members/${memberId}`),
+  updateData: (id: string, data: BudgetUpdateData) => 
+    api.put(`/budgets/${id}/data`, data),
+  inviteMember: (id: string, email: string) => 
+    api.post(`/budgets/${id}/invite`, { email }),
+  getInvitations: (id: string) => 
+    api.get(`/budgets/${id}/invitations`),
+  cancelInvitation: (budgetId: string, invitationId: string) => 
+    api.delete(`/budgets/${budgetId}/invitations/${invitationId}`),
+  removeMember: (budgetId: string, memberId: string) => 
+    api.delete(`/budgets/${budgetId}/members/${memberId}`),
   
-  // NEW: AI Categorization Endpoint
-  categorize: (label: string): Promise<AxiosResponse<CategorizeResponse>> => api.post('/categorize', { label }),
-  // Nouvelle méthode pour l'analyse bulk
+  // AI Categorization Endpoint
+  categorize: (label: string): Promise<AxiosResponse<CategorizeResponse>> => 
+    api.post('/categorize', { label }),
+
+  // ⭐ NOUVEAUX ENDPOINTS - Market Suggestions
   bulkAnalyzeSuggestions: (
     budgetId: string, 
     data: BulkAnalyzeRequest
   ): Promise<AxiosResponse<BulkAnalyzeResponse>> => 
     api.post(`/budgets/${budgetId}/suggestions/bulk-analyze`, data),
-  
-  // Analyse d'une charge individuelle
+
   analyzeSingleCharge: (data: {
     category: string;
     merchant_name?: string;
     current_amount: number;
   }): Promise<AxiosResponse<MarketSuggestion>> =>
     api.post('/suggestions/analyze', data),
-    
-  // Récupérer suggestions en cache pour une catégorie
+
   getCategorySuggestions: (category: string): Promise<AxiosResponse<MarketSuggestion>> =>
     api.get(`/suggestions/category/${category}`),
 };
 
 export const invitationAPI = {
-  accept: (token: string) => api.post('/invitations/accept', { token }),
-  invite: (budgetId: string, email: string) => api.post(`/budgets/${budgetId}/invite`, { email }),
+  accept: (token: string) => 
+    api.post('/invitations/accept', { token }),
+  invite: (budgetId: string, email: string) => 
+    api.post(`/budgets/${budgetId}/invite`, { email }),
 };
 
 export default api;

@@ -39,6 +39,7 @@ import { useTutorial } from '../contexts/TutorialContext';
 import { DEMO_TRANSACTIONS, DEMO_BANK_BALANCE, DEMO_MODE_LIMITS } from '@/constants/demoData';
 import { DemoModePrompt } from '@/components/budget/DemoModePrompt';
 import { DemoBanner } from '@/components/budget/DemoBanner';
+import EnhancedSuggestions from '@/components/budget/EnhancedSuggestions';
 
 const BUDGET_NAV_ITEMS: NavItem[] = [
   { id: "overview", label: "Vue d'ensemble", icon: LayoutDashboard },
@@ -618,7 +619,14 @@ export default function Beta2Page() {
             />
         </div>
         
-        {/* ============================================================================ */}
+        <div id="suggestions" className="mt-6">
+          <EnhancedSuggestions 
+            budgetId={id!} 
+            charges={charges} 
+          />
+        </div>
+          
+                  {/* ============================================================================ */}
         {/* REALITY CHECK SECTION */}
         {/* ============================================================================ */}
         <div id="reality" className="mt-8">
