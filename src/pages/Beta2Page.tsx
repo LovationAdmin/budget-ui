@@ -29,7 +29,7 @@ import ActionsBar from '../components/budget/ActionsBar';
 import MemberManagementSection from '../components/budget/MemberManagementSection';
 import { RealityCheck } from '../components/budget/RealityCheck'; 
 import { EnableBankingManager } from '../components/budget/EnableBankingManager';
-import { TransactionMapper, MappedTransaction } from '../components/budget/TransactionMapper';
+import { TransactionMapper, MappedTransaction, BridgeTransaction } from '../components/budget/TransactionMapper';
 
 import { LayoutDashboard, Users, Receipt, Target, CalendarDays, FlaskConical } from "lucide-react";
 import { ToastAction } from '@/components/ui/toast';
