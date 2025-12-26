@@ -1,165 +1,84 @@
-/* ============================================================================
-   CORRECTIONS ERGONOMIE MOBILE - Version Subtile
-   ============================================================================
-   
-   Objectif : Corriger Google Search Console SANS casser le design existant
-   Approche : Modifications minimales et ciblées uniquement
-   
-   ============================================================================ */
+/* src/styles/mobile-fixes.css */
 
 /* ============================================================================
-   1. VIEWPORT & BASE (Critique pour Google)
+   1. CRITICAL MOBILE FIXES (Google Compliance)
    ============================================================================ */
 
+/* Prevent font scaling issues in landscape on iOS */
 html {
   -webkit-text-size-adjust: 100%;
-  overflow-x: hidden;
+  /* overflow-x: hidden here can sometimes break sticky headers, 
+     better to handle overflow on specific containers */
 }
 
+/* Ensure body doesn't cause horizontal scroll */
 body {
+  width: 100%;
   overflow-x: hidden;
-  max-width: 100vw;
-}
-
-/* Éviter débordement horizontal */
-* {
-  box-sizing: border-box;
+  -webkit-font-smoothing: antialiased;
 }
 
 /* ============================================================================
-   2. TAILLE TEXTE MINIMUM (Uniquement ce qui est vraiment trop petit)
+   2. IOS INPUT ZOOM FIX (The most important UX fix)
    ============================================================================ */
 
-/* Forcer 16px sur les inputs UNIQUEMENT (évite le zoom iOS) */
-@media (max-width: 768px) {
+/* Forces inputs to 16px on mobile to prevent iOS from zooming in when you tap them.
+   We use a media query so desktop users still get your smaller text designs.
+*/
+@media screen and (max-width: 768px) {
   input[type="text"],
   input[type="email"],
   input[type="password"],
   input[type="number"],
+  input[type="date"],
   input[type="tel"],
   select,
   textarea {
-    font-size: 16px !important;
+    font-size: 16px !important; 
   }
 }
 
 /* ============================================================================
-   3. ÉLÉMENTS CLIQUABLES (Légères corrections, pas de force)
+   3. TAP HIGHLIGHT REMOVAL
    ============================================================================ */
 
-/* Boutons - Ajouter padding minimum SANS forcer la taille */
-button,
-a[role="button"] {
-  padding: 0.75rem 1rem;
-  touch-action: manipulation;
-}
-
-/* Boutons icon - Taille minimum légère */
-button[aria-label],
-button[title] {
-  min-height: 44px;
-  min-width: 44px;
-}
-
-/* Checkbox/Radio - Zone tactile */
-input[type="checkbox"],
-input[type="radio"] {
-  min-width: 20px;
-  min-height: 20px;
-}
-
-/* ============================================================================
-   4. RESPONSIVE IMAGES (Éviter débordement)
-   ============================================================================ */
-
-img {
-  max-width: 100%;
-  height: auto;
-}
-
-/* ============================================================================
-   5. CORRECTIONS SPÉCIFIQUES LÉGÈRES
-   ============================================================================ */
-
-/* Tables - Scroll horizontal sur mobile */
-@media (max-width: 768px) {
-  .monthly-table-container,
-  table {
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-  }
-}
-
-/* Modals - Ne pas dépasser l'écran */
-[role="dialog"],
-.dialog-content {
-  max-width: calc(100vw - 1rem);
-  max-height: calc(100vh - 1rem);
-}
-
-/* ============================================================================
-   6. ACCESSIBILITÉ LÉGÈRE
-   ============================================================================ */
-
-/* Focus visible */
-*:focus-visible {
-  outline: 2px solid #6366f1;
-  outline-offset: 2px;
-}
-
-/* Désactiver tap highlight iOS */
+/* Removes the grey background when tapping links on mobile */
 * {
   -webkit-tap-highlight-color: transparent;
 }
 
 /* ============================================================================
-   7. PERFORMANCE
+   4. TOUCH TARGET HELPERS (Utility classes)
    ============================================================================ */
 
-/* Smooth scrolling iOS */
-* {
-  -webkit-overflow-scrolling: touch;
+/* Instead of forcing ALL buttons to be large, add this class 
+   only to specific elements Google complains about.
+   It creates an invisible hit area around the element.
+*/
+.touch-target-extend {
+  position: relative;
 }
 
-/* Reduce motion si préférence utilisateur */
-@media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-  }
+.touch-target-extend::after {
+  content: '';
+  position: absolute;
+  top: -10px;
+  bottom: -10px;
+  left: -10px;
+  right: -10px;
 }
 
 /* ============================================================================
-   8. CORRECTIONS SPÉCIFIQUES BUDGETFAMILLE (Optionnelles)
+   5. RESPONSIVE UTILS
    ============================================================================ */
 
-/* Dashboard - Boutons cards responsive (seulement sur très petit écran) */
-@media (max-width: 480px) {
-  .glass-card .flex.gap-2 {
-    flex-direction: column;
-    gap: 0.5rem;
-  }
-  
-  .glass-card button {
-    width: 100%;
-  }
+/* Ensure images never overflow their container */
+img, video {
+  max-width: 100%;
+  height: auto;
 }
 
-/* Navigation mobile - Empêcher débordement titre */
-@media (max-width: 640px) {
-  .budget-navbar h1,
-  .budget-navbar .font-display {
-    font-size: clamp(1rem, 4vw, 1.5rem);
-  }
-}
-
-/* Safe area iPhone X+ */
-@supports (padding: max(0px)) {
-  body {
-    padding-left: max(0px, env(safe-area-inset-left));
-    padding-right: max(0px, env(safe-area-inset-right));
-  }
+/* Fix for Radix UI Dialogs/Sheets on very narrow screens */
+[data-radix-popper-content-wrapper] {
+  max-width: 100vw !important;
 }
