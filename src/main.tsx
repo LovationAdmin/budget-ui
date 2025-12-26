@@ -7,6 +7,7 @@ import { TutorialProvider } from './contexts/TutorialContext'; // <--- Import
 import { TutorialModal } from './components/tutorial/TutorialModal'; // <--- Import
 import App from './App';
 import './index.css';
+import './styles/mobile-fixes.css'
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>

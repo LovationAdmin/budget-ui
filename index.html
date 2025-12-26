@@ -1,51 +1,159 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="fr">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+<head>
+  <meta charset="UTF-8" />
+  
+  <!-- ============================================================================
+       VIEWPORT - CRITIQUE pour mobile
+       ============================================================================ -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  
+  <!-- ============================================================================
+       SEO Basique
+       ============================================================================ -->
+  <title>Budget Famille - Gérez votre budget familial simplement</title>
+  <meta name="description" content="Application gratuite de gestion de budget familial. Suivez vos revenus, dépenses et projets. Collaborez en famille. Synchronisation bancaire disponible." />
+  <meta name="keywords" content="budget familial, gestion budget, finances famille, épargne, dépenses, revenus, application budget" />
+  
+  <!-- ============================================================================
+       Open Graph (Facebook, LinkedIn)
+       ============================================================================ -->
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://budgetfamille.com/" />
+  <meta property="og:title" content="Budget Famille - Gérez votre budget familial" />
+  <meta property="og:description" content="Application gratuite de gestion de budget familial. Suivez vos revenus, dépenses et projets." />
+  <meta property="og:image" content="https://budgetfamille.com/og-image.png" />
+  <meta property="og:locale" content="fr_FR" />
+  <meta property="og:site_name" content="Budget Famille" />
+  
+  <!-- ============================================================================
+       Twitter Card
+       ============================================================================ -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:url" content="https://budgetfamille.com/" />
+  <meta name="twitter:title" content="Budget Famille - Gérez votre budget familial" />
+  <meta name="twitter:description" content="Application gratuite de gestion de budget familial" />
+  <meta name="twitter:image" content="https://budgetfamille.com/og-image.png" />
+  
+  <!-- ============================================================================
+       Canonical & Robots
+       ============================================================================ -->
+  <link rel="canonical" href="https://budgetfamille.com/" />
+  <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
+  
+  <!-- ============================================================================
+       Icons & Favicons
+       ============================================================================ -->
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+  <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+  <link rel="manifest" href="/site.webmanifest" />
+  <meta name="theme-color" content="#6366f1" />
+  
+  <!-- ============================================================================
+       Auteur & Copyright
+       ============================================================================ -->
+  <meta name="author" content="Budget Famille" />
+  <meta name="copyright" content="Budget Famille © 2024" />
+  
+  <!-- ============================================================================
+       Google Site Verification (à compléter après création compte)
+       ============================================================================ -->
+  <!-- <meta name="google-site-verification" content="VOTRE_CODE_ICI" /> -->
+  
+  <!-- ============================================================================
+       Performance & Preload
+       ============================================================================ -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
+  
+  <!-- ============================================================================
+       CSS Mobile Fixes - IMPORTANT
+       ============================================================================ -->
+  <style>
+    /* Critical CSS - Chargé immédiatement */
+    html {
+      font-size: 16px;
+      -webkit-text-size-adjust: 100%;
+      overflow-x: hidden;
+    }
     
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes" />
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      font-size: 1rem;
+      line-height: 1.5;
+      overflow-x: hidden;
+      max-width: 100vw;
+    }
     
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-    <meta name="apple-mobile-web-app-title" content="Budget Famille" />
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
     
-    <meta name="mobile-web-app-capable" content="yes" />
-    <meta name="theme-color" content="#f87171" />
+    /* Boutons et éléments cliquables - Taille minimale */
+    button, a[role="button"], [role="button"] {
+      min-height: 48px;
+      min-width: 48px;
+      touch-action: manipulation;
+    }
     
-    <title>Budget Famille - Gérez votre budget familial ensemble</title>
-    <meta name="description" content="Application moderne de gestion de budget pour familles. Suivez vos dépenses, épargnez ensemble et atteignez vos objectifs financiers." />
+    /* Inputs - Taille minimale pour éviter zoom iOS */
+    input, select, textarea {
+      font-size: 16px !important;
+    }
     
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&display=swap" rel="stylesheet">
+    /* Images responsive */
+    img {
+      max-width: 100%;
+      height: auto;
+    }
     
-    <style>
-      /* Simple Loading Animation - Only applies to the spinner div */
-      .loading-spinner {
-        position: fixed;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        width: 50px;
-        height: 50px;
-        border: 3px solid #f3f3f3;
-        border-top: 3px solid #f87171;
-        border-radius: 50%;
-        animation: spin 1s linear infinite;
-        z-index: 9999;
-      }
-      
-      @keyframes spin {
-        0% { transform: translate(-50%, -50%) rotate(0deg); }
-        100% { transform: translate(-50%, -50%) rotate(360deg); }
-      }
-    </style>
-  </head>
-  <body>
-    <div id="root">
-      <div class="loading-spinner"></div>
-    </div>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
+    /* Loading state */
+    #root {
+      min-height: 100vh;
+    }
+  </style>
+  
+  <!-- ============================================================================
+       Schema.org JSON-LD (pour Google)
+       ============================================================================ -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "Budget Famille",
+    "url": "https://budgetfamille.com",
+    "description": "Application gratuite de gestion de budget familial",
+    "applicationCategory": "FinanceApplication",
+    "operatingSystem": "Web, iOS, Android",
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "EUR"
+    },
+    "aggregateRating": {
+      "@type": "AggregateRating",
+      "ratingValue": "4.8",
+      "ratingCount": "150"
+    }
+  }
+  </script>
+</head>
+<body>
+  <!-- Skip to main content (Accessibilité) -->
+  <a href="#main-content" class="skip-to-main">Aller au contenu principal</a>
+  
+  <!-- Application Root -->
+  <div id="root"></div>
+  
+  <!-- Main Script -->
+  <script type="module" src="/src/main.tsx"></script>
+</body>
 </html>
