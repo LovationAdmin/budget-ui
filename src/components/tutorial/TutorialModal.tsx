@@ -20,26 +20,30 @@ import {
   Link,
   Sparkles,
   HelpCircle,
-  CheckCircle2
+  CheckCircle2,
+  Lock,
+  FlaskConical
 } from "lucide-react";
 
 // ============================================================================
-// TUTORIAL STEPS CONFIGURATION - 7 ÉTAPES
+// TUTORIAL STEPS CONFIGURATION
 // ============================================================================
 
 const STEPS = [
   {
     icon: ShieldCheck,
     title: "Bienvenue sur Budget Famille",
-    description: "Une approche sécurisée et collaborative pour gérer vos finances.",
+    description: "Une approche sécurisée et collaborative pour maîtriser vos finances.",
     content: (
       <div className="space-y-3 text-sm text-muted-foreground">
         <p>
-          Ici, vos données sont <strong>chiffrées de bout en bout</strong>. Même nous ne pouvons pas les lire.
+          Bienvenue dans votre nouvel espace de gestion financière. Ici, la confidentialité est notre priorité absolue :
         </p>
-        <p>
-          Cette application est conçue pour gérer un budget à plusieurs (conjoints, famille) en temps réel.
-        </p>
+        <ul className="list-disc pl-4 space-y-2">
+            <li><strong>Chiffrement de bout en bout :</strong> Vos données sont cryptées avant même d'être enregistrées.</li>
+            <li><strong>Architecture Zero-Knowledge :</strong> Nous n'avons techniquement pas accès à vos données brutes.</li>
+            <li><strong>Collaboratif :</strong> Conçu pour être utilisé à deux (ou plus) en temps réel.</li>
+        </ul>
       </div>
     ),
     color: "text-primary",
@@ -48,20 +52,27 @@ const STEPS = [
   {
     icon: Calendar,
     title: "Le Tableau Mensuel",
-    description: "Planifiez votre année, mois par mois.",
+    description: "Le cœur de votre planification financière sur 12 mois.",
     content: (
       <div className="space-y-3 text-sm text-muted-foreground">
+        <p>Gérez votre année fiscale mois par mois avec précision :</p>
         <ul className="list-disc pl-4 space-y-2">
           <li>
-            <strong>Revenus & Charges :</strong> Saisissez vos entrées et sorties fixes.
+            <strong>Revenus & Charges :</strong> Saisissez vos salaires et prélèvements fixes pour calculer votre "Reste à Vivre" théorique.
           </li>
           <li>
-            <strong>Disponible :</strong> Ce qu'il reste est automatiquement réparti entre vos projets.
+            <strong>Répartition Intelligente :</strong> Allouez le disponible dans vos différents projets.
           </li>
           <li className="flex items-start gap-2">
-            <span className="mt-1"><MessageCircle className="h-3 w-3 inline" /></span>
+            <span className="mt-1"><MessageCircle className="h-3 w-3 inline text-primary" /></span>
             <span>
-              <strong>Notes & Commentaires :</strong> Cliquez sur les petites bulles pour annoter un mois globalement ou préciser une dépense spécifique dans une case projet.
+              <strong>Système de Commentaires :</strong> Utilisez les bulles pour justifier une dépense, noter un rappel (ex: "Régul EDF") ou discuter d'un choix budgétaire avec votre conjoint.
+            </span>
+          </li>
+          <li className="flex items-start gap-2">
+            <span className="mt-1"><Lock className="h-3 w-3 inline text-orange-500" /></span>
+            <span>
+              <strong>Verrouillage :</strong> Une fois un mois écoulé et vérifié, verrouillez-le pour figer les comptes et éviter les modifications accidentelles.
             </span>
           </li>
         </ul>
@@ -73,71 +84,88 @@ const STEPS = [
   {
     icon: Target,
     title: "Projets & Objectifs",
-    description: "Distinguez le Rêve de la Réalité.",
+    description: "Distinguez clairement le Rêve de la Réalité.",
     content: (
       <div className="space-y-3 text-sm text-muted-foreground">
-        <p>Nous utilisons deux barres de progression :</p>
-        <div className="space-y-2 border-l-2 border-muted pl-3">
+        <p>Ne mélangez plus l'argent que vous <em>avez</em> et celui que vous <em>aurez</em>. Nous utilisons un double affichage :</p>
+        
+        <div className="space-y-3 border-l-2 border-muted pl-4 my-2">
           <div>
-            <span className="text-xs font-bold text-primary uppercase">Barre Claire (Planifié)</span>
-            <p className="text-xs">L'argent que vous <em>prévoyez</em> d'avoir si vous suivez votre plan toute l'année.</p>
+            <div className="flex items-center gap-2 mb-1">
+                <div className="h-2 w-2 rounded-full bg-success shadow-[0_0_6px_rgba(34,197,94,0.4)]"></div>
+                <span className="text-xs font-bold text-success uppercase">EN CAISSE (Passé & Présent)</span>
+            </div>
+            <p className="text-xs">
+                C'est l'argent <strong>réellement accumulé</strong> sur les mois passés. C'est votre épargne disponible aujourd'hui.
+            </p>
           </div>
+          
           <div>
-            <span className="text-xs font-bold text-success uppercase">Barre Verte (En Caisse)</span>
-            <p className="text-xs">L'argent <em>réellement</em> accumulé dans les mois passés.</p>
+            <div className="flex items-center gap-2 mb-1">
+                <div className="h-2 w-2 rounded-full bg-primary/30"></div>
+                <span className="text-xs font-bold text-primary uppercase">PLANIFIÉ (Futur)</span>
+            </div>
+            <p className="text-xs">
+                C'est une <strong>projection</strong>. Si vous suivez votre budget jusqu'à la fin de l'année, vous atteindrez ce montant. Idéal pour savoir si vous pourrez payer vos vacances en Août !
+            </p>
           </div>
         </div>
+        <p><strong>💡 Astuce :</strong> Définissez un "Objectif" (Montant cible) pour chaque projet afin de voir votre barre de progression avancer.</p>
       </div>
     ),
     color: "text-secondary",
     bg: "bg-secondary/10"
   },
   {
-    icon: Link,
-    title: "Reality Check - Connexion Bancaire",
-    description: "Comparez votre budget théorique avec vos dépenses réelles.",
+    icon: FlaskConical, // Changed icon to represent Beta/Lab
+    title: "Reality Check (Beta / Sandbox)",
+    description: "Le test de réalité : Budget Théorique vs Compte Bancaire.",
     content: (
       <div className="space-y-3 text-sm text-muted-foreground">
+        <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-3 mb-2">
+            <p className="text-xs text-indigo-800 font-medium flex items-center gap-2">
+                <Sparkles className="h-3 w-3" /> Fonctionnalité Expérimentale
+            </p>
+        </div>
         <p>
-          Connectez vos comptes bancaires pour voir <strong>l'écart entre votre plan et la réalité</strong>.
+          Fini les fichiers Excel déconnectés de la réalité. Cette fonctionnalité (actuellement en test) permet de :
         </p>
         <ul className="list-disc pl-4 space-y-2">
-          <li>Connexion <strong>sécurisée PSD2</strong> via Enable Banking (2500+ banques)</li>
-          <li>Vos identifiants ne transitent <strong>jamais</strong> par nos serveurs</li>
-          <li>Mappez vos transactions bancaires à vos catégories de budget</li>
-          <li>Détectez automatiquement où vous dépassez</li>
+          <li>
+            <strong>Connecter votre banque</strong> via le protocole sécurisé européen <strong>PSD2</strong> (Enable Banking).
+          </li>
+          <li>
+            <strong>Mapper vos transactions :</strong> Liez une dépense réelle (ex: "Prélèvement Free") à une ligne de votre budget (ex: "Internet").
+          </li>
+          <li>
+            <strong>Détecter les écarts :</strong> Le système vous alerte si vous avez dépensé plus que prévu dans une catégorie.
+          </li>
         </ul>
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mt-3">
-          <p className="text-xs text-blue-800">
-            💡 <strong>Astuce:</strong> En Premium (2€/mois), la synchronisation est automatique chaque mois !
-          </p>
-        </div>
+        <p className="text-xs italic mt-2">
+           * En mode Sandbox, utilisez les données de démonstration pour voir la puissance de l'outil sans connecter vos vrais comptes.
+        </p>
       </div>
     ),
-    color: "text-blue-600",
-    bg: "bg-blue-100"
+    color: "text-indigo-600",
+    bg: "bg-indigo-100"
   },
   {
     icon: Sparkles,
     title: "Suggestions d'Économies IA",
-    description: "Trouvez les meilleures offres grâce à l'intelligence artificielle.",
+    description: "Optimisez vos charges fixes automatiquement.",
     content: (
       <div className="space-y-3 text-sm text-muted-foreground">
         <p>
-          Notre IA analyse vos charges (énergie, internet, mobile, assurance, prêts) et vous propose 
-          <strong> le top 3 des meilleures alternatives</strong> du marché.
+          Pourquoi payer plus cher ? Notre IA analyse la section <strong>"Charges"</strong> de votre budget pour trouver des opportunités d'économies.
         </p>
         <ul className="list-disc pl-4 space-y-2">
-          <li><strong>Analyse automatique</strong> de vos charges avec catégorisation</li>
-          <li><strong>Comparaison en temps réel</strong> avec les concurrents</li>
-          <li><strong>Top 3 des offres</strong> pour chaque catégorie</li>
-          <li><strong>Économies potentielles</strong> calculées précisément</li>
-          <li><strong>Avantages/Inconvénients</strong> de chaque offre</li>
-          <li><strong>Liens directs</strong> vers les meilleures offres</li>
+          <li><strong>Analyse automatique</strong> des postes clés : Énergie, Mobile, Internet, Assurance...</li>
+          <li><strong>Comparatif Marché :</strong> Nous scannons les offres actuelles pour trouver le Top 3 des meilleures alternatives.</li>
+          <li><strong>Calcul de rentabilité :</strong> "En changeant d'opérateur, vous économiseriez 120€/an".</li>
         </ul>
         <div className="bg-green-50 border border-green-200 rounded-lg p-3 mt-3">
           <p className="text-xs text-green-800">
-            🎯 Économisez en moyenne <strong>200-500€/an</strong> en changeant quelques abonnements !
+            🎯 L'objectif : Réduire vos charges fixes sans réduire votre confort de vie.
           </p>
         </div>
       </div>
@@ -147,19 +175,19 @@ const STEPS = [
   },
   {
     icon: Users,
-    title: "Travail d'Équipe",
-    description: "Invitez votre famille et gérez ensemble.",
+    title: "Collaboration & Partage",
+    description: "Le budget est une affaire d'équipe.",
     content: (
       <div className="space-y-3 text-sm text-muted-foreground">
+        <p>Budget Famille est conçu pour la transparence au sein du foyer :</p>
         <ul className="list-disc pl-4 space-y-2">
-          <li><strong>Invitations par email</strong> - chaque membre a son propre compte</li>
-          <li><strong>Modifications en temps réel</strong> - voyez les changements instantanément</li>
-          <li><strong>Notifications</strong> quand un membre modifie le budget</li>
-          <li><strong>Commentaires</strong> pour communiquer sur les décisions</li>
+          <li><strong>Multi-utilisateurs :</strong> Invitez votre conjoint(e) via email. Chacun a son propre accès sécurisé.</li>
+          <li><strong>Temps Réel :</strong> Voyez qui modifie quoi, quand. Plus de conflits de versions de fichiers.</li>
+          <li><strong>Rôles :</strong> Définissez qui est Propriétaire (Admin) ou Membre (Éditeur).</li>
         </ul>
         <div className="bg-purple-50 border border-purple-200 rounded-lg p-3 mt-3">
           <p className="text-xs text-purple-800">
-            👥 <strong>Astuce:</strong> Définissez des <strong>rôles clairs</strong> - qui gère quoi (courses, factures, épargne...)
+            👥 <strong>Conseil :</strong> Prenez un moment chaque mois pour faire le point ensemble sur le tableau de bord.
           </p>
         </div>
       </div>
@@ -169,25 +197,26 @@ const STEPS = [
   },
   {
     icon: CheckCircle2,
-    title: "Prêt à commencer ?",
-    description: "Tout est en place pour gérer vos finances efficacement.",
+    title: "Prêt à reprendre le contrôle ?",
+    description: "Tout est en place pour votre réussite financière.",
     content: (
       <div className="space-y-3 text-sm text-muted-foreground">
         <p>
-          Vous pouvez <strong>retrouver ce tutoriel</strong> à tout moment en cliquant sur 
-          l'icône <HelpCircle className="h-4 w-4 inline mx-1" /> dans la barre de menu.
+          Vous avez maintenant toutes les clés en main. Voici votre feuille de route pour les 5 prochaines minutes :
         </p>
-        <div className="bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 rounded-lg p-4 mt-4">
-          <p className="text-sm font-semibold text-gray-900 mb-3">📋 Prochaines étapes:</p>
+        <div className="bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 rounded-lg p-4 mt-2">
+          <p className="text-sm font-semibold text-gray-900 mb-3">🚀 Vos premières actions :</p>
           <ol className="list-decimal pl-5 space-y-2 text-xs">
-            <li>Créez votre premier budget</li>
-            <li>Ajoutez vos revenus et charges mensuelles</li>
-            <li>Définissez vos projets d'épargne</li>
-            <li>Explorez les suggestions d'économies IA</li>
-            <li>Connectez votre banque (Reality Check)</li>
-            <li>Invitez votre famille !</li>
+            <li>Remplissez la section <strong>Revenus</strong> (Salaires).</li>
+            <li>Ajoutez vos <strong>Charges Fixes</strong> (Loyer, Crédits, Abonnements).</li>
+            <li>Créez vos <strong>Projets d'Épargne</strong> (Vacances, Travaux, Fonds de secours).</li>
+            <li>Allez dans le <strong>Tableau Mensuel</strong> pour vérifier votre "Reste à vivre".</li>
+            <li>(Optionnel) Testez le <strong>Reality Check</strong> en mode Démo.</li>
           </ol>
         </div>
+        <p className="mt-4 text-xs text-center text-muted-foreground">
+            Besoin d'aide plus tard ? Cliquez sur l'icône <HelpCircle className="h-3 w-3 inline" /> dans le menu.
+        </p>
       </div>
     ),
     color: "text-green-600",
@@ -228,6 +257,7 @@ export function TutorialModal() {
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>
+      {/* Increased width to max-w-3xl for better readability */}
       <DialogContent className="sm:max-w-3xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <div className={`mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full ${STEPS[currentStep].bg}`}>
@@ -241,13 +271,13 @@ export function TutorialModal() {
           </DialogDescription>
         </DialogHeader>
 
-        <div className="py-4">
+        <div className="py-4 px-2 sm:px-4">
           {STEPS[currentStep].content}
         </div>
 
-        <DialogFooter className="flex-col sm:flex-row gap-3">
+        <DialogFooter className="flex-col sm:flex-row gap-3 items-center">
           {/* Progress dots */}
-          <div className="flex justify-center gap-1.5 mb-4 sm:mb-0 sm:mr-auto items-center">
+          <div className="flex justify-center gap-1.5 mb-4 sm:mb-0 sm:mr-auto items-center order-2 sm:order-1">
             {STEPS.map((_, index) => (
               <button
                 key={index}
@@ -263,7 +293,7 @@ export function TutorialModal() {
           </div>
 
           {/* Navigation buttons */}
-          <div className="flex gap-2 w-full sm:w-auto">
+          <div className="flex gap-2 w-full sm:w-auto order-1 sm:order-2">
             {!isFirstStep && (
               <Button 
                 onClick={handlePrevious} 
@@ -275,7 +305,7 @@ export function TutorialModal() {
             )}
             <Button 
               onClick={handleNext} 
-              className="flex-1 sm:flex-none gap-2"
+              className="flex-1 sm:flex-none gap-2 bg-gradient-to-r from-primary to-[hsl(35_90%_65%)] hover:opacity-90"
             >
               {isLastStep ? (
                 <>C'est parti ! <Check className="h-4 w-4" /></>
@@ -287,7 +317,7 @@ export function TutorialModal() {
         </DialogFooter>
 
         {/* Step counter */}
-        <div className="text-center text-xs text-muted-foreground pb-2">
+        <div className="text-center text-xs text-muted-foreground pb-2 pt-2">
           Étape {currentStep + 1} sur {STEPS.length}
         </div>
       </DialogContent>

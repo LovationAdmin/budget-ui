@@ -3,12 +3,28 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Plus, Trash2, Calendar, Clock, Link as LinkIcon, ChevronDown, ChevronUp } from "lucide-react";
+import { 
+  Plus, 
+  Trash2, 
+  Calendar, 
+  Clock, 
+  Link as LinkIcon, 
+  ChevronDown, 
+  ChevronUp 
+} from "lucide-react";
+import { 
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import type { Charge } from '@/utils/importConverter';
 import { budgetAPI } from '@/services/api';
 
-// ... (Exported Interfaces for Suggestion remain same)
+// ============================================================================
+// EXPORTED TYPE
+// ============================================================================
+
 export interface Suggestion {
   id: string;
   chargeId?: string;
@@ -20,12 +36,20 @@ export interface Suggestion {
   canBeContacted: boolean;
 }
 
+// ============================================================================
+// INTERFACES
+// ============================================================================
+
 interface ChargesSectionProps {
   charges: Charge[];
   onChargesChange: (charges: Charge[]) => void;
   onLinkTransaction?: (charge: Charge) => void; 
   mappedTotals?: Record<string, number>; 
 }
+
+// ============================================================================
+// COMPOSANT PRINCIPAL
+// ============================================================================
 
 export default function ChargesSection({ 
     charges, 
@@ -45,7 +69,10 @@ export default function ChargesSection({
   const [detectedCategory, setDetectedCategory] = useState<string>('');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
 
-  // ... (AI Categorization Logic remains same)
+  // ============================================================================
+  // AI CATEGORIZATION
+  // ============================================================================
+
   const handleLabelBlur = async () => {
       if (!newChargeLabel.trim() || newChargeLabel.length < 3) return;
       setIsAnalyzing(true);
@@ -63,6 +90,10 @@ export default function ChargesSection({
       }
   };
 
+  // ============================================================================
+  // CRUD OPERATIONS
+  // ============================================================================
+
   const addCharge = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newChargeLabel.trim()) return;
@@ -78,13 +109,14 @@ export default function ChargesSection({
     
     onChargesChange([...charges, newCharge]);
     
+    // Reset form
     setNewChargeLabel('');
     setNewChargeAmount('');
     setStartDate('');
     setEndDate('');
     setDetectedCategory('');
     setShowAddForm(false);
-    setIsExpanded(true); // Open when adding
+    setIsExpanded(true); // Open section when adding
   };
 
   const removeCharge = (id: string) => {
@@ -96,6 +128,10 @@ export default function ChargesSection({
   const updateCharge = (id: string, updates: Partial<Charge>) => {
     onChargesChange(charges.map(c => c.id === id ? { ...c, ...updates } : c));
   };
+
+  // ============================================================================
+  // HELPER FUNCTIONS
+  // ============================================================================
 
   const getCategoryLabel = (category?: string) => {
     if (!category) return '';
@@ -113,6 +149,10 @@ export default function ChargesSection({
   };
 
   const totalCharges = charges.reduce((sum, c) => sum + c.amount, 0);
+
+  // ============================================================================
+  // RENDER
+  // ============================================================================
 
   return (
     <Card className="border-orange-200 bg-gradient-to-br from-orange-50 to-orange-100/30 transition-all duration-300">
@@ -270,7 +310,10 @@ export default function ChargesSection({
   );
 }
 
-// ... (ChargeItem Component remains exactly the same as in your prompt)
+// ============================================================================
+// COMPOSANT ITEM DE CHARGE
+// ============================================================================
+
 interface ChargeItemProps {
   charge: Charge;
   onUpdate: (id: string, updates: Partial<Charge>) => void;
@@ -291,11 +334,17 @@ function ChargeItem({
   const [isEditing, setIsEditing] = useState(false);
   const [editLabel, setEditLabel] = useState(charge.label);
   const [editAmount, setEditAmount] = useState(charge.amount.toString());
+  
+  // NEW: Date state for edit mode
+  const [editStartDate, setEditStartDate] = useState(charge.startDate);
+  const [editEndDate, setEditEndDate] = useState(charge.endDate);
 
   const handleSave = () => {
     onUpdate(charge.id, {
       label: editLabel,
-      amount: parseFloat(editAmount) || 0
+      amount: parseFloat(editAmount) || 0,
+      startDate: editStartDate,
+      endDate: editEndDate
     });
     setIsEditing(false);
   };
@@ -303,6 +352,8 @@ function ChargeItem({
   const handleCancel = () => {
     setEditLabel(charge.label);
     setEditAmount(charge.amount.toString());
+    setEditStartDate(charge.startDate);
+    setEditEndDate(charge.endDate);
     setIsEditing(false);
   };
 
@@ -317,6 +368,8 @@ function ChargeItem({
   const differsFromBudget = hasRealityCheck && Math.abs(mappedTotal - charge.amount) > 0.5;
 
   if (isEditing) {
+    const hasEditDates = editStartDate || editEndDate;
+
     return (
       <div className="flex items-center gap-2 p-3 bg-white rounded-lg border border-orange-200">
         <Input
@@ -333,10 +386,66 @@ function ChargeItem({
           className="w-24 h-8"
           placeholder="0.00"
         />
-        <Button size="sm" onClick={handleSave} className="h-8">
+        
+        {/* Date Editor Button (Popover) */}
+        <Popover>
+            <PopoverTrigger asChild>
+                <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className={cn(
+                        "h-8 w-8 hover:bg-orange-50",
+                        hasEditDates ? "text-orange-600 bg-orange-50" : "text-muted-foreground"
+                    )}
+                    title="Modifier la période"
+                >
+                    <Calendar className="h-4 w-4" />
+                </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-72 p-3">
+                <div className="space-y-3">
+                    <h4 className="font-medium text-xs text-muted-foreground">Période de facturation</h4>
+                    <div className="grid gap-2">
+                        <div className="grid grid-cols-3 items-center gap-2">
+                            <Label className="text-xs">Début</Label>
+                            <Input
+                                type="date"
+                                value={editStartDate || ''}
+                                onChange={(e) => setEditStartDate(e.target.value)}
+                                className="col-span-2 h-8 text-xs"
+                            />
+                        </div>
+                        <div className="grid grid-cols-3 items-center gap-2">
+                            <Label className="text-xs">Fin</Label>
+                            <Input
+                                type="date"
+                                value={editEndDate || ''}
+                                onChange={(e) => setEditEndDate(e.target.value)}
+                                className="col-span-2 h-8 text-xs"
+                            />
+                        </div>
+                    </div>
+                    {(editStartDate || editEndDate) && (
+                        <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            className="w-full h-7 text-xs text-muted-foreground hover:text-destructive"
+                            onClick={() => {
+                                setEditStartDate(undefined);
+                                setEditEndDate(undefined);
+                            }}
+                        >
+                            Effacer les dates
+                        </Button>
+                    )}
+                </div>
+            </PopoverContent>
+        </Popover>
+
+        <Button size="sm" onClick={handleSave} className="h-8 w-8 p-0 bg-orange-600 hover:bg-orange-700">
           ✓
         </Button>
-        <Button size="sm" variant="ghost" onClick={handleCancel} className="h-8">
+        <Button size="sm" variant="ghost" onClick={handleCancel} className="h-8 w-8 p-0">
           ✕
         </Button>
       </div>
