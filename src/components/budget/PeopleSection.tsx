@@ -9,7 +9,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { Plus, Trash2, Users, DollarSign, X, Calendar, Clock } from "lucide-react";
+import { Plus, Trash2, Users, DollarSign, Calendar, Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Person } from '@/utils/importConverter';
 
@@ -155,13 +155,13 @@ export default function PeopleSection({ people, onPeopleChange }: PeopleSectionP
           </form>
         )}
 
-        {/* List */}
+        {/* List - UPDATED TO GRID LAYOUT */}
         {people.length === 0 ? (
           <div className="text-center py-6 text-muted-foreground text-sm">
             Aucune personne ajoutée.
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {people.map((person) => {
               const hasDates = person.startDate || person.endDate;
               const dateText = hasDates
@@ -171,7 +171,7 @@ export default function PeopleSection({ people, onPeopleChange }: PeopleSectionP
               return (
                 <div
                     key={person.id}
-                    className="group relative flex items-center gap-3 p-3 rounded-xl border border-border/50 bg-card/50 hover:bg-card hover:shadow-sm transition-all"
+                    className="group relative flex items-center gap-3 p-3 rounded-lg border border-border/60 bg-white hover:border-primary/30 hover:shadow-sm transition-all"
                 >
                     <MemberAvatar name={person.name} size="sm" />
                     

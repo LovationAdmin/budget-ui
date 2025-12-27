@@ -164,7 +164,7 @@ export default function ChargesSection({
             <p className="text-xs">Cliquez sur "Ajouter une charge" pour commencer</p>
           </div>
         ) : (
-          <div className="space-y-2">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {charges.map((charge) => (
               <ChargeItem
                 key={charge.id}

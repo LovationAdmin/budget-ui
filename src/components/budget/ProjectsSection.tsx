@@ -184,13 +184,13 @@ export default function ProjectsSection({
           </form>
         )}
 
-        {/* Projects List */}
+        {/* Projects List - UPDATED TO GRID LAYOUT */}
         {projects.length === 0 ? (
           <div className="text-center py-6 text-muted-foreground text-sm">
             Aucun projet d'épargne.
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {projects.map((project) => {
               const { totalPlanned, totalRealized } = getProjectStats(project.id);
               const target = project.targetAmount || 0;
@@ -206,10 +206,10 @@ export default function ProjectsSection({
                 <div
                   key={project.id}
                   className={cn(
-                    "group relative overflow-hidden rounded-xl border transition-all duration-200 p-4",
+                    "group relative overflow-hidden rounded-lg border transition-all duration-200 p-4",
                     isGoalReached 
                         ? "bg-success/5 border-success/30 shadow-sm" 
-                        : "bg-card/50 border-border/50 hover:bg-card hover:shadow-md"
+                        : "bg-white border-border/60 hover:border-secondary/30 hover:shadow-sm"
                   )}
                 >
                   <div className="relative flex flex-col gap-3">

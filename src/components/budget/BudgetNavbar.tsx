@@ -63,7 +63,7 @@ export function BudgetNavbar({
   const { logout } = useAuth();
   const { startTutorial } = useTutorial(); // Hook for tutorial
   const [helpOpen, setHelpOpen] = useState(false);
-  
+
   const handleLogout = () => {
     logout();
     navigate('/login');
@@ -263,9 +263,9 @@ export function BudgetNavbar({
               </button>
             );
           })}
-          <HelpCenter open={helpOpen} onClose={() => setHelpOpen(false)} />
         </nav>
       )}
+      <HelpCenter open={helpOpen} onClose={() => setHelpOpen(false)} />
     </header>
   );
 }
