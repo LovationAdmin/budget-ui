@@ -9,7 +9,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { Plus, Trash2, Users, DollarSign, Calendar, Clock } from "lucide-react";
+import { Plus, Trash2, Users, DollarSign, Calendar, Clock, ChevronDown, ChevronUp } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Person } from '@/utils/importConverter';
 
@@ -24,6 +24,9 @@ export default function PeopleSection({ people, onPeopleChange }: PeopleSectionP
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [showAddForm, setShowAddForm] = useState(false);
+  
+  // Collapsible State
+  const [isExpanded, setIsExpanded] = useState(true);
 
   const addPerson = (e: React.FormEvent) => {
     e.preventDefault();
@@ -43,6 +46,8 @@ export default function PeopleSection({ people, onPeopleChange }: PeopleSectionP
     setStartDate('');
     setEndDate('');
     setShowAddForm(false);
+    // Ensure section is open when adding
+    setIsExpanded(true);
   };
 
   const removePerson = (id: string) => {
@@ -60,61 +65,83 @@ export default function PeopleSection({ people, onPeopleChange }: PeopleSectionP
   const totalSalary = people.reduce((sum, p) => sum + p.salary, 0);
 
   return (
-    <Card className="glass-card animate-slide-up">
-      <CardHeader className="pb-3">
+    // UPDATED STYLE: Emerald Gradient (Green for Income)
+    <Card className="border-emerald-200 bg-gradient-to-br from-emerald-50 to-emerald-100/30 animate-slide-up transition-all duration-300">
+      <CardHeader 
+        className="pb-3 cursor-pointer hover:opacity-80 transition-opacity" 
+        onClick={() => setIsExpanded(!isExpanded)}
+      >
         <div className="flex items-center justify-between">
           {/* LEFT SIDE: Icon + Title + Count */}
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10">
-              <Users className="h-5 w-5 text-primary" />
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-100 text-emerald-600">
+              <Users className="h-5 w-5" />
             </div>
             <div>
-              <CardTitle className="font-display text-lg flex items-center gap-2">
+              <CardTitle className="font-display text-lg flex items-center gap-2 text-emerald-900">
                 Revenus (Salaires)
-                <span className="text-sm font-normal text-muted-foreground">
+                <span className="text-sm font-normal text-emerald-700/70">
                   ({people.length} personne{people.length > 1 ? 's' : ''})
                 </span>
               </CardTitle>
             </div>
           </div>
           
-          {/* RIGHT SIDE: Total + Add Button */}
+          {/* RIGHT SIDE: Total + Add Button + Chevron */}
           <div className="flex items-center gap-4">
             <div className="text-right hidden sm:block">
-                <p className="text-2xl font-bold text-primary">
+                <p className="text-2xl font-bold text-emerald-900">
                   {totalSalary.toLocaleString('fr-FR')} €
                 </p>
-                <p className="text-xs text-muted-foreground">Total mensuel</p>
+                <p className="text-xs text-emerald-700">Total mensuel</p>
             </div>
 
-            {!showAddForm && (
-                <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setShowAddForm(true)}
-                className="gap-1 h-8 bg-primary/5 hover:bg-primary/10 text-primary"
-                >
-                <Plus className="h-3.5 w-3.5" />
-                <span className="hidden sm:inline">Ajouter</span>
-                <span className="sm:hidden">+</span>
-                </Button>
-            )}
+            <div className="flex items-center gap-2">
+                {!showAddForm && (
+                    <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        setShowAddForm(true);
+                        setIsExpanded(true);
+                    }}
+                    className="gap-1 h-8 bg-emerald-100/50 hover:bg-emerald-200/50 text-emerald-800"
+                    >
+                    <Plus className="h-3.5 w-3.5" />
+                    <span className="hidden sm:inline">Ajouter</span>
+                    </Button>
+                )}
+                
+                {/* Chevron Toggle */}
+                <div className="text-emerald-700">
+                    {isExpanded ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
+                </div>
+            </div>
           </div>
         </div>
         
         {/* Mobile Total (visible only on small screens) */}
-        <div className="sm:hidden flex justify-end mt-2">
-             <p className="text-lg font-bold text-primary">
-                  {totalSalary.toLocaleString('fr-FR')} € 
-                  <span className="text-xs font-normal text-muted-foreground ml-1">/ mois</span>
-             </p>
-        </div>
+        {!isExpanded && (
+            <div className="sm:hidden flex justify-end mt-2 animate-fade-in">
+                 <p className="text-lg font-bold text-emerald-900">
+                      {totalSalary.toLocaleString('fr-FR')} € 
+                      <span className="text-xs font-normal text-muted-foreground ml-1">/ mois</span>
+                 </p>
+            </div>
+        )}
       </CardHeader>
 
-      <CardContent>
+      {/* Collapsible Content */}
+      {isExpanded && (
+      <CardContent className="animate-accordion-down">
         {/* Add Form */}
         {showAddForm && (
-          <form onSubmit={addPerson} className="mb-4 p-3 rounded-xl border border-primary/20 bg-primary/5 animate-scale-in">
+          <form 
+            onSubmit={addPerson} 
+            onClick={(e) => e.stopPropagation()}
+            className="mb-4 p-3 rounded-xl border border-emerald-200 bg-white/50 animate-scale-in"
+          >
             <div className="flex flex-col gap-3">
                 <div className="flex flex-col sm:flex-row gap-3 items-end">
                 <div className="w-full sm:flex-1 space-y-1.5">
@@ -169,7 +196,7 @@ export default function PeopleSection({ people, onPeopleChange }: PeopleSectionP
                     <Button type="button" size="sm" variant="ghost" onClick={() => setShowAddForm(false)} className="h-8 text-xs">
                         Annuler
                     </Button>
-                    <Button type="submit" size="sm" variant="gradient" className="h-8 text-xs">
+                    <Button type="submit" size="sm" className="h-8 text-xs bg-emerald-600 hover:bg-emerald-700 text-white">
                         <Plus className="h-3 w-3 mr-1" /> Ajouter
                     </Button>
                 </div>
@@ -179,7 +206,7 @@ export default function PeopleSection({ people, onPeopleChange }: PeopleSectionP
 
         {/* List */}
         {people.length === 0 ? (
-          <div className="text-center py-6 text-muted-foreground text-sm">
+          <div className="text-center py-6 text-emerald-800/60 text-sm">
             Aucune personne ajoutée.
           </div>
         ) : (
@@ -193,7 +220,7 @@ export default function PeopleSection({ people, onPeopleChange }: PeopleSectionP
               return (
                 <div
                     key={person.id}
-                    className="group relative flex items-center gap-3 p-3 rounded-lg border border-border/60 bg-white hover:border-primary/30 hover:shadow-sm transition-all"
+                    className="group relative flex items-center gap-3 p-3 rounded-lg border border-emerald-100 bg-white hover:border-emerald-300 hover:shadow-sm transition-all"
                 >
                     <MemberAvatar name={person.name} size="sm" />
                     
@@ -201,21 +228,21 @@ export default function PeopleSection({ people, onPeopleChange }: PeopleSectionP
                     <Input
                         value={person.name}
                         onChange={(e) => updatePerson(person.id, { name: e.target.value })}
-                        className="h-7 text-sm font-medium bg-transparent border-0 p-0 focus-visible:ring-0 px-1 -ml-1"
+                        className="h-7 text-sm font-medium bg-transparent border-0 p-0 focus-visible:ring-0 px-1 -ml-1 text-emerald-950"
                     />
                     <div className="flex items-center gap-1 text-muted-foreground">
-                        <DollarSign className="h-3 w-3" />
+                        <DollarSign className="h-3 w-3 text-emerald-600" />
                         <Input
                             type="number"
                             value={person.salary}
                             onChange={(e) => updatePerson(person.id, { salary: parseFloat(e.target.value) || 0 })}
-                            className="h-6 w-20 text-xs bg-transparent border-0 p-0 focus-visible:ring-0"
+                            className="h-6 w-20 text-xs bg-transparent border-0 p-0 focus-visible:ring-0 font-semibold text-emerald-700"
                         />
                     </div>
 
                     {/* Date Badge */}
                     {hasDates && (
-                        <div className="flex items-center gap-1 mt-1 text-[10px] text-muted-foreground bg-muted/30 px-1.5 py-0.5 rounded w-fit">
+                        <div className="flex items-center gap-1 mt-1 text-[10px] text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded w-fit">
                             <Clock className="h-3 w-3" />
                             <span className="truncate max-w-[120px]">{dateText}</span>
                         </div>
@@ -230,8 +257,8 @@ export default function PeopleSection({ people, onPeopleChange }: PeopleSectionP
                                     variant="ghost" 
                                     size="icon-sm" 
                                     className={cn(
-                                        "h-7 w-7 text-muted-foreground hover:text-primary hover:bg-primary/10",
-                                        hasDates && "text-primary bg-primary/5"
+                                        "h-7 w-7 text-emerald-400 hover:text-emerald-700 hover:bg-emerald-50",
+                                        hasDates && "text-emerald-700 bg-emerald-50"
                                     )}
                                     title="Définir une période"
                                 >
@@ -281,7 +308,7 @@ export default function PeopleSection({ people, onPeopleChange }: PeopleSectionP
                             variant="ghost"
                             size="icon-sm"
                             onClick={() => removePerson(person.id)}
-                            className="h-7 w-7 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                            className="h-7 w-7 text-emerald-300 hover:text-red-600 hover:bg-red-50"
                         >
                             <Trash2 className="h-3.5 w-3.5" />
                         </Button>
@@ -292,6 +319,7 @@ export default function PeopleSection({ people, onPeopleChange }: PeopleSectionP
           </div>
         )}
       </CardContent>
+      )}
     </Card>
   );
 }

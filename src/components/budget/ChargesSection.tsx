@@ -3,15 +3,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Plus, Trash2, Calendar, Clock, Link as LinkIcon } from "lucide-react";
+import { Plus, Trash2, Calendar, Clock, Link as LinkIcon, ChevronDown, ChevronUp } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Charge } from '@/utils/importConverter';
 import { budgetAPI } from '@/services/api';
 
-// ============================================================================
-// EXPORTED TYPE - Pour compatibilité avec Beta2Page et BudgetComplete
-// ============================================================================
-
+// ... (Exported Interfaces for Suggestion remain same)
 export interface Suggestion {
   id: string;
   chargeId?: string;
@@ -23,20 +20,12 @@ export interface Suggestion {
   canBeContacted: boolean;
 }
 
-// ============================================================================
-// INTERFACE - Plus de props "suggestions"
-// ============================================================================
-
 interface ChargesSectionProps {
   charges: Charge[];
   onChargesChange: (charges: Charge[]) => void;
   onLinkTransaction?: (charge: Charge) => void; 
   mappedTotals?: Record<string, number>; 
 }
-
-// ============================================================================
-// COMPOSANT PRINCIPAL
-// ============================================================================
 
 export default function ChargesSection({ 
     charges, 
@@ -50,13 +39,13 @@ export default function ChargesSection({
   const [endDate, setEndDate] = useState('');
   const [showAddForm, setShowAddForm] = useState(false);
   
+  // Collapsible State
+  const [isExpanded, setIsExpanded] = useState(true);
+  
   const [detectedCategory, setDetectedCategory] = useState<string>('');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
 
-  // ============================================================================
-  // AI CATEGORIZATION
-  // ============================================================================
-
+  // ... (AI Categorization Logic remains same)
   const handleLabelBlur = async () => {
       if (!newChargeLabel.trim() || newChargeLabel.length < 3) return;
       setIsAnalyzing(true);
@@ -74,10 +63,6 @@ export default function ChargesSection({
       }
   };
 
-  // ============================================================================
-  // CRUD OPERATIONS
-  // ============================================================================
-
   const addCharge = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newChargeLabel.trim()) return;
@@ -93,13 +78,13 @@ export default function ChargesSection({
     
     onChargesChange([...charges, newCharge]);
     
-    // Reset form
     setNewChargeLabel('');
     setNewChargeAmount('');
     setStartDate('');
     setEndDate('');
     setDetectedCategory('');
     setShowAddForm(false);
+    setIsExpanded(true); // Open when adding
   };
 
   const removeCharge = (id: string) => {
@@ -111,10 +96,6 @@ export default function ChargesSection({
   const updateCharge = (id: string, updates: Partial<Charge>) => {
     onChargesChange(charges.map(c => c.id === id ? { ...c, ...updates } : c));
   };
-
-  // ============================================================================
-  // HELPER FUNCTIONS
-  // ============================================================================
 
   const getCategoryLabel = (category?: string) => {
     if (!category) return '';
@@ -133,13 +114,12 @@ export default function ChargesSection({
 
   const totalCharges = charges.reduce((sum, c) => sum + c.amount, 0);
 
-  // ============================================================================
-  // RENDER
-  // ============================================================================
-
   return (
-    <Card className="border-orange-200 bg-gradient-to-br from-orange-50 to-orange-100/30">
-      <CardHeader className="pb-4">
+    <Card className="border-orange-200 bg-gradient-to-br from-orange-50 to-orange-100/30 transition-all duration-300">
+      <CardHeader 
+        className="pb-4 cursor-pointer hover:opacity-80 transition-opacity"
+        onClick={() => setIsExpanded(!isExpanded)}
+      >
         <div className="flex items-center justify-between">
           <CardTitle className="text-orange-900 flex items-center gap-2">
             📤 Charges Mensuelles
@@ -147,16 +127,24 @@ export default function ChargesSection({
               ({charges.length} charge{charges.length > 1 ? 's' : ''})
             </span>
           </CardTitle>
-          <div className="text-right">
-            <p className="text-2xl font-bold text-orange-900">
-              {totalCharges.toFixed(0)}€
-            </p>
-            <p className="text-xs text-muted-foreground">Total mensuel</p>
+          
+          <div className="flex items-center gap-4">
+            <div className="text-right">
+                <p className="text-2xl font-bold text-orange-900">
+                {totalCharges.toFixed(0)}€
+                </p>
+                <p className="text-xs text-muted-foreground">Total mensuel</p>
+            </div>
+            {/* Chevron Toggle */}
+            <div className="text-orange-800">
+                {isExpanded ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
+            </div>
           </div>
         </div>
       </CardHeader>
 
-      <CardContent className="space-y-3">
+      {isExpanded && (
+      <CardContent className="space-y-3 animate-accordion-down">
         {/* Liste des charges */}
         {charges.length === 0 ? (
           <div className="text-center py-8 text-muted-foreground">
@@ -182,7 +170,10 @@ export default function ChargesSection({
         {/* Formulaire d'ajout */}
         {!showAddForm ? (
           <Button 
-            onClick={() => setShowAddForm(true)} 
+            onClick={(e) => {
+                e.stopPropagation();
+                setShowAddForm(true);
+            }} 
             variant="outline" 
             className="w-full border-dashed border-orange-300 text-orange-700 hover:bg-orange-50"
           >
@@ -190,7 +181,11 @@ export default function ChargesSection({
             Ajouter une charge
           </Button>
         ) : (
-          <form onSubmit={addCharge} className="space-y-3 p-4 border border-orange-200 rounded-lg bg-white">
+          <form 
+            onSubmit={addCharge} 
+            onClick={(e) => e.stopPropagation()}
+            className="space-y-3 p-4 border border-orange-200 rounded-lg bg-white"
+          >
             <div>
               <Label htmlFor="charge-label">Libellé *</Label>
               <Input
@@ -270,14 +265,12 @@ export default function ChargesSection({
           </form>
         )}
       </CardContent>
+      )}
     </Card>
   );
 }
 
-// ============================================================================
-// COMPOSANT ITEM DE CHARGE
-// ============================================================================
-
+// ... (ChargeItem Component remains exactly the same as in your prompt)
 interface ChargeItemProps {
   charge: Charge;
   onUpdate: (id: string, updates: Partial<Charge>) => void;
