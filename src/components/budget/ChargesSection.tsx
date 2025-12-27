@@ -23,7 +23,6 @@ export interface Suggestion {
 interface ChargesSectionProps {
   charges: Charge[];
   onChargesChange: (charges: Charge[]) => void;
-  suggestions?: Suggestion[];
   onLinkTransaction?: (charge: Charge) => void; 
   mappedTotals?: Record<string, number>; 
 }
@@ -31,7 +30,6 @@ interface ChargesSectionProps {
 export default function ChargesSection({ 
     charges, 
     onChargesChange, 
-    suggestions = [], 
     onLinkTransaction,
     mappedTotals = {} 
 }: ChargesSectionProps) {

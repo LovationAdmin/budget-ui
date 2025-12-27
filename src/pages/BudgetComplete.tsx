@@ -459,7 +459,7 @@ export default function BudgetComplete() {
 
         <div id="people"><PeopleSection people={people} onPeopleChange={setPeople} /></div>
         
-        <div id="charges" className="mt-6"><ChargesSection charges={charges} onChargesChange={setCharges} suggestions={suggestions} /></div>
+        <div id="charges" className="mt-6"><ChargesSection charges={charges} onChargesChange={setCharges} /></div>
         
         <div id="suggestions" className="mt-6">
           <EnhancedSuggestions 

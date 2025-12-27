@@ -613,7 +613,6 @@ export default function Beta2Page() {
             <ChargesSection 
                 charges={charges} 
                 onChargesChange={setCharges} 
-                suggestions={suggestions} 
                 onLinkTransaction={handleOpenMapper} 
                 mappedTotals={mappedTotalsByChargeId} 
             />
