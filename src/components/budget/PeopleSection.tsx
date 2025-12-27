@@ -87,7 +87,7 @@ export default function PeopleSection({ people, onPeopleChange }: PeopleSectionP
             </div>
           </div>
           
-          {/* RIGHT SIDE: Total + Add Button + Chevron */}
+          {/* RIGHT SIDE: Total + Chevron */}
           <div className="flex items-center gap-4">
             <div className="text-right hidden sm:block">
                 <p className="text-2xl font-bold text-emerald-900">
@@ -96,27 +96,9 @@ export default function PeopleSection({ people, onPeopleChange }: PeopleSectionP
                 <p className="text-xs text-emerald-700">Total mensuel</p>
             </div>
 
-            <div className="flex items-center gap-2">
-                {!showAddForm && (
-                    <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={(e) => {
-                        e.stopPropagation();
-                        setShowAddForm(true);
-                        setIsExpanded(true);
-                    }}
-                    className="gap-1 h-8 bg-emerald-100/50 hover:bg-emerald-200/50 text-emerald-800"
-                    >
-                    <Plus className="h-3.5 w-3.5" />
-                    <span className="hidden sm:inline">Ajouter</span>
-                    </Button>
-                )}
-                
-                {/* Chevron Toggle */}
-                <div className="text-emerald-700">
-                    {isExpanded ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
-                </div>
+            {/* Chevron Toggle */}
+            <div className="text-emerald-700">
+                {isExpanded ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
             </div>
           </div>
         </div>
@@ -134,76 +116,8 @@ export default function PeopleSection({ people, onPeopleChange }: PeopleSectionP
 
       {/* Collapsible Content */}
       {isExpanded && (
-      <CardContent className="animate-accordion-down">
-        {/* Add Form */}
-        {showAddForm && (
-          <form 
-            onSubmit={addPerson} 
-            onClick={(e) => e.stopPropagation()}
-            className="mb-4 p-3 rounded-xl border border-emerald-200 bg-white/50 animate-scale-in"
-          >
-            <div className="flex flex-col gap-3">
-                <div className="flex flex-col sm:flex-row gap-3 items-end">
-                <div className="w-full sm:flex-1 space-y-1.5">
-                    <Label htmlFor="person-name" className="text-xs">Nom</Label>
-                    <Input
-                    id="person-name"
-                    value={newPersonName}
-                    onChange={(e) => setNewPersonName(e.target.value)}
-                    placeholder="Ex: Jean"
-                    className="h-9 bg-white"
-                    required
-                    autoFocus
-                    />
-                </div>
-                <div className="w-full sm:w-32 space-y-1.5">
-                    <Label htmlFor="person-salary" className="text-xs">Salaire</Label>
-                    <Input
-                    id="person-salary"
-                    type="number"
-                    value={newPersonSalary}
-                    onChange={(e) => setNewPersonSalary(e.target.value)}
-                    placeholder="2000"
-                    className="h-9 bg-white"
-                    />
-                </div>
-                </div>
-
-                <div className="flex flex-col sm:flex-row gap-3 items-end">
-                    <div className="w-full space-y-1.5">
-                        <Label htmlFor="start-date" className="text-xs text-muted-foreground">Début (Optionnel)</Label>
-                        <Input 
-                            id="start-date" 
-                            type="date" 
-                            className="h-8 text-xs bg-white"
-                            value={startDate}
-                            onChange={(e) => setStartDate(e.target.value)}
-                        />
-                    </div>
-                    <div className="w-full space-y-1.5">
-                        <Label htmlFor="end-date" className="text-xs text-muted-foreground">Fin (Optionnel)</Label>
-                        <Input 
-                            id="end-date" 
-                            type="date" 
-                            className="h-8 text-xs bg-white"
-                            value={endDate}
-                            onChange={(e) => setEndDate(e.target.value)}
-                        />
-                    </div>
-                </div>
-
-                <div className="flex gap-2 justify-end pt-2">
-                    <Button type="button" size="sm" variant="ghost" onClick={() => setShowAddForm(false)} className="h-8 text-xs">
-                        Annuler
-                    </Button>
-                    <Button type="submit" size="sm" className="h-8 text-xs bg-emerald-600 hover:bg-emerald-700 text-white">
-                        <Plus className="h-3 w-3 mr-1" /> Ajouter
-                    </Button>
-                </div>
-            </div>
-          </form>
-        )}
-
+      <CardContent className="animate-accordion-down space-y-3">
+        
         {/* List */}
         {people.length === 0 ? (
           <div className="text-center py-6 text-emerald-800/60 text-sm">
@@ -318,6 +232,94 @@ export default function PeopleSection({ people, onPeopleChange }: PeopleSectionP
             })}
           </div>
         )}
+
+        {/* Formulaire d'ajout / Bouton Ajouter (Style Charges) */}
+        {!showAddForm ? (
+          <Button 
+            onClick={(e) => {
+                e.stopPropagation();
+                setShowAddForm(true);
+            }} 
+            variant="outline" 
+            className="w-full border-dashed border-emerald-300 text-emerald-700 hover:bg-emerald-50 mt-2"
+          >
+            <Plus className="mr-2 h-4 w-4" />
+            Ajouter une personne
+          </Button>
+        ) : (
+          <form 
+            onSubmit={addPerson} 
+            onClick={(e) => e.stopPropagation()}
+            className="mb-4 p-3 rounded-xl border border-emerald-200 bg-white/50 animate-scale-in"
+          >
+            <div className="flex flex-col gap-3">
+                <div className="flex flex-col sm:flex-row gap-3 items-end">
+                <div className="w-full sm:flex-1 space-y-1.5">
+                    <Label htmlFor="person-name" className="text-xs">Nom</Label>
+                    <Input
+                    id="person-name"
+                    value={newPersonName}
+                    onChange={(e) => setNewPersonName(e.target.value)}
+                    placeholder="Ex: Jean"
+                    className="h-9 bg-white"
+                    required
+                    autoFocus
+                    />
+                </div>
+                <div className="w-full sm:w-32 space-y-1.5">
+                    <Label htmlFor="person-salary" className="text-xs">Salaire</Label>
+                    <Input
+                    id="person-salary"
+                    type="number"
+                    value={newPersonSalary}
+                    onChange={(e) => setNewPersonSalary(e.target.value)}
+                    placeholder="2000"
+                    className="h-9 bg-white"
+                    />
+                </div>
+                </div>
+
+                <div className="flex flex-col sm:flex-row gap-3 items-end">
+                    <div className="w-full space-y-1.5">
+                        <Label htmlFor="start-date" className="text-xs text-muted-foreground">Début (Optionnel)</Label>
+                        <Input 
+                            id="start-date" 
+                            type="date" 
+                            className="h-8 text-xs bg-white"
+                            value={startDate}
+                            onChange={(e) => setStartDate(e.target.value)}
+                        />
+                    </div>
+                    <div className="w-full space-y-1.5">
+                        <Label htmlFor="end-date" className="text-xs text-muted-foreground">Fin (Optionnel)</Label>
+                        <Input 
+                            id="end-date" 
+                            type="date" 
+                            className="h-8 text-xs bg-white"
+                            value={endDate}
+                            onChange={(e) => setEndDate(e.target.value)}
+                        />
+                    </div>
+                </div>
+
+                <div className="flex gap-2 justify-end pt-2">
+                    <Button 
+                        type="button" 
+                        size="sm" 
+                        variant="ghost" 
+                        onClick={() => setShowAddForm(false)} 
+                        className="h-8 text-xs"
+                    >
+                        Annuler
+                    </Button>
+                    <Button type="submit" size="sm" className="h-8 text-xs bg-emerald-600 hover:bg-emerald-700 text-white">
+                        <Plus className="h-3 w-3 mr-1" /> Ajouter
+                    </Button>
+                </div>
+            </div>
+          </form>
+        )}
+
       </CardContent>
       )}
     </Card>
