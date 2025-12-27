@@ -209,6 +209,8 @@ export const budgetAPI = {
 
   getCategorySuggestions: (category: string): Promise<AxiosResponse<MarketSuggestion>> =>
     api.get(`/suggestions/category/${category}`),
+  exportUserData: (): Promise<AxiosResponse> =>
+    api.get('/user/export-data'),
 };
 
 export const invitationAPI = {
