@@ -28,6 +28,9 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { HelpCenter } from '@/components/help/HelpCenter';
+
+const [helpOpen, setHelpOpen] = useState(false);
 
 export interface NavItem {
   id: string;
@@ -128,8 +131,8 @@ export function BudgetNavbar({
           <Button 
             variant="ghost" 
             size="icon" 
-            onClick={startTutorial}
-            title="Aide & Tutoriel"
+            onClick={() => setHelpOpen(true)}
+            title="Aide & Documentation"
             className="text-muted-foreground hover:text-primary"
           >
             <HelpCircle className="h-5 w-5" />
@@ -260,6 +263,7 @@ export function BudgetNavbar({
               </button>
             );
           })}
+          <HelpCenter open={helpOpen} onClose={() => setHelpOpen(false)} />
         </nav>
       )}
     </header>

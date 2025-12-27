@@ -3,22 +3,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Plus, Trash2, Receipt, Calendar, Clock, Lightbulb, ExternalLink, Sparkles, Link as LinkIcon } from "lucide-react";
+import { Plus, Trash2, Calendar, Clock, Link as LinkIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Charge } from '@/utils/importConverter';
 import { budgetAPI } from '@/services/api';
 
-export interface Suggestion {
-    id: string;
-    chargeId?: string;
-    type: string;
-    title: string;
-    message: string;
-    potentialSavings: number;
-    actionLink: string;
-    canBeContacted: boolean;
-}
+// ============================================================================
+// INTERFACE - Plus de props "suggestions"
+// ============================================================================
 
 interface ChargesSectionProps {
   charges: Charge[];
@@ -26,6 +18,10 @@ interface ChargesSectionProps {
   onLinkTransaction?: (charge: Charge) => void; 
   mappedTotals?: Record<string, number>; 
 }
+
+// ============================================================================
+// COMPOSANT PRINCIPAL
+// ============================================================================
 
 export default function ChargesSection({ 
     charges, 
@@ -41,6 +37,10 @@ export default function ChargesSection({
   
   const [detectedCategory, setDetectedCategory] = useState<string>('');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+
+  // ============================================================================
+  // AI CATEGORIZATION
+  // ============================================================================
 
   const handleLabelBlur = async () => {
       if (!newChargeLabel.trim() || newChargeLabel.length < 3) return;
@@ -59,9 +59,14 @@ export default function ChargesSection({
       }
   };
 
+  // ============================================================================
+  // CRUD OPERATIONS
+  // ============================================================================
+
   const addCharge = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newChargeLabel.trim()) return;
+    
     const newCharge: Charge = {
       id: Date.now().toString(),
       label: newChargeLabel.trim(),
@@ -70,140 +75,339 @@ export default function ChargesSection({
       endDate: endDate || undefined,
       category: detectedCategory || undefined, 
     };
+    
     onChargesChange([...charges, newCharge]);
-    setNewChargeLabel(''); setNewChargeAmount(''); setStartDate(''); setEndDate(''); setDetectedCategory(''); setShowAddForm(false);
+    
+    // Reset form
+    setNewChargeLabel('');
+    setNewChargeAmount('');
+    setStartDate('');
+    setEndDate('');
+    setDetectedCategory('');
+    setShowAddForm(false);
   };
 
-  const removeCharge = (id: string) => { if (confirm('Supprimer cette charge ?')) onChargesChange(charges.filter(c => c.id !== id)); };
-  const updateCharge = (id: string, updates: Partial<Charge>) => { onChargesChange(charges.map(c => c.id === id ? { ...c, ...updates } : c)); };
-  const totalChargesBase = charges.reduce((sum, c) => sum + c.amount, 0);
+  const removeCharge = (id: string) => {
+    if (confirm('Supprimer cette charge ?')) {
+      onChargesChange(charges.filter(c => c.id !== id));
+    }
+  };
+
+  const updateCharge = (id: string, updates: Partial<Charge>) => {
+    onChargesChange(charges.map(c => c.id === id ? { ...c, ...updates } : c));
+  };
+
+  // ============================================================================
+  // HELPER FUNCTIONS
+  // ============================================================================
+
+  const getCategoryLabel = (category?: string) => {
+    if (!category) return '';
+    const labels: Record<string, string> = {
+      ENERGY: '⚡ Énergie',
+      INTERNET: '🌐 Internet',
+      MOBILE: '📱 Mobile',
+      INSURANCE_AUTO: '🚗 Assurance Auto',
+      INSURANCE_HOME: '🏠 Assurance Habitation',
+      INSURANCE_HEALTH: '🏥 Assurance Santé',
+      LOAN: '💳 Prêt',
+      OTHER: '📦 Autre'
+    };
+    return labels[category] || category;
+  };
+
+  const totalCharges = charges.reduce((sum, c) => sum + c.amount, 0);
+
+  // ============================================================================
+  // RENDER
+  // ============================================================================
 
   return (
-    <Card className="glass-card animate-slide-up stagger-1">
-      <CardHeader className="pb-3">
+    <Card className="border-orange-200 bg-gradient-to-br from-orange-50 to-orange-100/30">
+      <CardHeader className="pb-4">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-destructive/10">
-              <Receipt className="h-5 w-5 text-destructive" />
-            </div>
-            <div>
-              <CardTitle className="font-display text-lg">Charges Fixes</CardTitle>
-              <p className="text-sm text-muted-foreground">Total théorique : {totalChargesBase.toLocaleString('fr-FR')} € / mois</p>
-            </div>
+          <CardTitle className="text-orange-900 flex items-center gap-2">
+            📤 Charges Mensuelles
+            <span className="text-sm font-normal text-muted-foreground">
+              ({charges.length} charge{charges.length > 1 ? 's' : ''})
+            </span>
+          </CardTitle>
+          <div className="text-right">
+            <p className="text-2xl font-bold text-orange-900">
+              {totalCharges.toFixed(0)}€
+            </p>
+            <p className="text-xs text-muted-foreground">Total mensuel</p>
           </div>
-          {!showAddForm && (
-            <Button variant="ghost" size="sm" onClick={() => setShowAddForm(true)} className="gap-1 h-8 bg-destructive/5 hover:bg-destructive/10 text-destructive">
-              <Plus className="h-3.5 w-3.5" /> Ajouter
-            </Button>
-          )}
         </div>
       </CardHeader>
 
-      <CardContent>
-        {showAddForm && (
-          <form onSubmit={addCharge} className="mb-4 p-3 rounded-xl border border-destructive/20 bg-destructive/5 animate-scale-in">
-            <div className="flex flex-col gap-3">
-              <div className="flex flex-col sm:flex-row gap-3 items-start">
-                <div className="w-full sm:flex-1 space-y-1.5 relative">
-                  <Label htmlFor="charge-label" className="text-xs">Libellé</Label>
-                  <div className="relative">
-                      <Input id="charge-label" value={newChargeLabel} onChange={(e) => setNewChargeLabel(e.target.value)} onBlur={handleLabelBlur} placeholder="Ex: Forfait Sosh, EDF..." className="h-9 bg-white pr-10" required autoFocus />
-                      <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                          {isAnalyzing ? (
-                              <span className="flex h-2 w-2 relative"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span><span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span></span>
-                          ) : detectedCategory ? (
-                              <span className="text-[9px] font-bold text-green-700 bg-green-100 border border-green-200 px-1.5 py-0.5 rounded-full flex items-center gap-1 shadow-sm animate-fade-in"><Sparkles className="h-2 w-2" /> {detectedCategory}</span>
-                          ) : null}
-                      </div>
-                  </div>
-                </div>
-                <div className="w-full sm:w-32 space-y-1.5">
-                  <Label htmlFor="charge-amount" className="text-xs">Montant</Label>
-                  <Input id="charge-amount" type="number" value={newChargeAmount} onChange={(e) => setNewChargeAmount(e.target.value)} placeholder="0" className="h-9 bg-white" required />
-                </div>
+      <CardContent className="space-y-3">
+        {/* Liste des charges */}
+        {charges.length === 0 ? (
+          <div className="text-center py-8 text-muted-foreground">
+            <p className="mb-2">Aucune charge enregistrée</p>
+            <p className="text-xs">Cliquez sur "Ajouter une charge" pour commencer</p>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {charges.map((charge) => (
+              <ChargeItem
+                key={charge.id}
+                charge={charge}
+                onUpdate={updateCharge}
+                onDelete={removeCharge}
+                onLinkTransaction={onLinkTransaction}
+                mappedTotal={mappedTotals[charge.id]}
+                getCategoryLabel={getCategoryLabel}
+              />
+            ))}
+          </div>
+        )}
+
+        {/* Formulaire d'ajout */}
+        {!showAddForm ? (
+          <Button 
+            onClick={() => setShowAddForm(true)} 
+            variant="outline" 
+            className="w-full border-dashed border-orange-300 text-orange-700 hover:bg-orange-50"
+          >
+            <Plus className="mr-2 h-4 w-4" />
+            Ajouter une charge
+          </Button>
+        ) : (
+          <form onSubmit={addCharge} className="space-y-3 p-4 border border-orange-200 rounded-lg bg-white">
+            <div>
+              <Label htmlFor="charge-label">Libellé *</Label>
+              <Input
+                id="charge-label"
+                value={newChargeLabel}
+                onChange={(e) => setNewChargeLabel(e.target.value)}
+                onBlur={handleLabelBlur}
+                placeholder="Ex: EDF, Loyer, Assurance..."
+                required
+              />
+              {isAnalyzing && (
+                <p className="text-xs text-muted-foreground mt-1">
+                  🔄 Analyse de la catégorie...
+                </p>
+              )}
+              {detectedCategory && (
+                <p className="text-xs text-green-600 mt-1">
+                  ✓ Catégorie détectée: {getCategoryLabel(detectedCategory)}
+                </p>
+              )}
+            </div>
+
+            <div>
+              <Label htmlFor="charge-amount">Montant mensuel (€) *</Label>
+              <Input
+                id="charge-amount"
+                type="number"
+                step="0.01"
+                value={newChargeAmount}
+                onChange={(e) => setNewChargeAmount(e.target.value)}
+                placeholder="0.00"
+                required
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label htmlFor="start-date">Date début (optionnel)</Label>
+                <Input
+                  id="start-date"
+                  type="date"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                />
               </div>
-              <div className="flex flex-col sm:flex-row gap-3 items-end">
-                 <div className="w-full space-y-1.5"><Label htmlFor="start-date" className="text-xs text-muted-foreground">Début (Optionnel)</Label><Input id="start-date" type="date" className="h-8 text-xs bg-white" value={startDate} onChange={(e) => setStartDate(e.target.value)} /></div>
-                 <div className="w-full space-y-1.5"><Label htmlFor="end-date" className="text-xs text-muted-foreground">Fin (Optionnel)</Label><Input id="end-date" type="date" className="h-8 text-xs bg-white" value={endDate} onChange={(e) => setEndDate(e.target.value)} /></div>
+              <div>
+                <Label htmlFor="end-date">Date fin (optionnel)</Label>
+                <Input
+                  id="end-date"
+                  type="date"
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                />
               </div>
-              <div className="flex gap-2 justify-end pt-2">
-                <Button type="button" size="sm" variant="ghost" onClick={() => setShowAddForm(false)} className="h-8 text-xs">Annuler</Button>
-                <Button type="submit" size="sm" variant="destructive" className="h-8 text-xs"><Plus className="h-3 w-3 mr-1" /> Ajouter</Button>
-              </div>
+            </div>
+
+            <div className="flex gap-2">
+              <Button type="submit" size="sm" className="flex-1">
+                Ajouter
+              </Button>
+              <Button 
+                type="button" 
+                size="sm" 
+                variant="ghost" 
+                onClick={() => {
+                  setShowAddForm(false);
+                  setNewChargeLabel('');
+                  setNewChargeAmount('');
+                  setStartDate('');
+                  setEndDate('');
+                  setDetectedCategory('');
+                }}
+              >
+                Annuler
+              </Button>
             </div>
           </form>
         )}
-
-        {charges.length === 0 ? (
-          <div className="text-center py-6 text-muted-foreground text-sm">Aucune charge récurrente.</div>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-            {charges.map((charge) => {
-              const hasDates = charge.startDate || charge.endDate;
-              const dateText = hasDates ? 'Dates définies' : null;
-              const suggestion = suggestions.find(s => s.chargeId === charge.id);
-
-              return (
-                <div key={charge.id} className="group relative flex items-center gap-3 p-3 rounded-xl border border-border/50 bg-card/50 hover:bg-card hover:shadow-sm transition-all">
-                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground"><Receipt className="h-4 w-4" /></div>
-                  <div className="flex-1 min-w-0">
-                    <Input value={charge.label} onChange={(e) => updateCharge(charge.id, { label: e.target.value })} className="h-6 text-sm font-medium bg-transparent border-0 p-0 focus-visible:ring-0 px-1 -ml-1 truncate" />
-                    
-                    <div className="flex flex-col">
-                        <div className="flex items-center gap-1 text-destructive font-medium">
-                            <span className="text-xs">-</span>
-                            <Input type="number" value={charge.amount} onChange={(e) => updateCharge(charge.id, { amount: parseFloat(e.target.value) || 0 })} className="h-5 w-20 text-xs bg-transparent border-0 p-0 focus-visible:ring-0" />
-                            <span className="text-xs">€</span>
-                        </div>
-                        {mappedTotals[charge.id] !== undefined && mappedTotals[charge.id] !== charge.amount && (
-                            <span className="text-[9px] text-indigo-600 font-medium">Réel: {mappedTotals[charge.id].toFixed(0)}€</span>
-                        )}
-                    </div>
-
-                    {hasDates && <div className="flex items-center gap-1 mt-1 text-[10px] text-muted-foreground bg-muted/30 px-1.5 py-0.5 rounded w-fit"><Clock className="h-3 w-3" /><span className="truncate max-w-[120px]">{dateText}</span></div>}
-                  </div>
-
-                  <div className="flex flex-col gap-1 items-end">
-                      {suggestion && (
-                          <Popover>
-                              <PopoverTrigger asChild>
-                                   <Button variant="ghost" size="icon-sm" className="h-7 w-7 transition-colors text-yellow-600 bg-yellow-50 hover:bg-yellow-100" title="Optimiser cette dépense"><Lightbulb className="h-3.5 w-3.5" /></Button>
-                              </PopoverTrigger>
-                              <PopoverContent className="w-72 border-none shadow-xl" align="end">
-                                  <div className="space-y-3">
-                                     <div className="flex items-center gap-2 border-b pb-2 border-border/50">
-                                          <div className="p-1.5 rounded-full bg-yellow-100 text-yellow-600"><Sparkles className="h-4 w-4" /></div>
-                                          <h4 className="font-semibold text-sm">{suggestion.title}</h4>
-                                      </div>
-                                      <p className="text-xs text-muted-foreground leading-relaxed">{suggestion.message}</p>
-                                      {suggestion.potentialSavings > 0 && <p className="text-xs font-bold text-green-600">Économie potentielle : {suggestion.potentialSavings.toLocaleString()}€ / an</p>}
-                                      <a href={suggestion.actionLink} target="_blank" rel="noreferrer" className="flex items-center justify-center gap-2 w-full py-2.5 rounded-lg text-xs font-bold transition-all shadow-sm hover:shadow text-white bg-blue-600 hover:bg-blue-700">
-                                          <span className="text-white">Voir l'offre</span><ExternalLink className="h-3 w-3 text-white" />
-                                      </a>
-                                  </div>
-                              </PopoverContent>
-                          </Popover>
-                      )}
-
-                      {/* Link Button (Only if prop provided) */}
-                      {onLinkTransaction && (
-                          <Button variant="ghost" size="icon-sm" onClick={() => onLinkTransaction(charge)} className={cn("h-7 w-7 transition-colors", mappedTotals[charge.id] ? "text-indigo-600 bg-indigo-50" : "text-muted-foreground hover:text-indigo-600")} title="Lier des transactions bancaires"><LinkIcon className="h-3.5 w-3.5" /></Button>
-                      )}
-
-                      <Popover>
-                        <PopoverTrigger asChild><Button variant="ghost" size="icon-sm" className={cn("h-7 w-7 text-muted-foreground hover:text-primary", hasDates && "text-primary")}><Calendar className="h-3.5 w-3.5" /></Button></PopoverTrigger>
-                        <PopoverContent className="w-72 p-3">
-                            <div className="space-y-3"><h4 className="font-medium text-xs text-muted-foreground">Période de validité</h4><div className="grid gap-2"><div className="grid grid-cols-3 items-center gap-2"><Label className="text-xs">Début</Label><Input type="date" value={charge.startDate || ''} onChange={(e) => updateCharge(charge.id, { startDate: e.target.value })} className="col-span-2 h-8 text-xs" /></div><div className="grid grid-cols-3 items-center gap-2"><Label className="text-xs">Fin</Label><Input type="date" value={charge.endDate || ''} onChange={(e) => updateCharge(charge.id, { endDate: e.target.value })} className="col-span-2 h-8 text-xs" /></div></div></div>
-                        </PopoverContent>
-                      </Popover>
-                      <Button variant="ghost" size="icon-sm" onClick={() => removeCharge(charge.id)} className="h-7 w-7 text-muted-foreground hover:text-destructive"><Trash2 className="h-3.5 w-3.5" /></Button>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
       </CardContent>
     </Card>
+  );
+}
+
+// ============================================================================
+// COMPOSANT ITEM DE CHARGE
+// ============================================================================
+
+interface ChargeItemProps {
+  charge: Charge;
+  onUpdate: (id: string, updates: Partial<Charge>) => void;
+  onDelete: (id: string) => void;
+  onLinkTransaction?: (charge: Charge) => void;
+  mappedTotal?: number;
+  getCategoryLabel: (category?: string) => string;
+}
+
+function ChargeItem({ 
+  charge, 
+  onUpdate, 
+  onDelete, 
+  onLinkTransaction,
+  mappedTotal,
+  getCategoryLabel 
+}: ChargeItemProps) {
+  const [isEditing, setIsEditing] = useState(false);
+  const [editLabel, setEditLabel] = useState(charge.label);
+  const [editAmount, setEditAmount] = useState(charge.amount.toString());
+
+  const handleSave = () => {
+    onUpdate(charge.id, {
+      label: editLabel,
+      amount: parseFloat(editAmount) || 0
+    });
+    setIsEditing(false);
+  };
+
+  const handleCancel = () => {
+    setEditLabel(charge.label);
+    setEditAmount(charge.amount.toString());
+    setIsEditing(false);
+  };
+
+  // Format dates
+  const hasDates = charge.startDate || charge.endDate;
+  const dateText = hasDates 
+    ? `${charge.startDate || '...'} → ${charge.endDate || '...'}`
+    : '';
+
+  // Comparaison budget vs réel
+  const hasRealityCheck = mappedTotal !== undefined && mappedTotal > 0;
+  const differsFromBudget = hasRealityCheck && Math.abs(mappedTotal - charge.amount) > 0.5;
+
+  if (isEditing) {
+    return (
+      <div className="flex items-center gap-2 p-3 bg-white rounded-lg border border-orange-200">
+        <Input
+          value={editLabel}
+          onChange={(e) => setEditLabel(e.target.value)}
+          className="flex-1 h-8"
+          placeholder="Libellé"
+        />
+        <Input
+          type="number"
+          step="0.01"
+          value={editAmount}
+          onChange={(e) => setEditAmount(e.target.value)}
+          className="w-24 h-8"
+          placeholder="0.00"
+        />
+        <Button size="sm" onClick={handleSave} className="h-8">
+          ✓
+        </Button>
+        <Button size="sm" variant="ghost" onClick={handleCancel} className="h-8">
+          ✕
+        </Button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex items-center justify-between p-3 bg-white rounded-lg hover:bg-orange-50/50 transition-colors group border border-transparent hover:border-orange-200">
+      {/* Infos charge */}
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2">
+          <span className="font-medium text-sm truncate">{charge.label}</span>
+          {charge.category && (
+            <span className="text-xs bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full">
+              {getCategoryLabel(charge.category)}
+            </span>
+          )}
+        </div>
+        
+        {/* Dates */}
+        {hasDates && (
+          <div className="flex items-center gap-1 mt-1 text-xs text-muted-foreground">
+            <Clock className="h-3 w-3" />
+            <span className="truncate">{dateText}</span>
+          </div>
+        )}
+
+        {/* Reality Check Info */}
+        {hasRealityCheck && differsFromBudget && (
+          <div className="mt-1 text-xs text-indigo-600 font-medium">
+            Réel: {mappedTotal.toFixed(2)}€
+          </div>
+        )}
+      </div>
+
+      {/* Montant et actions */}
+      <div className="flex items-center gap-2">
+        <span className="font-bold text-orange-900 text-sm whitespace-nowrap">
+          {charge.amount.toFixed(2)}€
+        </span>
+
+        {/* Bouton Link Transaction (Reality Check) */}
+        {onLinkTransaction && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => onLinkTransaction(charge)}
+            className={cn(
+              "h-8 w-8 p-0 opacity-0 group-hover:opacity-100 transition-opacity",
+              hasRealityCheck && "text-indigo-600 opacity-100"
+            )}
+            title={hasRealityCheck ? "Gérer le mapping" : "Lier aux transactions"}
+          >
+            <LinkIcon className="h-4 w-4" />
+          </Button>
+        )}
+
+        {/* Bouton Éditer */}
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => setIsEditing(true)}
+          className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+          title="Modifier"
+        >
+          ✏️
+        </Button>
+
+        {/* Bouton Supprimer */}
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => onDelete(charge.id)}
+          className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50 opacity-0 group-hover:opacity-100 transition-opacity"
+          title="Supprimer"
+        >
+          <Trash2 className="h-4 w-4" />
+        </Button>
+      </div>
+    </div>
   );
 }

@@ -14,7 +14,8 @@ import {
   ChevronUp,
   AlertCircle
 } from "lucide-react";
-import { budgetAPI, ChargeSuggestion, Competitor, MarketSuggestion } from '@/services/api';
+import { budgetAPI, ChargeSuggestion, Competitor } from '@/services/api';
+import { useToast } from '@/hooks/use-toast';
 
 // ============================================================================
 // TYPES
@@ -31,7 +32,45 @@ interface EnhancedSuggestionsProps {
 }
 
 // ============================================================================
-// COMPOSANT PRINCIPAL - COLLAPSIBLE PAR DÉFAUT
+// HELPER FUNCTIONS
+// ============================================================================
+
+function isRelevantCategory(category: string): boolean {
+  const relevantCategories = [
+    'ENERGY',
+    'INTERNET', 
+    'MOBILE',
+    'INSURANCE_AUTO',
+    'INSURANCE_HOME',
+    'INSURANCE_HEALTH',
+    'LOAN'
+  ];
+  return relevantCategories.includes(category);
+}
+
+function extractMerchantName(label: string): string {
+  // Essayer d'extraire le nom du fournisseur du label
+  const cleanLabel = label.trim();
+  // Prendre le premier mot en majuscule comme nom potentiel
+  const words = cleanLabel.split(' ');
+  return words[0] || '';
+}
+
+function getCategoryLabel(category: string): string {
+  const labels: Record<string, string> = {
+    'ENERGY': 'Énergie',
+    'INTERNET': 'Internet',
+    'MOBILE': 'Mobile',
+    'INSURANCE_AUTO': 'Assurance Auto',
+    'INSURANCE_HOME': 'Assurance Habitation',
+    'INSURANCE_HEALTH': 'Assurance Santé',
+    'LOAN': 'Prêt / Crédit'
+  };
+  return labels[category] || category;
+}
+
+// ============================================================================
+// COMPOSANT PRINCIPAL
 // ============================================================================
 
 export default function EnhancedSuggestions({ budgetId, charges }: EnhancedSuggestionsProps) {
@@ -40,11 +79,8 @@ export default function EnhancedSuggestions({ budgetId, charges }: EnhancedSugge
   const [error, setError] = useState<string | null>(null);
   const [cacheStats, setCacheStats] = useState({ hits: 0, aiCalls: 0 });
   const [totalSavings, setTotalSavings] = useState(0);
-  
-  // ⭐ NOUVEAU: État pour collapse/expand
   const [isExpanded, setIsExpanded] = useState(false);
 
-  // Charger les suggestions au montage
   useEffect(() => {
     loadSuggestions();
   }, [budgetId, charges]);
@@ -54,7 +90,6 @@ export default function EnhancedSuggestions({ budgetId, charges }: EnhancedSugge
     setError(null);
     
     try {
-      // Préparer les charges pertinentes (avec catégorie)
       const relevantCharges = charges
         .filter(c => c.category && isRelevantCategory(c.category))
         .map(c => ({
@@ -73,7 +108,6 @@ export default function EnhancedSuggestions({ budgetId, charges }: EnhancedSugge
 
       console.log('[EnhancedSuggestions] Analyzing', relevantCharges.length, 'charges');
 
-      // Appel API bulk analyze
       const response = await budgetAPI.bulkAnalyzeSuggestions(budgetId, {
         charges: relevantCharges
       });
@@ -124,16 +158,12 @@ export default function EnhancedSuggestions({ budgetId, charges }: EnhancedSugge
   }
 
   if (suggestions.length === 0) {
-    return null; // Pas de suggestions à afficher
+    return null;
   }
-
-  // ============================================================================
-  // VERSION COLLAPSIBLE - Affichage condensé par défaut
-  // ============================================================================
 
   return (
     <div className="mt-6 space-y-4">
-      {/* Header avec toggle - Toujours visible */}
+      {/* Header avec toggle */}
       <Card 
         className="border-green-200 bg-green-50/50 cursor-pointer hover:bg-green-50 transition-colors"
         onClick={() => setIsExpanded(!isExpanded)}
@@ -152,62 +182,27 @@ export default function EnhancedSuggestions({ budgetId, charges }: EnhancedSugge
                   </Badge>
                 </div>
                 <CardDescription className="text-green-700 mt-1">
-                  {isExpanded ? (
-                    <>
-                      {suggestions.length} charge{suggestions.length > 1 ? 's' : ''} analysée{suggestions.length > 1 ? 's' : ''} • 
-                      Économies potentielles: <strong>{totalSavings.toFixed(0)}€/an</strong>
-                    </>
-                  ) : (
-                    <>
-                      Cliquez pour voir {suggestions.length} suggestion{suggestions.length > 1 ? 's' : ''} • 
-                      <strong>~{totalSavings.toFixed(0)}€/an d'économies</strong>
-                    </>
-                  )}
+                  {isExpanded 
+                    ? 'Découvrez les meilleures alternatives pour vos charges' 
+                    : `Économie totale possible : ${totalSavings.toFixed(2)}€`}
                 </CardDescription>
               </div>
             </div>
-
-            {/* Bouton expand/collapse */}
-            <Button
-              variant="ghost"
-              size="sm"
-              className="ml-2"
-              onClick={(e) => {
-                e.stopPropagation();
-                setIsExpanded(!isExpanded);
-              }}
-            >
-              {isExpanded ? (
-                <>
-                  <ChevronUp className="h-4 w-4 mr-1" />
-                  Réduire
-                </>
-              ) : (
-                <>
-                  <ChevronDown className="h-4 w-4 mr-1" />
-                  Voir les détails
-                </>
-              )}
+            <Button variant="ghost" size="sm">
+              {isExpanded ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
             </Button>
           </div>
-
-          {/* Stats en mode collapsed */}
-          {!isExpanded && cacheStats.hits > 0 && (
-            <div className="mt-2 text-xs text-green-600">
-              ⚡ {cacheStats.hits} réponse{cacheStats.hits > 1 ? 's' : ''} instantanée{cacheStats.hits > 1 ? 's' : ''}
-            </div>
-          )}
         </CardHeader>
       </Card>
 
-      {/* Contenu détaillé - Affiché uniquement si expanded */}
+      {/* Liste des suggestions (visible si expanded) */}
       {isExpanded && (
         <>
-          {/* Stats détaillées */}
-          {cacheStats.hits > 0 && (
-            <div className="flex items-center gap-2 text-sm text-muted-foreground px-1">
-              <Badge variant="outline" className="text-xs">
-                {cacheStats.hits} réponse{cacheStats.hits > 1 ? 's' : ''} en cache
+          {/* Stats cache */}
+          {(cacheStats.hits > 0 || cacheStats.aiCalls > 0) && (
+            <div className="flex gap-2 text-xs">
+              <Badge variant="secondary" className="text-xs">
+                {cacheStats.hits} suggestion{cacheStats.hits > 1 ? 's' : ''} en cache
               </Badge>
               {cacheStats.aiCalls > 0 && (
                 <Badge variant="outline" className="text-xs">
@@ -217,7 +212,6 @@ export default function EnhancedSuggestions({ budgetId, charges }: EnhancedSugge
             </div>
           )}
 
-          {/* Liste des suggestions */}
           {suggestions.map((item) => (
             <SuggestionCard
               key={item.charge_id}
@@ -232,7 +226,7 @@ export default function EnhancedSuggestions({ budgetId, charges }: EnhancedSugge
 }
 
 // ============================================================================
-// CARTE INDIVIDUELLE DE SUGGESTION
+// CARTE INDIVIDUELLE DE SUGGESTION - TOP 3
 // ============================================================================
 
 interface SuggestionCardProps {
@@ -241,12 +235,14 @@ interface SuggestionCardProps {
 }
 
 function SuggestionCard({ chargeSuggestion }: SuggestionCardProps) {
-  const [expanded, setExpanded] = useState(false);
+  const [showAll, setShowAll] = useState(false);
+  const { toast } = useToast();
   const { charge_label, suggestion } = chargeSuggestion;
   
-  // ✅ Prendre les 3 meilleurs au lieu d'un seul
+  // ✅ TOP 3 au lieu d'un seul
   const topCompetitors = suggestion.competitors.slice(0, 3);
-  const hasMore = suggestion.competitors.length > 3;
+  const remainingCompetitors = suggestion.competitors.slice(3);
+  const hasMore = remainingCompetitors.length > 0;
 
   if (topCompetitors.length === 0) return null;
 
@@ -268,136 +264,25 @@ function SuggestionCard({ chargeSuggestion }: SuggestionCardProps) {
       </CardHeader>
 
       <CardContent className="space-y-4">
-        {/* ✅ Afficher les 3 meilleurs */}
+        {/* ✅ Afficher le TOP 3 */}
         {topCompetitors.map((competitor, index) => (
-          <div 
+          <CompetitorCard 
             key={index} 
-            className={cn(
-              "p-4 rounded-lg border-2 transition-all",
-              index === 0 
-                ? "border-green-300 bg-green-50/50" 
-                : "border-gray-200 bg-gray-50"
-            )}
-          >
-            {/* Badge de position */}
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center gap-2">
-                {index === 0 && (
-                  <Badge className="bg-green-600 text-white">
-                    🏆 Meilleure offre
-                  </Badge>
-                )}
-                {index === 1 && (
-                  <Badge variant="outline" className="border-orange-400 text-orange-700">
-                    #2
-                  </Badge>
-                )}
-                {index === 2 && (
-                  <Badge variant="outline" className="border-gray-400 text-gray-700">
-                    #3
-                  </Badge>
-                )}
-              </div>
-              <span className="text-lg font-bold text-green-700">
-                -{competitor.potential_savings.toFixed(2)}€
-              </span>
-            </div>
-
-            {/* Nom du concurrent */}
-            <h4 className="font-semibold text-gray-900 mb-1">
-              {competitor.name}
-            </h4>
-
-            {/* Offre */}
-            <p className="text-sm text-gray-600 mb-2">
-              {competitor.best_offer}
-            </p>
-
-            {/* Prix */}
-            <div className="flex items-center gap-2 mb-3">
-              <span className="text-sm text-muted-foreground">Prix typique:</span>
-              <span className="font-semibold text-primary">
-                {competitor.typical_price.toFixed(2)}€
-              </span>
-            </div>
-
-            {/* Pros/Cons */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
-              {/* Avantages */}
-              {competitor.pros.length > 0 && (
-                <div className="space-y-1">
-                  <p className="text-xs font-semibold text-green-700 flex items-center gap-1">
-                    <CheckCircle2 className="h-3 w-3" />
-                    Avantages
-                  </p>
-                  <ul className="space-y-0.5">
-                    {competitor.pros.map((pro, i) => (
-                      <li key={i} className="text-xs text-gray-600 flex items-start gap-1">
-                        <span className="text-green-600 mt-0.5">•</span>
-                        {pro}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-
-              {/* Inconvénients */}
-              {competitor.cons.length > 0 && (
-                <div className="space-y-1">
-                  <p className="text-xs font-semibold text-red-700 flex items-center gap-1">
-                    <XCircle className="h-3 w-3" />
-                    Inconvénients
-                  </p>
-                  <ul className="space-y-0.5">
-                    {competitor.cons.map((con, i) => (
-                      <li key={i} className="text-xs text-gray-600 flex items-start gap-1">
-                        <span className="text-red-600 mt-0.5">•</span>
-                        {con}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-            </div>
-
-            {/* Actions */}
-            <div className="flex gap-2">
-              {competitor.affiliate_link && (
-                <Button 
-                  size="sm" 
-                  className="flex-1"
-                  onClick={() => window.open(competitor.affiliate_link, '_blank')}
-                >
-                  <ExternalLink className="h-4 w-4 mr-2" />
-                  Voir l'offre
-                </Button>
-              )}
-              {competitor.contact_available && (
-                <Button 
-                  size="sm" 
-                  variant="outline"
-                  onClick={() => toast({
-                    title: "Contact disponible",
-                    description: `Contactez ${competitor.name} pour cette offre`
-                  })}
-                >
-                  <Phone className="h-4 w-4 mr-2" />
-                  Contacter
-                </Button>
-              )}
-            </div>
-          </div>
+            competitor={competitor} 
+            rank={index + 1}
+            toast={toast}
+          />
         ))}
 
-        {/* Bouton "voir plus" si > 3 concurrents */}
+        {/* Bouton "Voir plus" si > 3 concurrents */}
         {hasMore && (
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => setExpanded(!expanded)}
+            onClick={() => setShowAll(!showAll)}
             className="w-full"
           >
-            {expanded ? (
+            {showAll ? (
               <>
                 <ChevronUp className="h-4 w-4 mr-2" />
                 Voir moins
@@ -405,21 +290,20 @@ function SuggestionCard({ chargeSuggestion }: SuggestionCardProps) {
             ) : (
               <>
                 <ChevronDown className="h-4 w-4 mr-2" />
-                Voir {suggestion.competitors.length - 3} autre(s) option(s)
+                Voir {remainingCompetitors.length} autre(s) option(s)
               </>
             )}
           </Button>
         )}
 
-        {/* Afficher les autres si expanded */}
-        {expanded && suggestion.competitors.slice(3).map((competitor, index) => (
-          <div 
+        {/* Afficher les autres options si showAll */}
+        {showAll && remainingCompetitors.map((competitor, index) => (
+          <CompetitorCard 
             key={index + 3} 
-            className="p-4 rounded-lg border border-gray-200 bg-gray-50"
-          >
-            {/* Même structure que ci-dessus mais sans badge */}
-            {/* ... */}
-          </div>
+            competitor={competitor} 
+            rank={index + 4}
+            toast={toast}
+          />
         ))}
       </CardContent>
     </Card>
@@ -427,89 +311,129 @@ function SuggestionCard({ chargeSuggestion }: SuggestionCardProps) {
 }
 
 // ============================================================================
-// CARTE CONCURRENT INDIVIDUEL
+// CARTE CONCURRENT INDIVIDUELLE
 // ============================================================================
 
 interface CompetitorCardProps {
   competitor: Competitor;
-  isBest: boolean;
-  category: string;
+  rank: number;
+  toast: any;
 }
 
-function CompetitorCard({ competitor, isBest }: CompetitorCardProps) {
+function CompetitorCard({ competitor, rank, toast }: CompetitorCardProps) {
+  const getRankBadge = () => {
+    if (rank === 1) {
+      return (
+        <Badge className="bg-green-600 text-white border-0">
+          🏆 Meilleure offre
+        </Badge>
+      );
+    }
+    if (rank === 2) {
+      return (
+        <Badge variant="outline" className="border-orange-400 text-orange-700 bg-orange-50">
+          #2
+        </Badge>
+      );
+    }
+    if (rank === 3) {
+      return (
+        <Badge variant="outline" className="border-gray-400 text-gray-700 bg-gray-50">
+          #3
+        </Badge>
+      );
+    }
+    return (
+      <Badge variant="outline" className="border-gray-300 text-gray-600">
+        #{rank}
+      </Badge>
+    );
+  };
+
+  const getCardStyle = () => {
+    if (rank === 1) {
+      return "border-2 border-green-300 bg-green-50/50";
+    }
+    if (rank === 2) {
+      return "border-2 border-orange-200 bg-orange-50/30";
+    }
+    return "border border-gray-200 bg-gray-50";
+  };
+
   return (
-    <div className={`p-4 rounded-lg border-2 ${
-      isBest 
-        ? 'bg-green-50 border-green-300' 
-        : 'bg-gray-50 border-gray-200'
-    }`}>
-      <div className="flex items-start justify-between mb-3">
-        <div className="flex-1">
-          <div className="flex items-center gap-2 mb-1">
-            <h4 className="font-semibold text-lg">{competitor.name}</h4>
-            {isBest && (
-              <Badge className="bg-green-600">
-                Meilleur choix
-              </Badge>
-            )}
-          </div>
-          <p className="text-sm text-muted-foreground mb-2">
-            {competitor.best_offer}
-          </p>
-          <div className="flex items-baseline gap-2">
-            <span className="text-2xl font-bold text-primary">
-              {competitor.typical_price.toFixed(2)}€
-            </span>
-            <span className="text-sm text-muted-foreground">/mois</span>
-          </div>
-        </div>
+    <div className={`p-4 rounded-lg transition-all ${getCardStyle()}`}>
+      {/* Header avec badge et économies */}
+      <div className="flex items-center justify-between mb-3">
+        {getRankBadge()}
+        <span className="text-lg font-bold text-green-700">
+          -{competitor.potential_savings.toFixed(2)}€
+        </span>
+      </div>
 
-        {competitor.potential_savings > 0 && (
-          <div className="text-right ml-4">
-            <div className="text-sm text-muted-foreground">Économie annuelle</div>
-            <div className="text-xl font-bold text-green-600">
-              +{competitor.potential_savings.toFixed(0)}€
+      {/* Nom du concurrent */}
+      <h4 className="font-semibold text-gray-900 mb-2 text-base">
+        {competitor.name}
+      </h4>
+
+      {/* Offre */}
+      <p className="text-sm text-gray-600 mb-3">
+        {competitor.best_offer}
+      </p>
+
+      {/* Prix */}
+      <div className="flex items-center gap-2 mb-4">
+        <span className="text-sm text-muted-foreground">Prix typique:</span>
+        <span className="font-semibold text-primary">
+          {competitor.typical_price.toFixed(2)}€
+        </span>
+      </div>
+
+      {/* Pros/Cons en grille responsive */}
+      {(competitor.pros.length > 0 || competitor.cons.length > 0) && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+          {/* Avantages */}
+          {competitor.pros.length > 0 && (
+            <div className="space-y-1">
+              <p className="text-xs font-semibold text-green-700 flex items-center gap-1">
+                <CheckCircle2 className="h-3 w-3" />
+                Avantages
+              </p>
+              <ul className="space-y-1">
+                {competitor.pros.map((pro, i) => (
+                  <li key={i} className="text-xs text-gray-600 flex items-start gap-1.5">
+                    <span className="text-green-600 mt-0.5">•</span>
+                    <span>{pro}</span>
+                  </li>
+                ))}
+              </ul>
             </div>
-          </div>
-        )}
-      </div>
+          )}
 
-      {/* Avantages / Inconvénients */}
-      <div className="grid grid-cols-2 gap-3 mb-3">
-        {competitor.pros.length > 0 && (
-          <div>
-            <p className="text-xs font-medium text-green-700 mb-1">✓ Avantages</p>
-            <ul className="text-xs space-y-1">
-              {competitor.pros.map((pro, idx) => (
-                <li key={idx} className="flex items-start gap-1">
-                  <CheckCircle2 className="h-3 w-3 text-green-600 mt-0.5 flex-shrink-0" />
-                  <span>{pro}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
-
-        {competitor.cons.length > 0 && (
-          <div>
-            <p className="text-xs font-medium text-orange-700 mb-1">✗ Inconvénients</p>
-            <ul className="text-xs space-y-1">
-              {competitor.cons.map((con, idx) => (
-                <li key={idx} className="flex items-start gap-1">
-                  <XCircle className="h-3 w-3 text-orange-600 mt-0.5 flex-shrink-0" />
-                  <span>{con}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
-      </div>
+          {/* Inconvénients */}
+          {competitor.cons.length > 0 && (
+            <div className="space-y-1">
+              <p className="text-xs font-semibold text-red-700 flex items-center gap-1">
+                <XCircle className="h-3 w-3" />
+                Inconvénients
+              </p>
+              <ul className="space-y-1">
+                {competitor.cons.map((con, i) => (
+                  <li key={i} className="text-xs text-gray-600 flex items-start gap-1.5">
+                    <span className="text-red-600 mt-0.5">•</span>
+                    <span>{con}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Actions */}
       <div className="flex gap-2">
         {competitor.affiliate_link && (
-          <Button
-            size="sm"
+          <Button 
+            size="sm" 
             className="flex-1"
             onClick={() => window.open(competitor.affiliate_link, '_blank')}
           >
@@ -517,64 +441,21 @@ function CompetitorCard({ competitor, isBest }: CompetitorCardProps) {
             Voir l'offre
           </Button>
         )}
-
         {competitor.contact_available && (
-          <Button
-            size="sm"
+          <Button 
+            size="sm" 
             variant="outline"
-            className="flex-1"
-            onClick={() => handleContactRequest(competitor.name)}
+            onClick={() => toast({
+              title: "Contact disponible",
+              description: `Vous pouvez contacter ${competitor.name} directement pour cette offre spéciale.`,
+              variant: "default"
+            })}
           >
             <Phone className="h-4 w-4 mr-2" />
-            Être rappelé
+            Contacter
           </Button>
         )}
       </div>
     </div>
   );
-}
-
-// ============================================================================
-// HELPERS
-// ============================================================================
-
-function isRelevantCategory(category: string): boolean {
-  const relevant = ['ENERGY', 'INTERNET', 'MOBILE', 'INSURANCE', 'LOAN', 'BANK'];
-  return relevant.includes(category.toUpperCase());
-}
-
-function extractMerchantName(label: string): string {
-  // Extraction simple du nom du commerçant depuis le label
-  const normalized = label.toLowerCase();
-  
-  // Patterns courants
-  const patterns = [
-    /edf/i, /engie/i, /total/i,
-    /orange/i, /sfr/i, /free/i, /bouygues/i,
-    /axa/i, /allianz/i, /macif/i,
-  ];
-
-  for (const pattern of patterns) {
-    const match = normalized.match(pattern);
-    if (match) return match[0];
-  }
-
-  return '';
-}
-
-function getCategoryLabel(category: string): string {
-  const labels: Record<string, string> = {
-    ENERGY: 'Énergie',
-    INTERNET: 'Internet / Box',
-    MOBILE: 'Mobile',
-    INSURANCE: 'Assurance',
-    LOAN: 'Crédit',
-    BANK: 'Banque',
-  };
-  return labels[category] || category;
-}
-
-function handleContactRequest(providerName: string) {
-  // TODO: Implémenter la logique de demande de rappel
-  alert(`Demande de rappel pour ${providerName} - Fonctionnalité à venir`);
 }
