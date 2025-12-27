@@ -46,8 +46,8 @@ export interface User {
   name: string;
   email: string;
   avatar?: string;
-  country?: string;
-  postal_code?: string;
+  country?: string;        // ✅ NEW
+  postal_code?: string;    // ✅ NEW
 }
 
 export interface AuthResponse {
@@ -156,6 +156,9 @@ export const authAPI = {
   
   login: (data: Omit<AuthData, 'name'>): Promise<AxiosResponse<AuthResponse>> =>
     api.post('/auth/login', data),
+  
+  resendVerification: (email: string): Promise<AxiosResponse> =>
+    api.post('/auth/verify/resend', { email }),
 };
 
 // ============================================================================
@@ -177,7 +180,7 @@ export const userAPI = {
     api.get('/user/location'),
   
   changePassword: (data: PasswordChangeData): Promise<AxiosResponse> =>
-    api.post('/user/change-password', data),
+    api.post('/user/password', data),
   
   deleteAccount: (data: DeleteAccountData): Promise<AxiosResponse> =>
     api.post('/user/delete-account', data),
@@ -188,11 +191,18 @@ export const userAPI = {
 // ============================================================================
 
 export const budgetAPI = {
+  // Budget CRUD
   create: (name: string, year: number): Promise<AxiosResponse> =>
     api.post('/budgets', { name, year }),
   
+  list: (): Promise<AxiosResponse> =>
+    api.get('/budgets'),
+  
   getAll: (): Promise<AxiosResponse> =>
     api.get('/budgets'),
+  
+  getById: (id: string): Promise<AxiosResponse> =>
+    api.get(`/budgets/${id}`),
   
   getOne: (id: string): Promise<AxiosResponse> =>
     api.get(`/budgets/${id}`),
@@ -206,11 +216,21 @@ export const budgetAPI = {
   delete: (id: string): Promise<AxiosResponse> =>
     api.delete(`/budgets/${id}`),
   
+  // Invitations & Members
   invite: (budgetId: string, email: string): Promise<AxiosResponse> =>
     api.post(`/budgets/${budgetId}/invite`, { email }),
   
-  removeMember: (budgetId: string, userId: string): Promise<AxiosResponse> =>
-    api.delete(`/budgets/${budgetId}/members/${userId}`),
+  inviteMember: (id: string, email: string): Promise<AxiosResponse> =>
+    api.post(`/budgets/${id}/invite`, { email }),
+  
+  getInvitations: (id: string): Promise<AxiosResponse> =>
+    api.get(`/budgets/${id}/invitations`),
+  
+  cancelInvitation: (budgetId: string, invitationId: string): Promise<AxiosResponse> =>
+    api.delete(`/budgets/${budgetId}/invitations/${invitationId}`),
+  
+  removeMember: (budgetId: string, memberId: string): Promise<AxiosResponse> =>
+    api.delete(`/budgets/${budgetId}/members/${memberId}`),
   
   // AI Categorization
   categorize: (label: string): Promise<AxiosResponse<CategorizeResponse>> =>
@@ -225,6 +245,13 @@ export const budgetAPI = {
   
   getCategorySuggestions: (category: string): Promise<AxiosResponse<MarketSuggestion>> =>
     api.get(`/suggestions/category/${category}`),
+  
+  analyzeSingleCharge: (data: {
+    category: string;
+    merchant_name?: string;
+    current_amount: number;
+  }): Promise<AxiosResponse<MarketSuggestion>> =>
+    api.post('/suggestions/analyze', data),
   
   // GDPR Export
   exportUserData: (): Promise<AxiosResponse> =>

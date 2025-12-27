@@ -9,6 +9,21 @@ import type { Charge } from '@/utils/importConverter';
 import { budgetAPI } from '@/services/api';
 
 // ============================================================================
+// EXPORTED TYPE - Pour compatibilité avec Beta2Page et BudgetComplete
+// ============================================================================
+
+export interface Suggestion {
+  id: string;
+  chargeId?: string;
+  type: string;
+  title: string;
+  message: string;
+  potentialSavings: number;
+  actionLink: string;
+  canBeContacted: boolean;
+}
+
+// ============================================================================
 // INTERFACE - Plus de props "suggestions"
 // ============================================================================
 
