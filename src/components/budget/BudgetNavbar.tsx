@@ -31,8 +31,6 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { HelpCenter } from '@/components/help/HelpCenter';
 
-const [helpOpen, setHelpOpen] = useState(false);
-
 export interface NavItem {
   id: string;
   label: string;
@@ -64,7 +62,8 @@ export function BudgetNavbar({
   const { notifications, unreadCount, markAllAsRead, markAsRead } = useNotifications();
   const { logout } = useAuth();
   const { startTutorial } = useTutorial(); // Hook for tutorial
-
+  const [helpOpen, setHelpOpen] = useState(false);
+  
   const handleLogout = () => {
     logout();
     navigate('/login');
