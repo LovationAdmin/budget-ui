@@ -85,7 +85,10 @@ export default function Dashboard() {
 
     setCreating(true);
     try {
-      const response = await budgetAPI.create({ name: newBudgetName.trim() });
+      const response = await budgetAPI.create({ 
+        name: budgetName, 
+        year: new Date().getFullYear() 
+      });
       toast({
         title: "Succès",
         description: "Budget créé avec succès !",
