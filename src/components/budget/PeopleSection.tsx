@@ -63,29 +63,51 @@ export default function PeopleSection({ people, onPeopleChange }: PeopleSectionP
     <Card className="glass-card animate-slide-up">
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
+          {/* LEFT SIDE: Icon + Title + Count */}
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10">
               <Users className="h-5 w-5 text-primary" />
             </div>
             <div>
-              <CardTitle className="font-display text-lg">Revenus (Salaires)</CardTitle>
-              <p className="text-sm text-muted-foreground">
-                Total théorique : {totalSalary.toLocaleString('fr-FR')} € / mois
-              </p>
+              <CardTitle className="font-display text-lg flex items-center gap-2">
+                Revenus (Salaires)
+                <span className="text-sm font-normal text-muted-foreground">
+                  ({people.length} personne{people.length > 1 ? 's' : ''})
+                </span>
+              </CardTitle>
             </div>
           </div>
           
-          {!showAddForm && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setShowAddForm(true)}
-              className="gap-1 h-8 bg-primary/5 hover:bg-primary/10 text-primary"
-            >
-              <Plus className="h-3.5 w-3.5" />
-              Ajouter
-            </Button>
-          )}
+          {/* RIGHT SIDE: Total + Add Button */}
+          <div className="flex items-center gap-4">
+            <div className="text-right hidden sm:block">
+                <p className="text-2xl font-bold text-primary">
+                  {totalSalary.toLocaleString('fr-FR')} €
+                </p>
+                <p className="text-xs text-muted-foreground">Total mensuel</p>
+            </div>
+
+            {!showAddForm && (
+                <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowAddForm(true)}
+                className="gap-1 h-8 bg-primary/5 hover:bg-primary/10 text-primary"
+                >
+                <Plus className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline">Ajouter</span>
+                <span className="sm:hidden">+</span>
+                </Button>
+            )}
+          </div>
+        </div>
+        
+        {/* Mobile Total (visible only on small screens) */}
+        <div className="sm:hidden flex justify-end mt-2">
+             <p className="text-lg font-bold text-primary">
+                  {totalSalary.toLocaleString('fr-FR')} € 
+                  <span className="text-xs font-normal text-muted-foreground ml-1">/ mois</span>
+             </p>
         </div>
       </CardHeader>
 
@@ -155,7 +177,7 @@ export default function PeopleSection({ people, onPeopleChange }: PeopleSectionP
           </form>
         )}
 
-        {/* List - UPDATED TO GRID LAYOUT */}
+        {/* List */}
         {people.length === 0 ? (
           <div className="text-center py-6 text-muted-foreground text-sm">
             Aucune personne ajoutée.
