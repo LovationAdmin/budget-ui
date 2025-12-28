@@ -82,25 +82,20 @@ export default function Beta2Page() {
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [lastServerUpdate, setLastServerUpdate] = useState<string>("");
 
-  // --- ENABLE BANKING STATE ---
   const [showBankManager, setShowBankManager] = useState(false);
   const [realBankBalance, setRealBankBalance] = useState(0);
   const [hasActiveConnection, setHasActiveConnection] = useState(false);
   
-  // --- MAPPING STATE ---
   const [showMapper, setShowMapper] = useState(false);
   const [chargeToMap, setChargeToMap] = useState<Charge | null>(null);
   const [chargeMappings, setChargeMappings] = useState<MappedTransaction[]>([]);
 
-  // --- DEMO MODE STATE ---
   const [isDemoMode, setIsDemoMode] = useState(false);
   const [demoTransactions, setDemoTransactions] = useState<BridgeTransaction[]>([]);
   const [demoBankBalance, setDemoBankBalance] = useState(0);
 
-  // --- DATA STORAGE ---
   const globalDataRef = useRef<any>(null);
 
-  // --- Core Budget Data State ---
   const [budgetTitle, setBudgetTitle] = useState('');
   const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
   const [people, setPeople] = useState<Person[]>([]);
@@ -141,169 +136,96 @@ export default function Beta2Page() {
       return totals;
   }, [charges, chargeMappings]);
 
-  // ============================================================================
-  // DEMO MODE - PERSISTANCE & RESTORATION
-  // ============================================================================
-  
+  // NEW: Calculate member count for EnhancedSuggestions
+  const memberCount = useMemo(() => {
+      if (!budget || !budget.members) return 1;
+      return budget.members.length;
+  }, [budget]);
+
+  // ... (Demo Mode Persistence - unchanged) ...
   const getDemoStorageKey = () => `demo-mode-${id}`;
   const getDemoTimestampKey = () => `demo-timestamp-${id}`;
 
-  // Restaurer le mode démo au chargement
   useEffect(() => {
     if (!id) return;
-    
     const demoEnabled = localStorage.getItem(getDemoStorageKey()) === 'true';
     const demoTimestamp = localStorage.getItem(getDemoTimestampKey());
-    
     if (demoEnabled && demoTimestamp) {
       const daysSinceActivation = (Date.now() - parseInt(demoTimestamp)) / (1000 * 60 * 60 * 24);
-      
       if (daysSinceActivation < DEMO_MODE_LIMITS.EXPIRE_AFTER_DAYS) {
-        console.log('[Demo Mode] Restoring demo mode from localStorage');
         setDemoTransactions(DEMO_TRANSACTIONS);
         setDemoBankBalance(DEMO_BANK_BALANCE);
         setIsDemoMode(true);
         setHasActiveConnection(true);
       } else {
-        console.log('[Demo Mode] Demo mode expired after 7 days, cleaning up');
         disableDemoMode();
       }
     }
   }, [id]);
 
-  // ============================================================================
-  // DEMO MODE - ACTIONS
-  // ============================================================================
-
   const enableDemoMode = () => {
     if (!id) return;
-    
     setDemoTransactions(DEMO_TRANSACTIONS);
     setDemoBankBalance(DEMO_BANK_BALANCE);
     setIsDemoMode(true);
     setHasActiveConnection(true);
-    
-    // Persister dans localStorage
     localStorage.setItem(getDemoStorageKey(), 'true');
     localStorage.setItem(getDemoTimestampKey(), Date.now().toString());
-    
-    // Analytics tracking
-    if (typeof window !== 'undefined' && (window as any).gtag) {
-      (window as any).gtag('event', 'demo_mode_enabled', {
-        budget_id: id,
-        user_id: user?.id
-      });
-    }
-    
-    toast({
-      title: "🎭 Mode Démo Activé",
-      description: "Vous utilisez des données bancaires fictives pour tester Reality Check.",
-      duration: 5000
-    });
+    toast({ title: "🎬 Mode Démo Activé", description: "Données fictives chargées.", duration: 5000 });
   };
 
   const disableDemoMode = () => {
     if (!id) return;
-    
     setIsDemoMode(false);
     setDemoTransactions([]);
     setDemoBankBalance(0);
     setHasActiveConnection(false);
-    
-    // Nettoyer localStorage
     localStorage.removeItem(getDemoStorageKey());
     localStorage.removeItem(getDemoTimestampKey());
-    
-    toast({
-      title: "Mode Démo Désactivé",
-      description: "Les données de démonstration ont été effacées.",
-      variant: "default"
-    });
+    toast({ title: "Mode Démo Désactivé", description: "Données effacées.", variant: "default" });
   };
 
-  // ============================================================================
-  // INITIAL DATA LOADING
-  // ============================================================================
-
-  useEffect(() => {
-    loadBudgetData();
-  }, [id]);
+  useEffect(() => { loadBudgetData(); }, [id]);
 
   const loadBudgetData = async () => {
     if (!id || loadedRef.current) return;
     setLoading(true);
-
     try {
-      const [budgetResponse, dataResponse] = await Promise.all([
-        budgetAPI.getById(id),
-        budgetAPI.getData(id)
-      ]);
-
+      const [budgetResponse, dataResponse] = await Promise.all([budgetAPI.getById(id), budgetAPI.getData(id)]);
       setBudget(budgetResponse.data);
       const raw = dataResponse.data as ExtendedBudgetData;
-      
       setChargeMappings(raw.chargeMappings || []);
-      
-      const isNewFormat = raw.yearlyData && 
-                         Object.keys(raw.yearlyData).some(key => /^\d{4}$/.test(key));
-
-      let convertedData;
-      if (isNewFormat) {
-          convertedData = convertOldFormatToNew(raw);
-      } else {
-          convertedData = convertOldFormatToNew(raw);
-      }
-
+      const data = convertOldFormatToNew(raw);
       globalDataRef.current = raw;
       
-      setBudgetTitle(convertedData.budgetTitle);
-      setCurrentYear(convertedData.currentYear);
-      setPeople(convertedData.people);
-      setCharges(convertedData.charges);
-      setProjects(convertedData.projects);
-      setYearlyData(convertedData.yearlyData);
-      setYearlyExpenses(convertedData.yearlyExpenses);
-      setOneTimeIncomes(convertedData.oneTimeIncomes);
-      setMonthComments(convertedData.monthComments);
-      setProjectComments(convertedData.projectComments);
-      setLockedMonths(convertedData.lockedMonths || {});
-      setLastServerUpdate(convertedData.lastUpdated || "");
+      setBudgetTitle(data.budgetTitle);
+      setCurrentYear(data.currentYear);
+      setPeople(data.people);
+      setCharges(data.charges);
+      setProjects(data.projects);
+      setYearlyData(data.yearlyData);
+      setYearlyExpenses(data.yearlyExpenses);
+      setOneTimeIncomes(data.oneTimeIncomes);
+      setMonthComments(data.monthComments);
+      setProjectComments(data.projectComments);
+      setLockedMonths(data.lockedMonths || {});
+      setLastServerUpdate(data.lastUpdated || "");
       
       loadedRef.current = true;
-      
-      if (!hasSeenTutorial) {
-          setTimeout(() => startTutorial(), 500);
-      }
-      
-      // Charger les données bancaires
+      if (!hasSeenTutorial) setTimeout(() => startTutorial(), 500);
       refreshBankData();
-      
     } catch (error: any) {
       console.error('Error loading budget:', error);
-      if (error.response?.status === 404) {
-          navigate('/404');
-      }
-      toast({ 
-        title: "Erreur", 
-        description: "Impossible de charger le budget", 
-        variant: "destructive" 
-      });
-    } finally {
-      setLoading(false);
-    }
+      if (error.response?.status === 404) navigate('/404');
+      toast({ title: "Erreur", description: "Impossible de charger le budget", variant: "destructive" });
+    } finally { setLoading(false); }
   };
-
-  // ============================================================================
-  // BANK DATA MANAGEMENT
-  // ============================================================================
 
   const refreshBankData = async () => {
       if (!id || isDemoMode) return;
-      
       try {
           const response = await api.get(`/banking/budgets/${id}/reality-check`);
           const { total_real_cash } = response.data;
-          
           setRealBankBalance(total_real_cash || 0);
           setHasActiveConnection(total_real_cash > 0);
       } catch (error) {
@@ -312,11 +234,8 @@ export default function Beta2Page() {
       }
   };
 
-  // ============================================================================
-  // YEAR MANAGEMENT
-  // ============================================================================
-
   const hydrateStateFromGlobal = (year: number, rawData: any) => {
+      // ... (Hydration logic same as before) ...
       if (rawData.yearlyData && rawData.yearlyData[year]) {
           const yearData = rawData.yearlyData[year];
           const newYearlyData: YearlyData = {};
@@ -324,18 +243,15 @@ export default function Beta2Page() {
           const newOneTime: OneTimeIncomes = {};
           const newMonthComments: MonthComments = {};
           const newProjectComments: ProjectComments = {};
-
           MONTHS.forEach((month, idx) => {
               if (yearData.months && yearData.months[idx]) newYearlyData[month] = yearData.months[idx];
               if (yearData.expenses && yearData.expenses[idx]) newYearlyExpenses[month] = yearData.expenses[idx];
               if (yearData.monthComments && yearData.monthComments[idx]) newMonthComments[month] = yearData.monthComments[idx];
               if (yearData.expenseComments && yearData.expenseComments[idx]) newProjectComments[month] = yearData.expenseComments[idx];
-              
               if (rawData.oneTimeIncomes && rawData.oneTimeIncomes[year] && rawData.oneTimeIncomes[year][idx]) {
                   newOneTime[month] = Number(rawData.oneTimeIncomes[year][idx].amount || 0);
               }
           });
-
           setYearlyData(newYearlyData);
           setYearlyExpenses(newYearlyExpenses);
           setOneTimeIncomes(newOneTime);
@@ -352,44 +268,25 @@ export default function Beta2Page() {
 
   const handleYearChange = (newYear: number) => {
       if (globalDataRef.current) {
-          const tempCurrentState = {
-              budgetTitle, currentYear, people, charges, projects, 
-              yearlyData, yearlyExpenses, oneTimeIncomes, 
-              monthComments, projectComments, lockedMonths
-          };
+          const tempCurrentState = { budgetTitle, currentYear, people, charges, projects, yearlyData, yearlyExpenses, oneTimeIncomes, monthComments, projectComments, lockedMonths };
           const formattedCurrent = convertNewFormatToOld(tempCurrentState as any);
-          
           if (!globalDataRef.current.yearlyData) globalDataRef.current.yearlyData = {};
           if (!globalDataRef.current.oneTimeIncomes) globalDataRef.current.oneTimeIncomes = {};
-          
           const sourceYearlyData = formattedCurrent.yearlyData || {};
           const sourceOneTime = formattedCurrent.oneTimeIncomes || {};
-
           globalDataRef.current.yearlyData[currentYear] = sourceYearlyData[currentYear];
           globalDataRef.current.oneTimeIncomes[currentYear] = sourceOneTime[currentYear];
       }
-
       setCurrentYear(newYear);
       hydrateStateFromGlobal(newYear, globalDataRef.current);
   };
 
-  // ============================================================================
-  // SAVE MANAGEMENT
-  // ============================================================================
-
   const handleSave = async (silent = false) => {
      if(!id) return;
      if(!silent) setSaving(true);
-     
-     const currentViewData = { 
-         budgetTitle, currentYear, people, charges, projects, 
-         yearlyData, yearlyExpenses, oneTimeIncomes, 
-         monthComments, projectComments, lockedMonths 
-     };
+     const currentViewData = { budgetTitle, currentYear, people, charges, projects, yearlyData, yearlyExpenses, oneTimeIncomes, monthComments, projectComments, lockedMonths };
      const formattedCurrent = convertNewFormatToOld(currentViewData as any);
-
      const finalPayload = { ...globalDataRef.current };
-     
      finalPayload.budgetTitle = budgetTitle;
      finalPayload.people = people;
      finalPayload.charges = charges;
@@ -398,36 +295,20 @@ export default function Beta2Page() {
      finalPayload.lastUpdated = new Date().toISOString();
      finalPayload.updatedBy = user?.name;
      finalPayload.version = '2.4-beta2';
-
      if (!finalPayload.yearlyData) finalPayload.yearlyData = {};
      if (!finalPayload.oneTimeIncomes) finalPayload.oneTimeIncomes = {};
-
      const sourceYearlyData = formattedCurrent.yearlyData || {};
      const sourceOneTime = formattedCurrent.oneTimeIncomes || {};
-
      finalPayload.yearlyData[currentYear] = sourceYearlyData[currentYear];
      finalPayload.oneTimeIncomes[currentYear] = sourceOneTime[currentYear];
-
      try { 
          await budgetAPI.updateData(id, { data: finalPayload }); 
          setLastServerUpdate(finalPayload.lastUpdated);
          globalDataRef.current = finalPayload;
-         if(!silent) toast({
-             title: "Succès", 
-             description: "Budget sauvegardé !", 
-             variant: "success"
-         }); 
+         if(!silent) toast({ title: "Succès", description: "Budget sauvegardé !", variant: "success" }); 
      } 
-     catch(e) { 
-         if(!silent) toast({
-             title: "Erreur", 
-             description: "Échec sauvegarde", 
-             variant: "destructive"
-         }); 
-     } 
-     finally { 
-         if(!silent) setSaving(false); 
-     }
+     catch(e) { if(!silent) toast({ title: "Erreur", description: "Échec sauvegarde", variant: "destructive" }); } 
+     finally { if(!silent) setSaving(false); }
   };
   
   const refreshMembersOnly = async () => { 
@@ -440,14 +321,8 @@ export default function Beta2Page() {
             }
             return prev;
         });
-    } catch (error) { 
-        console.error(error); 
-    }
+    } catch (error) { console.error(error); }
   };
-
-  // ============================================================================
-  // TRANSACTION MAPPING
-  // ============================================================================
 
   const handleOpenMapper = (charge: Charge) => {
       setChargeToMap(charge);
@@ -458,38 +333,25 @@ export default function Beta2Page() {
       const others = chargeMappings.filter(m => m.chargeId !== chargeToMap?.id);
       const updated = [...others, ...newLinks];
       setChargeMappings(updated);
-      
-      toast({ 
-          title: "Mappings mis à jour", 
-          description: `${newLinks.length} transaction(s) liée(s).` 
-      });
+      toast({ title: "Mappings mis à jour", description: `${newLinks.length} transaction(s) liée(s).` });
   };
 
   const handleOpenBankManager = () => {
       if (isDemoMode) {
-          toast({
-              title: "Mode Démonstration",
-              description: "Vous utilisez des données fictives. Les vraies connexions bancaires seront disponibles prochainement.",
-              duration: 5000
-          });
+          toast({ title: "Mode Démonstration", description: "Vous utilisez des données fictives.", duration: 5000 });
           return;
       }
       setShowBankManager(true);
   };
 
-  // ============================================================================
-  // REALITY CHECK CALCULATION
-  // ============================================================================
-
+  // --- REALITY CHECK CALCULATION ---
   const today = new Date();
   const currentMonthIndex = today.getMonth();
   const currentRealYear = today.getFullYear();
   let totalGlobalRealized = 0;
-  
   if (currentYear <= currentRealYear) {
       projects.forEach(proj => {
           totalGlobalRealized += (projectCarryOvers[proj.id] || 0);
-          
           MONTHS.forEach((month, idx) => {
               if (currentYear < currentRealYear || idx <= currentMonthIndex) {
                    const allocation = yearlyData[month]?.[proj.id] || 0;
@@ -499,10 +361,6 @@ export default function Beta2Page() {
           });
       });
   }
-
-  // ============================================================================
-  // SECTION NAVIGATION
-  // ============================================================================
 
   const handleSectionChange = (section: string) => {
     if (section === 'settings' || section === 'notifications') return;
@@ -514,27 +372,16 @@ export default function Beta2Page() {
     }
   };
 
-  // ============================================================================
-  // RENDER
-  // ============================================================================
-
-  if (loading) {
-      return (
-          <div className="min-h-screen flex items-center justify-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
-          </div>
-      );
-  }
+  if (loading) return <div className="min-h-screen flex items-center justify-center"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div></div>;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-purple-50">
-      
       <div className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white text-center text-xs py-1.5 font-medium shadow-lg">
         ✨ Beta 2 : Enable Banking (2500+ banques européennes) - Test de l'API PSD2
       </div>
 
       <BudgetNavbar 
-        budgetTitle={budget?.name + " (Beta 2 - Enable Banking)"} 
+        budgetTitle={budget?.name + " (Beta 2)"} 
         userName={user?.name}
         userAvatar={user?.avatar}
         items={BUDGET_NAV_ITEMS}
@@ -543,119 +390,56 @@ export default function Beta2Page() {
       />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        
         <div className="flex items-center justify-between mb-6">
-          <button 
-            onClick={() => navigate('/')} 
-            className="text-indigo-600 hover:text-indigo-700 flex items-center gap-2 font-medium transition-colors"
-          >
+          <button onClick={() => navigate('/')} className="text-indigo-600 hover:text-indigo-700 flex items-center gap-2 font-medium transition-colors">
             ← Retour au Dashboard
           </button>
-          
           <div className="flex items-center gap-2 bg-indigo-50 border border-indigo-200 rounded-lg px-4 py-2">
             <FlaskConical className="h-4 w-4 text-indigo-600" />
-            <span className="text-sm font-medium text-indigo-900">
-              Mode Beta 2 actif
-            </span>
+            <span className="text-sm font-medium text-indigo-900">Mode Beta 2 actif</span>
           </div>
         </div>
 
         <div className="bg-white rounded-xl shadow-lg overflow-hidden mb-6">
-          <BudgetHeader 
-            budgetTitle={budgetTitle} 
-            onTitleChange={setBudgetTitle} 
-            currentYear={currentYear} 
-            onYearChange={handleYearChange} 
-          />
-          
+          <BudgetHeader budgetTitle={budgetTitle} onTitleChange={setBudgetTitle} currentYear={currentYear} onYearChange={handleYearChange} />
           <div className="p-4 bg-gray-50 border-t border-gray-200 flex justify-between items-center">
             <div className="flex items-center gap-3">
               {budget?.is_owner && (
-                <button 
-                  onClick={() => setShowInviteModal(true)} 
-                  className="bg-white hover:bg-gray-50 border border-gray-300 text-gray-700 px-4 py-2 rounded-lg font-medium transition-colors shadow-sm hover:shadow"
-                >
-                  👥 Inviter des membres
+                <button onClick={() => setShowInviteModal(true)} className="bg-white hover:bg-gray-50 border border-gray-300 text-gray-700 px-4 py-2 rounded-lg font-medium transition-colors shadow-sm hover:shadow">
+                  👤 Inviter des membres
                 </button>
               )}
             </div>
-            
             <div className="text-sm text-gray-600">
-              {hasActiveConnection ? (
-                <span className="flex items-center gap-2 text-green-600 font-medium">
-                  <span className="h-2 w-2 bg-green-500 rounded-full animate-pulse"></span>
-                  Banque connectée
-                </span>
-              ) : (
-                <span className="text-gray-500">Aucune banque connectée</span>
-              )}
+              {hasActiveConnection ? <span className="flex items-center gap-2 text-green-600 font-medium"><span className="h-2 w-2 bg-green-500 rounded-full animate-pulse"></span>Banque connectée</span> : <span className="text-gray-500">Aucune banque connectée</span>}
             </div>
           </div>
         </div>
         
-        {budget && user && ( 
-          <div id="members">
-            <MemberManagementSection 
-              budget={budget} 
-              currentUserId={user.id} 
-              onMemberChange={refreshMembersOnly} 
-            />
-          </div> 
-        )}
-        
+        {budget && user && ( <div id="members"><MemberManagementSection budget={budget} currentUserId={user.id} onMemberChange={refreshMembersOnly} /></div> )}
         <ActionsBar onSave={() => handleSave(false)} saving={saving} />
-
-        <div id="people">
-          <PeopleSection people={people} onPeopleChange={setPeople} />
-        </div>
-        
+        <div id="people"><PeopleSection people={people} onPeopleChange={setPeople} /></div>
         <div id="charges" className="mt-6">
-            <ChargesSection 
-                charges={charges} 
-                onChargesChange={setCharges} 
-                onLinkTransaction={handleOpenMapper} 
-                mappedTotals={mappedTotalsByChargeId} 
-            />
+            <ChargesSection charges={charges} onChargesChange={setCharges} onLinkTransaction={handleOpenMapper} mappedTotals={mappedTotalsByChargeId} />
         </div>
         
         <div id="suggestions" className="mt-6">
-          <EnhancedSuggestions 
-            budgetId={id!} 
-            charges={charges} 
-          />
+          <EnhancedSuggestions budgetId={id!} charges={charges} memberCount={memberCount} />
         </div>
           
-                  {/* ============================================================================ */}
-        {/* REALITY CHECK SECTION */}
-        {/* ============================================================================ */}
         <div id="reality" className="mt-8">
-            {isDemoMode && (
-                <DemoBanner 
-                    onDisable={disableDemoMode}
-                />
-            )}
-            
+            {isDemoMode && <DemoBanner onDisable={disableDemoMode} />}
             <div className="bg-gradient-to-r from-indigo-500 to-purple-600 rounded-t-xl p-4 text-white mt-4">
               <div className="flex items-center gap-3">
                 <FlaskConical className="h-6 w-6" /> 
                 <div>
-                  <h2 className="text-xl font-display font-semibold">
-                    Reality Check
-                  </h2>
-                  <p className="text-sm text-indigo-100 mt-0.5">
-                    Comparaison entre votre budget théorique et vos comptes bancaires réels
-                  </p>
+                  <h2 className="text-xl font-display font-semibold">Reality Check</h2>
+                  <p className="text-sm text-indigo-100 mt-0.5">Comparaison budget théorique vs comptes bancaires réels</p>
                 </div>
               </div>
             </div>
-            
             <div className="bg-white rounded-b-xl shadow-lg p-6 border-t-4 border-indigo-500">
-                {!hasActiveConnection && !isDemoMode && (
-                    <DemoModePrompt 
-                        onEnableDemoMode={enableDemoMode}
-                    />
-                )}
-                
+                {!hasActiveConnection && !isDemoMode && <DemoModePrompt onEnableDemoMode={enableDemoMode} />}
                 {(hasActiveConnection || isDemoMode) && (
                     <RealityCheck 
                         totalRealized={totalGlobalRealized}
@@ -669,83 +453,25 @@ export default function Beta2Page() {
         </div>
 
         <div id="projects" className="mt-8">
-            <ProjectsSection 
-                projects={projects} 
-                onProjectsChange={setProjects}
-                projectCarryOvers={projectCarryOvers}
-                currentYear={currentYear}
-            />
+            <ProjectsSection projects={projects} onProjectsChange={setProjects} yearlyData={yearlyData} currentYear={currentYear} projectCarryOvers={projectCarryOvers} />
         </div>
-
         <div id="calendar" className="mt-8">
-            <MonthlyTable 
-                currentYear={currentYear}
-                onYearChange={handleYearChange}
-                people={people}
-                charges={charges}
-                projects={projects}
-                yearlyData={yearlyData}
-                yearlyExpenses={yearlyExpenses}
-                oneTimeIncomes={oneTimeIncomes}
-                monthComments={monthComments}
-                projectComments={projectComments}
-                lockedMonths={lockedMonths}
-                onYearlyDataChange={setYearlyData}
-                onYearlyExpensesChange={setYearlyExpenses}
-                onOneTimeIncomesChange={setOneTimeIncomes}
-                onMonthCommentsChange={setMonthComments}
-                onProjectCommentsChange={setProjectComments}
-                onLockedMonthsChange={setLockedMonths}
-                projectCarryOvers={projectCarryOvers}
-            />
+            <MonthlyTable currentYear={currentYear} onYearChange={handleYearChange} people={people} charges={charges} projects={projects} yearlyData={yearlyData} yearlyExpenses={yearlyExpenses} oneTimeIncomes={oneTimeIncomes} monthComments={monthComments} projectComments={projectComments} lockedMonths={lockedMonths} onYearlyDataChange={setYearlyData} onYearlyExpensesChange={setYearlyExpenses} onOneTimeIncomesChange={setOneTimeIncomes} onMonthCommentsChange={setMonthComments} onProjectCommentsChange={setProjectComments} onLockedMonthsChange={setLockedMonths} projectCarryOvers={projectCarryOvers} />
         </div>
-
         <div id="overview" className="mt-8">
-            <StatsSection 
-                currentYear={currentYear}
-                people={people}
-                charges={charges}
-                projects={projects}
-                yearlyData={yearlyData}
-                oneTimeIncomes={oneTimeIncomes}
-            />
+            <StatsSection currentYear={currentYear} people={people} charges={charges} projects={projects} yearlyData={yearlyData} oneTimeIncomes={oneTimeIncomes} />
         </div>
       </div>
 
-      {showInviteModal && (
-        <InviteModal 
-          budgetId={id!} 
-          onClose={() => setShowInviteModal(false)} 
-        />
-      )}
-
+      {showInviteModal && <InviteModal budgetId={id!} onClose={() => setShowInviteModal(false)} />}
       <Dialog open={showBankManager} onOpenChange={setShowBankManager}>
         <DialogContent className="sm:max-w-2xl max-h-[80vh] overflow-y-auto">
-            <DialogHeader>
-                <DialogTitle>Gestion des Connexions Bancaires</DialogTitle>
-                <DialogDescription>
-                    Connectez vos comptes bancaires via Enable Banking (2500+ banques européennes).
-                    Sélectionnez ensuite les comptes d'épargne pour le calcul du Reality Check.
-                </DialogDescription>
-            </DialogHeader>
-            
-            <EnableBankingManager 
-              budgetId={id!} 
-              onUpdate={refreshBankData} 
-            />
+            <DialogHeader><DialogTitle>Gestion des Connexions Bancaires</DialogTitle><DialogDescription>Connectez vos comptes via Enable Banking.</DialogDescription></DialogHeader>
+            <EnableBankingManager budgetId={id!} onUpdate={refreshBankData} />
         </DialogContent>
       </Dialog>
-
       {chargeToMap && (
-          <TransactionMapper 
-              isOpen={showMapper}
-              onClose={() => setShowMapper(false)}
-              charge={chargeToMap}
-              currentMappings={chargeMappings}
-              onSave={handleSaveMappings}
-              budgetId={id!}
-              demoTransactions={isDemoMode ? demoTransactions : undefined}
-          />
+          <TransactionMapper isOpen={showMapper} onClose={() => setShowMapper(false)} charge={chargeToMap} currentMappings={chargeMappings} onSave={handleSaveMappings} budgetId={id!} demoTransactions={isDemoMode ? demoTransactions : undefined} />
       )}
     </div>
   );

@@ -39,8 +39,8 @@ export interface User {
   name: string;
   email: string;
   avatar?: string;
-  country?: string;        // ✅ NEW
-  postal_code?: string;    // ✅ NEW
+  country?: string;
+  postal_code?: string;
 }
 
 export interface AuthResponse {
@@ -55,7 +55,7 @@ export interface CategorizeResponse {
 }
 
 // ============================================================================
-// ⭐ NOUVEAUX TYPES - Market Suggestions
+// MARKET SUGGESTIONS TYPES
 // ============================================================================
 
 export interface Competitor {
@@ -67,6 +67,8 @@ export interface Competitor {
   pros: string[];
   cons: string[];
   contact_available: boolean;
+  phone_number?: string;    // NEW
+  contact_email?: string;   // NEW
 }
 
 export interface MarketSuggestion {
@@ -103,7 +105,7 @@ export interface BulkAnalyzeResponse {
 }
 
 // ============================================================================
-// LOCATION TYPES (NEW)
+// LOCATION TYPES
 // ============================================================================
 
 export interface LocationUpdate {
@@ -163,7 +165,6 @@ export const userAPI = {
   deleteAccount: (data: DeleteAccountData) => 
     api.delete('/user/account', { data }),
   
-  // ✅ NEW: Location endpoints
   updateLocation: (data: LocationUpdate): Promise<AxiosResponse> =>
     api.put('/user/location', data),
     
@@ -189,11 +190,10 @@ export const budgetAPI = {
   removeMember: (budgetId: string, memberId: string) => 
     api.delete(`/budgets/${budgetId}/members/${memberId}`),
   
-  // AI Categorization Endpoint
   categorize: (label: string): Promise<AxiosResponse<CategorizeResponse>> => 
     api.post('/categorize', { label }),
 
-  // ⭐ NOUVEAUX ENDPOINTS - Market Suggestions
+  // Market Suggestions Endpoints
   bulkAnalyzeSuggestions: (
     budgetId: string, 
     data: BulkAnalyzeRequest
@@ -218,7 +218,6 @@ export const invitationAPI = {
     api.post('/invitations/accept', { token }),
   getByToken: (token: string) => 
     api.get(`/invitations/${token}`),
-  // ✅ FIXED: Ajout de la méthode invite manquante
   invite: (budgetId: string, email: string) => 
     api.post(`/budgets/${budgetId}/invite`, { email }),
 };

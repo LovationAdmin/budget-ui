@@ -14,6 +14,7 @@ export interface Charge {
   startDate?: string;
   endDate?: string;
   category?: string;
+  ignoreSuggestions?: boolean; // NEW: Allows disabling suggestions for this charge
 }
 
 export interface Project {
@@ -60,6 +61,7 @@ export interface RawBudgetData {
   version?: string;
   exportDate?: string;
   date?: string;
+  chargeMappings?: any[];
 }
 
 // Output Data Type
@@ -88,7 +90,7 @@ const MONTHS = [
 ];
 
 // ============================================
-// NOUVEAU: Map pour gérer les problèmes d'encodage des noms de mois
+// Map to handle encoding issues in month names
 // ============================================
 const MONTH_NAME_VARIANTS: Record<string, string> = {
   // Standard
@@ -104,47 +106,45 @@ const MONTH_NAME_VARIANTS: Record<string, string> = {
   'Octobre': 'Octobre', 'octobre': 'Octobre',
   'Novembre': 'Novembre', 'novembre': 'Novembre',
   'Décembre': 'Décembre', 'décembre': 'Décembre', 'Decembre': 'Décembre',
-  // Encodage UTF-8 mal interprété (mojibake)
+  // UTF-8 encoding mojibake handling
   'FÃ©vrier': 'Février',
   'AoÃ»t': 'Août',
   'DÃ©cembre': 'Décembre',
 };
 
 /**
- * Normalise un nom de mois (gère les variantes d'encodage)
+ * Normalizes a month name (handles encoding variants)
  */
 function normalizeMonthName(monthKey: string): string | null {
   return MONTH_NAME_VARIANTS[monthKey] || null;
 }
 
 /**
- * Vérifie si une clé est un nom de mois (avec variantes)
+ * Checks if a key is a month name
  */
 function isMonthName(key: string): boolean {
   return normalizeMonthName(key) !== null;
 }
 
 /**
- * Vérifie si les données sont dans l'ancien format (clés = noms de mois)
+ * Checks if data is in legacy format (keys = month names)
  */
 function isLegacyMonthNameFormat(yearlyData: unknown): boolean {
   if (!yearlyData || typeof yearlyData !== 'object') return false;
   const keys = Object.keys(yearlyData);
   if (keys.length === 0) return false;
   
-  // Si au moins une clé est un nom de mois, c'est l'ancien format
   return keys.some(key => isMonthName(key));
 }
 
 /**
- * Vérifie si les données sont dans le nouveau format (clés = années)
+ * Checks if data is in new year-based format (keys = years)
  */
 function isNewYearBasedFormat(yearlyData: unknown): boolean {
   if (!yearlyData || typeof yearlyData !== 'object') return false;
   const keys = Object.keys(yearlyData);
   if (keys.length === 0) return false;
   
-  // Vérifie si les clés sont des années (4 chiffres) avec structure .months
   return keys.some(key => {
     if (!/^\d{4}$/.test(key)) return false;
     const yearData = (yearlyData as any)[key];
@@ -153,12 +153,11 @@ function isNewYearBasedFormat(yearlyData: unknown): boolean {
 }
 
 export function convertOldFormatToNew(oldData: RawBudgetData): ConvertedBudgetData {
-  // Default structure
   const newData: ConvertedBudgetData = {
     budgetTitle: oldData.budgetTitle || '',
     currentYear: oldData.currentYear || new Date().getFullYear(),
     people: oldData.people || [],
-    charges: oldData.charges || [],
+    charges: oldData.charges || [], // TypeScript includes ignoreSuggestions automatically
     projects: oldData.projects || [],
     yearlyData: {},
     yearlyExpenses: {},
@@ -176,25 +175,19 @@ export function convertOldFormatToNew(oldData: RawBudgetData): ConvertedBudgetDa
   const rawProjectComments = oldData.projectComments || {};
   const rawOneTimeIncomes = oldData.oneTimeIncomes || {};
 
-  // ============================================
-  // CAS 1: Ancien format avec noms de mois comme clés (v2.2 et avant)
-  // yearlyData: { "Janvier": {...}, "Février": {...}, ... }
-  // ============================================
+  // CAS 1: Legacy format
   if (isLegacyMonthNameFormat(rawYearlyData)) {
     console.log('[importConverter] Detected LEGACY month-name format, converting...');
     
-    // Convertir yearlyData (allocations)
     for (const [key, value] of Object.entries(rawYearlyData)) {
       const normalizedMonth = normalizeMonthName(key);
       if (normalizedMonth && value && typeof value === 'object' && !Array.isArray(value)) {
-        // Vérifier que ce n'est pas une structure year-based accidentellement mélangée
         if (!(value as any).months) {
           newData.yearlyData[normalizedMonth] = { ...(value as Record<string, number>) };
         }
       }
     }
     
-    // Convertir yearlyExpenses (dépenses réelles)
     if (isLegacyMonthNameFormat(rawYearlyExpenses)) {
       for (const [key, value] of Object.entries(rawYearlyExpenses)) {
         const normalizedMonth = normalizeMonthName(key);
@@ -204,7 +197,6 @@ export function convertOldFormatToNew(oldData: RawBudgetData): ConvertedBudgetDa
       }
     }
     
-    // Convertir monthComments
     if (rawMonthComments && typeof rawMonthComments === 'object') {
       for (const [key, value] of Object.entries(rawMonthComments)) {
         const normalizedMonth = normalizeMonthName(key);
@@ -214,7 +206,6 @@ export function convertOldFormatToNew(oldData: RawBudgetData): ConvertedBudgetDa
       }
     }
     
-    // Convertir projectComments
     if (rawProjectComments && typeof rawProjectComments === 'object') {
       for (const [key, value] of Object.entries(rawProjectComments)) {
         const normalizedMonth = normalizeMonthName(key);
@@ -224,7 +215,6 @@ export function convertOldFormatToNew(oldData: RawBudgetData): ConvertedBudgetDa
       }
     }
     
-    // Convertir oneTimeIncomes (ancien format: { "Janvier": 500, ... })
     if (rawOneTimeIncomes && typeof rawOneTimeIncomes === 'object') {
       for (const [key, value] of Object.entries(rawOneTimeIncomes)) {
         const normalizedMonth = normalizeMonthName(key);
@@ -237,10 +227,7 @@ export function convertOldFormatToNew(oldData: RawBudgetData): ConvertedBudgetDa
     return newData;
   }
 
-  // ============================================
-  // CAS 2: Nouveau format avec années comme clés (v2.3+)
-  // yearlyData: { "2024": { months: [...], expenses: [...], ... } }
-  // ============================================
+  // CAS 2: New Year-Based Format
   if (isNewYearBasedFormat(rawYearlyData)) {
     console.log('[importConverter] Detected NEW year-based format, extracting current year...');
     
@@ -250,25 +237,20 @@ export function convertOldFormatToNew(oldData: RawBudgetData): ConvertedBudgetDa
     
     if (yearData) {
       MONTHS.forEach((month, idx) => {
-        // Allocations
         if (yearData.months && yearData.months[idx]) {
           newData.yearlyData[month] = { ...yearData.months[idx] };
         }
-        // Expenses
         if (yearData.expenses && yearData.expenses[idx]) {
           newData.yearlyExpenses[month] = { ...yearData.expenses[idx] };
         }
-        // Month Comments
         if (yearData.monthComments && yearData.monthComments[idx]) {
           newData.monthComments[month] = yearData.monthComments[idx];
         }
-        // Project/Expense Comments
         if (yearData.expenseComments && yearData.expenseComments[idx]) {
           newData.projectComments[month] = { ...yearData.expenseComments[idx] };
         }
       });
       
-      // OneTimeIncomes (format: { "2024": [{ amount, description }, ...] })
       if (rawOneTimeIncomes && (rawOneTimeIncomes as any)[yearKey]) {
         const yearIncomes = (rawOneTimeIncomes as any)[yearKey];
         if (Array.isArray(yearIncomes)) {
@@ -287,13 +269,9 @@ export function convertOldFormatToNew(oldData: RawBudgetData): ConvertedBudgetDa
     return newData;
   }
 
-  // ============================================
-  // CAS 3: Format déjà correct (frontend format)
-  // yearlyData: { "Janvier": {...}, ... } avec yearlyExpenses séparé
-  // ============================================
+  // CAS 3: Already correct format
   console.log('[importConverter] Data appears to be already in correct format');
   
-  // Copier directement si déjà au bon format
   if (rawYearlyData && typeof rawYearlyData === 'object') {
     newData.yearlyData = { ...(rawYearlyData as YearlyData) };
   }
@@ -353,38 +331,4 @@ export function convertNewFormatToOld(newData: ConvertedBudgetData): RawBudgetDa
   });
 
   return oldData;
-}
-
-// ============================================
-// BONUS: Fonction pour migrer les données en DB directement
-// Utile si tu veux faire une migration one-shot côté backend
-// ============================================
-export function migrateRawDataToNewFormat(rawData: RawBudgetData): RawBudgetData {
-  const targetYear = rawData.currentYear || new Date().getFullYear();
-  
-  // Si déjà au nouveau format, retourner tel quel
-  if (isNewYearBasedFormat(rawData.yearlyData)) {
-    return rawData;
-  }
-  
-  // Si pas en format legacy, retourner tel quel
-  if (!isLegacyMonthNameFormat(rawData.yearlyData)) {
-    return rawData;
-  }
-  
-  console.log('[migrateRawDataToNewFormat] Migrating legacy data to new format...');
-  
-  // Convertir d'abord au format frontend
-  const frontendFormat = convertOldFormatToNew(rawData);
-  
-  // Puis reconvertir au format DB (nouveau)
-  const migratedData = convertNewFormatToOld(frontendFormat);
-  
-  // Conserver les métadonnées originales
-  return {
-    ...migratedData,
-    version: '2.3-migrated',
-    lastUpdated: new Date().toISOString(),
-    updatedBy: rawData.updatedBy
-  };
 }

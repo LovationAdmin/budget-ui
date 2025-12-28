@@ -10,7 +10,9 @@ import {
   Clock, 
   Link as LinkIcon, 
   ChevronDown, 
-  ChevronUp 
+  ChevronUp,
+  Lightbulb,
+  LightbulbOff
 } from "lucide-react";
 import { 
   Popover,
@@ -21,35 +23,12 @@ import { cn } from "@/lib/utils";
 import type { Charge } from '@/utils/importConverter';
 import { budgetAPI } from '@/services/api';
 
-// ============================================================================
-// EXPORTED TYPE
-// ============================================================================
-
-export interface Suggestion {
-  id: string;
-  chargeId?: string;
-  type: string;
-  title: string;
-  message: string;
-  potentialSavings: number;
-  actionLink: string;
-  canBeContacted: boolean;
-}
-
-// ============================================================================
-// INTERFACES
-// ============================================================================
-
 interface ChargesSectionProps {
   charges: Charge[];
   onChargesChange: (charges: Charge[]) => void;
   onLinkTransaction?: (charge: Charge) => void; 
   mappedTotals?: Record<string, number>; 
 }
-
-// ============================================================================
-// COMPOSANT PRINCIPAL
-// ============================================================================
 
 export default function ChargesSection({ 
     charges, 
@@ -62,16 +41,9 @@ export default function ChargesSection({
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [showAddForm, setShowAddForm] = useState(false);
-  
-  // Collapsible State
   const [isExpanded, setIsExpanded] = useState(true);
-  
   const [detectedCategory, setDetectedCategory] = useState<string>('');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
-
-  // ============================================================================
-  // AI CATEGORIZATION
-  // ============================================================================
 
   const handleLabelBlur = async () => {
       if (!newChargeLabel.trim() || newChargeLabel.length < 3) return;
@@ -79,7 +51,7 @@ export default function ChargesSection({
       try {
           const res = await budgetAPI.categorize(newChargeLabel);
           if (res.data.category && res.data.category !== 'OTHER') {
-              setDetectedCategory(res.data.category);
+             setDetectedCategory(res.data.category);
           } else {
               setDetectedCategory('');
           }
@@ -89,10 +61,6 @@ export default function ChargesSection({
           setIsAnalyzing(false);
       }
   };
-
-  // ============================================================================
-  // CRUD OPERATIONS
-  // ============================================================================
 
   const addCharge = (e: React.FormEvent) => {
     e.preventDefault();
@@ -105,18 +73,18 @@ export default function ChargesSection({
       startDate: startDate || undefined,
       endDate: endDate || undefined,
       category: detectedCategory || undefined, 
+      ignoreSuggestions: false // Default to suggestions enabled
     };
     
     onChargesChange([...charges, newCharge]);
     
-    // Reset form
     setNewChargeLabel('');
     setNewChargeAmount('');
     setStartDate('');
     setEndDate('');
     setDetectedCategory('');
     setShowAddForm(false);
-    setIsExpanded(true); // Open section when adding
+    setIsExpanded(true);
   };
 
   const removeCharge = (id: string) => {
@@ -128,10 +96,6 @@ export default function ChargesSection({
   const updateCharge = (id: string, updates: Partial<Charge>) => {
     onChargesChange(charges.map(c => c.id === id ? { ...c, ...updates } : c));
   };
-
-  // ============================================================================
-  // HELPER FUNCTIONS
-  // ============================================================================
 
   const getCategoryLabel = (category?: string) => {
     if (!category) return '';
@@ -150,10 +114,6 @@ export default function ChargesSection({
 
   const totalCharges = charges.reduce((sum, c) => sum + c.amount, 0);
 
-  // ============================================================================
-  // RENDER
-  // ============================================================================
-
   return (
     <Card className="border-orange-200 bg-gradient-to-br from-orange-50 to-orange-100/30 transition-all duration-300">
       <CardHeader 
@@ -162,7 +122,7 @@ export default function ChargesSection({
       >
         <div className="flex items-center justify-between">
           <CardTitle className="text-orange-900 flex items-center gap-2">
-            📤 Charges Mensuelles
+            🧾 Charges Mensuelles
             <span className="text-sm font-normal text-muted-foreground">
               ({charges.length} charge{charges.length > 1 ? 's' : ''})
             </span>
@@ -175,7 +135,6 @@ export default function ChargesSection({
                 </p>
                 <p className="text-xs text-muted-foreground">Total mensuel</p>
             </div>
-            {/* Chevron Toggle */}
             <div className="text-orange-800">
                 {isExpanded ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
             </div>
@@ -185,7 +144,6 @@ export default function ChargesSection({
 
       {isExpanded && (
       <CardContent className="space-y-3 animate-accordion-down">
-        {/* Liste des charges */}
         {charges.length === 0 ? (
           <div className="text-center py-8 text-muted-foreground">
             <p className="mb-2">Aucune charge enregistrée</p>
@@ -207,7 +165,6 @@ export default function ChargesSection({
           </div>
         )}
 
-        {/* Formulaire d'ajout */}
         {!showAddForm ? (
           <Button 
             onClick={(e) => {
@@ -237,14 +194,10 @@ export default function ChargesSection({
                 required
               />
               {isAnalyzing && (
-                <p className="text-xs text-muted-foreground mt-1">
-                  🔄 Analyse de la catégorie...
-                </p>
+                <p className="text-xs text-muted-foreground mt-1">🔄 Analyse de la catégorie...</p>
               )}
               {detectedCategory && (
-                <p className="text-xs text-green-600 mt-1">
-                  ✓ Catégorie détectée: {getCategoryLabel(detectedCategory)}
-                </p>
+                <p className="text-xs text-green-600 mt-1">✓ Catégorie détectée: {getCategoryLabel(detectedCategory)}</p>
               )}
             </div>
 
@@ -264,28 +217,16 @@ export default function ChargesSection({
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <Label htmlFor="start-date">Date début (optionnel)</Label>
-                <Input
-                  id="start-date"
-                  type="date"
-                  value={startDate}
-                  onChange={(e) => setStartDate(e.target.value)}
-                />
+                <Input id="start-date" type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
               </div>
               <div>
                 <Label htmlFor="end-date">Date fin (optionnel)</Label>
-                <Input
-                  id="end-date"
-                  type="date"
-                  value={endDate}
-                  onChange={(e) => setEndDate(e.target.value)}
-                />
+                <Input id="end-date" type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
               </div>
             </div>
 
             <div className="flex gap-2">
-              <Button type="submit" size="sm" className="flex-1">
-                Ajouter
-              </Button>
+              <Button type="submit" size="sm" className="flex-1">Ajouter</Button>
               <Button 
                 type="button" 
                 size="sm" 
@@ -310,10 +251,7 @@ export default function ChargesSection({
   );
 }
 
-// ============================================================================
-// COMPOSANT ITEM DE CHARGE
-// ============================================================================
-
+// Sub-component
 interface ChargeItemProps {
   charge: Charge;
   onUpdate: (id: string, updates: Partial<Charge>) => void;
@@ -323,19 +261,10 @@ interface ChargeItemProps {
   getCategoryLabel: (category?: string) => string;
 }
 
-function ChargeItem({ 
-  charge, 
-  onUpdate, 
-  onDelete, 
-  onLinkTransaction,
-  mappedTotal,
-  getCategoryLabel 
-}: ChargeItemProps) {
+function ChargeItem({ charge, onUpdate, onDelete, onLinkTransaction, mappedTotal, getCategoryLabel }: ChargeItemProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editLabel, setEditLabel] = useState(charge.label);
   const [editAmount, setEditAmount] = useState(charge.amount.toString());
-  
-  // NEW: Date state for edit mode
   const [editStartDate, setEditStartDate] = useState(charge.startDate);
   const [editEndDate, setEditEndDate] = useState(charge.endDate);
 
@@ -357,48 +286,21 @@ function ChargeItem({
     setIsEditing(false);
   };
 
-  // Format dates
   const hasDates = charge.startDate || charge.endDate;
-  const dateText = hasDates 
-    ? `${charge.startDate || '...'} → ${charge.endDate || '...'}`
-    : '';
-
-  // Comparaison budget vs réel
+  const dateText = hasDates ? `${charge.startDate || '...'} → ${charge.endDate || '...'}` : '';
   const hasRealityCheck = mappedTotal !== undefined && mappedTotal > 0;
   const differsFromBudget = hasRealityCheck && Math.abs(mappedTotal - charge.amount) > 0.5;
 
   if (isEditing) {
     const hasEditDates = editStartDate || editEndDate;
-
     return (
       <div className="flex items-center gap-2 p-3 bg-white rounded-lg border border-orange-200">
-        <Input
-          value={editLabel}
-          onChange={(e) => setEditLabel(e.target.value)}
-          className="flex-1 h-8"
-          placeholder="Libellé"
-        />
-        <Input
-          type="number"
-          step="0.01"
-          value={editAmount}
-          onChange={(e) => setEditAmount(e.target.value)}
-          className="w-24 h-8"
-          placeholder="0.00"
-        />
+        <Input value={editLabel} onChange={(e) => setEditLabel(e.target.value)} className="flex-1 h-8" placeholder="Libellé" />
+        <Input type="number" step="0.01" value={editAmount} onChange={(e) => setEditAmount(e.target.value)} className="w-24 h-8" placeholder="0.00" />
         
-        {/* Date Editor Button (Popover) */}
         <Popover>
             <PopoverTrigger asChild>
-                <Button 
-                    variant="ghost" 
-                    size="icon" 
-                    className={cn(
-                        "h-8 w-8 hover:bg-orange-50",
-                        hasEditDates ? "text-orange-600 bg-orange-50" : "text-muted-foreground"
-                    )}
-                    title="Modifier la période"
-                >
+                <Button variant="ghost" size="icon" className={cn("h-8 w-8 hover:bg-orange-50", hasEditDates ? "text-orange-600 bg-orange-50" : "text-muted-foreground")} title="Modifier la période">
                     <Calendar className="h-4 w-4" />
                 </Button>
             </PopoverTrigger>
@@ -408,21 +310,11 @@ function ChargeItem({
                     <div className="grid gap-2">
                         <div className="grid grid-cols-3 items-center gap-2">
                             <Label className="text-xs">Début</Label>
-                            <Input
-                                type="date"
-                                value={editStartDate || ''}
-                                onChange={(e) => setEditStartDate(e.target.value)}
-                                className="col-span-2 h-8 text-xs"
-                            />
+                            <Input type="date" value={editStartDate || ''} onChange={(e) => setEditStartDate(e.target.value)} className="col-span-2 h-8 text-xs" />
                         </div>
                         <div className="grid grid-cols-3 items-center gap-2">
                             <Label className="text-xs">Fin</Label>
-                            <Input
-                                type="date"
-                                value={editEndDate || ''}
-                                onChange={(e) => setEditEndDate(e.target.value)}
-                                className="col-span-2 h-8 text-xs"
-                            />
+                            <Input type="date" value={editEndDate || ''} onChange={(e) => setEditEndDate(e.target.value)} className="col-span-2 h-8 text-xs" />
                         </div>
                     </div>
                     {(editStartDate || editEndDate) && (
@@ -442,88 +334,65 @@ function ChargeItem({
             </PopoverContent>
         </Popover>
 
-        <Button size="sm" onClick={handleSave} className="h-8 w-8 p-0 bg-orange-600 hover:bg-orange-700">
-          ✓
-        </Button>
-        <Button size="sm" variant="ghost" onClick={handleCancel} className="h-8 w-8 p-0">
-          ✕
-        </Button>
+        <Button size="sm" onClick={handleSave} className="h-8 w-8 p-0 bg-orange-600 hover:bg-orange-700">✓</Button>
+        <Button size="sm" variant="ghost" onClick={handleCancel} className="h-8 w-8 p-0">✕</Button>
       </div>
     );
   }
 
   return (
     <div className="flex items-center justify-between p-3 bg-white rounded-lg hover:bg-orange-50/50 transition-colors group border border-transparent hover:border-orange-200">
-      {/* Infos charge */}
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
           <span className="font-medium text-sm truncate">{charge.label}</span>
           {charge.category && (
-            <span className="text-xs bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full">
-              {getCategoryLabel(charge.category)}
-            </span>
+            <span className="text-xs bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full">{getCategoryLabel(charge.category)}</span>
+          )}
+          {charge.ignoreSuggestions && (
+             <span className="text-[10px] bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded border border-gray-200" title="Suggestions d'économies désactivées">
+                Suggestions OFF
+             </span>
           )}
         </div>
         
-        {/* Dates */}
-        {hasDates && (
-          <div className="flex items-center gap-1 mt-1 text-xs text-muted-foreground">
-            <Clock className="h-3 w-3" />
-            <span className="truncate">{dateText}</span>
-          </div>
-        )}
-
-        {/* Reality Check Info */}
-        {hasRealityCheck && differsFromBudget && (
-          <div className="mt-1 text-xs text-indigo-600 font-medium">
-            Réel: {mappedTotal.toFixed(2)}€
-          </div>
-        )}
+        {hasDates && <div className="flex items-center gap-1 mt-1 text-xs text-muted-foreground"><Clock className="h-3 w-3" /><span className="truncate">{dateText}</span></div>}
+        {hasRealityCheck && differsFromBudget && <div className="mt-1 text-xs text-indigo-600 font-medium">Réel: {mappedTotal.toFixed(2)}€</div>}
       </div>
 
-      {/* Montant et actions */}
       <div className="flex items-center gap-2">
-        <span className="font-bold text-orange-900 text-sm whitespace-nowrap">
-          {charge.amount.toFixed(2)}€
-        </span>
+        <span className="font-bold text-orange-900 text-sm whitespace-nowrap">{charge.amount.toFixed(2)}€</span>
 
-        {/* Bouton Link Transaction (Reality Check) */}
-        {onLinkTransaction && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => onLinkTransaction(charge)}
-            className={cn(
-              "h-8 w-8 p-0 opacity-0 group-hover:opacity-100 transition-opacity",
-              hasRealityCheck && "text-indigo-600 opacity-100"
+        {/* Action Buttons */}
+        <div className="flex opacity-0 group-hover:opacity-100 transition-opacity">
+            {/* Toggle Suggestions */}
+            <Button
+                variant="ghost"
+                size="icon-sm"
+                onClick={() => onUpdate(charge.id, { ignoreSuggestions: !charge.ignoreSuggestions })}
+                className={cn(
+                    "h-7 w-7 transition-colors",
+                    charge.ignoreSuggestions ? "text-gray-300 hover:text-gray-500" : "text-yellow-500 hover:bg-yellow-50"
+                )}
+                title={charge.ignoreSuggestions ? "Réactiver les suggestions" : "Désactiver les suggestions"}
+            >
+                {charge.ignoreSuggestions ? <LightbulbOff className="h-3.5 w-3.5" /> : <Lightbulb className="h-3.5 w-3.5" />}
+            </Button>
+
+            {onLinkTransaction && (
+                <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => onLinkTransaction(charge)}
+                    className={cn("h-8 w-8 p-0", hasRealityCheck && "text-indigo-600")}
+                    title={hasRealityCheck ? "Gérer le mapping" : "Lier aux transactions"}
+                >
+                    <LinkIcon className="h-4 w-4" />
+                </Button>
             )}
-            title={hasRealityCheck ? "Gérer le mapping" : "Lier aux transactions"}
-          >
-            <LinkIcon className="h-4 w-4" />
-          </Button>
-        )}
 
-        {/* Bouton Éditer */}
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => setIsEditing(true)}
-          className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
-          title="Modifier"
-        >
-          ✏️
-        </Button>
-
-        {/* Bouton Supprimer */}
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => onDelete(charge.id)}
-          className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50 opacity-0 group-hover:opacity-100 transition-opacity"
-          title="Supprimer"
-        >
-          <Trash2 className="h-4 w-4" />
-        </Button>
+            <Button variant="ghost" size="sm" onClick={() => setIsEditing(true)} className="h-8 w-8 p-0" title="Modifier">✏️</Button>
+            <Button variant="ghost" size="sm" onClick={() => onDelete(charge.id)} className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50" title="Supprimer"><Trash2 className="h-4 w-4" /></Button>
+        </div>
       </div>
     </div>
   );
