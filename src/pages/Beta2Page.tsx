@@ -135,13 +135,13 @@ export default function Beta2Page() {
       return totals;
   }, [charges, chargeMappings]);
 
-  // NEW: Calculate member count for EnhancedSuggestions
+  // Calculate member count for EnhancedSuggestions (household size)
   const memberCount = useMemo(() => {
       if (!budget || !budget.members) return 1;
       return budget.members.length;
   }, [budget]);
 
-  // ... (Demo Mode Persistence - unchanged) ...
+  // Demo Mode Persistence
   const getDemoStorageKey = () => `demo-mode-${id}`;
   const getDemoTimestampKey = () => `demo-timestamp-${id}`;
 
@@ -234,7 +234,6 @@ export default function Beta2Page() {
   };
 
   const hydrateStateFromGlobal = (year: number, rawData: any) => {
-      // ... (Hydration logic same as before) ...
       if (rawData.yearlyData && rawData.yearlyData[year]) {
           const yearData = rawData.yearlyData[year];
           const newYearlyData: YearlyData = {};
@@ -422,8 +421,13 @@ export default function Beta2Page() {
             <ChargesSection charges={charges} onChargesChange={setCharges} onLinkTransaction={handleOpenMapper} mappedTotals={mappedTotalsByChargeId} />
         </div>
         
+        {/* Enhanced Suggestions with memberCount */}
         <div id="suggestions" className="mt-6">
-          <EnhancedSuggestions budgetId={id!} charges={charges} memberCount={memberCount} />
+          <EnhancedSuggestions 
+            budgetId={id!} 
+            charges={charges} 
+            memberCount={memberCount} 
+          />
         </div>
           
         <div id="reality" className="mt-8">
