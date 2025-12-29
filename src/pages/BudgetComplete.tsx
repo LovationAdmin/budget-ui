@@ -20,7 +20,7 @@ import { BudgetNavbar, NavItem } from '@/components/budget/BudgetNavbar';
 import InviteModal from '../components/InviteModal';
 import BudgetHeader from '../components/budget/BudgetHeader';
 import PeopleSection from '../components/budget/PeopleSection';
-import ChargesSection, { Suggestion } from '../components/budget/ChargesSection';
+import ChargesSection from '../components/budget/ChargesSection';
 import ProjectsSection from '../components/budget/ProjectsSection';
 import MonthlyTable from '../components/budget/MonthlyTable';
 import StatsSection from '../components/budget/StatsSection';
@@ -81,7 +81,6 @@ export default function BudgetComplete() {
   const [projectComments, setProjectComments] = useState<ProjectComments>({});
   const [lockedMonths, setLockedMonths] = useState<LockedMonths>({});
 
-  const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const loadedRef = useRef(false);
   const notifiedProjectsRef = useRef<Set<string>>(new Set());
 
