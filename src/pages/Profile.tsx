@@ -84,7 +84,7 @@ export default function Profile() {
     try {
       await userAPI.updateProfile({ name, avatar });
       
-      // ✅ FIXED: Use updateUser instead of direct localStorage + reload
+      // ✅ FIXED: Use updateUser instead of localStorage + reload
       updateUser({ name, avatar });
       
       toast({ 
@@ -179,7 +179,7 @@ export default function Profile() {
     } catch (err: any) {
       toast({ 
         title: "Erreur", 
-        description: err.response?.data?.error || 'Erreur lors du changement de mot de passe', 
+        description: err.response?.data?.error || 'Mot de passe actuel incorrect', 
         variant: "destructive" 
       });
     } finally {
@@ -192,10 +192,10 @@ export default function Profile() {
   // ============================================================================
 
   const handleDeleteAccount = async () => {
-    if (!deletePassword) {
+    if (!deletePassword.trim()) {
       toast({ 
         title: "Erreur", 
-        description: "Veuillez entrer votre mot de passe pour confirmer.", 
+        description: "Veuillez entrer votre mot de passe.", 
         variant: "destructive" 
       });
       return;
@@ -205,70 +205,54 @@ export default function Profile() {
 
     try {
       await userAPI.deleteAccount({ password: deletePassword });
-      logout();
-      navigate('/login');
       toast({ 
         title: "Compte supprimé", 
-        description: "Votre compte a été supprimé définitivement.", 
-        variant: "success" 
+        description: "Votre compte sera supprimé définitivement sous 30 jours.", 
+        variant: "default" 
       });
+      logout();
+      navigate('/login');
     } catch (err: any) {
       toast({ 
         title: "Erreur", 
-        description: err.response?.data?.error || 'Erreur lors de la suppression', 
+        description: err.response?.data?.error || 'Mot de passe incorrect', 
         variant: "destructive" 
       });
-    } finally {
       setDeleting(false);
-      setDeleteDialogOpen(false);
-      setDeletePassword('');
     }
   };
 
   // ============================================================================
-  // 5. EXPORT DATA
+  // 5. GDPR EXPORT
   // ============================================================================
 
-  const handleExportData = async () => {
+  const handleGDPRExport = async () => {
     setExporting(true);
-
     try {
-      const response = await budgetAPI.list();
-      const budgets = response.data;
-
-      const exportData = {
-        exportDate: new Date().toISOString(),
-        user: {
-          name: user?.name,
-          email: user?.email,
-          country: user?.country,
-          postal_code: user?.postal_code,
-        },
-        budgets: budgets,
-      };
-
-      const blob = new Blob([JSON.stringify(exportData, null, 2)], {
-        type: 'application/json',
+      const response = await budgetAPI.exportUserData();
+      const blob = new Blob([JSON.stringify(response.data, null, 2)], { 
+        type: 'application/json' 
       });
-      const url = URL.createObjectURL(blob);
+      const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = `budget-famille-export-${new Date().toISOString().split('T')[0]}.json`;
+      link.download = `mes-donnees-budgetfamille-${new Date().toISOString().split('T')[0]}.json`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      URL.revokeObjectURL(url);
-
-      toast({
-        title: "Export réussi",
-        description: "Vos données ont été exportées.",
-        variant: "success",
+      window.URL.revokeObjectURL(url);
+      
+      toast({ 
+        title: "Export réussi", 
+        description: "Vos données ont été téléchargées.", 
+        variant: "default" 
       });
-    } catch (err: any) {
-      toast({
-        title: "Erreur",
-        description: err.response?.data?.error || "Erreur lors de l'export",
-        variant: "destructive",
+    } catch (error) {
+      console.error(error);
+      toast({ 
+        title: "Erreur", 
+        description: "Impossible de générer l'export.", 
+        variant: "destructive" 
       });
     } finally {
       setExporting(false);
@@ -280,89 +264,70 @@ export default function Profile() {
   // ============================================================================
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <BudgetNavbar />
+    <div className="min-h-screen bg-gray-50 pb-12">
+      <BudgetNavbar items={[]} userName={user?.name} userAvatar={user?.avatar} />
       
-      <div className="max-w-2xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
-        {/* Header */}
-        <div className="mb-8">
-          <button 
-            onClick={() => navigate(-1)}
-            className="flex items-center text-gray-600 hover:text-gray-900 mb-4"
-          >
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Retour
-          </button>
-          <div className="flex items-center justify-between">
-            <h1 className="text-3xl font-bold text-gray-900">Mon Profil</h1>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={startTutorial}
-              className="flex items-center gap-2"
-            >
-              <HelpCircle className="h-4 w-4" />
-              Tutoriel
-            </Button>
-          </div>
-        </div>
+      <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <Button 
+          variant="ghost" 
+          className="mb-4 gap-2 pl-0 hover:bg-transparent hover:text-primary"
+          onClick={() => navigate('/')}
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Retour au tableau de bord
+        </Button>
+
+        <h1 className="text-3xl font-bold text-gray-900 mb-8">Mon Profil</h1>
 
         {/* ============================================================================ */}
-        {/* SECTION 1: PROFILE */}
+        {/* SECTION 1: PROFILE INFO */}
         {/* ============================================================================ */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-6">
-            Informations personnelles
-          </h2>
+          <h2 className="text-xl font-semibold text-gray-900 mb-6">Informations</h2>
           <form onSubmit={handleUpdateProfile}>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Avatar
-                </label>
-                <AvatarPicker 
-                  value={avatar} 
-                  onChange={setAvatar}
-                  name={name}
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Nom
-                </label>
-                <Input
-                  type="text"
-                  value={name}
-                  onChange={(e: ChangeEvent<HTMLInputElement>) => setName(e.target.value)}
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Email
-                </label>
-                <Input
-                  type="email"
-                  value={user?.email || ''}
-                  disabled
-                  className="bg-gray-100"
-                />
-                <p className="text-xs text-muted-foreground mt-1">
-                  L'email ne peut pas être modifié
-                </p>
-              </div>
-
-              <Button type="submit" variant="gradient" disabled={updating}>
-                {updating ? 'Mise à jour...' : 'Mettre à jour le profil'}
-              </Button>
+            <div className="flex flex-col items-center mb-8">
+              <AvatarPicker 
+                name={name} 
+                currentAvatar={avatar} 
+                onSelect={(newAvatar) => setAvatar(newAvatar)} 
+              />
+              <p className="text-sm text-muted-foreground mt-3">
+                Cliquez sur l'avatar pour le modifier
+              </p>
             </div>
+
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Nom
+              </label>
+              <Input
+                type="text"
+                value={name}
+                onChange={(e: ChangeEvent<HTMLInputElement>) => setName(e.target.value)}
+                required
+              />
+            </div>
+
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Email
+              </label>
+              <Input
+                type="email"
+                value={user?.email || ''}
+                className="bg-gray-100 text-gray-500"
+                disabled
+              />
+            </div>
+
+            <Button type="submit" variant="gradient" disabled={updating}>
+              {updating ? 'Mise à jour...' : 'Mettre à jour le profil'}
+            </Button>
           </form>
         </div>
 
         {/* ============================================================================ */}
-        {/* SECTION 2: LOCATION */}
+        {/* SECTION 2: LOCATION (NEW) */}
         {/* ============================================================================ */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
           <h2 className="text-xl font-semibold text-gray-900 mb-6 flex items-center gap-2">
@@ -416,11 +381,11 @@ export default function Profile() {
         </div>
 
         {/* ============================================================================ */}
-        {/* SECTION 3: PASSWORD */}
+        {/* SECTION 3: CHANGE PASSWORD */}
         {/* ============================================================================ */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
           <h2 className="text-xl font-semibold text-gray-900 mb-6">
-            Changer le mot de passe
+            Changer de mot de passe
           </h2>
           <form onSubmit={handleChangePassword}>
             <div className="space-y-4">
@@ -458,6 +423,7 @@ export default function Profile() {
                   value={confirmPassword}
                   onChange={(e: ChangeEvent<HTMLInputElement>) => setConfirmPassword(e.target.value)}
                   required
+                  minLength={6}
                 />
               </div>
 
@@ -469,42 +435,66 @@ export default function Profile() {
         </div>
 
         {/* ============================================================================ */}
-        {/* SECTION 4: EXPORT DATA */}
+        {/* SECTION 4: GDPR EXPORT */}
         {/* ============================================================================ */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center gap-2">
-            <FileJson className="h-5 w-5" />
-            Exporter mes données
+          <h2 className="text-xl font-semibold text-gray-900 mb-4">
+            Mes données (RGPD)
           </h2>
-          <p className="text-sm text-gray-600 mb-4">
-            Téléchargez une copie de toutes vos données (budgets, paramètres) au format JSON.
+          <p className="text-muted-foreground text-sm mb-4">
+            Téléchargez une copie complète de toutes vos données personnelles au format JSON.
+            <br/>
+            <span className="text-xs font-medium text-blue-600 mt-2 block">
+              Note : Ce fichier contient uniquement VOS informations personnelles. Les données des autres membres sont exclues de cet export.
+            </span>
           </p>
-          <Button
-            variant="outline"
-            onClick={handleExportData}
-            disabled={exporting}
-            className="flex items-center gap-2"
+          <Button 
+            variant="outline" 
+            onClick={handleGDPRExport} 
+            disabled={exporting} 
+            className="w-full sm:w-auto gap-2"
           >
-            <Download className="h-4 w-4" />
-            {exporting ? 'Export en cours...' : 'Exporter mes données'}
+            {exporting ? <Download className="h-4 w-4 animate-bounce" /> : <Download className="h-4 w-4" />}
+            {exporting ? "Génération de l'archive..." : "Télécharger mes données (JSON)"}
           </Button>
         </div>
 
         {/* ============================================================================ */}
-        {/* SECTION 5: DANGER ZONE */}
+        {/* SECTION 5: TUTORIAL */}
         {/* ============================================================================ */}
-        <div className="bg-white rounded-xl shadow-sm border border-red-200 p-6">
-          <h2 className="text-xl font-semibold text-red-600 mb-4 flex items-center gap-2">
-            <AlertTriangle className="h-5 w-5" />
-            Zone de danger
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
+          <h2 className="text-xl font-semibold text-gray-900 mb-4">
+            Aide & Tutoriel
           </h2>
-          <p className="text-sm text-gray-600 mb-4">
-            La suppression de votre compte est irréversible. Toutes vos données seront définitivement effacées.
+          <p className="text-muted-foreground text-sm mb-4">
+            Besoin d'un rappel sur le fonctionnement de l'application ?
           </p>
-          <Button
-            variant="destructive"
+          <Button 
+            variant="outline" 
+            onClick={startTutorial} 
+            className="w-full sm:w-auto gap-2"
+          >
+            <HelpCircle className="h-4 w-4" />
+            Revoir le tutoriel
+          </Button>
+        </div>
+
+        {/* ============================================================================ */}
+        {/* SECTION 6: DANGER ZONE */}
+        {/* ============================================================================ */}
+        <div className="bg-red-50 rounded-xl border border-red-200 p-6">
+          <div className="flex items-center gap-3 mb-4">
+            <AlertTriangle className="h-6 w-6 text-red-600" />
+            <h2 className="text-xl font-semibold text-red-900">Zone de danger</h2>
+          </div>
+          <p className="text-red-700 mb-6 text-sm">
+            La suppression de votre compte est irréversible.
+            Toutes vos données seront définitivement effacées de nos serveurs.
+          </p>
+          <Button 
+            variant="destructive" 
             onClick={() => setDeleteDialogOpen(true)}
-            className="flex items-center gap-2"
+            className="w-full sm:w-auto gap-2"
           >
             <Trash2 className="h-4 w-4" />
             Supprimer mon compte
@@ -512,30 +502,36 @@ export default function Profile() {
         </div>
       </div>
 
-      {/* Delete Account Dialog */}
+      {/* ============================================================================ */}
+      {/* DELETE ACCOUNT DIALOG */}
+      {/* ============================================================================ */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Supprimer votre compte ?</AlertDialogTitle>
+            <AlertDialogTitle>Êtes-vous absolument sûr ?</AlertDialogTitle>
             <AlertDialogDescription>
-              Cette action est irréversible. Tous vos budgets et données seront définitivement supprimés.
-              Entrez votre mot de passe pour confirmer.
+              Cette action est irréversible. Toutes vos données seront définitivement supprimées 
+              de nos serveurs sous 30 jours.
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <Input
-            type="password"
-            placeholder="Votre mot de passe"
-            value={deletePassword}
-            onChange={(e) => setDeletePassword(e.target.value)}
-            className="mt-4"
-          />
+          <div className="my-4">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Confirmez votre mot de passe
+            </label>
+            <Input
+              type="password"
+              value={deletePassword}
+              onChange={(e: ChangeEvent<HTMLInputElement>) => setDeletePassword(e.target.value)}
+              placeholder="Votre mot de passe"
+            />
+          </div>
           <AlertDialogFooter>
             <AlertDialogCancel onClick={() => setDeletePassword('')}>
               Annuler
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDeleteAccount}
-              disabled={deleting || !deletePassword}
+              disabled={deleting}
               className="bg-red-600 hover:bg-red-700"
             >
               {deleting ? 'Suppression...' : 'Supprimer définitivement'}
