@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { 
   TrendingDown, 
-  ExternalLink, 
   Phone, 
   Sparkles, 
   CheckCircle2, 
@@ -28,7 +27,7 @@ import { Charge } from '@/utils/importConverter';
 interface EnhancedSuggestionsProps {
   budgetId: string;
   charges: Charge[];
-  memberCount: number; // people.length from parent
+  memberCount: number; // people.length from parent (household size)
 }
 
 // ============================================================================
@@ -107,22 +106,41 @@ export default function EnhancedSuggestions({ budgetId, charges, memberCount }: 
         return;
       }
 
-      // Send householdSize (memberCount) to backend
+      // Send householdSize (memberCount = people.length) to backend
       const response = await budgetAPI.bulkAnalyzeSuggestions(budgetId, {
         charges: relevantCharges,
-        household_size: memberCount // Frontend sends the count
+        household_size: memberCount
       });
 
-      setSuggestions(response.data.suggestions || []);
+      // Filter suggestions: only keep those with actual savings > 0
+      const rawSuggestions = response.data.suggestions || [];
+      const filteredSuggestions = rawSuggestions.filter(s => {
+        // Check if at least one competitor has positive savings
+        const hasPositiveSavings = s.suggestion.competitors.some(c => c.potential_savings > 0);
+        return hasPositiveSavings;
+      });
+
+      // For each suggestion, filter out competitors with 0 or negative savings
+      filteredSuggestions.forEach(s => {
+        s.suggestion.competitors = s.suggestion.competitors.filter(c => c.potential_savings > 0);
+      });
+
+      setSuggestions(filteredSuggestions);
       setCacheStats({
         hits: response.data.cache_hits || 0,
         aiCalls: response.data.ai_calls_made || 0
       });
-      setTotalSavings(response.data.total_potential_savings || 0);
+      
+      // Recalculate total savings from filtered data
+      const actualTotalSavings = filteredSuggestions.reduce((sum, s) => {
+        const bestSaving = s.suggestion.competitors[0]?.potential_savings || 0;
+        return sum + bestSaving;
+      }, 0);
+      setTotalSavings(actualTotalSavings);
       setHouseholdSize(response.data.household_size || memberCount);
 
-      console.log('[EnhancedSuggestions] Loaded', response.data.suggestions?.length || 0, 
-        'suggestions for household of', response.data.household_size, 'persons');
+      console.log('[EnhancedSuggestions] Loaded', filteredSuggestions.length, 
+        'suggestions with actual savings for household of', response.data.household_size, 'persons');
 
     } catch (err: any) {
       console.error('Failed to load suggestions:', err);
@@ -150,7 +168,7 @@ export default function EnhancedSuggestions({ budgetId, charges, memberCount }: 
 
   if (error) return null;
 
-  // No suggestions
+  // No suggestions with actual savings = excellent offers!
   if (suggestions.length === 0 && charges.length > 0) {
     const hasRelevant = charges.some(c => c.category && isRelevantCategory(c.category) && !c.ignoreSuggestions);
     
@@ -162,7 +180,9 @@ export default function EnhancedSuggestions({ budgetId, charges, memberCount }: 
               <CheckCircle2 className="h-6 w-6" />
               <div>
                 <p className="font-medium">🎉 Vous avez déjà d'excellentes offres !</p>
-                <p className="text-sm text-green-600">Vos charges sont bien optimisées.</p>
+                <p className="text-sm text-green-600">
+                  Vos charges sont bien optimisées pour votre foyer de {householdSize} personne{householdSize > 1 ? 's' : ''}.
+                </p>
               </div>
             </div>
           </CardContent>
@@ -244,15 +264,18 @@ export default function EnhancedSuggestions({ budgetId, charges, memberCount }: 
 }
 
 // ============================================================================
-// SUGGESTION CARD - Max 3 competitors
+// SUGGESTION CARD - Max 3 competitors with positive savings
 // ============================================================================
 
 function SuggestionCard({ chargeSuggestion, householdSize }: { chargeSuggestion: ChargeSuggestion; householdSize: number }) {
   const { charge_label, suggestion } = chargeSuggestion;
   
-  // Backend already limits to 3, but ensure it here too
-  const competitors = suggestion.competitors.slice(0, 3);
+  // Only show competitors with positive savings, max 3
+  const competitors = suggestion.competitors
+    .filter(c => c.potential_savings > 0)
+    .slice(0, 3);
   
+  // If no competitors with positive savings, don't show this card
   if (competitors.length === 0) return null;
 
   const bestSavings = competitors[0]?.potential_savings || 0;
@@ -315,7 +338,6 @@ function CompetitorCard({ competitor, rank }: { competitor: Competitor; rank: nu
     return "border border-gray-300 bg-gray-50/50";
   };
 
-  // Get the best URL available
   const websiteUrl = competitor.affiliate_link || competitor.website_url;
 
   return (
@@ -366,9 +388,8 @@ function CompetitorCard({ competitor, rank }: { competitor: Competitor; rank: nu
         </div>
       )}
 
-      {/* Action Buttons - URL is required, phone/email optional */}
+      {/* Action Buttons */}
       <div className="flex flex-wrap gap-2 pt-3 border-t border-gray-200">
-        {/* Website URL (REQUIRED) */}
         {websiteUrl && (
           <Button 
             size="sm" 
@@ -380,7 +401,6 @@ function CompetitorCard({ competitor, rank }: { competitor: Competitor; rank: nu
           </Button>
         )}
         
-        {/* Phone (optional) */}
         {competitor.phone_number && (
           <Button 
             variant="outline" 
@@ -393,7 +413,6 @@ function CompetitorCard({ competitor, rank }: { competitor: Competitor; rank: nu
           </Button>
         )}
         
-        {/* Email (optional) */}
         {competitor.contact_email && (
           <Button 
             variant="outline" 
