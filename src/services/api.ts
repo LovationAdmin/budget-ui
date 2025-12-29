@@ -1,4 +1,4 @@
-import axios, { InternalAxiosRequestConfig } from 'axios';
+import axios, { InternalAxiosRequestConfig, AxiosResponse } from 'axios';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api/v1';
 
@@ -33,7 +33,10 @@ api.interceptors.response.use(
   }
 );
 
-// --- EXPORTED TYPES ---
+// ============================================================================
+// EXPORTED TYPES
+// ============================================================================
+
 export interface User {
   id: string;
   name: string;
@@ -119,7 +122,10 @@ export interface UserLocation {
   postal_code?: string;
 }
 
-// Internal types
+// ============================================================================
+// INTERNAL TYPES
+// ============================================================================
+
 interface AuthData { 
   name?: string; 
   email: string; 
@@ -142,7 +148,11 @@ interface BudgetCreateData {
 }
 
 interface BudgetUpdateData { 
-  name?: string; 
+  data: unknown; 
+}
+
+interface DeleteAccountData { 
+  password: string; 
 }
 
 // ============================================================================
@@ -150,24 +160,35 @@ interface BudgetUpdateData {
 // ============================================================================
 
 export const authAPI = {
-  register: (data: AuthData) => api.post<AuthResponse>('/auth/register', data),
-  login: (data: Omit<AuthData, 'name'>) => api.post<AuthResponse>('/auth/login', data),
-  getProfile: () => api.get<User>('/auth/me'),
-  updateProfile: (data: ProfileUpdateData) => api.put<User>('/auth/profile', data),
-  changePassword: (data: PasswordChangeData) => api.put('/auth/password', data),
+  signup: (data: AuthData): Promise<AxiosResponse<AuthResponse>> => 
+    api.post('/auth/signup', data),
   
-  // 2FA Methods
-  setup2FA: () => api.post<{ secret: string; qr_code: string }>('/auth/2fa/setup'),
-  verify2FA: (code: string) => api.post('/auth/2fa/verify', { code }),
-  disable2FA: (code: string) => api.post('/auth/2fa/disable', { code }),
-  login2FA: (userId: string, code: string) => api.post<AuthResponse>('/auth/2fa/login', { user_id: userId, code }),
+  login: (data: AuthData): Promise<AxiosResponse<AuthResponse>> => 
+    api.post('/auth/login', data),
   
-  // Location
-  updateLocation: (data: LocationUpdate) => api.put<User>('/auth/location', data),
-  getLocation: () => api.get<UserLocation>('/auth/location'),
+  resendVerification: (email: string) => 
+    api.post('/auth/verify/resend', { email }),
+};
+
+// ============================================================================
+// USER API
+// ============================================================================
+
+export const userAPI = {
+  updateProfile: (data: ProfileUpdateData) => 
+    api.put('/user/profile', data),
   
-  // Account
-  deleteAccount: () => api.delete('/auth/account'),
+  changePassword: (data: PasswordChangeData) => 
+    api.put('/user/password', data),
+  
+  deleteAccount: (data: DeleteAccountData) => 
+    api.delete('/user/account', { data }),
+  
+  updateLocation: (data: LocationUpdate): Promise<AxiosResponse> =>
+    api.put('/user/location', data),
+    
+  getLocation: (): Promise<AxiosResponse<UserLocation>> =>
+    api.get('/user/location'),
 };
 
 // ============================================================================
@@ -176,62 +197,96 @@ export const authAPI = {
 
 export const budgetAPI = {
   // CRUD
-  getAll: () => api.get('/budgets'),
-  getById: (id: string) => api.get(`/budgets/${id}`),
+  list: () => api.get('/budgets'),
   create: (data: BudgetCreateData) => api.post('/budgets', data),
-  update: (id: string, data: BudgetUpdateData) => api.put(`/budgets/${id}`, data),
+  getById: (id: string) => api.get(`/budgets/${id}`),
+  update: (id: string, data: unknown) => api.put(`/budgets/${id}`, data),
   delete: (id: string) => api.delete(`/budgets/${id}`),
   
   // Budget Data
   getData: (id: string) => api.get(`/budgets/${id}/data`),
-  updateData: (id: string, data: any) => api.put(`/budgets/${id}/data`, data),
+  updateData: (id: string, data: BudgetUpdateData) => 
+    api.put(`/budgets/${id}/data`, data),
   
-  // Members
-  getMembers: (id: string) => api.get(`/budgets/${id}/members`),
-  invite: (id: string, email: string) => api.post(`/budgets/${id}/invite`, { email }),
-  removeMember: (budgetId: string, memberId: string) => api.delete(`/budgets/${budgetId}/members/${memberId}`),
-  acceptInvitation: (token: string) => api.post(`/budgets/accept-invite/${token}`),
+  // Members & Invitations
+  inviteMember: (id: string, email: string) => 
+    api.post(`/budgets/${id}/invite`, { email }),
+  getInvitations: (id: string) => 
+    api.get(`/budgets/${id}/invitations`),
+  cancelInvitation: (budgetId: string, invitationId: string) => 
+    api.delete(`/budgets/${budgetId}/invitations/${invitationId}`),
+  removeMember: (budgetId: string, memberId: string) => 
+    api.delete(`/budgets/${budgetId}/members/${memberId}`),
   
-  // Suggestions API
-  bulkAnalyzeSuggestions: (budgetId: string, data: BulkAnalyzeRequest) => 
-    api.post<BulkAnalyzeResponse>(`/budgets/${budgetId}/suggestions/bulk-analyze`, data),
+  // Categorization (AI)
+  categorize: (label: string): Promise<AxiosResponse<CategorizeResponse>> => 
+    api.post('/categorize', { label }),
+
+  // Market Suggestions Endpoints
+  bulkAnalyzeSuggestions: (
+    budgetId: string, 
+    data: BulkAnalyzeRequest
+  ): Promise<AxiosResponse<BulkAnalyzeResponse>> => 
+    api.post(`/budgets/${budgetId}/suggestions/bulk-analyze`, data),
+
+  analyzeSingleCharge: (data: {
+    category: string;
+    merchant_name?: string;
+    current_amount: number;
+  }): Promise<AxiosResponse<MarketSuggestion>> =>
+    api.post('/suggestions/analyze', data),
+
+  getCategorySuggestions: (category: string): Promise<AxiosResponse<MarketSuggestion>> =>
+    api.get(`/suggestions/category/${category}`),
   
-  getCategorySuggestions: (category: string) => 
-    api.get<MarketSuggestion>(`/suggestions/category/${category}`),
+  // GDPR Export
+  exportUserData: (): Promise<AxiosResponse> =>
+    api.get('/user/export-data'),
 };
 
 // ============================================================================
-// CATEGORIZATION API
+// INVITATION API
 // ============================================================================
 
-export const categorizationAPI = {
-  categorize: (label: string) => api.post<CategorizeResponse>('/categorize', { label }),
+export const invitationAPI = {
+  accept: (token: string) => 
+    api.post('/invitations/accept', { token }),
+  
+  getByToken: (token: string) => 
+    api.get(`/invitations/${token}`),
+  
+  invite: (budgetId: string, email: string) => 
+    api.post(`/budgets/${budgetId}/invite`, { email }),
 };
 
 // ============================================================================
-// BANKING API
+// BANKING API (Enable Banking / Reality Check)
 // ============================================================================
 
 export const bankingAPI = {
-  // Enable Banking
+  // Institutions
   getInstitutions: (country?: string) => 
     api.get('/banking/institutions', { params: { country } }),
   
+  // Auth Session
   createAuthSession: (budgetId: string, institutionId: string) => 
     api.post(`/banking/budgets/${budgetId}/auth-session`, { institution_id: institutionId }),
   
   handleCallback: (budgetId: string, code: string, state: string) => 
     api.post(`/banking/budgets/${budgetId}/callback`, { code, state }),
   
+  // Connections
   getConnections: (budgetId: string) => 
     api.get(`/banking/budgets/${budgetId}/connections`),
   
   deleteConnection: (budgetId: string, connectionId: string) => 
     api.delete(`/banking/budgets/${budgetId}/connections/${connectionId}`),
   
+  // Transactions
   getTransactions: (budgetId: string, params?: { from?: string; to?: string }) => 
     api.get(`/banking/budgets/${budgetId}/transactions`, { params }),
   
+  // Reality Check
   getRealityCheck: (budgetId: string) => 
     api.get(`/banking/budgets/${budgetId}/reality-check`),
 };
