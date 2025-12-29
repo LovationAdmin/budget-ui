@@ -51,7 +51,6 @@ export interface AuthResponse {
   user: User;
 }
 
-// Response type for AI Categorization
 export interface CategorizeResponse {
   label: string;
   category: string;
@@ -66,12 +65,14 @@ export interface Competitor {
   typical_price: number;
   best_offer: string;
   potential_savings: number;
-  affiliate_link?: string;
   pros: string[];
   cons: string[];
+  // Contact info
+  website_url?: string;      // Official website (REQUIRED from backend)
+  affiliate_link?: string;   // Affiliate link (falls back to website_url)
+  phone_number?: string;     // Customer service phone
+  contact_email?: string;    // Contact email
   contact_available: boolean;
-  phone_number?: string;
-  contact_email?: string;
 }
 
 export interface MarketSuggestion {
@@ -98,6 +99,7 @@ export interface BulkAnalyzeRequest {
     amount: number;
     merchant_name?: string;
   }>;
+  household_size: number; // Sent by frontend (people.length)
 }
 
 export interface BulkAnalyzeResponse {
@@ -105,7 +107,7 @@ export interface BulkAnalyzeResponse {
   cache_hits: number;
   ai_calls_made: number;
   total_potential_savings: number;
-  household_size: number; // NEW: Number of people in the household
+  household_size: number;
 }
 
 // ============================================================================
@@ -222,7 +224,7 @@ export const budgetAPI = {
   categorize: (label: string): Promise<AxiosResponse<CategorizeResponse>> => 
     api.post('/categorize', { label }),
 
-  // Market Suggestions Endpoints
+  // Market Suggestions (household_size sent by frontend)
   bulkAnalyzeSuggestions: (
     budgetId: string, 
     data: BulkAnalyzeRequest
@@ -233,6 +235,7 @@ export const budgetAPI = {
     category: string;
     merchant_name?: string;
     current_amount: number;
+    household_size?: number;
   }): Promise<AxiosResponse<MarketSuggestion>> =>
     api.post('/suggestions/analyze', data),
 
@@ -260,33 +263,28 @@ export const invitationAPI = {
 };
 
 // ============================================================================
-// BANKING API (Enable Banking / Reality Check)
+// BANKING API
 // ============================================================================
 
 export const bankingAPI = {
-  // Institutions
   getInstitutions: (country?: string) => 
     api.get('/banking/institutions', { params: { country } }),
   
-  // Auth Session
   createAuthSession: (budgetId: string, institutionId: string) => 
     api.post(`/banking/budgets/${budgetId}/auth-session`, { institution_id: institutionId }),
   
   handleCallback: (budgetId: string, code: string, state: string) => 
     api.post(`/banking/budgets/${budgetId}/callback`, { code, state }),
   
-  // Connections
   getConnections: (budgetId: string) => 
     api.get(`/banking/budgets/${budgetId}/connections`),
   
   deleteConnection: (budgetId: string, connectionId: string) => 
     api.delete(`/banking/budgets/${budgetId}/connections/${connectionId}`),
   
-  // Transactions
   getTransactions: (budgetId: string, params?: { from?: string; to?: string }) => 
     api.get(`/banking/budgets/${budgetId}/transactions`, { params }),
   
-  // Reality Check
   getRealityCheck: (budgetId: string) => 
     api.get(`/banking/budgets/${budgetId}/reality-check`),
 };

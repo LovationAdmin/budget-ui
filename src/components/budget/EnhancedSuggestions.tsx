@@ -15,7 +15,8 @@ import {
   Mail,
   RefreshCw,
   Users,
-  Info
+  Info,
+  Globe
 } from "lucide-react";
 import { budgetAPI, ChargeSuggestion, Competitor } from '@/services/api';
 import { Charge } from '@/utils/importConverter';
@@ -27,27 +28,30 @@ import { Charge } from '@/utils/importConverter';
 interface EnhancedSuggestionsProps {
   budgetId: string;
   charges: Charge[];
-  memberCount: number;
+  memberCount: number; // people.length from parent
 }
 
 // ============================================================================
-// HELPER FUNCTIONS
+// HELPERS
 // ============================================================================
 
-function isRelevantCategory(category: string): boolean {
-  const relevantCategories = [
-    'ENERGY', 'INTERNET', 'MOBILE', 'INSURANCE',
-    'INSURANCE_AUTO', 'INSURANCE_HOME', 'INSURANCE_HEALTH',
-    'LOAN', 'BANK'
-  ];
-  return relevantCategories.includes(category.toUpperCase());
+const RELEVANT_CATEGORIES = [
+  'ENERGY', 'INTERNET', 'MOBILE', 'INSURANCE',
+  'INSURANCE_AUTO', 'INSURANCE_HOME', 'INSURANCE_HEALTH',
+  'LOAN', 'BANK'
+];
+
+const INDIVIDUAL_CATEGORIES = ['MOBILE', 'INSURANCE_AUTO', 'INSURANCE_HEALTH', 'TRANSPORT'];
+
+function isRelevantCategory(cat: string): boolean {
+  return RELEVANT_CATEGORIES.includes(cat.toUpperCase());
 }
 
-function extractMerchantName(label: string): string {
-  return label.trim().split(' ')[0] || '';
+function isIndividualCategory(cat: string): boolean {
+  return INDIVIDUAL_CATEGORIES.includes(cat.toUpperCase());
 }
 
-function getCategoryLabel(category: string): string {
+function getCategoryLabel(cat: string): string {
   const labels: Record<string, string> = {
     'ENERGY': '⚡ Énergie',
     'INTERNET': '🌐 Internet',
@@ -55,16 +59,11 @@ function getCategoryLabel(category: string): string {
     'INSURANCE': '🛡️ Assurance',
     'INSURANCE_AUTO': '🚗 Assurance Auto',
     'INSURANCE_HOME': '🏠 Assurance Habitation',
-    'INSURANCE_HEALTH': '🏥 Assurance Santé',
+    'INSURANCE_HEALTH': '🏥 Mutuelle Santé',
     'LOAN': '💳 Prêt / Crédit',
     'BANK': '🏦 Banque'
   };
-  return labels[category.toUpperCase()] || category;
-}
-
-function isIndividualCategory(category: string): boolean {
-  const individualCategories = ['MOBILE', 'INSURANCE_AUTO', 'INSURANCE_HEALTH', 'TRANSPORT'];
-  return individualCategories.includes(category.toUpperCase());
+  return labels[cat.toUpperCase()] || cat;
 }
 
 // ============================================================================
@@ -81,9 +80,7 @@ export default function EnhancedSuggestions({ budgetId, charges, memberCount }: 
   const [householdSize, setHouseholdSize] = useState(1);
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      loadSuggestions();
-    }, 1000);
+    const timer = setTimeout(() => loadSuggestions(), 1000);
     return () => clearTimeout(timer);
   }, [budgetId, charges, memberCount]);
 
@@ -101,7 +98,7 @@ export default function EnhancedSuggestions({ budgetId, charges, memberCount }: 
           category: c.category!,
           label: c.label,
           amount: c.amount,
-          merchant_name: extractMerchantName(c.label)
+          merchant_name: c.label.trim().split(' ')[0] || ''
         }));
 
       if (relevantCharges.length === 0) {
@@ -110,10 +107,10 @@ export default function EnhancedSuggestions({ budgetId, charges, memberCount }: 
         return;
       }
 
-      console.log('[EnhancedSuggestions] Analyzing', relevantCharges.length, 'charges');
-
+      // Send householdSize (memberCount) to backend
       const response = await budgetAPI.bulkAnalyzeSuggestions(budgetId, {
-        charges: relevantCharges
+        charges: relevantCharges,
+        household_size: memberCount // Frontend sends the count
       });
 
       setSuggestions(response.data.suggestions || []);
@@ -122,20 +119,20 @@ export default function EnhancedSuggestions({ budgetId, charges, memberCount }: 
         aiCalls: response.data.ai_calls_made || 0
       });
       setTotalSavings(response.data.total_potential_savings || 0);
-      setHouseholdSize(response.data.household_size || 1);
+      setHouseholdSize(response.data.household_size || memberCount);
 
       console.log('[EnhancedSuggestions] Loaded', response.data.suggestions?.length || 0, 
         'suggestions for household of', response.data.household_size, 'persons');
 
     } catch (err: any) {
       console.error('Failed to load suggestions:', err);
-      setError(err.response?.data?.error || 'Erreur lors du chargement des suggestions');
+      setError(err.response?.data?.error || 'Erreur lors du chargement');
     } finally {
       setLoading(false);
     }
   };
 
-  // Loading state
+  // Loading
   if (loading && suggestions.length === 0) {
     return (
       <Card className="border-blue-200 bg-blue-50/30">
@@ -153,11 +150,11 @@ export default function EnhancedSuggestions({ budgetId, charges, memberCount }: 
 
   if (error) return null;
 
-  // No suggestions - show positive message
+  // No suggestions
   if (suggestions.length === 0 && charges.length > 0) {
-    const relevantChargesExist = charges.some(c => c.category && isRelevantCategory(c.category) && !c.ignoreSuggestions);
+    const hasRelevant = charges.some(c => c.category && isRelevantCategory(c.category) && !c.ignoreSuggestions);
     
-    if (relevantChargesExist) {
+    if (hasRelevant) {
       return (
         <Card className="border-green-200 bg-green-50/30">
           <CardContent className="pt-6">
@@ -165,9 +162,7 @@ export default function EnhancedSuggestions({ budgetId, charges, memberCount }: 
               <CheckCircle2 className="h-6 w-6" />
               <div>
                 <p className="font-medium">🎉 Vous avez déjà d'excellentes offres !</p>
-                <p className="text-sm text-green-600">
-                  Aucune économie significative trouvée. Vos charges sont bien optimisées.
-                </p>
+                <p className="text-sm text-green-600">Vos charges sont bien optimisées.</p>
               </div>
             </div>
           </CardContent>
@@ -181,7 +176,7 @@ export default function EnhancedSuggestions({ budgetId, charges, memberCount }: 
 
   return (
     <div className="space-y-4">
-      {/* Header Card */}
+      {/* Header */}
       <Card 
         className="border-green-200 bg-green-50/50 cursor-pointer hover:bg-green-50 transition-colors"
         onClick={() => setIsExpanded(!isExpanded)}
@@ -192,22 +187,20 @@ export default function EnhancedSuggestions({ budgetId, charges, memberCount }: 
               <Sparkles className="h-6 w-6 text-green-600" />
               <div className="flex-1">
                 <div className="flex items-center gap-2">
-                  <CardTitle className="text-green-900">
-                    💡 Opportunités d'Économies
-                  </CardTitle>
+                  <CardTitle className="text-green-900">💡 Opportunités d'Économies</CardTitle>
                   <Badge variant="outline" className="bg-green-100 text-green-800 border-green-300">
                     {suggestions.length}
                   </Badge>
                 </div>
                 <CardDescription className="text-green-700 mt-1">
-                  {isExpanded 
-                    ? (
-                      <span className="flex items-center gap-1">
-                        <Users className="h-3 w-3" />
-                        Basé sur votre foyer de {householdSize} personne{householdSize > 1 ? 's' : ''}
-                      </span>
-                    )
-                    : `Économie totale possible : ${totalSavings.toFixed(0)}€/an`}
+                  {isExpanded ? (
+                    <span className="flex items-center gap-1">
+                      <Users className="h-3 w-3" />
+                      Basé sur votre foyer de {householdSize} personne{householdSize > 1 ? 's' : ''}
+                    </span>
+                  ) : (
+                    `Économie totale possible : ${totalSavings.toFixed(0)}€/an`
+                  )}
                 </CardDescription>
               </div>
             </div>
@@ -216,15 +209,11 @@ export default function EnhancedSuggestions({ budgetId, charges, memberCount }: 
               <Button 
                 variant="ghost" 
                 size="sm"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  loadSuggestions();
-                }}
+                onClick={(e) => { e.stopPropagation(); loadSuggestions(); }}
                 disabled={loading}
               >
                 <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
               </Button>
-              
               <Button variant="ghost" size="sm">
                 {isExpanded ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
               </Button>
@@ -236,27 +225,17 @@ export default function EnhancedSuggestions({ budgetId, charges, memberCount }: 
       {/* Expanded Content */}
       {isExpanded && (
         <>
-          {/* Cache Stats */}
           {(cacheStats.hits > 0 || cacheStats.aiCalls > 0) && (
             <div className="flex gap-2 text-xs px-1">
-              <Badge variant="secondary" className="text-xs">
-                ⚡ {cacheStats.hits} en cache
-              </Badge>
+              <Badge variant="secondary" className="text-xs">⚡ {cacheStats.hits} en cache</Badge>
               {cacheStats.aiCalls > 0 && (
-                <Badge variant="outline" className="text-xs">
-                  🤖 {cacheStats.aiCalls} nouvelle{cacheStats.aiCalls > 1 ? 's' : ''} analyse{cacheStats.aiCalls > 1 ? 's' : ''}
-                </Badge>
+                <Badge variant="outline" className="text-xs">🤖 {cacheStats.aiCalls} nouvelle{cacheStats.aiCalls > 1 ? 's' : ''} analyse{cacheStats.aiCalls > 1 ? 's' : ''}</Badge>
               )}
             </div>
           )}
 
-          {/* Suggestion Cards */}
           {suggestions.map((item) => (
-            <SuggestionCard
-              key={item.charge_id}
-              chargeSuggestion={item}
-              householdSize={householdSize}
-            />
+            <SuggestionCard key={item.charge_id} chargeSuggestion={item} householdSize={householdSize} />
           ))}
         </>
       )}
@@ -265,25 +244,18 @@ export default function EnhancedSuggestions({ budgetId, charges, memberCount }: 
 }
 
 // ============================================================================
-// SUGGESTION CARD
+// SUGGESTION CARD - Max 3 competitors
 // ============================================================================
 
-interface SuggestionCardProps {
-  chargeSuggestion: ChargeSuggestion;
-  householdSize: number;
-}
-
-function SuggestionCard({ chargeSuggestion, householdSize }: SuggestionCardProps) {
-  const [showAll, setShowAll] = useState(false);
+function SuggestionCard({ chargeSuggestion, householdSize }: { chargeSuggestion: ChargeSuggestion; householdSize: number }) {
   const { charge_label, suggestion } = chargeSuggestion;
   
-  const topCompetitors = suggestion.competitors.slice(0, 3);
-  const remainingCompetitors = suggestion.competitors.slice(3);
-  const hasMore = remainingCompetitors.length > 0;
+  // Backend already limits to 3, but ensure it here too
+  const competitors = suggestion.competitors.slice(0, 3);
+  
+  if (competitors.length === 0) return null;
 
-  if (topCompetitors.length === 0) return null;
-
-  const bestSavings = topCompetitors[0]?.potential_savings || 0;
+  const bestSavings = competitors[0]?.potential_savings || 0;
   const isIndividual = isIndividualCategory(suggestion.category);
 
   return (
@@ -297,11 +269,9 @@ function SuggestionCard({ chargeSuggestion, householdSize }: SuggestionCardProps
             </div>
             <CardDescription className="flex items-center gap-2 flex-wrap">
               <span>{getCategoryLabel(suggestion.category)}</span>
-              {suggestion.merchant_name && <span>• Actuel: {suggestion.merchant_name}</span>}
               {isIndividual && householdSize > 1 && (
                 <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-200">
-                  <Users className="h-3 w-3 mr-1" />
-                  Prix/personne
+                  <Users className="h-3 w-3 mr-1" />Prix/personne
                 </Badge>
               )}
             </CardDescription>
@@ -313,47 +283,15 @@ function SuggestionCard({ chargeSuggestion, householdSize }: SuggestionCardProps
       </CardHeader>
 
       <CardContent className="space-y-4">
-        {/* Info for individual charges */}
         {isIndividual && householdSize > 1 && (
           <div className="flex items-start gap-2 p-3 bg-blue-50 rounded-lg border border-blue-200 text-xs text-blue-700">
             <Info className="h-4 w-4 flex-shrink-0 mt-0.5" />
-            <span>
-              Prix analysé par personne (total divisé par {householdSize}). 
-              L'économie affichée est pour l'ensemble du foyer.
-            </span>
+            <span>Prix analysé par personne. L'économie affichée est pour l'ensemble du foyer ({householdSize} personnes).</span>
           </div>
         )}
 
-        {/* TOP 3 Competitors */}
-        {topCompetitors.map((competitor, index) => (
+        {competitors.map((competitor, index) => (
           <CompetitorCard key={index} competitor={competitor} rank={index + 1} />
-        ))}
-
-        {/* Show More Button */}
-        {hasMore && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setShowAll(!showAll)}
-            className="w-full"
-          >
-            {showAll ? (
-              <>
-                <ChevronUp className="h-4 w-4 mr-2" />
-                Voir moins
-              </>
-            ) : (
-              <>
-                <ChevronDown className="h-4 w-4 mr-2" />
-                Voir {remainingCompetitors.length} autre{remainingCompetitors.length > 1 ? 's' : ''} option{remainingCompetitors.length > 1 ? 's' : ''}
-              </>
-            )}
-          </Button>
-        )}
-
-        {/* Additional Competitors */}
-        {showAll && remainingCompetitors.map((competitor, index) => (
-          <CompetitorCard key={index + 3} competitor={competitor} rank={index + 4} />
         ))}
       </CardContent>
     </Card>
@@ -361,83 +299,66 @@ function SuggestionCard({ chargeSuggestion, householdSize }: SuggestionCardProps
 }
 
 // ============================================================================
-// COMPETITOR CARD
+// COMPETITOR CARD - With URL + Contact buttons
 // ============================================================================
 
-interface CompetitorCardProps {
-  competitor: Competitor;
-  rank: number;
-}
-
-function CompetitorCard({ competitor, rank }: CompetitorCardProps) {
+function CompetitorCard({ competitor, rank }: { competitor: Competitor; rank: number }) {
   const getRankBadge = () => {
     if (rank === 1) return <Badge className="bg-green-600 text-white border-0">🏆 Meilleure offre</Badge>;
     if (rank === 2) return <Badge variant="outline" className="border-orange-400 text-orange-700 bg-orange-50">🥈 #2</Badge>;
-    if (rank === 3) return <Badge variant="outline" className="border-gray-400 text-gray-700 bg-gray-50">🥉 #3</Badge>;
-    return <Badge variant="outline" className="border-gray-300 text-gray-600">#{rank}</Badge>;
+    return <Badge variant="outline" className="border-gray-400 text-gray-700 bg-gray-50">🥉 #3</Badge>;
   };
 
   const getCardStyle = () => {
     if (rank === 1) return "border-2 border-green-300 bg-green-50/50";
     if (rank === 2) return "border-2 border-orange-200 bg-orange-50/30";
-    if (rank === 3) return "border border-gray-300 bg-gray-50/50";
-    return "border border-gray-200 bg-gray-50";
+    return "border border-gray-300 bg-gray-50/50";
   };
+
+  // Get the best URL available
+  const websiteUrl = competitor.affiliate_link || competitor.website_url;
 
   return (
     <div className={`p-4 rounded-lg transition-all ${getCardStyle()}`}>
       {/* Header */}
       <div className="flex items-center justify-between mb-3">
         {getRankBadge()}
-        <span className="text-lg font-bold text-green-700">
-          -{competitor.potential_savings.toFixed(0)}€/an
-        </span>
+        <span className="text-lg font-bold text-green-700">-{competitor.potential_savings.toFixed(0)}€/an</span>
       </div>
 
-      {/* Name */}
-      <h4 className="font-semibold text-gray-900 mb-2 text-base">{competitor.name}</h4>
-
-      {/* Offer */}
+      {/* Name & Offer */}
+      <h4 className="font-semibold text-gray-900 mb-2">{competitor.name}</h4>
       <p className="text-sm text-gray-600 mb-3">{competitor.best_offer}</p>
 
       {/* Price */}
       <div className="flex items-center gap-2 mb-4">
-        <span className="text-sm text-muted-foreground">Prix typique:</span>
+        <span className="text-sm text-muted-foreground">Prix:</span>
         <span className="font-semibold text-primary">{competitor.typical_price.toFixed(2)}€/mois</span>
       </div>
 
       {/* Pros & Cons */}
       {(competitor.pros?.length > 0 || competitor.cons?.length > 0) && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
           {competitor.pros?.length > 0 && (
-            <div className="space-y-1">
-              <p className="text-xs font-semibold text-green-700 flex items-center gap-1">
-                <CheckCircle2 className="h-3 w-3" />
-                Avantages
+            <div>
+              <p className="text-xs font-semibold text-green-700 flex items-center gap-1 mb-1">
+                <CheckCircle2 className="h-3 w-3" />Avantages
               </p>
-              <ul className="space-y-1">
+              <ul className="space-y-0.5">
                 {competitor.pros.map((pro, i) => (
-                  <li key={i} className="text-xs text-gray-600 flex items-start gap-1.5">
-                    <span className="text-green-600 mt-0.5">•</span>
-                    <span>{pro}</span>
-                  </li>
+                  <li key={i} className="text-xs text-gray-600">• {pro}</li>
                 ))}
               </ul>
             </div>
           )}
-
           {competitor.cons?.length > 0 && (
-            <div className="space-y-1">
-              <p className="text-xs font-semibold text-red-700 flex items-center gap-1">
-                <XCircle className="h-3 w-3" />
-                Inconvénients
+            <div>
+              <p className="text-xs font-semibold text-red-700 flex items-center gap-1 mb-1">
+                <XCircle className="h-3 w-3" />Inconvénients
               </p>
-              <ul className="space-y-1">
+              <ul className="space-y-0.5">
                 {competitor.cons.map((con, i) => (
-                  <li key={i} className="text-xs text-gray-600 flex items-start gap-1.5">
-                    <span className="text-red-600 mt-0.5">•</span>
-                    <span>{con}</span>
-                  </li>
+                  <li key={i} className="text-xs text-gray-600">• {con}</li>
                 ))}
               </ul>
             </div>
@@ -445,47 +366,43 @@ function CompetitorCard({ competitor, rank }: CompetitorCardProps) {
         </div>
       )}
 
-      {/* Action Buttons */}
+      {/* Action Buttons - URL is required, phone/email optional */}
       <div className="flex flex-wrap gap-2 pt-3 border-t border-gray-200">
-        {competitor.affiliate_link && (
+        {/* Website URL (REQUIRED) */}
+        {websiteUrl && (
           <Button 
             size="sm" 
             className="flex-1 text-xs h-8"
-            onClick={() => window.open(competitor.affiliate_link, '_blank')}
+            onClick={() => window.open(websiteUrl, '_blank')}
           >
-            <ExternalLink className="h-3 w-3 mr-2" />
-            Voir l'offre
+            <Globe className="h-3 w-3 mr-2" />
+            Voir le site
           </Button>
         )}
         
+        {/* Phone (optional) */}
         {competitor.phone_number && (
           <Button 
             variant="outline" 
             size="sm" 
-            className="flex-1 text-xs h-8"
+            className="text-xs h-8"
             onClick={() => window.open(`tel:${competitor.phone_number}`)}
           >
-            <Phone className="h-3 w-3 mr-2" />
+            <Phone className="h-3 w-3 mr-1" />
             {competitor.phone_number}
           </Button>
         )}
         
+        {/* Email (optional) */}
         {competitor.contact_email && (
           <Button 
             variant="outline" 
             size="sm" 
-            className="flex-1 text-xs h-8"
+            className="text-xs h-8"
             onClick={() => window.open(`mailto:${competitor.contact_email}`)}
           >
-            <Mail className="h-3 w-3 mr-2" />
+            <Mail className="h-3 w-3 mr-1" />
             Email
-          </Button>
-        )}
-
-        {competitor.contact_available && !competitor.phone_number && !competitor.contact_email && !competitor.affiliate_link && (
-          <Button variant="outline" size="sm" className="flex-1 text-xs h-8">
-            <Phone className="h-3 w-3 mr-2" />
-            Contact disponible
           </Button>
         )}
       </div>
