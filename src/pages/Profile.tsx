@@ -43,7 +43,8 @@ const SUPPORTED_COUNTRIES = [
 // ============================================================================
 
 export default function Profile() {
-  const { user, logout } = useAuth();
+  // ✅ FIXED: Now includes updateUser from AuthContext
+  const { user, logout, updateUser } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   const { startTutorial } = useTutorial();
@@ -82,11 +83,10 @@ export default function Profile() {
 
     try {
       await userAPI.updateProfile({ name, avatar });
-      if (user) {
-        const updatedUser = { ...user, name, avatar };
-        localStorage.setItem('user', JSON.stringify(updatedUser));
-        window.location.reload();
-      }
+      
+      // ✅ FIXED: Use updateUser instead of direct localStorage + reload
+      updateUser({ name, avatar });
+      
       toast({ 
         title: "Profil mis à jour", 
         description: "Vos informations ont été enregistrées.", 
@@ -117,10 +117,8 @@ export default function Profile() {
         postal_code: postalCode 
       });
       
-      if (user) {
-        const updatedUser = { ...user, country, postal_code: postalCode };
-        localStorage.setItem('user', JSON.stringify(updatedUser));
-      }
+      // ✅ FIXED: Use updateUser to sync both localStorage AND React state
+      updateUser({ country, postal_code: postalCode });
       
       toast({ 
         title: "Localisation mise à jour", 
@@ -181,7 +179,7 @@ export default function Profile() {
     } catch (err: any) {
       toast({ 
         title: "Erreur", 
-        description: err.response?.data?.error || 'Mot de passe actuel incorrect', 
+        description: err.response?.data?.error || 'Erreur lors du changement de mot de passe', 
         variant: "destructive" 
       });
     } finally {
@@ -194,10 +192,10 @@ export default function Profile() {
   // ============================================================================
 
   const handleDeleteAccount = async () => {
-    if (!deletePassword.trim()) {
+    if (!deletePassword) {
       toast({ 
         title: "Erreur", 
-        description: "Veuillez entrer votre mot de passe.", 
+        description: "Veuillez entrer votre mot de passe pour confirmer.", 
         variant: "destructive" 
       });
       return;
@@ -207,54 +205,70 @@ export default function Profile() {
 
     try {
       await userAPI.deleteAccount({ password: deletePassword });
-      toast({ 
-        title: "Compte supprimé", 
-        description: "Votre compte sera supprimé définitivement sous 30 jours.", 
-        variant: "default" 
-      });
       logout();
       navigate('/login');
+      toast({ 
+        title: "Compte supprimé", 
+        description: "Votre compte a été supprimé définitivement.", 
+        variant: "success" 
+      });
     } catch (err: any) {
       toast({ 
         title: "Erreur", 
-        description: err.response?.data?.error || 'Mot de passe incorrect', 
+        description: err.response?.data?.error || 'Erreur lors de la suppression', 
         variant: "destructive" 
       });
+    } finally {
       setDeleting(false);
+      setDeleteDialogOpen(false);
+      setDeletePassword('');
     }
   };
 
   // ============================================================================
-  // 5. GDPR EXPORT
+  // 5. EXPORT DATA
   // ============================================================================
 
-  const handleGDPRExport = async () => {
+  const handleExportData = async () => {
     setExporting(true);
+
     try {
-      const response = await budgetAPI.exportUserData();
-      const blob = new Blob([JSON.stringify(response.data, null, 2)], { 
-        type: 'application/json' 
+      const response = await budgetAPI.list();
+      const budgets = response.data;
+
+      const exportData = {
+        exportDate: new Date().toISOString(),
+        user: {
+          name: user?.name,
+          email: user?.email,
+          country: user?.country,
+          postal_code: user?.postal_code,
+        },
+        budgets: budgets,
+      };
+
+      const blob = new Blob([JSON.stringify(exportData, null, 2)], {
+        type: 'application/json',
       });
-      const url = window.URL.createObjectURL(blob);
+      const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = `mes-donnees-budgetfamille-${new Date().toISOString().split('T')[0]}.json`;
+      link.download = `budget-famille-export-${new Date().toISOString().split('T')[0]}.json`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
-      
-      toast({ 
-        title: "Export réussi", 
-        description: "Vos données ont été téléchargées.", 
-        variant: "default" 
+      URL.revokeObjectURL(url);
+
+      toast({
+        title: "Export réussi",
+        description: "Vos données ont été exportées.",
+        variant: "success",
       });
-    } catch (error) {
-      console.error(error);
-      toast({ 
-        title: "Erreur", 
-        description: "Impossible de générer l'export.", 
-        variant: "destructive" 
+    } catch (err: any) {
+      toast({
+        title: "Erreur",
+        description: err.response?.data?.error || "Erreur lors de l'export",
+        variant: "destructive",
       });
     } finally {
       setExporting(false);
@@ -266,70 +280,89 @@ export default function Profile() {
   // ============================================================================
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-12">
-      <BudgetNavbar items={[]} userName={user?.name} userAvatar={user?.avatar} />
+    <div className="min-h-screen bg-gray-50">
+      <BudgetNavbar />
       
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <Button 
-          variant="ghost" 
-          className="mb-4 gap-2 pl-0 hover:bg-transparent hover:text-primary"
-          onClick={() => navigate('/')}
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Retour au tableau de bord
-        </Button>
-
-        <h1 className="text-3xl font-bold text-gray-900 mb-8">Mon Profil</h1>
+      <div className="max-w-2xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+        {/* Header */}
+        <div className="mb-8">
+          <button 
+            onClick={() => navigate(-1)}
+            className="flex items-center text-gray-600 hover:text-gray-900 mb-4"
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Retour
+          </button>
+          <div className="flex items-center justify-between">
+            <h1 className="text-3xl font-bold text-gray-900">Mon Profil</h1>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={startTutorial}
+              className="flex items-center gap-2"
+            >
+              <HelpCircle className="h-4 w-4" />
+              Tutoriel
+            </Button>
+          </div>
+        </div>
 
         {/* ============================================================================ */}
-        {/* SECTION 1: PROFILE INFO */}
+        {/* SECTION 1: PROFILE */}
         {/* ============================================================================ */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-6">Informations</h2>
+          <h2 className="text-xl font-semibold text-gray-900 mb-6">
+            Informations personnelles
+          </h2>
           <form onSubmit={handleUpdateProfile}>
-            <div className="flex flex-col items-center mb-8">
-              <AvatarPicker 
-                name={name} 
-                currentAvatar={avatar} 
-                onSelect={(newAvatar) => setAvatar(newAvatar)} 
-              />
-              <p className="text-sm text-muted-foreground mt-3">
-                Cliquez sur l'avatar pour le modifier
-              </p>
-            </div>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Avatar
+                </label>
+                <AvatarPicker 
+                  value={avatar} 
+                  onChange={setAvatar}
+                  name={name}
+                />
+              </div>
 
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Nom
-              </label>
-              <Input
-                type="text"
-                value={name}
-                onChange={(e: ChangeEvent<HTMLInputElement>) => setName(e.target.value)}
-                required
-              />
-            </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Nom
+                </label>
+                <Input
+                  type="text"
+                  value={name}
+                  onChange={(e: ChangeEvent<HTMLInputElement>) => setName(e.target.value)}
+                  required
+                />
+              </div>
 
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Email
-              </label>
-              <Input
-                type="email"
-                value={user?.email || ''}
-                className="bg-gray-100 text-gray-500"
-                disabled
-              />
-            </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Email
+                </label>
+                <Input
+                  type="email"
+                  value={user?.email || ''}
+                  disabled
+                  className="bg-gray-100"
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  L'email ne peut pas être modifié
+                </p>
+              </div>
 
-            <Button type="submit" variant="gradient" disabled={updating}>
-              {updating ? 'Mise à jour...' : 'Mettre à jour le profil'}
-            </Button>
+              <Button type="submit" variant="gradient" disabled={updating}>
+                {updating ? 'Mise à jour...' : 'Mettre à jour le profil'}
+              </Button>
+            </div>
           </form>
         </div>
 
         {/* ============================================================================ */}
-        {/* SECTION 2: LOCATION (NEW) */}
+        {/* SECTION 2: LOCATION */}
         {/* ============================================================================ */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
           <h2 className="text-xl font-semibold text-gray-900 mb-6 flex items-center gap-2">
@@ -383,11 +416,11 @@ export default function Profile() {
         </div>
 
         {/* ============================================================================ */}
-        {/* SECTION 3: CHANGE PASSWORD */}
+        {/* SECTION 3: PASSWORD */}
         {/* ============================================================================ */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
           <h2 className="text-xl font-semibold text-gray-900 mb-6">
-            Changer de mot de passe
+            Changer le mot de passe
           </h2>
           <form onSubmit={handleChangePassword}>
             <div className="space-y-4">
@@ -425,7 +458,6 @@ export default function Profile() {
                   value={confirmPassword}
                   onChange={(e: ChangeEvent<HTMLInputElement>) => setConfirmPassword(e.target.value)}
                   required
-                  minLength={6}
                 />
               </div>
 
@@ -437,66 +469,42 @@ export default function Profile() {
         </div>
 
         {/* ============================================================================ */}
-        {/* SECTION 4: GDPR EXPORT */}
+        {/* SECTION 4: EXPORT DATA */}
         {/* ============================================================================ */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">
-            Mes données (RGPD)
+          <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center gap-2">
+            <FileJson className="h-5 w-5" />
+            Exporter mes données
           </h2>
-          <p className="text-muted-foreground text-sm mb-4">
-            Téléchargez une copie complète de toutes vos données personnelles au format JSON.
-            <br/>
-            <span className="text-xs font-medium text-blue-600 mt-2 block">
-              Note : Ce fichier contient uniquement VOS informations personnelles. Les données des autres membres sont exclues de cet export.
-            </span>
+          <p className="text-sm text-gray-600 mb-4">
+            Téléchargez une copie de toutes vos données (budgets, paramètres) au format JSON.
           </p>
-          <Button 
-            variant="outline" 
-            onClick={handleGDPRExport} 
-            disabled={exporting} 
-            className="w-full sm:w-auto gap-2"
+          <Button
+            variant="outline"
+            onClick={handleExportData}
+            disabled={exporting}
+            className="flex items-center gap-2"
           >
-            {exporting ? <Download className="h-4 w-4 animate-bounce" /> : <Download className="h-4 w-4" />}
-            {exporting ? "Génération de l'archive..." : "Télécharger mes données (JSON)"}
+            <Download className="h-4 w-4" />
+            {exporting ? 'Export en cours...' : 'Exporter mes données'}
           </Button>
         </div>
 
         {/* ============================================================================ */}
-        {/* SECTION 5: TUTORIAL */}
+        {/* SECTION 5: DANGER ZONE */}
         {/* ============================================================================ */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">
-            Aide & Tutoriel
+        <div className="bg-white rounded-xl shadow-sm border border-red-200 p-6">
+          <h2 className="text-xl font-semibold text-red-600 mb-4 flex items-center gap-2">
+            <AlertTriangle className="h-5 w-5" />
+            Zone de danger
           </h2>
-          <p className="text-muted-foreground text-sm mb-4">
-            Besoin d'un rappel sur le fonctionnement de l'application ?
+          <p className="text-sm text-gray-600 mb-4">
+            La suppression de votre compte est irréversible. Toutes vos données seront définitivement effacées.
           </p>
-          <Button 
-            variant="outline" 
-            onClick={startTutorial} 
-            className="w-full sm:w-auto gap-2"
-          >
-            <HelpCircle className="h-4 w-4" />
-            Revoir le tutoriel
-          </Button>
-        </div>
-
-        {/* ============================================================================ */}
-        {/* SECTION 6: DANGER ZONE */}
-        {/* ============================================================================ */}
-        <div className="bg-red-50 rounded-xl border border-red-200 p-6">
-          <div className="flex items-center gap-3 mb-4">
-            <AlertTriangle className="h-6 w-6 text-red-600" />
-            <h2 className="text-xl font-semibold text-red-900">Zone de danger</h2>
-          </div>
-          <p className="text-red-700 mb-6 text-sm">
-            La suppression de votre compte est irréversible.
-            Toutes vos données seront définitivement effacées de nos serveurs.
-          </p>
-          <Button 
-            variant="destructive" 
+          <Button
+            variant="destructive"
             onClick={() => setDeleteDialogOpen(true)}
-            className="w-full sm:w-auto gap-2"
+            className="flex items-center gap-2"
           >
             <Trash2 className="h-4 w-4" />
             Supprimer mon compte
@@ -504,36 +512,30 @@ export default function Profile() {
         </div>
       </div>
 
-      {/* ============================================================================ */}
-      {/* DELETE ACCOUNT DIALOG */}
-      {/* ============================================================================ */}
+      {/* Delete Account Dialog */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Êtes-vous absolument sûr ?</AlertDialogTitle>
+            <AlertDialogTitle>Supprimer votre compte ?</AlertDialogTitle>
             <AlertDialogDescription>
-              Cette action est irréversible. Toutes vos données seront définitivement supprimées 
-              de nos serveurs sous 30 jours.
+              Cette action est irréversible. Tous vos budgets et données seront définitivement supprimés.
+              Entrez votre mot de passe pour confirmer.
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <div className="my-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Confirmez votre mot de passe
-            </label>
-            <Input
-              type="password"
-              value={deletePassword}
-              onChange={(e: ChangeEvent<HTMLInputElement>) => setDeletePassword(e.target.value)}
-              placeholder="Votre mot de passe"
-            />
-          </div>
+          <Input
+            type="password"
+            placeholder="Votre mot de passe"
+            value={deletePassword}
+            onChange={(e) => setDeletePassword(e.target.value)}
+            className="mt-4"
+          />
           <AlertDialogFooter>
             <AlertDialogCancel onClick={() => setDeletePassword('')}>
               Annuler
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDeleteAccount}
-              disabled={deleting}
+              disabled={deleting || !deletePassword}
               className="bg-red-600 hover:bg-red-700"
             >
               {deleting ? 'Suppression...' : 'Supprimer définitivement'}
