@@ -136,10 +136,10 @@ export default function Beta2Page() {
   }, [charges, chargeMappings]);
 
   // Calculate member count for EnhancedSuggestions (household size)
-  const memberCount = useMemo(() => {
-      if (!budget || !budget.members) return 1;
-      return budget.members.length;
-  }, [budget]);
+  const householdSize = useMemo(() => {
+      // Use people.length (foyer) NOT budget.members.length (collaborators)
+      return people.length > 0 ? people.length : 1;
+  }, [people]);
 
   // Demo Mode Persistence
   const getDemoStorageKey = () => `demo-mode-${id}`;
@@ -426,7 +426,7 @@ export default function Beta2Page() {
           <EnhancedSuggestions 
             budgetId={id!} 
             charges={charges} 
-            memberCount={memberCount} 
+            memberCount={householdSize} 
           />
         </div>
           

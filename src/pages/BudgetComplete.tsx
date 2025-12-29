@@ -109,10 +109,10 @@ export default function BudgetComplete() {
   }, [currentYear, projects]);
 
   // Calculate member count for EnhancedSuggestions (household size)
-  const memberCount = useMemo(() => {
-      if (!budget || !budget.members) return 1;
-      return budget.members.length;
-  }, [budget]);
+  const householdSize = useMemo(() => {
+      // Use people.length (foyer) NOT budget.members.length (collaborators)
+      return people.length > 0 ? people.length : 1;
+  }, [people]);
 
   // --- EFFECTS ---
   useEffect(() => {
@@ -351,7 +351,7 @@ export default function BudgetComplete() {
           <EnhancedSuggestions 
             budgetId={id!} 
             charges={charges} 
-            memberCount={memberCount} 
+            memberCount={householdSize} 
           />
         </div>
         
