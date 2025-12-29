@@ -106,9 +106,9 @@ export default function BudgetComplete() {
           }
       });
       return carryOvers;
-  }, [currentYear, projects]); // Re-compute when year or projects change
+  }, [currentYear, projects]);
 
-  // NEW: Calculate member count for EnhancedSuggestions
+  // Calculate member count for EnhancedSuggestions (household size)
   const memberCount = useMemo(() => {
       if (!budget || !budget.members) return 1;
       return budget.members.length;
@@ -214,7 +214,6 @@ export default function BudgetComplete() {
   };
 
   const hydrateStateFromGlobal = (year: number, rawData: any) => {
-      // ... (Same hydration logic)
       if (rawData.yearlyData && rawData.yearlyData[year]) {
           const yearData = rawData.yearlyData[year];
           const newYearlyData: YearlyData = {};
@@ -347,9 +346,13 @@ export default function BudgetComplete() {
         
         <div id="charges" className="mt-6"><ChargesSection charges={charges} onChargesChange={setCharges} /></div>
         
-        {/* NEW: Enhanced Suggestions */}
+        {/* Enhanced Suggestions with memberCount */}
         <div id="suggestions" className="mt-6">
-          <EnhancedSuggestions budgetId={id!} charges={charges} memberCount={memberCount} />
+          <EnhancedSuggestions 
+            budgetId={id!} 
+            charges={charges} 
+            memberCount={memberCount} 
+          />
         </div>
         
         <div id="projects" className="mt-6">
