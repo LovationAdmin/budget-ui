@@ -1,4 +1,6 @@
 // src/pages/BudgetComplete.tsx
+// VERSION COMPLÈTE AVEC AUTO-SAVE INTÉGRÉ
+
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { budgetAPI } from '../services/api';
@@ -18,6 +20,7 @@ import {
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast'; 
 import { useNotifications } from '@/contexts/NotificationContext';
+import { useAutoSave } from '../hooks/useAutoSave';
 import { BudgetNavbar, NavItem } from '@/components/budget/BudgetNavbar';
 import InviteModal from '../components/InviteModal';
 import BudgetHeader from '../components/budget/BudgetHeader';
@@ -87,7 +90,7 @@ export default function BudgetComplete() {
   const notifiedProjectsRef = useRef<Set<string>>(new Set());
 
   // ============================================================================
-  // 🚀 OPTIMISATION : useMemo pour projectCarryOvers
+  // PROJECT CARRY OVERS CALCULATION
   // ============================================================================
   const projectCarryOvers = useMemo(() => {
     const carryOvers: Record<string, number> = {};
@@ -113,14 +116,86 @@ export default function BudgetComplete() {
   }, [currentYear, projects]);
 
   // ============================================================================
-  // 🚀 OPTIMISATION : useMemo pour householdSize
+  // HOUSEHOLD SIZE CALCULATION
   // ============================================================================
   const householdSize = useMemo(() => {
     return people.length > 0 ? people.length : 1;
   }, [people]);
 
   // ============================================================================
-  // 🚀 OPTIMISATION : WebSocket Connection
+  // AUTO-SAVE HOOK
+  // ============================================================================
+  const performSave = useCallback(async () => {
+    if (!id) return;
+    
+    console.log('💾 [AutoSave] Sauvegarde du budget:', id);
+
+    // 1. Capture current state
+    const currentViewData = { 
+      budgetTitle, 
+      currentYear, 
+      people, 
+      charges, 
+      projects, 
+      yearlyData, 
+      yearlyExpenses, 
+      oneTimeIncomes, 
+      monthComments, 
+      projectComments, 
+      lockedMonths 
+    };
+
+    // 2. Convert to storage format
+    const formattedCurrent = convertNewFormatToOld(currentViewData as any);
+
+    // 3. Merge with global data
+    const finalPayload = JSON.parse(JSON.stringify(globalDataRef.current || {}));
+    finalPayload.budgetTitle = budgetTitle;
+    finalPayload.people = people;
+    finalPayload.charges = charges;
+    finalPayload.projects = projects;
+    finalPayload.lastUpdated = new Date().toISOString();
+    finalPayload.updatedBy = user?.name;
+    finalPayload.version = '2.3';
+
+    if (!finalPayload.yearlyData) finalPayload.yearlyData = {};
+    if (!finalPayload.oneTimeIncomes) finalPayload.oneTimeIncomes = {};
+
+    // 4. Save current year explicitly
+    const sourceYearlyData = formattedCurrent.yearlyData || {};
+    const sourceOneTime = formattedCurrent.oneTimeIncomes || {};
+
+    if (sourceYearlyData[currentYear]) {
+      finalPayload.yearlyData[currentYear] = sourceYearlyData[currentYear];
+    }
+    if (sourceOneTime[currentYear]) {
+      finalPayload.oneTimeIncomes[currentYear] = sourceOneTime[currentYear];
+    }
+
+    try {
+      await budgetAPI.updateData(id, { data: finalPayload });
+      setLastServerUpdate(finalPayload.lastUpdated);
+      globalDataRef.current = finalPayload;
+      console.log('✅ [AutoSave] Budget sauvegardé avec succès');
+    } catch (error) {
+      console.error('❌ [AutoSave] Erreur de sauvegarde:', error);
+      throw error;
+    }
+  }, [id, budgetTitle, currentYear, people, charges, projects, yearlyData, yearlyExpenses, oneTimeIncomes, monthComments, projectComments, lockedMonths, user?.name]);
+
+  const {
+    hasUnsavedChanges,
+    isSaving,
+    markAsModified,
+    saveNow,
+  } = useAutoSave({
+    onSave: performSave,
+    delay: 2000,
+    enabled: loadedRef.current,
+  });
+
+  // ============================================================================
+  // WEBSOCKET CONNECTION
   // ============================================================================
   useEffect(() => {
     if (budget) {
@@ -130,7 +205,7 @@ export default function BudgetComplete() {
   }, [budget, connectToBudget, disconnectFromBudget]);
 
   // ============================================================================
-  // Tutorial Effect
+  // TUTORIAL EFFECT
   // ============================================================================
   useEffect(() => {
     if (!loading && !hasSeenTutorial && loadedRef.current) {
@@ -142,60 +217,7 @@ export default function BudgetComplete() {
   }, [loading, hasSeenTutorial, startTutorial]);
 
   // ============================================================================
-  // Load Budget Effect
-  // ============================================================================
-  useEffect(() => { 
-    if (id) loadBudget(); 
-  }, [id]);
-
-  // ============================================================================
-  // Auto-save Effect
-  // ============================================================================
-  useEffect(() => {
-    if (!loadedRef.current) return;
-    const saveInterval = setInterval(() => {
-      if (document.visibilityState === 'visible') handleSave(true);
-    }, 30000);
-    return () => clearInterval(saveInterval);
-  }, [budgetTitle, currentYear, people, charges, projects, yearlyData, yearlyExpenses, oneTimeIncomes, monthComments, projectComments, lockedMonths]);
-
-  // ============================================================================
-  // Members Refresh Effect
-  // ============================================================================
-  useEffect(() => {
-    if (!id) return;
-    const memberInterval = setInterval(() => {
-      if (document.visibilityState === 'visible') refreshMembersOnly();
-    }, 60000); 
-    return () => clearInterval(memberInterval);
-  }, [id]);
-
-  // ============================================================================
-  // Project Target Notifications Effect
-  // ============================================================================
-  useEffect(() => {
-    if (!loadedRef.current) return;
-    projects.forEach(project => {
-      if (!project.targetAmount || project.targetAmount <= 0) return;
-      if (notifiedProjectsRef.current.has(project.id)) return;
-      let totalAllocated = (projectCarryOvers[project.id] || 0);
-      MONTHS.forEach(month => { 
-        totalAllocated += yearlyData[month]?.[project.id] || 0; 
-      });
-      if (totalAllocated >= project.targetAmount) {
-        notifiedProjectsRef.current.add(project.id);
-        toast({
-          title: "🎉 Objectif Atteint !",
-          description: `Félicitations ! Le projet "${project.label}" est entièrement financé.`,
-          className: "bg-success/10 border-success/50 text-success-foreground",
-          duration: 5000,
-        });
-      }
-    });
-  }, [projects, yearlyData, projectCarryOvers, toast]);
-
-  // ============================================================================
-  // 🚀 OPTIMISATION : useCallback pour loadBudget
+  // LOAD BUDGET
   // ============================================================================
   const loadBudget = useCallback(async () => {
     if (!id) return;
@@ -235,8 +257,62 @@ export default function BudgetComplete() {
     }
   }, [id, toast]);
 
+  useEffect(() => { 
+    if (id) loadBudget(); 
+  }, [id]);
+
   // ============================================================================
-  // 🚀 OPTIMISATION : useCallback pour hydrateStateFromGlobal
+  // MEMBERS REFRESH
+  // ============================================================================
+  const refreshMembersOnly = useCallback(async () => {
+    if (!id) return;
+    try {
+      const response = await budgetAPI.getById(id);
+      setBudget(prev => {
+        if (JSON.stringify(prev?.members) !== JSON.stringify(response.data.members)) {
+          return response.data;
+        }
+        return prev;
+      });
+    } catch (error) { 
+      console.error("Failed to refresh members", error); 
+    }
+  }, [id]);
+
+  useEffect(() => {
+    if (!id) return;
+    const memberInterval = setInterval(() => {
+      if (document.visibilityState === 'visible') refreshMembersOnly();
+    }, 60000); 
+    return () => clearInterval(memberInterval);
+  }, [id, refreshMembersOnly]);
+
+  // ============================================================================
+  // PROJECT TARGET NOTIFICATIONS
+  // ============================================================================
+  useEffect(() => {
+    if (!loadedRef.current) return;
+    projects.forEach(project => {
+      if (!project.targetAmount || project.targetAmount <= 0) return;
+      if (notifiedProjectsRef.current.has(project.id)) return;
+      let totalAllocated = (projectCarryOvers[project.id] || 0);
+      MONTHS.forEach(month => { 
+        totalAllocated += yearlyData[month]?.[project.id] || 0; 
+      });
+      if (totalAllocated >= project.targetAmount) {
+        notifiedProjectsRef.current.add(project.id);
+        toast({
+          title: "🎉 Objectif Atteint !",
+          description: `Félicitations ! Le projet "${project.label}" est entièrement financé.`,
+          className: "bg-success/10 border-success/50 text-success-foreground",
+          duration: 5000,
+        });
+      }
+    });
+  }, [projects, yearlyData, projectCarryOvers, toast]);
+
+  // ============================================================================
+  // YEAR CHANGE HANDLER
   // ============================================================================
   const hydrateStateFromGlobal = useCallback((year: number, rawData: any) => {
     if (rawData.yearlyData && rawData.yearlyData[year]) {
@@ -269,9 +345,6 @@ export default function BudgetComplete() {
     }
   }, []);
 
-  // ============================================================================
-  // 🚀 OPTIMISATION : useCallback pour handleYearChange
-  // ============================================================================
   const handleYearChange = useCallback((newYear: number) => {
     if (globalDataRef.current) {
       const tempCurrentState = { 
@@ -292,117 +365,101 @@ export default function BudgetComplete() {
       if (!globalDataRef.current.oneTimeIncomes) globalDataRef.current.oneTimeIncomes = {};
       const sourceYearlyData = formattedCurrent.yearlyData || {};
       const sourceOneTime = formattedCurrent.oneTimeIncomes || {};
-      globalDataRef.current.yearlyData[currentYear] = sourceYearlyData[currentYear];
-      globalDataRef.current.oneTimeIncomes[currentYear] = sourceOneTime[currentYear];
+      if (sourceYearlyData[currentYear]) {
+        globalDataRef.current.yearlyData[currentYear] = sourceYearlyData[currentYear];
+      }
+      if (sourceOneTime[currentYear]) {
+        globalDataRef.current.oneTimeIncomes[currentYear] = sourceOneTime[currentYear];
+      }
     }
     setCurrentYear(newYear);
     hydrateStateFromGlobal(newYear, globalDataRef.current);
   }, [budgetTitle, currentYear, people, charges, projects, yearlyData, yearlyExpenses, oneTimeIncomes, monthComments, projectComments, lockedMonths, hydrateStateFromGlobal]);
 
   // ============================================================================
-  // 🚀 OPTIMISATION : useCallback pour refreshMembersOnly
+  // SAVE HANDLER
   // ============================================================================
-  const refreshMembersOnly = useCallback(async () => {
-    if (!id) return;
+  const handleSave = async () => {
+    console.log('💾 [BudgetComplete] Sauvegarde manuelle déclenchée');
+    setSaving(true);
     try {
-      const response = await budgetAPI.getById(id);
-      setBudget(prev => {
-        if (JSON.stringify(prev?.members) !== JSON.stringify(response.data.members)) {
-          return response.data;
-        }
-        return prev;
+      await saveNow();
+      toast({ 
+        title: "Succès", 
+        description: "Budget sauvegardé !", 
+        variant: "default" 
       });
-    } catch (error) { 
-      console.error("Failed to refresh members", error); 
-    }
-  }, [id]);
-
-  // ============================================================================
-  // 🚀 OPTIMISATION : useCallback pour handleSave
-  // ============================================================================
-
-  const handleSave = useCallback(async (silent = false) => {
-    if (!id) return;
-    if (!silent) setSaving(true);
-
-    // 1. Capture the CURRENT state of the UI (what the user sees right now)
-    const currentViewData = { 
-      budgetTitle, 
-      currentYear, 
-      people, 
-      charges, 
-      projects, 
-      yearlyData, 
-      yearlyExpenses, 
-      oneTimeIncomes, 
-      monthComments, 
-      projectComments, 
-      lockedMonths 
-    };
-
-    // 2. Convert this "view state" into the "storage format" (YearlyData map)
-    const formattedCurrent = convertNewFormatToOld(currentViewData as any);
-
-    // 3. Merge this into the Global Data Ref (to preserve other years)
-    // We clone the ref to avoid mutating it directly before we are sure
-    const finalPayload = JSON.parse(JSON.stringify(globalDataRef.current || {}));
-
-    // Ensure basic fields are present
-    finalPayload.budgetTitle = budgetTitle;
-    finalPayload.people = people;
-    finalPayload.charges = charges;
-    finalPayload.projects = projects;
-    finalPayload.lastUpdated = new Date().toISOString();
-    finalPayload.updatedBy = user?.name;
-    finalPayload.version = '2.3'; // Increment version to force update if needed
-
-    // Initialize containers if missing
-    if (!finalPayload.yearlyData) finalPayload.yearlyData = {};
-    if (!finalPayload.oneTimeIncomes) finalPayload.oneTimeIncomes = {};
-
-    // 4. CRITICAL: Explicitly save the CURRENT YEAR data into the global payload
-    // We take the data we just formatted and put it into the [currentYear] slot
-    const sourceYearlyData = formattedCurrent.yearlyData || {};
-    const sourceOneTime = formattedCurrent.oneTimeIncomes || {};
-
-    if (sourceYearlyData[currentYear]) {
-        finalPayload.yearlyData[currentYear] = sourceYearlyData[currentYear];
-    }
-    if (sourceOneTime[currentYear]) {
-        finalPayload.oneTimeIncomes[currentYear] = sourceOneTime[currentYear];
-    }
-
-    try {
-      // 5. Send to Backend
-      await budgetAPI.updateData(id, { data: finalPayload });
-      
-      // 6. Update local refs to match what we just saved (sync source of truth)
-      setLastServerUpdate(finalPayload.lastUpdated);
-      globalDataRef.current = finalPayload;
-
-      if (!silent) {
-        toast({ 
-          title: "Succès", 
-          description: "Budget sauvegardé !", 
-          variant: "default" 
-        });
-      }
     } catch (error) {
-      console.error('Error saving:', error);
-      if (!silent) {
-        toast({ 
-          title: "Erreur", 
-          description: "Échec de la sauvegarde.", 
-          variant: "destructive" 
-        });
-      }
-    } finally { 
-      if (!silent) setSaving(false); 
+      toast({ 
+        title: "Erreur", 
+        description: "Échec de la sauvegarde.", 
+        variant: "destructive" 
+      });
+    } finally {
+      setSaving(false);
     }
-  }, [id, budgetTitle, currentYear, people, charges, projects, yearlyData, yearlyExpenses, oneTimeIncomes, monthComments, projectComments, lockedMonths, user?.name, toast]);
+  };
 
   // ============================================================================
-  // 🚀 OPTIMISATION : useCallback pour handleSectionChange
+  // DATA CHANGE HANDLERS WITH AUTO-SAVE TRIGGER
+  // ============================================================================
+  const handleDataChange = useCallback((newData: any) => {
+    console.log('📝 [BudgetComplete] Données modifiées, marquage pour auto-save');
+    markAsModified();
+  }, [markAsModified]);
+
+  const handleBudgetTitleChange = (title: string) => {
+    setBudgetTitle(title);
+    handleDataChange(null);
+  };
+
+  const handlePeopleChange = (newPeople: Person[]) => {
+    setPeople(newPeople);
+    handleDataChange(null);
+  };
+
+  const handleChargesChange = (newCharges: Charge[]) => {
+    setCharges(newCharges);
+    handleDataChange(null);
+  };
+
+  const handleProjectsChange = (newProjects: Project[]) => {
+    setProjects(newProjects);
+    handleDataChange(null);
+  };
+
+  const handleYearlyDataChange = (newData: YearlyData) => {
+    setYearlyData(newData);
+    handleDataChange(null);
+  };
+
+  const handleYearlyExpensesChange = (newData: YearlyData) => {
+    setYearlyExpenses(newData);
+    handleDataChange(null);
+  };
+
+  const handleOneTimeIncomesChange = (newData: OneTimeIncomes) => {
+    setOneTimeIncomes(newData);
+    handleDataChange(null);
+  };
+
+  const handleMonthCommentsChange = (newData: MonthComments) => {
+    setMonthComments(newData);
+    handleDataChange(null);
+  };
+
+  const handleProjectCommentsChange = (newData: ProjectComments) => {
+    setProjectComments(newData);
+    handleDataChange(null);
+  };
+
+  const handleLockedMonthsChange = (newData: LockedMonths) => {
+    setLockedMonths(newData);
+    handleDataChange(null);
+  };
+
+  // ============================================================================
+  // NAVIGATION HANDLERS
   // ============================================================================
   const handleSectionChange = useCallback((section: string) => {
     if (section === 'settings' || section === 'notifications') return;
@@ -414,9 +471,6 @@ export default function BudgetComplete() {
     }
   }, []);
 
-  // ============================================================================
-  // 🚀 OPTIMISATION : useCallback pour autres handlers
-  // ============================================================================
   const handleShowInviteModal = useCallback(() => {
     setShowInviteModal(true);
   }, []);
@@ -429,145 +483,155 @@ export default function BudgetComplete() {
     navigate('/');
   }, [navigate]);
 
-  const handleInvited = useCallback(() => {
-    refreshMembersOnly();
-    toast({ 
-      title: "Invitation envoyée", 
-      variant: "default" 
-    });
-  }, [refreshMembersOnly, toast]);
+  const handleInvitationSent = useCallback(async () => {
+    await refreshMembersOnly();
+  }, [refreshMembersOnly]);
 
   // ============================================================================
-  // Loading State
+  // RENDER
   // ============================================================================
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-primary-50 to-purple-50 flex items-center justify-center">
-        <BudgetNavbar items={[]} />
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+      <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-gray-600">Chargement...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!budget) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-gray-600">Budget introuvable</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary-50 to-purple-50">
+    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50">
       <BudgetNavbar 
-        budgetTitle={budget?.name} 
-        userName={user?.name}
-        userAvatar={user?.avatar}
         items={BUDGET_NAV_ITEMS}
         onSectionChange={handleSectionChange}
         currentSection="overview"
       />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <button 
-          onClick={handleNavigateBack} 
-          className="text-primary-600 hover:text-primary-700 mb-4 flex items-center gap-2 font-medium"
-        >
-          ← Retour aux budgets
-        </button>
+        <BudgetHeader
+          budgetTitle={budgetTitle}
+          onBudgetTitleChange={handleBudgetTitleChange}
+          onNavigateBack={handleNavigateBack}
+          onShowInviteModal={handleShowInviteModal}
+          isOwner={budget.is_owner}
+          hasUnsavedChanges={hasUnsavedChanges}
+          isSaving={isSaving || saving}
+        />
 
-        <div className="bg-white rounded-xl shadow-lg overflow-hidden mb-6">
-          <BudgetHeader 
-            budgetTitle={budgetTitle} 
-            onTitleChange={setBudgetTitle} 
-            currentYear={currentYear} 
-            onYearChange={handleYearChange} 
-          />
-          <div className="p-4 bg-gray-50 border-t border-gray-200 flex justify-between items-center">
-            <div className="flex items-center gap-3">
-              {budget?.is_owner && (
-                <button 
-                  onClick={handleShowInviteModal} 
-                  className="bg-white hover:bg-gray-50 border border-gray-300 text-gray-700 px-4 py-2 rounded-lg font-medium transition"
-                >
-                  👤 Inviter
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
-        
-        {budget && user && (
-          <div id="members">
-            <MemberManagementSection 
-              budget={budget} 
-              currentUserId={user.id} 
-              onMemberChange={refreshMembersOnly} 
-            />
+        {/* Auto-save Indicators */}
+        {hasUnsavedChanges && !isSaving && !saving && (
+          <div className="mb-4 flex items-center gap-2 px-4 py-2 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg">
+            <svg className="w-4 h-4 text-orange-600 dark:text-orange-400" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
+            </svg>
+            <span className="text-sm font-medium text-orange-800 dark:text-orange-300">
+              Modifications non sauvegardées - Sauvegarde automatique dans quelques secondes...
+            </span>
           </div>
         )}
 
-        <ActionsBar onSave={() => handleSave(false)} saving={saving} />
+        {(isSaving || saving) && (
+          <div className="mb-4 flex items-center gap-2 px-4 py-2 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+            <svg className="animate-spin w-4 h-4 text-blue-600 dark:text-blue-400" fill="none" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+            </svg>
+            <span className="text-sm font-medium text-blue-800 dark:text-blue-300">
+              Sauvegarde en cours...
+            </span>
+          </div>
+        )}
 
-        <div id="people">
-          <PeopleSection people={people} onPeopleChange={setPeople} />
-        </div>
-        
-        <div id="charges" className="mt-6">
-          <ChargesSection charges={charges} onChargesChange={setCharges} />
-        </div>
-        
-        <div id="suggestions" className="mt-6">
-          <EnhancedSuggestions 
-            budgetId={id!} 
-            charges={charges} 
-            memberCount={householdSize} 
-          />
-        </div>
-        
-        <div id="projects" className="mt-6">
-          <ProjectsSection 
-            projects={projects} 
-            onProjectsChange={setProjects} 
-            yearlyData={yearlyData} 
-            currentYear={currentYear} 
-            projectCarryOvers={projectCarryOvers} 
+        <div id="overview" className="mb-8">
+          <StatsSection
+            people={people}
+            charges={charges}
+            projects={projects}
+            yearlyData={yearlyData}
+            yearlyExpenses={yearlyExpenses}
+            oneTimeIncomes={oneTimeIncomes}
+            projectCarryOvers={projectCarryOvers}
+            currentYear={currentYear}
           />
         </div>
 
-        <div id="calendar" className="mt-6">
-          <MonthlyTable 
-            currentYear={currentYear} 
-            people={people} 
-            charges={charges} 
-            projects={projects} 
-            yearlyData={yearlyData} 
-            yearlyExpenses={yearlyExpenses} 
-            oneTimeIncomes={oneTimeIncomes} 
-            monthComments={monthComments} 
-            projectComments={projectComments} 
-            lockedMonths={lockedMonths} 
-            onYearlyDataChange={setYearlyData} 
-            onYearlyExpensesChange={setYearlyExpenses} 
-            onOneTimeIncomesChange={setOneTimeIncomes} 
-            onMonthCommentsChange={setMonthComments} 
-            onProjectCommentsChange={setProjectComments} 
-            onLockedMonthsChange={setLockedMonths} 
-            onYearChange={handleYearChange} 
-            projectCarryOvers={projectCarryOvers} 
+        <div id="members" className="mb-8">
+          <MemberManagementSection
+            budget={budget}
+            onRefresh={refreshMembersOnly}
           />
         </div>
 
-        {/* Removed id="overview" from here so the "Vue d'ensemble" navbar button scrolls to top */}
-        <div className="mt-6">
-          <StatsSection 
-            people={people} 
-            charges={charges} 
-            projects={projects} 
-            yearlyData={yearlyData} 
-            oneTimeIncomes={oneTimeIncomes} 
-            currentYear={currentYear} 
+        <div id="charges" className="mb-8">
+          <EnhancedSuggestions
+            budgetId={budget.id}
+            charges={charges}
+            householdSize={householdSize}
+          />
+          
+          <ChargesSection
+            people={people}
+            charges={charges}
+            onChargesChange={handleChargesChange}
           />
         </div>
+
+        <div id="projects" className="mb-8">
+          <ProjectsSection
+            projects={projects}
+            onProjectsChange={handleProjectsChange}
+            yearlyData={yearlyData}
+            projectCarryOvers={projectCarryOvers}
+          />
+        </div>
+
+        <div id="calendar" className="mb-8">
+          <MonthlyTable
+            people={people}
+            charges={charges}
+            projects={projects}
+            yearlyData={yearlyData}
+            yearlyExpenses={yearlyExpenses}
+            oneTimeIncomes={oneTimeIncomes}
+            monthComments={monthComments}
+            projectComments={projectComments}
+            lockedMonths={lockedMonths}
+            projectCarryOvers={projectCarryOvers}
+            onYearlyDataChange={handleYearlyDataChange}
+            onYearlyExpensesChange={handleYearlyExpensesChange}
+            onOneTimeIncomesChange={handleOneTimeIncomesChange}
+            onMonthCommentsChange={handleMonthCommentsChange}
+            onProjectCommentsChange={handleProjectCommentsChange}
+            onLockedMonthsChange={handleLockedMonthsChange}
+          />
+        </div>
+
+        <ActionsBar
+          currentYear={currentYear}
+          onYearChange={handleYearChange}
+          onSave={handleSave}
+          saving={isSaving || saving}
+          hasUnsavedChanges={hasUnsavedChanges}
+        />
       </div>
 
-      {showInviteModal && id && (
-        <InviteModal 
-          budgetId={id} 
-          onClose={handleCloseInviteModal} 
-          onInvited={handleInvited} 
+      {showInviteModal && (
+        <InviteModal
+          budgetId={budget.id}
+          onClose={handleCloseInviteModal}
+          onInvitationSent={handleInvitationSent}
         />
       )}
     </div>
