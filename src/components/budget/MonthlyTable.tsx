@@ -1,4 +1,5 @@
-import { useState, useEffect, useCallback } from 'react'; // Added useCallback
+// src/components/budget/MonthlyTable.tsx
+import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -91,6 +92,51 @@ const DebouncedInput = ({
             className={className} 
             placeholder={placeholder}
             disabled={disabled}
+        />
+    );
+};
+
+// ============================================================================
+// 🚀 OPTIMIZATION: Debounced Textarea Component
+// Fixes lag when typing comments inside popovers
+// ============================================================================
+const DebouncedTextarea = ({ 
+    value, 
+    onChange, 
+    className, 
+    placeholder,
+    ...props
+}: { 
+    value: string; 
+    onChange: (val: string) => void; 
+    className?: string; 
+    placeholder?: string;
+    [key: string]: any;
+}) => {
+    const [localValue, setLocalValue] = useState<string>(value || '');
+
+    useEffect(() => {
+        setLocalValue(value || '');
+    }, [value]);
+
+    const handleBlur = () => {
+        if (localValue !== value) {
+            onChange(localValue);
+        }
+    };
+
+    const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+        setLocalValue(e.target.value);
+    };
+
+    return (
+        <Textarea 
+            value={localValue} 
+            onChange={handleChange} 
+            onBlur={handleBlur}
+            className={className} 
+            placeholder={placeholder}
+            {...props}
         />
     );
 };
@@ -478,7 +524,16 @@ export default function MonthlyTable({
                                 <Popover>
                                   <PopoverTrigger asChild><Button variant="ghost" size="icon" className={cn("h-4 w-4 rounded-full p-0", comment ? "text-primary" : "text-muted-foreground/30")}>{comment ? <MessageCircle className="h-3 w-3" /> : <MessageSquarePlus className="h-3 w-3" />}</Button></PopoverTrigger>
                                   <PopoverContent className="w-64 p-3">
-                                    <div className="space-y-2"><h4 className="font-medium text-xs text-muted-foreground mb-1">Note pour {project.label} ({month})</h4><Textarea value={comment || ''} onChange={(e) => updateProjectComment(month, project.id, e.target.value)} placeholder="Détail..." className="h-20 text-sm resize-none" /></div>
+                                    <div className="space-y-2">
+                                        <h4 className="font-medium text-xs text-muted-foreground mb-1">Note pour {project.label} ({month})</h4>
+                                        {/* 🔥 DEBOUNCED TEXTAREA */}
+                                        <DebouncedTextarea 
+                                            value={comment || ''} 
+                                            onChange={(val) => updateProjectComment(month, project.id, val)} 
+                                            placeholder="Détail..." 
+                                            className="h-20 text-sm resize-none" 
+                                        />
+                                    </div>
                                   </PopoverContent>
                                 </Popover>
                               </div>
@@ -504,7 +559,18 @@ export default function MonthlyTable({
                                 <div className="text-[10px] text-muted-foreground flex items-center gap-0.5 bg-muted/30 px-1 py-0 rounded"><span>∑</span><span className={genSavingsCumulative >= 0 ? "text-success font-medium" : "text-destructive font-medium"}>{genSavingsCumulative.toLocaleString()} €</span></div>
                                 <Popover>
                                     <PopoverTrigger asChild><Button variant="ghost" size="icon" className={cn("h-4 w-4 rounded-full p-0", genSavingsComment ? "text-primary" : "text-muted-foreground/30")}>{genSavingsComment ? <MessageCircle className="h-3 w-3" /> : <MessageSquarePlus className="h-3 w-3" />}</Button></PopoverTrigger>
-                                    <PopoverContent className="w-64 p-3"><div className="space-y-2"><h4 className="font-medium text-xs text-muted-foreground mb-1">Note pour Épargne Générale</h4><Textarea value={genSavingsComment || ''} onChange={(e) => updateProjectComment(month, GENERAL_SAVINGS_ID, e.target.value)} placeholder="Détail..." className="h-20 text-sm resize-none" /></div></PopoverContent>
+                                    <PopoverContent className="w-64 p-3">
+                                        <div className="space-y-2">
+                                            <h4 className="font-medium text-xs text-muted-foreground mb-1">Note pour Épargne Générale</h4>
+                                            {/* 🔥 DEBOUNCED TEXTAREA */}
+                                            <DebouncedTextarea 
+                                                value={genSavingsComment || ''} 
+                                                onChange={(val) => updateProjectComment(month, GENERAL_SAVINGS_ID, val)} 
+                                                placeholder="Détail..." 
+                                                className="h-20 text-sm resize-none" 
+                                            />
+                                        </div>
+                                    </PopoverContent>
                                 </Popover>
                             </div>
                         </div>
