@@ -102,7 +102,7 @@ export default function EnhancedSuggestions({ budgetId, charges, people, memberC
           category: c.category,
           label: c.label,
           amount: c.amount,
-          merchant_name: c.merchantName || ''
+          merchant_name: '' // Charge type doesn't have merchantName property
         }));
 
       if (relevantCharges.length === 0) {
