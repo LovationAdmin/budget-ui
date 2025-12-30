@@ -2,81 +2,91 @@ import { useEffect, useRef, useCallback, useState } from 'react';
 
 interface UseAutoSaveOptions {
   onSave: () => Promise<void>;
-  delay?: number; // délai en ms avant auto-save (défaut: 2000ms)
+  delay?: number;
   enabled?: boolean;
 }
 
-/**
- * Hook pour gérer l'auto-save avec:
- * - Debouncing des modifications
- * - Sauvegarde avant fermeture de la page
- * - Indicateur de modifications non sauvegardées
- */
-export function useAutoSave({ onSave, delay = 2000, enabled = true }: UseAutoSaveOptions) {
+interface UseAutoSaveReturn {
+  hasUnsavedChanges: boolean;
+  isSaving: boolean;
+  markAsModified: () => void;
+  saveNow: () => Promise<void>;
+}
+
+export function useAutoSave({
+  onSave,
+  delay = 2000,
+  enabled = true,
+}: UseAutoSaveOptions): UseAutoSaveReturn {
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   const saveInProgressRef = useRef(false);
 
-  // Fonction de sauvegarde avec protection contre les appels multiples
-  const executeSave = useCallback(async () => {
-    if (saveInProgressRef.current || !hasUnsavedChanges) {
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, []);
+
+  const performSave = useCallback(async () => {
+    if (saveInProgressRef.current) {
+      console.log('⏸️ [AutoSave] Sauvegarde déjà en cours, skip');
       return;
     }
 
-    saveInProgressRef.current = true;
-    setIsSaving(true);
-
     try {
+      saveInProgressRef.current = true;
+      setIsSaving(true);
+      console.log('💾 [AutoSave] Début de la sauvegarde...');
+      
       await onSave();
+      
+      // ✅ CORRECTIF : Réinitialiser hasUnsavedChanges après succès
       setHasUnsavedChanges(false);
       console.log('✅ [AutoSave] Données sauvegardées avec succès');
     } catch (error) {
       console.error('❌ [AutoSave] Erreur lors de la sauvegarde:', error);
-      // On garde hasUnsavedChanges à true en cas d'erreur
+      // Ne pas réinitialiser hasUnsavedChanges en cas d'erreur
+      throw error;
     } finally {
-      setIsSaving(false);
       saveInProgressRef.current = false;
+      setIsSaving(false);
     }
-  }, [onSave, hasUnsavedChanges]);
+  }, [onSave]);
 
-  // Fonction pour marquer qu'il y a des modifications
   const markAsModified = useCallback(() => {
     if (!enabled) return;
 
     setHasUnsavedChanges(true);
 
-    // Annuler le timeout précédent
-    if (saveTimeoutRef.current) {
-      clearTimeout(saveTimeoutRef.current);
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
     }
 
-    // Planifier une nouvelle sauvegarde
-    saveTimeoutRef.current = setTimeout(() => {
-      console.log('⏰ [AutoSave] Déclenchement auto-save après', delay, 'ms');
-      executeSave();
+    timeoutRef.current = setTimeout(() => {
+      console.log(`⏰ [AutoSave] Déclenchement auto-save après ${delay} ms`);
+      performSave();
     }, delay);
-  }, [enabled, delay, executeSave]);
+  }, [enabled, delay, performSave]);
 
-  // Sauvegarder immédiatement (pour les boutons "Sauvegarder")
   const saveNow = useCallback(async () => {
-    if (saveTimeoutRef.current) {
-      clearTimeout(saveTimeoutRef.current);
-      saveTimeoutRef.current = null;
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
     }
-    await executeSave();
-  }, [executeSave]);
+    await performSave();
+  }, [performSave]);
 
-  // Sauvegarde avant fermeture/rafraîchissement de la page
+  // ✅ CORRECTIF : beforeunload seulement si hasUnsavedChanges ET pas en train de sauvegarder
   useEffect(() => {
     if (!enabled) return;
 
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
       if (hasUnsavedChanges && !saveInProgressRef.current) {
-        // Tenter une sauvegarde synchrone (ne fonctionne pas toujours)
-        executeSave();
-
-        // Afficher le message de confirmation du navigateur
         e.preventDefault();
         e.returnValue = '';
         return '';
@@ -84,20 +94,8 @@ export function useAutoSave({ onSave, delay = 2000, enabled = true }: UseAutoSav
     };
 
     window.addEventListener('beforeunload', handleBeforeUnload);
-
-    return () => {
-      window.removeEventListener('beforeunload', handleBeforeUnload);
-    };
-  }, [enabled, hasUnsavedChanges, executeSave]);
-
-  // Cleanup du timeout
-  useEffect(() => {
-    return () => {
-      if (saveTimeoutRef.current) {
-        clearTimeout(saveTimeoutRef.current);
-      }
-    };
-  }, []);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [enabled, hasUnsavedChanges]);
 
   return {
     hasUnsavedChanges,
