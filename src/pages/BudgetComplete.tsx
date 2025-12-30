@@ -320,9 +320,12 @@ export default function BudgetComplete() {
   // ============================================================================
   // 🚀 OPTIMISATION : useCallback pour handleSave
   // ============================================================================
+
   const handleSave = useCallback(async (silent = false) => {
     if (!id) return;
     if (!silent) setSaving(true);
+
+    // 1. Capture the CURRENT state of the UI (what the user sees right now)
     const currentViewData = { 
       budgetTitle, 
       currentYear, 
@@ -336,25 +339,47 @@ export default function BudgetComplete() {
       projectComments, 
       lockedMonths 
     };
+
+    // 2. Convert this "view state" into the "storage format" (YearlyData map)
     const formattedCurrent = convertNewFormatToOld(currentViewData as any);
-    const finalPayload = { ...globalDataRef.current };
+
+    // 3. Merge this into the Global Data Ref (to preserve other years)
+    // We clone the ref to avoid mutating it directly before we are sure
+    const finalPayload = JSON.parse(JSON.stringify(globalDataRef.current || {}));
+
+    // Ensure basic fields are present
     finalPayload.budgetTitle = budgetTitle;
     finalPayload.people = people;
     finalPayload.charges = charges;
     finalPayload.projects = projects;
     finalPayload.lastUpdated = new Date().toISOString();
     finalPayload.updatedBy = user?.name;
-    finalPayload.version = '2.2';
+    finalPayload.version = '2.3'; // Increment version to force update if needed
+
+    // Initialize containers if missing
     if (!finalPayload.yearlyData) finalPayload.yearlyData = {};
     if (!finalPayload.oneTimeIncomes) finalPayload.oneTimeIncomes = {};
+
+    // 4. CRITICAL: Explicitly save the CURRENT YEAR data into the global payload
+    // We take the data we just formatted and put it into the [currentYear] slot
     const sourceYearlyData = formattedCurrent.yearlyData || {};
     const sourceOneTime = formattedCurrent.oneTimeIncomes || {};
-    finalPayload.yearlyData[currentYear] = sourceYearlyData[currentYear];
-    finalPayload.oneTimeIncomes[currentYear] = sourceOneTime[currentYear];
+
+    if (sourceYearlyData[currentYear]) {
+        finalPayload.yearlyData[currentYear] = sourceYearlyData[currentYear];
+    }
+    if (sourceOneTime[currentYear]) {
+        finalPayload.oneTimeIncomes[currentYear] = sourceOneTime[currentYear];
+    }
+
     try {
+      // 5. Send to Backend
       await budgetAPI.updateData(id, { data: finalPayload });
+      
+      // 6. Update local refs to match what we just saved (sync source of truth)
       setLastServerUpdate(finalPayload.lastUpdated);
       globalDataRef.current = finalPayload;
+
       if (!silent) {
         toast({ 
           title: "Succès", 
