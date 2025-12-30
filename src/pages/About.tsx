@@ -232,11 +232,11 @@ export default function About() {
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <a 
-              href="mailto:contact@budgetfamille.com"
+              href="mailto:lovation.pro@gmail.com"
               className="inline-flex items-center gap-2 bg-primary text-white px-6 py-3 rounded-lg hover:bg-primary/90 font-medium transition"
             >
               <Mail className="h-5 w-5" />
-              contact@budgetfamille.com
+              lovation.pro@gmail.com
             </a>
           </div>
         </section>
