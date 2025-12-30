@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react'; // Added useCallback
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -38,6 +38,63 @@ import type {
   LockedMonths
 } from '@/utils/importConverter';
 
+// ============================================================================
+// 🚀 OPTIMIZATION: Debounced Input Component
+// prevents the entire table from re-rendering on every single keystroke
+// ============================================================================
+const DebouncedInput = ({ 
+    value, 
+    onChange, 
+    type = "text", 
+    className, 
+    placeholder, 
+    disabled 
+}: { 
+    value: string | number; 
+    onChange: (val: number) => void; 
+    type?: string; 
+    className?: string; 
+    placeholder?: string;
+    disabled?: boolean;
+}) => {
+    const [localValue, setLocalValue] = useState<string | number>(value);
+
+    // Sync local value if prop changes externally (e.g. year switch)
+    useEffect(() => {
+        setLocalValue(value);
+    }, [value]);
+
+    const handleBlur = () => {
+        const num = parseFloat(localValue.toString());
+        if (num !== value) {
+            onChange(isNaN(num) ? 0 : num);
+        }
+    };
+
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setLocalValue(e.target.value);
+    };
+
+    const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+        if (e.key === 'Enter') {
+            e.currentTarget.blur();
+        }
+    };
+
+    return (
+        <Input 
+            type={type}
+            value={localValue} 
+            onChange={handleChange} 
+            onBlur={handleBlur}
+            onKeyDown={handleKeyDown}
+            className={className} 
+            placeholder={placeholder}
+            disabled={disabled}
+        />
+    );
+};
+
 interface MonthlyTableProps {
   currentYear: number;
   people: Person[];
@@ -55,8 +112,6 @@ interface MonthlyTableProps {
   onMonthCommentsChange: (data: MonthComments) => void;
   onProjectCommentsChange: (data: ProjectComments) => void;
   onLockedMonthsChange: (data: LockedMonths) => void;
-  
-  // Navigation & Coherence Props
   onYearChange: (year: number) => void;
   projectCarryOvers?: Record<string, number>;
   customChargeTotalCalculator?: (monthIndex: number) => number;
@@ -71,34 +126,28 @@ const GENERAL_SAVINGS_ID = 'epargne';
 const isChargeActive = (charge: Charge, year: number, monthIndex: number): boolean => {
     const monthStart = new Date(year, monthIndex, 1);
     const monthEnd = new Date(year, monthIndex + 1, 0);
-
     if (charge.startDate) {
         const start = new Date(charge.startDate);
         if (start > monthEnd) return false;
     }
-
     if (charge.endDate) {
         const end = new Date(charge.endDate);
         if (end < monthStart) return false;
     }
-
     return true;
 };
 
 const isPersonActive = (person: Person, year: number, monthIndex: number): boolean => {
     const monthStart = new Date(year, monthIndex, 1);
     const monthEnd = new Date(year, monthIndex + 1, 0);
-
     if (person.startDate) {
         const start = new Date(person.startDate);
         if (start > monthEnd) return false;
     }
-
     if (person.endDate) {
         const end = new Date(person.endDate);
         if (end < monthStart) return false;
     }
-
     return true;
 };
 
@@ -127,7 +176,6 @@ export default function MonthlyTable({
   const [commentDialogOpen, setCommentDialogOpen] = useState(false);
   const [tempComment, setTempComment] = useState('');
   
-  // Visibility States
   const [visibleProjectIds, setVisibleProjectIds] = useState<string[]>([]);
   const [showIncome, setShowIncome] = useState(false); 
   const [showOneTime, setShowOneTime] = useState(false);
@@ -141,7 +189,7 @@ export default function MonthlyTable({
     });
   }, [projects.length]);
 
-  // --- Calculations (FIXED: Now considers person dates) ---
+  // --- Calculations ---
   const getMonthlyBaseIncome = (monthIndex: number) => {
     return people.reduce((sum, person) => {
       if (!isPersonActive(person, currentYear, monthIndex)) {
@@ -182,7 +230,6 @@ export default function MonthlyTable({
 
   const getCumulativeProjectTotal = (projectId: string, upToMonthIndex: number) => {
     let total = projectCarryOvers[projectId] || 0;
-    
     for (let i = 0; i <= upToMonthIndex; i++) {
       const monthName = MONTHS[i];
       const allocation = yearlyData[monthName]?.[projectId] || 0;
@@ -194,7 +241,6 @@ export default function MonthlyTable({
 
   const getCumulativeGeneralSavings = (upToMonthIndex: number) => {
     let total = projectCarryOvers[GENERAL_SAVINGS_ID] || 0;
-    
     for (let i = 0; i <= upToMonthIndex; i++) {
       const monthName = MONTHS[i];
       const allocation = getGeneralSavingsAllocation(monthName, i);
@@ -205,25 +251,24 @@ export default function MonthlyTable({
   };
 
   // --- Updates ---
-  const updateAllocation = (month: string, projectId: string, amount: number) => {
-    const newYearlyData = {
+  // Using useCallback to ensure stability
+  const updateAllocation = useCallback((month: string, projectId: string, amount: number) => {
+    onYearlyDataChange({
       ...yearlyData,
       [month]: { ...(yearlyData[month] || {}), [projectId]: amount },
-    };
-    onYearlyDataChange(newYearlyData);
-  };
+    });
+  }, [yearlyData, onYearlyDataChange]);
 
-  const updateExpense = (month: string, projectId: string, amount: number) => {
-    const newExpensesData = {
+  const updateExpense = useCallback((month: string, projectId: string, amount: number) => {
+    onYearlyExpensesChange({
       ...yearlyExpenses,
       [month]: { ...(yearlyExpenses[month] || {}), [projectId]: amount },
-    };
-    onYearlyExpensesChange(newExpensesData);
-  };
+    });
+  }, [yearlyExpenses, onYearlyExpensesChange]);
 
-  const updateOneTimeIncome = (month: string, amount: number) => {
+  const updateOneTimeIncome = useCallback((month: string, amount: number) => {
     onOneTimeIncomesChange({ ...oneTimeIncomes, [month]: amount });
-  };
+  }, [oneTimeIncomes, onOneTimeIncomesChange]);
 
   const updateProjectComment = (month: string, projectId: string, comment: string) => {
     const newComments = {
@@ -275,27 +320,14 @@ export default function MonthlyTable({
                     <span className="hidden sm:inline">Tableau de Gestion</span>
                 </CardTitle>
                 
-                {/* Year Navigation */}
                 <div className="flex items-center gap-1 bg-background rounded-lg border p-0.5">
-                    <Button 
-                        variant="ghost" 
-                        size="icon-sm" 
-                        className="h-6 w-6" 
-                        onClick={() => onYearChange(currentYear - 1)}
-                        title="Année précédente"
-                    >
+                    <Button variant="ghost" size="icon-sm" className="h-6 w-6" onClick={() => onYearChange(currentYear - 1)} title="Année précédente">
                         <ChevronLeft className="h-3 w-3" />
                     </Button>
                     <Badge variant="secondary" className="h-6 px-2 font-mono text-xs">
                         {currentYear}
                     </Badge>
-                    <Button 
-                        variant="ghost" 
-                        size="icon-sm" 
-                        className="h-6 w-6" 
-                        onClick={() => onYearChange(currentYear + 1)}
-                        title="Année suivante"
-                    >
+                    <Button variant="ghost" size="icon-sm" className="h-6 w-6" onClick={() => onYearChange(currentYear + 1)} title="Année suivante">
                         <ChevronRight className="h-3 w-3" />
                     </Button>
                 </div>
@@ -313,24 +345,14 @@ export default function MonthlyTable({
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-64">
                     <DropdownMenuLabel>Colonnes Standards</DropdownMenuLabel>
-                    <DropdownMenuCheckboxItem checked={showIncome} onCheckedChange={setShowIncome} onSelect={(e) => e.preventDefault()}>
-                        Revenus (Salaires)
-                    </DropdownMenuCheckboxItem>
-                    <DropdownMenuCheckboxItem checked={showOneTime} onCheckedChange={setShowOneTime} onSelect={(e) => e.preventDefault()}>
-                        Revenus (Ponctuels)
-                    </DropdownMenuCheckboxItem>
-                    <DropdownMenuCheckboxItem checked={showCharges} onCheckedChange={setShowCharges} onSelect={(e) => e.preventDefault()}>
-                        Charges Fixes
-                    </DropdownMenuCheckboxItem>
+                    <DropdownMenuCheckboxItem checked={showIncome} onCheckedChange={setShowIncome} onSelect={(e) => e.preventDefault()}>Revenus (Salaires)</DropdownMenuCheckboxItem>
+                    <DropdownMenuCheckboxItem checked={showOneTime} onCheckedChange={setShowOneTime} onSelect={(e) => e.preventDefault()}>Revenus (Ponctuels)</DropdownMenuCheckboxItem>
+                    <DropdownMenuCheckboxItem checked={showCharges} onCheckedChange={setShowCharges} onSelect={(e) => e.preventDefault()}>Charges Fixes</DropdownMenuCheckboxItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuLabel>Projets</DropdownMenuLabel>
                     <div className="p-2 flex gap-2">
-                        <Button variant="ghost" size="sm" className="flex-1 h-7 text-xs bg-muted/50" onClick={(e) => { e.preventDefault(); showAllProjects(); }}>
-                            <CheckSquare className="h-3 w-3 mr-1" /> Tout
-                        </Button>
-                        <Button variant="ghost" size="sm" className="flex-1 h-7 text-xs bg-muted/50" onClick={(e) => { e.preventDefault(); hideAllProjects(); }}>
-                            <Square className="h-3 w-3 mr-1" /> Aucun
-                        </Button>
+                        <Button variant="ghost" size="sm" className="flex-1 h-7 text-xs bg-muted/50" onClick={(e) => { e.preventDefault(); showAllProjects(); }}><CheckSquare className="h-3 w-3 mr-1" /> Tout</Button>
+                        <Button variant="ghost" size="sm" className="flex-1 h-7 text-xs bg-muted/50" onClick={(e) => { e.preventDefault(); hideAllProjects(); }}><Square className="h-3 w-3 mr-1" /> Aucun</Button>
                     </div>
                     <div className="max-h-[200px] overflow-y-auto">
                         {standardProjects.map((project) => (
@@ -369,7 +391,7 @@ export default function MonthlyTable({
                     </th>
                   ))}
                   <th className="px-2 py-3 text-center font-bold text-primary bg-primary/5 border-b border-border min-w-[160px]">
-                     <div className="flex flex-col items-center gap-1">
+                      <div className="flex flex-col items-center gap-1">
                         <span>Épargne Générale</span>
                         <div className="grid grid-cols-2 gap-1 w-full text-[9px] font-normal text-primary/70 bg-primary/10 rounded px-1 py-0.5">
                             <span>Auto</span><span>Dépensé</span>
@@ -408,7 +430,15 @@ export default function MonthlyTable({
                       {showIncome && <td className="px-2 py-2 text-center bg-success/5 font-medium text-success border-r border-dashed border-border/50">+{baseIncome.toLocaleString()} €</td>}
                       {showOneTime && (
                         <td className="px-2 py-2 bg-success/5 border-r border-dashed border-border/50">
-                            <Input type="number" min="0" value={oneTimeIncomes[month] || ''} onChange={(e) => updateOneTimeIncome(month, parseFloat(e.target.value) || 0)} disabled={isLocked} className={cn("text-center h-7 text-xs font-medium border-success/20 focus-visible:ring-success/30 bg-background hover:bg-white shadow-sm p-1", oneTimeIncomes[month] ? "text-success font-bold" : "text-muted-foreground", isLocked && "opacity-50 cursor-not-allowed")} placeholder="-" />
+                            {/* 🔥 DEBOUNCED INPUT */}
+                            <DebouncedInput 
+                                type="number" 
+                                value={oneTimeIncomes[month] || ''} 
+                                onChange={(val) => updateOneTimeIncome(month, val)} 
+                                disabled={isLocked} 
+                                className={cn("text-center h-7 text-xs font-medium border-success/20 focus-visible:ring-success/30 bg-background hover:bg-white shadow-sm p-1", oneTimeIncomes[month] ? "text-success font-bold" : "text-muted-foreground", isLocked && "opacity-50 cursor-not-allowed")} 
+                                placeholder="-" 
+                            />
                         </td>
                       )}
                       {showCharges && <td className="px-2 py-2 text-center bg-destructive/5 font-medium text-destructive border-r border-dashed border-border/50">-{chargesTotal.toLocaleString()} €</td>}
@@ -422,8 +452,24 @@ export default function MonthlyTable({
                           <td key={project.id} className="px-1 py-2 border-r border-dashed border-border/50">
                             <div className="flex flex-col gap-1">
                               <div className="flex items-center gap-1">
-                                <Input type="number" min="0" value={allocation || ''} onChange={(e) => updateAllocation(month, project.id, parseFloat(e.target.value) || 0)} disabled={isLocked} className={cn("text-center h-7 text-xs px-1 font-medium bg-background border-primary/20 focus-visible:ring-primary/30 shadow-sm", allocation > 0 && "text-primary font-bold bg-primary/5", isLocked && "opacity-50")} placeholder="0" />
-                                <Input type="number" min="0" value={expense || ''} onChange={(e) => updateExpense(month, project.id, parseFloat(e.target.value) || 0)} disabled={isLocked} className={cn("text-center h-7 text-xs px-1 font-medium bg-background border-destructive/20 focus-visible:ring-destructive/30 shadow-sm", expense > 0 && "text-destructive font-bold bg-destructive/5", isLocked && "opacity-50")} placeholder="0" />
+                                {/* 🔥 DEBOUNCED INPUT */}
+                                <DebouncedInput 
+                                    type="number" 
+                                    value={allocation || ''} 
+                                    onChange={(val) => updateAllocation(month, project.id, val)} 
+                                    disabled={isLocked} 
+                                    className={cn("text-center h-7 text-xs px-1 font-medium bg-background border-primary/20 focus-visible:ring-primary/30 shadow-sm", allocation > 0 && "text-primary font-bold bg-primary/5", isLocked && "opacity-50")} 
+                                    placeholder="0" 
+                                />
+                                {/* 🔥 DEBOUNCED INPUT */}
+                                <DebouncedInput 
+                                    type="number" 
+                                    value={expense || ''} 
+                                    onChange={(val) => updateExpense(month, project.id, val)} 
+                                    disabled={isLocked} 
+                                    className={cn("text-center h-7 text-xs px-1 font-medium bg-background border-destructive/20 focus-visible:ring-destructive/30 shadow-sm", expense > 0 && "text-destructive font-bold bg-destructive/5", isLocked && "opacity-50")} 
+                                    placeholder="0" 
+                                />
                               </div>
                               <div className="flex items-center justify-between px-0.5">
                                 <div className="text-[10px] text-muted-foreground flex items-center gap-0.5 bg-muted/30 px-1 py-0 rounded" title="Total Cumulé (incluant années précédentes)">
@@ -444,7 +490,15 @@ export default function MonthlyTable({
                         <div className="flex flex-col gap-1">
                             <div className="flex items-center gap-1">
                                 <Input type="text" value={`${genSavingsAllocation.toLocaleString()} €`} disabled className="text-center h-7 text-xs px-1 font-bold bg-primary/10 border-primary/20 text-primary cursor-default shadow-none" />
-                                <Input type="number" min="0" value={genSavingsExpense || ''} onChange={(e) => updateExpense(month, GENERAL_SAVINGS_ID, parseFloat(e.target.value) || 0)} disabled={isLocked} className={cn("text-center h-7 text-xs px-1 font-medium bg-background border-destructive/20 focus-visible:ring-destructive/30 shadow-sm", genSavingsExpense > 0 && "text-destructive font-bold bg-destructive/5", isLocked && "opacity-50")} placeholder="0" />
+                                {/* 🔥 DEBOUNCED INPUT */}
+                                <DebouncedInput 
+                                    type="number" 
+                                    value={genSavingsExpense || ''} 
+                                    onChange={(val) => updateExpense(month, GENERAL_SAVINGS_ID, val)} 
+                                    disabled={isLocked} 
+                                    className={cn("text-center h-7 text-xs px-1 font-medium bg-background border-destructive/20 focus-visible:ring-destructive/30 shadow-sm", genSavingsExpense > 0 && "text-destructive font-bold bg-destructive/5", isLocked && "opacity-50")} 
+                                    placeholder="0" 
+                                />
                             </div>
                             <div className="flex items-center justify-between px-0.5">
                                 <div className="text-[10px] text-muted-foreground flex items-center gap-0.5 bg-muted/30 px-1 py-0 rounded"><span>∑</span><span className={genSavingsCumulative >= 0 ? "text-success font-medium" : "text-destructive font-medium"}>{genSavingsCumulative.toLocaleString()} €</span></div>

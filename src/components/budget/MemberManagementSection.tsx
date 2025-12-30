@@ -82,9 +82,9 @@ export default function MemberManagementSection({
   useEffect(() => {
     loadInvitations();
     const interval = setInterval(() => {
-        loadInvitations();
-        onMemberChange(); 
-    }, 5000); 
+          loadInvitations();
+          onMemberChange(); 
+      }, 60000);
 
     return () => clearInterval(interval);
   }, []);
