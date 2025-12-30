@@ -16,6 +16,10 @@ import VerifyEmail from './pages/VerifyEmail';
 import Beta2Page from './pages/Beta2Page'; // Enable Banking
 import EnableBankingCallbackPage from './pages/EnableBankingCallbackPage';
 import PremiumPage from './pages/PremiumPage';
+import Terms from './pages/Terms';
+import Features from './pages/Features';
+import About from './pages/About';
+import Help from './pages/Help';
 
 export default function App() {
   return (
@@ -58,6 +62,10 @@ export default function App() {
         <Route path="/404" element={<NotFound />} />
         <Route path="*" element={<Navigate to="/404" replace />} />
         <Route path="/verify-email" element={<VerifyEmail />} />
+        <Route path="/terms" element={<Terms />} />
+        <Route path="/features" element={<Features />} />
+        <Route path="/about" element={<About />} />
+        <Route path="/help" element={<Help />} />
       </Routes>
 
       {/* Ce composant est indispensable pour les notifications */}

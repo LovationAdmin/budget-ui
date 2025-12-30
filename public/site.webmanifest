@@ -1,8 +1,9 @@
 {
   "name": "Budget Famille",
   "short_name": "Budget Famille",
-  "description": "Application de gestion de budget familial",
+  "description": "Application de gestion de budget familial collaborative avec synchronisation en temps réel",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#667eea",
@@ -26,6 +27,67 @@
       "purpose": "any maskable"
     }
   ],
-  "categories": ["finance", "productivity"],
-  "lang": "fr"
+  "screenshots": [
+    {
+      "src": "/screenshots/dashboard.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Dashboard principal avec vue d'ensemble"
+    },
+    {
+      "src": "/screenshots/mobile.png",
+      "sizes": "750x1334",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Interface mobile responsive"
+    }
+  ],
+  "categories": ["finance", "productivity", "lifestyle"],
+  "lang": "fr",
+  "dir": "ltr",
+  "shortcuts": [
+    {
+      "name": "Nouveau Budget",
+      "short_name": "Créer",
+      "description": "Créer un nouveau budget familial",
+      "url": "/?action=create",
+      "icons": [
+        {
+          "src": "/icons/shortcut-create.png",
+          "sizes": "96x96",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Mes Budgets",
+      "short_name": "Budgets",
+      "description": "Voir tous mes budgets",
+      "url": "/",
+      "icons": [
+        {
+          "src": "/icons/shortcut-list.png",
+          "sizes": "96x96",
+          "type": "image/png"
+        }
+      ]
+    }
+  ],
+  "related_applications": [],
+  "prefer_related_applications": false,
+  "iarc_rating_id": "",
+  "share_target": {
+    "action": "/share",
+    "method": "GET",
+    "params": {
+      "title": "title",
+      "text": "text",
+      "url": "url"
+    }
+  },
+  "display_override": ["window-controls-overlay", "standalone", "minimal-ui"],
+  "edge_side_panel": {
+    "preferred_width": 400
+  }
 }

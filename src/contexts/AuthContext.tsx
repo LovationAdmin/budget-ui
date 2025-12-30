@@ -1,5 +1,16 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { authAPI, User } from '../services/api';
+// src/contexts/AuthContext.tsx - VERSION OPTIMISÉE
+import { createContext, useContext, useState, useEffect, ReactNode, useMemo, useCallback } from 'react';
+import { authAPI } from '../services/api';
+
+export interface User {
+  id: string;
+  name: string;
+  email: string;
+  avatar?: string;
+  country?: string;
+  postal_code?: string;
+  created_at: string;
+}
 
 interface AuthContextType {
   user: User | null;
@@ -7,7 +18,7 @@ interface AuthContextType {
   signup: (name: string, email: string, password: string) => Promise<{ success: boolean; error?: string }>;
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => void;
-  updateUser: (updates: Partial<User>) => void; // ✅ NEW: Sync user state
+  updateUser: (updates: Partial<User>) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -28,6 +39,9 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // ============================================================================
+  // 🚀 OPTIMISATION : Chargement initial avec useEffect
+  // ============================================================================
   useEffect(() => {
     const token = localStorage.getItem('token');
     const userData = localStorage.getItem('user');
@@ -44,7 +58,11 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     setLoading(false);
   }, []);
 
-  const signup = async (name: string, email: string, password: string) => {
+  // ============================================================================
+  // 🚀 OPTIMISATION : useCallback pour éviter la recréation des fonctions
+  // ============================================================================
+
+  const signup = useCallback(async (name: string, email: string, password: string) => {
     try {
       const response = await authAPI.signup({ name, email, password });
       const { token, user: userData } = response.data;
@@ -60,9 +78,9 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         error: error.response?.data?.error || 'Erreur lors de l\'inscription' 
       };
     }
-  };
+  }, []);
 
-  const login = async (email: string, password: string) => {
+  const login = useCallback(async (email: string, password: string) => {
     try {
       const response = await authAPI.login({ email, password });
       const { token, user: userData } = response.data;
@@ -78,27 +96,38 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         error: error.response?.data?.error || 'Identifiants invalides' 
       };
     }
-  };
+  }, []);
 
-  const logout = () => {
+  const logout = useCallback(() => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     setUser(null);
-  };
+  }, []);
+
+  const updateUser = useCallback((updates: Partial<User>) => {
+    setUser(prevUser => {
+      if (!prevUser) return null;
+      
+      const updatedUser = { ...prevUser, ...updates };
+      localStorage.setItem('user', JSON.stringify(updatedUser));
+      return updatedUser;
+    });
+  }, []);
 
   // ============================================================================
-  // ✅ NEW: Update user state AND localStorage in sync
+  // 🚀 OPTIMISATION : useMemo pour éviter la recréation du contexte
   // ============================================================================
-  const updateUser = (updates: Partial<User>) => {
-    if (user) {
-      const updatedUser = { ...user, ...updates };
-      localStorage.setItem('user', JSON.stringify(updatedUser));
-      setUser(updatedUser);
-    }
-  };
+  const contextValue = useMemo(() => ({
+    user,
+    loading,
+    signup,
+    login,
+    logout,
+    updateUser
+  }), [user, loading, signup, login, logout, updateUser]);
 
   return (
-    <AuthContext.Provider value={{ user, signup, login, logout, loading, updateUser }}>
+    <AuthContext.Provider value={contextValue}>
       {children}
     </AuthContext.Provider>
   );

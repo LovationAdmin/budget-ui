@@ -1,0 +1,83 @@
+<svg width="750" height="1334" viewBox="0 0 750 1334" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <defs>
+    <linearGradient id="mobile-bg" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#EEF2FF;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#F3E8FF;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="mobile-primary" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#667eea;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#764ba2;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <rect width="750" height="1334" fill="url(#mobile-bg)"/>
+  
+  <!-- Status bar area (iOS style) -->
+  <rect x="0" y="0" width="750" height="44" fill="#1F2937" opacity="0.05"/>
+  
+  <!-- Header -->
+  <rect x="0" y="44" width="750" height="80" fill="white" opacity="0.95"/>
+  
+  <!-- Logo and title -->
+  <rect x="30" y="64" width="50" height="50" rx="12" fill="url(#mobile-primary)"/>
+  <text x="100" y="100" font-family="Arial, sans-serif" font-size="24" font-weight="bold" fill="#1F2937">Budget Famille</text>
+  
+  <!-- Welcome section -->
+  <rect x="30" y="154" width="690" height="140" rx="16" fill="white" opacity="0.95"/>
+  <text x="50" y="194" font-family="Arial, sans-serif" font-size="28" font-weight="bold" fill="#1F2937">Bonjour 👋</text>
+  <rect x="50" y="210" width="300" height="16" rx="8" fill="#E5E7EB"/>
+  <rect x="50" y="240" width="250" height="14" rx="7" fill="#E5E7EB"/>
+  
+  <!-- Quick stats -->
+  <g>
+    <!-- Revenue card -->
+    <rect x="30" y="324" width="690" height="120" rx="16" fill="url(#mobile-primary)" opacity="0.9"/>
+    <text x="50" y="364" font-family="Arial, sans-serif" font-size="18" fill="white" opacity="0.9">Revenus du mois</text>
+    <text x="50" y="410" font-family="Arial, sans-serif" font-size="42" font-weight="bold" fill="white">3 500 €</text>
+    
+    <!-- Expenses card -->
+    <rect x="30" y="464" width="335" height="100" rx="16" fill="#10B981" opacity="0.9"/>
+    <text x="50" y="500" font-family="Arial, sans-serif" font-size="16" fill="white" opacity="0.9">Dépenses</text>
+    <text x="50" y="540" font-family="Arial, sans-serif" font-size="32" font-weight="bold" fill="white">2 800 €</text>
+    
+    <!-- Savings card -->
+    <rect x="385" y="464" width="335" height="100" rx="16" fill="#F59E0B" opacity="0.9"/>
+    <text x="405" y="500" font-family="Arial, sans-serif" font-size="16" fill="white" opacity="0.9">Épargne</text>
+    <text x="405" y="540" font-family="Arial, sans-serif" font-size="32" font-weight="bold" fill="white">700 €</text>
+  </g>
+  
+  <!-- Budgets section header -->
+  <text x="30" y="620" font-family="Arial, sans-serif" font-size="24" font-weight="bold" fill="#1F2937">Mes Budgets</text>
+  
+  <!-- Budget cards -->
+  <rect x="30" y="650" width="690" height="140" rx="16" fill="white" opacity="0.95"/>
+  <circle cx="70" cy="700" r="28" fill="#EEF2FF"/>
+  <rect x="120" y="685" width="200" height="18" rx="9" fill="#1F2937"/>
+  <rect x="120" y="715" width="300" height="14" rx="7" fill="#E5E7EB"/>
+  <rect x="120" y="740" width="250" height="14" rx="7" fill="#E5E7EB"/>
+  
+  <rect x="30" y="810" width="690" height="140" rx="16" fill="white" opacity="0.95"/>
+  <circle cx="70" cy="860" r="28" fill="#EEF2FF"/>
+  <rect x="120" y="845" width="180" height="18" rx="9" fill="#1F2937"/>
+  <rect x="120" y="875" width="280" height="14" rx="7" fill="#E5E7EB"/>
+  <rect x="120" y="900" width="230" height="14" rx="7" fill="#E5E7EB"/>
+  
+  <rect x="30" y="970" width="690" height="140" rx="16" fill="white" opacity="0.95"/>
+  <circle cx="70" cy="1020" r="28" fill="#EEF2FF"/>
+  <rect x="120" y="1005" width="220" height="18" rx="9" fill="#1F2937"/>
+  <rect x="120" y="1035" width="260" height="14" rx="7" fill="#E5E7EB"/>
+  <rect x="120" y="1060" width="200" height="14" rx="7" fill="#E5E7EB"/>
+  
+  <!-- Bottom navigation -->
+  <rect x="0" y="1234" width="750" height="100" fill="white" opacity="0.98"/>
+  
+  <!-- Nav icons -->
+  <circle cx="150" cy="1270" r="24" fill="url(#mobile-primary)"/>
+  <circle cx="300" cy="1270" r="24" fill="#E5E7EB"/>
+  <circle cx="450" cy="1270" r="24" fill="#E5E7EB"/>
+  <circle cx="600" cy="1270" r="24" fill="#E5E7EB"/>
+  
+  <!-- Watermark -->
+  <text x="375" y="1320" font-family="Arial, sans-serif" font-size="12" fill="#9CA3AF" text-anchor="middle">Budget Famille Mobile</text>
+</svg>

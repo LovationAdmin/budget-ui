@@ -1,8 +1,10 @@
+// src/components/budget/MemberAvatar.tsx - VERSION OPTIMISÉE
+import { memo } from "react";
 import { cn } from "@/lib/utils";
 
 interface MemberAvatarProps {
   name: string;
-  image?: string; // Can be URL, Base64, or Gradient CSS
+  image?: string;
   size?: "sm" | "md" | "lg";
   showRing?: boolean;
   className?: string;
@@ -39,14 +41,19 @@ function getColorIndex(name: string): number {
   return Math.abs(hash) % colors.length;
 }
 
-export function MemberAvatar({
+// ============================================================================
+// 🚀 OPTIMISATION : React.memo pour MemberAvatar
+// ============================================================================
+// Ce composant est utilisé partout (BudgetNavbar, listes de membres, etc.)
+// React.memo évite les re-renders inutiles quand les props ne changent pas
+
+export const MemberAvatar = memo(function MemberAvatar({
   name,
   image,
   size = "md",
   showRing = false,
   className,
 }: MemberAvatarProps) {
-  // Logic to determine if 'image' is a CSS gradient or a real image
   const isGradient = image?.startsWith("linear-gradient");
   const isRealImage = image && !isGradient;
 
@@ -70,27 +77,40 @@ export function MemberAvatar({
     );
   }
 
-  // 2. Render Gradient (Custom Preset) or Default Hash
+  // 2. Render Gradient or Default Hash
   const colorClass = !image ? colors[getColorIndex(name)] : "";
   
   return (
     <div
       className={cn(
         "relative flex items-center justify-center rounded-full font-medium text-primary-foreground shadow-soft",
-        // Only apply default bg-gradient class if no custom gradient is provided
         !isGradient && "bg-gradient-to-br",
         !isGradient && colorClass,
         sizeClasses[size],
         showRing && "ring-2 ring-primary/30 ring-offset-2 ring-offset-background",
         className
       )}
-      // Apply custom gradient directly to style
       style={isGradient ? { background: image } : undefined}
     >
       {getInitials(name)}
     </div>
   );
-}
+}, (prevProps, nextProps) => {
+  // Comparaison personnalisée : ne re-render que si les props changent vraiment
+  return (
+    prevProps.name === nextProps.name &&
+    prevProps.image === nextProps.image &&
+    prevProps.size === nextProps.size &&
+    prevProps.showRing === nextProps.showRing &&
+    prevProps.className === nextProps.className
+  );
+});
+
+MemberAvatar.displayName = 'MemberAvatar';
+
+// ============================================================================
+// 🚀 OPTIMISATION : React.memo pour MemberAvatarGroup
+// ============================================================================
 
 interface MemberAvatarGroupProps {
   members: { name: string; image?: string }[];
@@ -98,7 +118,7 @@ interface MemberAvatarGroupProps {
   size?: "sm" | "md" | "lg";
 }
 
-export function MemberAvatarGroup({
+export const MemberAvatarGroup = memo(function MemberAvatarGroup({
   members,
   max = 4,
   size = "md",
@@ -110,7 +130,7 @@ export function MemberAvatarGroup({
     <div className="flex -space-x-2">
       {visibleMembers.map((member, index) => (
         <MemberAvatar
-          key={index}
+          key={`${member.name}-${index}`}
           name={member.name}
           image={member.image}
           size={size}
@@ -129,4 +149,23 @@ export function MemberAvatarGroup({
       )}
     </div>
   );
-}
+}, (prevProps, nextProps) => {
+  // Comparaison shallow pour la liste de membres
+  if (prevProps.members.length !== nextProps.members.length) return false;
+  if (prevProps.max !== nextProps.max) return false;
+  if (prevProps.size !== nextProps.size) return false;
+  
+  // Comparer chaque membre
+  for (let i = 0; i < prevProps.members.length; i++) {
+    if (
+      prevProps.members[i].name !== nextProps.members[i].name ||
+      prevProps.members[i].image !== nextProps.members[i].image
+    ) {
+      return false;
+    }
+  }
+  
+  return true;
+});
+
+MemberAvatarGroup.displayName = 'MemberAvatarGroup';

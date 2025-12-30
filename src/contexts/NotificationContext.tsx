@@ -1,4 +1,5 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+// src/contexts/NotificationContext.tsx - VERSION OPTIMISÉE
+import { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
 import { budgetAPI } from '../services/api';
 import { useAuth } from './AuthContext';
 import type { RawBudgetData } from '../utils/importConverter';
@@ -17,6 +18,8 @@ interface NotificationContextType {
   unreadCount: number;
   markAsRead: (id: string) => void;
   markAllAsRead: () => void;
+  connectToBudget: (budgetId: string, budgetName: string) => void;
+  disconnectFromBudget: () => void;
 }
 
 const NotificationContext = createContext<NotificationContextType | undefined>(undefined);
@@ -29,88 +32,121 @@ export const useNotifications = () => {
   return context;
 };
 
-// Check for updates every 60 seconds
-const POLLING_INTERVAL = 60000;
+// ============================================================================
+// 🚀 VERSION OPTIMISÉE : WebSocket au lieu de polling
+// ============================================================================
 
 export const NotificationProvider = ({ children }: { children: ReactNode }) => {
   const { user } = useAuth();
   const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [lastKnownUpdates, setLastKnownUpdates] = useState<Record<string, string>>({});
+  const [activeWebSocket, setActiveWebSocket] = useState<WebSocket | null>(null);
+  const [connectedBudgetId, setConnectedBudgetId] = useState<string | null>(null);
+
+  // ============================================================================
+  // WebSocket Connection Management
+  // ============================================================================
+
+  const connectToBudget = useCallback((budgetId: string, budgetName: string) => {
+    // Fermer la connexion existante si présente
+    if (activeWebSocket) {
+      activeWebSocket.close();
+    }
+
+    const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api/v1';
+    const wsUrl = API_URL.replace(/^http/, 'ws');
+    
+    try {
+      const ws = new WebSocket(`${wsUrl}/ws/budgets/${budgetId}`);
+      
+      ws.onopen = () => {
+        console.log(`✅ [Notifications] WebSocket connecté au budget ${budgetId}`);
+        setConnectedBudgetId(budgetId);
+      };
+
+      ws.onmessage = (event) => {
+        try {
+          const message = JSON.parse(event.data);
+          
+          // Ne créer une notification que si l'update vient d'un autre utilisateur
+          if (message.type === 'budget_updated' && message.user !== user?.name) {
+            const newNotification: Notification = {
+              id: `${Date.now()}-${budgetId}`,
+              budgetId,
+              budgetName,
+              updatedBy: message.user,
+              timestamp: new Date().toISOString(),
+              isRead: false
+            };
+
+            setNotifications(prev => [newNotification, ...prev]);
+          }
+        } catch (error) {
+          console.error('❌ [Notifications] Erreur parsing message:', error);
+        }
+      };
+
+      ws.onerror = (error) => {
+        console.error('❌ [Notifications] WebSocket erreur:', error);
+      };
+
+      ws.onclose = () => {
+        console.log('🔌 [Notifications] WebSocket fermé');
+        setConnectedBudgetId(null);
+      };
+
+      setActiveWebSocket(ws);
+    } catch (error) {
+      console.error('❌ [Notifications] Erreur création WebSocket:', error);
+    }
+  }, [user, activeWebSocket]);
+
+  const disconnectFromBudget = useCallback(() => {
+    if (activeWebSocket) {
+      activeWebSocket.close();
+      setActiveWebSocket(null);
+      setConnectedBudgetId(null);
+    }
+  }, [activeWebSocket]);
+
+  // ============================================================================
+  // Cleanup on unmount
+  // ============================================================================
 
   useEffect(() => {
-    // SECURITY CHECK: Don't poll if no user
-    if (!user || !user.id) return;
-
-    const checkUpdates = async () => {
-      try {
-        const listRes = await budgetAPI.list();
-        // SAFEGUARD: FORCE ARRAY
-        const budgets = Array.isArray(listRes.data) ? listRes.data : [];
-
-        for (const budget of budgets) {
-          if (!budget || !budget.id) continue;
-
-          // Check against Safe Array
-          const hasUnread = Array.isArray(notifications) && notifications.some(n => n.budgetId === budget.id && !n.isRead);
-          if (hasUnread) continue;
-
-          const localLastUpdate = lastKnownUpdates[budget.id];
-          
-          if (!localLastUpdate) {
-            setLastKnownUpdates(prev => ({ ...prev, [budget.id]: budget.created_at }));
-            continue;
-          }
-
-          try {
-            const dataRes = await budgetAPI.getData(budget.id);
-            const rawData: RawBudgetData = dataRes.data.data;
-            
-            // Check if object and lastUpdated exists
-            if (rawData && rawData.lastUpdated && rawData.lastUpdated > localLastUpdate) {
-                const updatedByName = rawData.updatedBy || "Un membre";
-                
-                if (updatedByName !== user.name) {
-                    const newNotification: Notification = {
-                        id: Date.now().toString() + budget.id,
-                        budgetId: budget.id,
-                        budgetName: budget.name,
-                        updatedBy: updatedByName,
-                        timestamp: new Date().toISOString(),
-                        isRead: false
-                    };
-
-                    setNotifications(prev => [newNotification, ...(Array.isArray(prev) ? prev : [])]);
-                }
-
-                setLastKnownUpdates(prev => ({ ...prev, [budget.id]: rawData.lastUpdated || new Date().toISOString() }));
-            }
-          } catch (err) {
-            // Warn but don't crash
-            console.warn("Skipping budget update check for", budget.id);
-          }
-        }
-      } catch (error) {
-        console.warn("Notification polling failed", error);
+    return () => {
+      if (activeWebSocket) {
+        activeWebSocket.close();
       }
     };
+  }, [activeWebSocket]);
 
-    checkUpdates();
-    const interval = setInterval(checkUpdates, POLLING_INTERVAL);
-    return () => clearInterval(interval);
-  }, [user, lastKnownUpdates]); // removed 'notifications' to avoid loop
+  // ============================================================================
+  // Notification Actions
+  // ============================================================================
 
   const markAsRead = (id: string) => {
-    setNotifications(prev => (Array.isArray(prev) ? prev.map(n => n.id === id ? { ...n, isRead: true } : n) : []));
+    setNotifications(prev => 
+      prev.map(n => n.id === id ? { ...n, isRead: true } : n)
+    );
   };
 
   const markAllAsRead = () => {
-    setNotifications(prev => (Array.isArray(prev) ? prev.map(n => ({ ...n, isRead: true })) : []));
+    setNotifications(prev => 
+      prev.map(n => ({ ...n, isRead: true }))
+    );
   };
 
-  const unreadCount = Array.isArray(notifications) ? notifications.filter(n => !n.isRead).length : 0;
+  const unreadCount = notifications.filter(n => !n.isRead).length;
 
   return (
-    <NotificationContext.Provider value={{ notifications, unreadCount, markAsRead, markAllAsRead }}>
+    <NotificationContext.Provider value={{ 
+      notifications, 
+      unreadCount, 
+      markAsRead, 
+      markAllAsRead,
+      connectToBudget,
+      disconnectFromBudget
+    }}>
       {children}
     </NotificationContext.Provider>
   );

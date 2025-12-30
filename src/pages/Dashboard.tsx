@@ -1,13 +1,15 @@
+// src/pages/Dashboard.tsx - VERSION OPTIMISÉE
 import { BudgetNavbar } from '@/components/budget/BudgetNavbar';
 import { EmptyState } from '@/components/budget/EmptyState';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, memo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { PiggyBank, Plus, ArrowRight, Trash2, Loader2, FlaskConical } from "lucide-react";
+import { PiggyBank, Plus, ArrowRight, Trash2, Loader2 } from "lucide-react";
 import { budgetAPI } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { MemberAvatarGroup } from '../components/budget/MemberAvatar';
 import { Button } from '../components/ui/button';
+import { Skeleton } from '../components/ui/skeleton';
 import { Footer } from '@/components/Footer';
 import {
   Dialog,
@@ -43,6 +45,123 @@ interface Budget {
   }>;
 }
 
+// ============================================================================
+// 🚀 OPTIMISATION 1 : Skeleton Loading Component
+// ============================================================================
+const BudgetListSkeleton = memo(function BudgetListSkeleton() {
+  return (
+    <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+      {[1, 2, 3].map((i) => (
+        <div key={i} className="group rounded-2xl border border-border bg-card p-6 shadow-card transition-all">
+          <div className="flex items-start justify-between mb-4">
+            <div className="flex-1">
+              <Skeleton className="h-6 w-3/4 mb-2" />
+              <Skeleton className="h-4 w-1/2" />
+            </div>
+            <Skeleton className="h-10 w-10 rounded-full" />
+          </div>
+          
+          <div className="flex items-center justify-between pt-4 border-t border-border/50">
+            <div className="flex -space-x-2">
+              <Skeleton className="h-8 w-8 rounded-full" />
+              <Skeleton className="h-8 w-8 rounded-full" />
+            </div>
+            <Skeleton className="h-9 w-24 rounded-xl" />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+});
+
+// ============================================================================
+// 🚀 OPTIMISATION 2 : Budget Card Component mémoïsé
+// ============================================================================
+interface BudgetCardProps {
+  budget: Budget;
+  onOpen: (id: string) => void;
+  onDelete: (budget: Budget) => void;
+}
+
+const BudgetCard = memo(function BudgetCard({ budget, onOpen, onDelete }: BudgetCardProps) {
+  const handleOpen = useCallback(() => {
+    onOpen(budget.id);
+  }, [budget.id, onOpen]);
+
+  const handleDelete = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
+    onDelete(budget);
+  }, [budget, onDelete]);
+
+  const members = budget.members
+    .filter(m => m.user)
+    .map(m => ({
+      name: m.user!.name,
+      image: m.user!.avatar,
+    }));
+
+  return (
+    <div 
+      className="group cursor-pointer rounded-2xl border border-border bg-card p-6 shadow-card transition-all hover:shadow-elevated hover:-translate-y-1"
+      onClick={handleOpen}
+    >
+      <div className="flex items-start justify-between mb-4">
+        <div className="flex-1">
+          <h3 className="font-display text-lg font-semibold text-foreground mb-1 group-hover:text-primary transition-colors">
+            {budget.name}
+          </h3>
+          <p className="text-sm text-muted-foreground">
+            Créé le {new Date(budget.created_at).toLocaleDateString('fr-FR')}
+          </p>
+        </div>
+        
+        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary shadow-soft">
+          <PiggyBank className="h-5 w-5" />
+        </div>
+      </div>
+      
+      <div className="flex items-center justify-between pt-4 border-t border-border/50">
+        {members.length > 0 ? (
+          <MemberAvatarGroup members={members} max={3} size="sm" />
+        ) : (
+          <div className="text-xs text-muted-foreground">Aucun membre</div>
+        )}
+        
+        <div className="flex items-center gap-2">
+          {budget.is_owner && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleDelete}
+              className="text-muted-foreground hover:text-destructive opacity-0 group-hover:opacity-100 transition-opacity"
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          )}
+          <Button 
+            variant="ghost" 
+            size="sm"
+            className="gap-1 opacity-0 group-hover:opacity-100 transition-opacity"
+          >
+            Ouvrir
+            <ArrowRight className="h-4 w-4" />
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}, (prevProps, nextProps) => {
+  // Ne re-render que si le budget change
+  return (
+    prevProps.budget.id === nextProps.budget.id &&
+    prevProps.budget.name === nextProps.budget.name &&
+    prevProps.budget.members.length === nextProps.budget.members.length
+  );
+});
+
+// ============================================================================
+// 🚀 MAIN COMPONENT
+// ============================================================================
 export default function Dashboard() {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -57,10 +176,9 @@ export default function Dashboard() {
   const [budgetToDelete, setBudgetToDelete] = useState<Budget | null>(null);
   const [deleting, setDeleting] = useState(false);
 
-  const loadBudgets = async () => {
+  const loadBudgets = useCallback(async () => {
     try {
       const response = await budgetAPI.list();
-      // FIX: Ensure we always set an array, even if API returns null
       setBudgets(Array.isArray(response.data) ? response.data : []);
     } catch (error) {
       console.error('Error loading budgets:', error);
@@ -73,26 +191,33 @@ export default function Dashboard() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);
 
   useEffect(() => {
     loadBudgets();
-  }, []);
+  }, [loadBudgets]);
 
-  const handleCreateBudget = async (e: React.FormEvent) => {
+  // ============================================================================
+  // 🚀 OPTIMISATION 3 : useCallback pour toutes les fonctions
+  // ============================================================================
+  const handleOpenBudget = useCallback((id: string) => {
+    navigate(`/budget/${id}/complete`);
+  }, [navigate]);
+
+  const handleCreateBudget = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newBudgetName.trim()) return;
 
     setCreating(true);
     try {
-      const response = await budgetAPI.create({ 
+      await budgetAPI.create({ 
         name: newBudgetName.trim(), 
         year: new Date().getFullYear() 
       });
       toast({
         title: "Succès",
         description: "Budget créé avec succès !",
-        variant: "success"
+        variant: "default"
       });
       setShowCreateModal(false);
       setNewBudgetName('');
@@ -106,13 +231,13 @@ export default function Dashboard() {
     } finally {
       setCreating(false);
     }
-  };
+  }, [newBudgetName, loadBudgets, toast]);
 
-  const confirmDelete = (budget: Budget) => {
+  const confirmDelete = useCallback((budget: Budget) => {
     setBudgetToDelete(budget);
-  };
+  }, []);
 
-  const handleDelete = async () => {
+  const handleDelete = useCallback(async () => {
     if (!budgetToDelete) return;
 
     setDeleting(true);
@@ -121,7 +246,7 @@ export default function Dashboard() {
       toast({
         title: "Succès",
         description: "Budget supprimé",
-        variant: "success"
+        variant: "default"
       });
       setBudgetToDelete(null);
       loadBudgets();
@@ -134,15 +259,20 @@ export default function Dashboard() {
     } finally {
       setDeleting(false);
     }
-  };
+  }, [budgetToDelete, loadBudgets, toast]);
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-primary-50 to-purple-50 flex items-center justify-center">
-        <Loader2 className="h-12 w-12 animate-spin text-primary-600" />
-      </div>
-    );
-  }
+  const handleShowCreateModal = useCallback(() => {
+    setShowCreateModal(true);
+  }, []);
+
+  const handleCloseCreateModal = useCallback(() => {
+    setShowCreateModal(false);
+    setNewBudgetName('');
+  }, []);
+
+  const handleCancelDelete = useCallback(() => {
+    setBudgetToDelete(null);
+  }, []);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary-50 to-purple-50 flex flex-col">
@@ -157,6 +287,7 @@ export default function Dashboard() {
           }
         }}
       />
+      
       <main className="flex-1 mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
         <div className="mb-8 animate-slide-up">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -171,126 +302,47 @@ export default function Dashboard() {
               </p>
             </div>
             <Button 
-                variant="gradient"
-                onClick={() => setShowCreateModal(true)}
-                className="gap-2 shadow-lg"
+              variant="default"
+              onClick={handleShowCreateModal}
+              className="gap-2 shadow-lg bg-primary hover:bg-primary/90"
             >
-                <Plus className="h-4 w-4" />
-                Nouveau Budget
+              <Plus className="h-4 w-4" />
+              Nouveau Budget
             </Button>
           </div>
         </div>
 
-        {budgets.length === 0 ? (
-          <div className="max-w-2xl mx-auto mt-12">
-            <EmptyState
-              icon={PiggyBank}
-              title="Aucun budget créé"
-              description="Commencez à gérer vos finances en créant votre premier budget familial"
-              actionLabel="Créer mon premier budget"
-              onAction={() => setShowCreateModal(true)}
-            />
-          </div>
+        {/* ============================================================================
+            🚀 OPTIMISATION 4 : Skeleton Loading au lieu de spinner
+            ============================================================================ */}
+        {loading ? (
+          <BudgetListSkeleton />
+        ) : budgets.length === 0 ? (
+          <EmptyState
+            icon={PiggyBank}
+            title="Aucun budget pour le moment"
+            description="Créez votre premier budget pour commencer à gérer vos finances."
+            actionLabel="Créer un budget"
+            onAction={handleShowCreateModal}
+          />
         ) : (
-          <section className="animate-fade-in">
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {budgets.map((budget) => (
-                <div
-                  key={budget.id}
-                  className="glass-card p-6 transition-all duration-300 hover:scale-[1.02] hover:shadow-elevated relative group"
-                >
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="flex-1">
-                      <h3 className="font-display font-semibold text-foreground mb-1 group-hover:text-primary transition-colors">
-                        {budget.name}
-                      </h3>
-                      <p className="text-sm text-muted-foreground">
-                        Créé le {new Date(budget.created_at).toLocaleDateString('fr-FR')}
-                      </p>
-                    </div>
-                    {budget.is_owner ? (
-                      <span className="bg-primary/10 text-primary px-3 py-1 rounded-full text-xs font-medium">
-                        👑 Propriétaire
-                      </span>
-                    ) : (
-                      <span className="bg-secondary/10 text-secondary px-3 py-1 rounded-full text-xs font-medium">
-                        👥 Membre
-                      </span>
-                    )}
-                  </div>
-
-                  {budget.members && budget.members.length > 0 && (
-                    <div className="mb-4">
-                      <p className="text-sm text-muted-foreground mb-2">
-                        {budget.members.length} membre(s)
-                      </p>
-                      <MemberAvatarGroup
-                        members={budget.members
-                          .filter(m => m.user)
-                          .map((m) => ({
-                            name: m.user!.name,
-                            image: m.user!.avatar,
-                          }))}
-                        max={4}
-                        size="sm"
-                      />
-                    </div>
-                  )}
-
-                  <div className="flex gap-2">
-                    {/* Bouton Ouvrir (Budget Normal) */}
-                    <Button 
-                        variant="outline" 
-                        className="flex-1 gap-2"
-                        onClick={(e: React.MouseEvent) => {
-                          e.stopPropagation();
-                          navigate(`/budget/${budget.id}/complete`);
-                        }}
-                    >
-                        Ouvrir
-                        <ArrowRight className="h-4 w-4" />
-                    </Button>
-                    
-                    {/* 🧪 NOUVEAU: Bouton Beta 2 (Reality Check) */}
-                    <Button
-                        variant="outline"
-                        className="border-purple-300 text-purple-700 hover:bg-purple-50 hover:border-purple-400 gap-2"
-                        onClick={(e: React.MouseEvent) => {
-                          e.stopPropagation();
-                          navigate(`/beta2/${budget.id}`);
-                        }}
-                        title="Tester Reality Check (Beta 2)"
-                    >
-                        <FlaskConical className="h-4 w-4" />
-                        Beta
-                    </Button>
-                    
-                    {/* Bouton Supprimer */}
-                    {budget.is_owner && (
-                        <Button
-                            variant="ghost"
-                            size="icon"
-                            className="text-muted-foreground hover:text-destructive hover:bg-destructive/10"
-                            onClick={(e: React.MouseEvent) => {
-                                e.stopPropagation();
-                                confirmDelete(budget);
-                            }}
-                        >
-                            <Trash2 className="h-4 w-4" />
-                        </Button>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </section>
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {budgets.map((budget) => (
+              <BudgetCard
+                key={budget.id}
+                budget={budget}
+                onOpen={handleOpenBudget}
+                onDelete={confirmDelete}
+              />
+            ))}
+          </div>
         )}
       </main>
-      
+
       <Footer />
 
-      {/* Modal Create Budget */}
-      <Dialog open={showCreateModal} onOpenChange={setShowCreateModal}>
+      {/* Create Budget Modal */}
+      <Dialog open={showCreateModal} onOpenChange={handleCloseCreateModal}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Créer un nouveau budget</DialogTitle>
@@ -301,10 +353,10 @@ export default function Dashboard() {
           <form onSubmit={handleCreateBudget}>
             <div className="space-y-4 py-4">
               <div className="space-y-2">
-                <Label htmlFor="name">Nom du budget</Label>
+                <Label htmlFor="budget-name">Nom du budget</Label>
                 <Input
-                  id="name"
-                  placeholder="Budget Famille Dupont"
+                  id="budget-name"
+                  placeholder="Ex: Budget Famille 2025"
                   value={newBudgetName}
                   onChange={(e) => setNewBudgetName(e.target.value)}
                   autoFocus
@@ -315,7 +367,8 @@ export default function Dashboard() {
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => setShowCreateModal(false)}
+                onClick={handleCloseCreateModal}
+                disabled={creating}
               >
                 Annuler
               </Button>
@@ -334,17 +387,17 @@ export default function Dashboard() {
         </DialogContent>
       </Dialog>
 
-      {/* Alert Dialog Delete */}
-      <AlertDialog open={!!budgetToDelete} onOpenChange={() => setBudgetToDelete(null)}>
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={!!budgetToDelete} onOpenChange={handleCancelDelete}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Êtes-vous sûr ?</AlertDialogTitle>
+            <AlertDialogTitle>Supprimer ce budget ?</AlertDialogTitle>
             <AlertDialogDescription>
-              Cette action est irréversible. Le budget "{budgetToDelete?.name}" et toutes ses données seront définitivement supprimés.
+              Cette action est irréversible. Toutes les données du budget "{budgetToDelete?.name}" seront définitivement supprimées.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogCancel disabled={deleting}>Annuler</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDelete}
               disabled={deleting}
