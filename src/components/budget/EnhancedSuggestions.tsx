@@ -44,6 +44,17 @@ export default function EnhancedSuggestions({ budgetId, charges, people, memberC
   const effectiveMemberCount = memberCount ?? people?.length ?? 1;
   const { onSuggestionsReady } = useNotifications();
 
+  // Auto-load suggestions on mount or when charges/memberCount changes
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (charges.length > 0) {
+        loadSuggestions();
+      }
+    }, 1000); // Small delay to avoid immediate load
+    
+    return () => clearTimeout(timer);
+  }, [budgetId, charges.length, effectiveMemberCount]);
+
   // FIXED: Subscribe to WebSocket suggestions instead of creating a new connection
   useEffect(() => {
     const unsubscribe = onSuggestionsReady((data: BulkAnalyzeResponse) => {
@@ -147,59 +158,34 @@ export default function EnhancedSuggestions({ budgetId, charges, people, memberC
 
   return (
     <div className="space-y-6">
-      {/* Header Card */}
-      <div className="bg-gradient-to-br from-purple-50 to-blue-50 rounded-xl p-6 border border-purple-100">
-        <div className="flex items-start justify-between mb-4">
-          <div className="flex items-center gap-3">
-            <div className="p-3 bg-purple-100 rounded-lg">
-              <Sparkles className="h-6 w-6 text-purple-600" />
-            </div>
+      {/* Loading State */}
+      {loading && suggestions.length === 0 && (
+        <div className="bg-gradient-to-br from-purple-50 to-blue-50 rounded-xl p-6 border border-purple-100">
+          <div className="flex items-center justify-center gap-3">
+            <Loader2 className="h-6 w-6 animate-spin text-purple-600" />
             <div>
-              <h3 className="text-xl font-bold text-gray-900">Suggestions Intelligentes</h3>
+              <p className="font-medium text-gray-900">Analyse en cours...</p>
               <p className="text-sm text-gray-600">
-                Propulsé par l'IA Claude pour optimiser votre budget
+                Recherche d'économies pour {effectiveMemberCount} {effectiveMemberCount > 1 ? 'personnes' : 'personne'}
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-2 bg-white px-3 py-2 rounded-lg border border-gray-200">
-            <Users className="h-4 w-4 text-gray-500" />
-            <span className="text-sm font-medium">{effectiveMemberCount} {effectiveMemberCount > 1 ? 'personnes' : 'personne'}</span>
-          </div>
         </div>
+      )}
 
-        {/* Analyze Button */}
-        <button
-          onClick={loadSuggestions}
-          disabled={loading}
-          className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-purple-600 to-blue-600 text-white px-6 py-3 rounded-lg hover:from-purple-700 hover:to-blue-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium transition-all shadow-lg hover:shadow-xl"
-        >
-          {loading ? (
-            <>
-              <Loader2 className="h-5 w-5 animate-spin" />
-              Analyse en cours...
-            </>
-          ) : (
-            <>
-              <Lightbulb className="h-5 w-5" />
-              Analyser mes charges
-            </>
+      {/* Cache Stats - Only show when not loading */}
+      {!loading && (cacheStats.hits > 0 || cacheStats.aiCalls > 0) && (
+        <div className="flex gap-2 text-xs px-1">
+          <span className="px-2 py-1 bg-green-100 text-green-800 rounded-md font-medium">
+            ⚡ {cacheStats.hits} en cache
+          </span>
+          {cacheStats.aiCalls > 0 && (
+            <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-md font-medium">
+              🤖 {cacheStats.aiCalls} nouvelle{cacheStats.aiCalls > 1 ? 's' : ''} analyse{cacheStats.aiCalls > 1 ? 's' : ''}
+            </span>
           )}
-        </button>
-
-        {/* Cache Stats */}
-        {(cacheStats.hits > 0 || cacheStats.aiCalls > 0) && (
-          <div className="mt-4 flex items-center gap-4 text-sm text-gray-600">
-            <div className="flex items-center gap-2">
-              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-              <span>{cacheStats.hits} résultats en cache</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-              <span>{cacheStats.aiCalls} analyses IA</span>
-            </div>
-          </div>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* Error State */}
       {error && (
@@ -363,14 +349,20 @@ export default function EnhancedSuggestions({ budgetId, charges, people, memberC
         </div>
       )}
 
-      {/* Empty State */}
-      {!loading && suggestions.length === 0 && !error && (
-        <div className="bg-gray-50 rounded-xl p-12 text-center">
-          <Lightbulb className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-          <h4 className="text-xl font-semibold text-gray-900 mb-2">Aucune suggestion disponible</h4>
-          <p className="text-gray-600 mb-6">
-            Cliquez sur "Analyser mes charges" pour obtenir des recommandations personnalisées
-          </p>
+      {/* Empty State - No suggestions found */}
+      {!loading && suggestions.length === 0 && !error && totalSavings === 0 && charges.length > 0 && (
+        <div className="bg-green-50 border border-green-200 rounded-xl p-6">
+          <div className="flex items-center gap-3 text-green-700">
+            <div className="p-2 bg-green-100 rounded-lg">
+              <TrendingUp className="h-5 w-5" />
+            </div>
+            <div>
+              <p className="font-medium">🎉 Excellent travail !</p>
+              <p className="text-sm text-green-600">
+                Vos charges sont déjà optimisées pour votre foyer de {effectiveMemberCount} {effectiveMemberCount > 1 ? 'personnes' : 'personne'}.
+              </p>
+            </div>
+          </div>
         </div>
       )}
     </div>
