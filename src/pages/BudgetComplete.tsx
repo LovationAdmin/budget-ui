@@ -398,10 +398,86 @@ export default function BudgetComplete() {
   // ============================================================================
   // SAVE HANDLER
   // ============================================================================
+
   const handleSave = useCallback(async (silent = false) => {
+    if (!id) return;
     if (!silent) setSaving(true);
+
     try {
-      await saveNow();
+      // 1. Construire le payload depuis l'état UI actuel
+      const currentViewData = { 
+        budgetTitle, 
+        currentYear, 
+        people, 
+        charges, 
+        projects, 
+        yearlyData, 
+        yearlyExpenses, 
+        oneTimeIncomes, 
+        monthComments, 
+        projectComments, 
+        lockedMonths 
+      };
+
+      // 2. Convertir au format de stockage
+      const formattedCurrent = convertNewFormatToOld(currentViewData as any);
+
+      // 3. Clone le global data ref (si existe)
+      const finalPayload = globalDataRef.current 
+        ? JSON.parse(JSON.stringify(globalDataRef.current))
+        : {};
+
+      // 4. Mettre à jour les champs de base
+      finalPayload.budgetTitle = budgetTitle;
+      finalPayload.people = people;
+      finalPayload.charges = charges;
+      finalPayload.projects = projects;
+      finalPayload.lastUpdated = new Date().toISOString();
+      finalPayload.updatedBy = user?.name;
+      finalPayload.version = '2.3';
+
+      // 5. Initialiser les conteneurs
+      if (!finalPayload.yearlyData) finalPayload.yearlyData = {};
+      if (!finalPayload.oneTimeIncomes) finalPayload.oneTimeIncomes = {};
+
+      // 6. ✅ CRITIQUE : NETTOYER les clés LEGACY avant de sauvegarder
+      const legacyMonthKeys = [
+        'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
+        'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'
+      ];
+      
+      legacyMonthKeys.forEach(monthKey => {
+        delete finalPayload.yearlyData[monthKey];
+        delete finalPayload.yearlyExpenses?.[monthKey];
+        delete finalPayload.projectComments?.[monthKey];
+      });
+
+      // 7. Sauvegarder UNIQUEMENT l'année courante
+      const sourceYearlyData = formattedCurrent.yearlyData || {};
+      const sourceOneTime = formattedCurrent.oneTimeIncomes || {};
+
+      if (sourceYearlyData[currentYear]) {
+        finalPayload.yearlyData[currentYear] = sourceYearlyData[currentYear];
+      }
+      if (sourceOneTime[currentYear]) {
+        finalPayload.oneTimeIncomes[currentYear] = sourceOneTime[currentYear];
+      }
+
+      console.log('💾 [handleSave] Saving payload:', {
+        budgetTitle: finalPayload.budgetTitle,
+        currentYear,
+        yearlyDataKeys: Object.keys(finalPayload.yearlyData),
+        hasCurrentYearData: !!finalPayload.yearlyData[currentYear],
+        monthsInCurrentYear: finalPayload.yearlyData[currentYear]?.months?.length || 0,
+      });
+
+      // 8. Envoyer au serveur
+      await budgetAPI.updateData(id, { data: finalPayload });
+      
+      // 9. Synchroniser le ref local
+      setLastServerUpdate(finalPayload.lastUpdated);
+      globalDataRef.current = finalPayload;
+
       if (!silent) {
         toast({ 
           title: "Succès", 
@@ -409,7 +485,10 @@ export default function BudgetComplete() {
           variant: "default" 
         });
       }
+      
+      console.log('✅ [handleSave] Save successful');
     } catch (error) {
+      console.error('❌ [handleSave] Save failed:', error);
       if (!silent) {
         toast({ 
           title: "Erreur", 
@@ -420,7 +499,7 @@ export default function BudgetComplete() {
     } finally { 
       if (!silent) setSaving(false); 
     }
-  }, [saveNow, toast]);
+  }, [id, budgetTitle, currentYear, people, charges, projects, yearlyData, yearlyExpenses, oneTimeIncomes, monthComments, projectComments, lockedMonths, user?.name, toast]);
 
   // ============================================================================
   // ✅ OPTION A: DATA CHANGE HANDLERS AVEC markAsModified()
