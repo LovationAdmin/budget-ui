@@ -35,34 +35,32 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isConnected, setIsConnected] = useState(false);
   
-  // CRITICAL FIX: Use useRef instead of useState for the socket instance
-  // This prevents the dependency cycle that causes infinite loops
+  // ✅ FIX: useRef stocke la connexion sans déclencher de re-render (brise la boucle)
   const wsRef = useRef<WebSocket | null>(null);
   const currentBudgetIdRef = useRef<string | null>(null);
 
   const connectToBudget = useCallback((budgetId: string, budgetName: string) => {
-    // 1. Prevent connecting if already connected to the same budget
+    // 1. Si déjà connecté au même budget, on ne fait rien
     if (wsRef.current?.readyState === WebSocket.OPEN && currentBudgetIdRef.current === budgetId) {
-      console.log(`⚡ [Notifications] Already connected to budget ${budgetId}`);
       return;
     }
 
-    // 2. Close existing connection if switching budgets
+    // 2. Fermer l'ancienne connexion
     if (wsRef.current) {
       wsRef.current.close();
     }
 
     const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api/v1';
-    // Handle both http/https to ws/wss conversion
+    // Conversion http->ws et https->wss
     const wsProtocol = API_URL.startsWith('https') ? 'wss' : 'ws';
     const wsBaseUrl = API_URL.replace(/^https?/, wsProtocol);
     
     try {
-      console.log(`🔌 [Notifications] Connecting to ${wsBaseUrl}/ws/budgets/${budgetId}...`);
+      console.log(`🔌 Connexion WebSocket vers ${budgetId}...`);
       const ws = new WebSocket(`${wsBaseUrl}/ws/budgets/${budgetId}`);
       
       ws.onopen = () => {
-        console.log(`✅ [Notifications] WebSocket Connected`);
+        console.log(`✅ WebSocket Connecté`);
         setIsConnected(true);
         currentBudgetIdRef.current = budgetId;
       };
@@ -71,7 +69,7 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
         try {
           const message = JSON.parse(event.data);
           
-          // Ignore our own updates
+          // Ignorer nos propres mises à jour
           if (message.type === 'budget_updated' && message.user !== user?.name) {
             const newNotification: Notification = {
               id: `${Date.now()}-${budgetId}`,
@@ -81,23 +79,20 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
               timestamp: new Date().toISOString(),
               isRead: false
             };
-
             setNotifications(prev => [newNotification, ...prev]);
-            
-            // Optional: Trigger a browser notification or sound here
           }
         } catch (error) {
-          console.error('❌ [Notifications] Parse error:', error);
+          console.error('❌ Erreur parsing socket:', error);
         }
       };
 
       ws.onerror = (error) => {
-        console.error('❌ [Notifications] WebSocket error:', error);
+        console.error('❌ Erreur WebSocket:', error);
         setIsConnected(false);
       };
 
       ws.onclose = () => {
-        console.log('🔌 [Notifications] WebSocket Closed');
+        console.log('🔌 WebSocket Fermé');
         setIsConnected(false);
         currentBudgetIdRef.current = null;
         wsRef.current = null;
@@ -105,13 +100,12 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
 
       wsRef.current = ws;
     } catch (error) {
-      console.error('❌ [Notifications] Connection failed:', error);
+      console.error('❌ Echec connexion:', error);
     }
-  }, [user?.name]); // Only depend on user name, not the socket itself
+  }, [user?.name]); // Dépendance stable
 
   const disconnectFromBudget = useCallback(() => {
     if (wsRef.current) {
-      console.log('🔌 [Notifications] Manual disconnect');
       wsRef.current.close();
       wsRef.current = null;
       currentBudgetIdRef.current = null;
@@ -119,12 +113,10 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
     }
   }, []);
 
-  // Cleanup on unmount
+  // Nettoyage final
   useEffect(() => {
     return () => {
-      if (wsRef.current) {
-        wsRef.current.close();
-      }
+      if (wsRef.current) wsRef.current.close();
     };
   }, []);
 
@@ -140,13 +132,8 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
 
   return (
     <NotificationContext.Provider value={{ 
-      notifications, 
-      unreadCount, 
-      markAsRead, 
-      markAllAsRead,
-      connectToBudget,
-      disconnectFromBudget,
-      isConnected
+      notifications, unreadCount, markAsRead, markAllAsRead,
+      connectToBudget, disconnectFromBudget, isConnected
     }}>
       {children}
     </NotificationContext.Provider>
