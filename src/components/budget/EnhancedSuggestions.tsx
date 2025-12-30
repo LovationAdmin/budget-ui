@@ -1,139 +1,88 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+// src/components/budget/EnhancedSuggestions.tsx
+import { useState, useEffect } from 'react';
 import { 
-  TrendingDown, 
+  TrendingUp, 
+  Lightbulb, 
+  Users, 
   Phone, 
-  Sparkles, 
-  CheckCircle2, 
-  XCircle,
-  Loader2,
+  Mail, 
+  ExternalLink,
+  AlertCircle,
+  Sparkles,
   ChevronDown,
   ChevronUp,
-  Mail,
-  RefreshCw,
-  Users,
-  Info,
-  Globe
-} from "lucide-react";
-import { budgetAPI, ChargeSuggestion, Competitor } from '@/services/api';
-import { Charge } from '@/utils/importConverter';
-import { useNotifications } from '@/contexts/NotificationContext'; // Use existing context for socket logic
-
-// ============================================================================
-// TYPES
-// ============================================================================
+  Loader2,
+  X
+} from 'lucide-react';
+import { Charge, Person, BulkAnalyzeResponse, ChargeSuggestion } from '../../services/api';
+import api from '../../services/api';
+import { useNotifications } from '../../contexts/NotificationContext';
 
 interface EnhancedSuggestionsProps {
   budgetId: string;
   charges: Charge[];
-  memberCount: number;
+  people: Person[];
 }
 
-// ============================================================================
-// HELPERS
-// ============================================================================
-
-const RELEVANT_CATEGORIES = [
-  'ENERGY', 'INTERNET', 'MOBILE', 'INSURANCE',
-  'INSURANCE_AUTO', 'INSURANCE_HOME', 'INSURANCE_HEALTH',
-  'LOAN', 'BANK'
-];
-
-const INDIVIDUAL_CATEGORIES = ['MOBILE', 'INSURANCE_AUTO', 'INSURANCE_HEALTH', 'TRANSPORT'];
-
-function isRelevantCategory(cat: string): boolean {
-  return RELEVANT_CATEGORIES.includes(cat.toUpperCase());
+interface CacheStats {
+  hits: number;
+  aiCalls: number;
 }
 
-function isIndividualCategory(cat: string): boolean {
-  return INDIVIDUAL_CATEGORIES.includes(cat.toUpperCase());
-}
-
-function getCategoryLabel(cat: string): string {
-  const labels: Record<string, string> = {
-    'ENERGY': '⚡ Énergie',
-    'INTERNET': '🌐 Internet',
-    'MOBILE': '📱 Mobile',
-    'INSURANCE': '🛡️ Assurance',
-    'INSURANCE_AUTO': '🚗 Assurance Auto',
-    'INSURANCE_HOME': '🏠 Assurance Habitation',
-    'INSURANCE_HEALTH': '💊 Mutuelle Santé',
-    'LOAN': '💳 Prêt / Crédit',
-    'BANK': '🏦 Banque'
-  };
-  return labels[cat.toUpperCase()] || cat;
-}
-
-// ============================================================================
-// MAIN COMPONENT
-// ============================================================================
-
-export default function EnhancedSuggestions({ budgetId, charges, memberCount }: EnhancedSuggestionsProps) {
+export default function EnhancedSuggestions({ budgetId, charges, people }: EnhancedSuggestionsProps) {
   const [suggestions, setSuggestions] = useState<ChargeSuggestion[]>([]);
+  const [totalSavings, setTotalSavings] = useState(0);
+  const [householdSize, setHouseholdSize] = useState(1);
+  const [cacheStats, setCacheStats] = useState<CacheStats>({ hits: 0, aiCalls: 0 });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [cacheStats, setCacheStats] = useState({ hits: 0, aiCalls: 0 });
-  const [totalSavings, setTotalSavings] = useState(0);
-  const [isExpanded, setIsExpanded] = useState(false);
-  const [householdSize, setHouseholdSize] = useState(1);
-  const [isProcessingBackground, setIsProcessingBackground] = useState(false);
+  const [expandedCharges, setExpandedCharges] = useState<Set<string>>(new Set());
 
-  // We can listen to WS messages globally via window event listener 
-  // (Assuming NotificationContext dispatches events or we hook into it)
-  // Or simpler: Reuse the existing WS connection from NotificationContext
-  
+  const memberCount = people.length || 1;
+  const { onSuggestionsReady } = useNotifications();
+
+  // FIXED: Subscribe to WebSocket suggestions instead of creating a new connection
   useEffect(() => {
-    // Handler for WebSocket messages
-    const handleWSMessage = (event: MessageEvent) => {
-        try {
-            const message = JSON.parse(event.data);
-            if (message.type === 'suggestions_ready') {
-                console.log("⚡ Analysis complete (via WS)");
-                processResults(message.data);
-                setIsProcessingBackground(false);
-                setLoading(false);
-            }
-        } catch (e) {
-            // Ignore parse errors from other messages
-        }
-    };
+    const unsubscribe = onSuggestionsReady((data: BulkAnalyzeResponse) => {
+      console.log('📊 [EnhancedSuggestions] Received suggestions from WebSocket:', data);
+      processResults(data);
+      setLoading(false);
+    });
 
-    // Attach to the NotificationContext's websocket if possible, 
-    // but since we don't expose the raw WS, we can rely on a global event listener if the context is broadcasting
-    // Alternatively, simpler hack:
-    const wsBaseUrl = (import.meta.env.VITE_API_URL || 'http://localhost:8080/api/v1').replace(/^http/, 'ws');
-    const tempWs = new WebSocket(`${wsBaseUrl}/ws/budgets/${budgetId}`);
-    tempWs.onmessage = handleWSMessage;
+    return unsubscribe;
+  }, [onSuggestionsReady]);
 
-    return () => {
-        tempWs.close();
-    };
-  }, [budgetId]);
+  const processResults = (data: BulkAnalyzeResponse) => {
+    const rawSuggestions = data.suggestions || [];
+    
+    // Filter out suggestions with no savings
+    const filteredSuggestions = rawSuggestions.filter((s: ChargeSuggestion) => {
+      return s.suggestion.competitors.some((c) => c.potential_savings > 0);
+    });
 
-  const processResults = (data: any) => {
-      const rawSuggestions = data.suggestions || [];
-      const filteredSuggestions = rawSuggestions.filter((s: any) => {
-        return s.suggestion.competitors.some((c: any) => c.potential_savings > 0);
-      });
+    // Filter competitors within each suggestion
+    filteredSuggestions.forEach((s) => {
+      s.suggestion.competitors = s.suggestion.competitors.filter((c) => c.potential_savings > 0);
+    });
 
-      filteredSuggestions.forEach((s: any) => {
-        s.suggestion.competitors = s.suggestion.competitors.filter((c: any) => c.potential_savings > 0);
-      });
+    setSuggestions(filteredSuggestions);
+    setCacheStats({
+      hits: data.cache_hits || 0,
+      aiCalls: data.ai_calls_made || 0
+    });
+    
+    const actualTotalSavings = filteredSuggestions.reduce((sum: number, s: ChargeSuggestion) => {
+      const bestSaving = s.suggestion.competitors[0]?.potential_savings || 0;
+      return sum + bestSaving;
+    }, 0);
+    
+    setTotalSavings(actualTotalSavings);
+    setHouseholdSize(data.household_size || memberCount);
+  };
 
-      setSuggestions(filteredSuggestions);
-      setCacheStats({
-        hits: data.cache_hits || 0,
-        aiCalls: data.ai_calls_made || 0
-      });
-      
-      const actualTotalSavings = filteredSuggestions.reduce((sum: number, s: any) => {
-        const bestSaving = s.suggestion.competitors[0]?.potential_savings || 0;
-        return sum + bestSaving;
-      }, 0);
-      setTotalSavings(actualTotalSavings);
-      setHouseholdSize(data.household_size || memberCount);
+  const isRelevantCategory = (category: string): boolean => {
+    const relevant = ['INSURANCE', 'UTILITIES', 'SUBSCRIPTION', 'MOBILE', 'INTERNET', 'ELECTRICITY', 'GAS', 'WATER', 'LOAN'];
+    return relevant.includes(category.toUpperCase());
   };
 
   const loadSuggestions = async () => {
@@ -147,233 +96,280 @@ export default function EnhancedSuggestions({ budgetId, charges, memberCount }: 
         .filter(c => c.category && isRelevantCategory(c.category) && !c.ignoreSuggestions)
         .map(c => ({
           id: c.id,
-          category: c.category!,
+          category: c.category,
           label: c.label,
           amount: c.amount,
-          merchant_name: c.label.trim().split(' ')[0] || ''
+          merchant_name: c.merchantName || ''
         }));
 
       if (relevantCharges.length === 0) {
-        setSuggestions([]);
+        setError('Aucune charge éligible aux suggestions trouvée');
         setLoading(false);
         return;
       }
 
-      const response = await budgetAPI.bulkAnalyzeSuggestions(budgetId, {
+      console.log(`📊 [EnhancedSuggestions] Analyzing ${relevantCharges.length} charges...`);
+
+      // Send request - results will arrive via WebSocket
+      await api.post(`/budgets/${budgetId}/suggestions/bulk-analyze`, {
         charges: relevantCharges,
         household_size: memberCount
       });
 
-      if (response.status === 202) {
-          // Processing in background
-          setIsProcessingBackground(true);
-          // Loading state remains true until WS returns
-      } else {
-          // Direct response (cache hit case possibly)
-          processResults(response.data);
-          setLoading(false);
-      }
+      // Don't set loading to false here - wait for WebSocket response
+      console.log('✅ [EnhancedSuggestions] Analysis request sent, waiting for WebSocket response...');
 
     } catch (err: any) {
-      console.error('Failed to load suggestions:', err);
-      setError(err.response?.data?.error || 'Erreur lors du chargement');
+      console.error('❌ [EnhancedSuggestions] Error:', err);
+      setError(err.response?.data?.error || 'Erreur lors de l\'analyse des suggestions');
       setLoading(false);
     }
   };
-  
-  // Initial load
-  useEffect(() => {
-     // Delay slightly to let page render
-     const t = setTimeout(() => loadSuggestions(), 1000);
-     return () => clearTimeout(t);
-  }, []);
 
-  // Loading View
-  if (loading && suggestions.length === 0) {
-    return (
-      <Card className="border-blue-200 bg-blue-50/30">
-        <CardContent className="pt-6">
-          <div className="flex items-center justify-center py-8">
-            <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
-            <div className="ml-3">
-                <p className="text-sm font-medium text-blue-900">Analyse de vos charges en cours...</p>
-                <p className="text-xs text-blue-700">
-                    {isProcessingBackground 
-                        ? "L'IA analyse le marché en arrière-plan. Cela peut prendre quelques secondes." 
-                        : `Recherche d'économies pour ${memberCount} personne${memberCount > 1 ? 's' : ''}...`}
-                </p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
+  const toggleCharge = (chargeId: string) => {
+    setExpandedCharges(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(chargeId)) {
+        newSet.delete(chargeId);
+      } else {
+        newSet.add(chargeId);
+      }
+      return newSet;
+    });
+  };
 
-  if (error) return null;
-
-  // No suggestions found state
-  if (suggestions.length === 0 && charges.length > 0) {
-    const hasRelevant = charges.some(c => c.category && isRelevantCategory(c.category) && !c.ignoreSuggestions);
-    if (hasRelevant && !loading) {
-      return (
-        <Card className="border-green-200 bg-green-50/30">
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3 text-green-700">
-              <CheckCircle2 className="h-6 w-6" />
-              <div>
-                <p className="font-medium">🎉 Vous avez déjà d'excellentes offres !</p>
-                <p className="text-sm text-green-600">
-                  Vos charges sont bien optimisées pour votre foyer.
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      );
-    }
-    return null;
-  }
+  const getProviderLink = (competitor: any): string => {
+    return competitor.affiliate_link || competitor.website_url || '#';
+  };
 
   return (
-    <div className="space-y-4">
-      <Card 
-        className="border-green-200 bg-green-50/50 cursor-pointer hover:bg-green-50 transition-colors"
-        onClick={() => setIsExpanded(!isExpanded)}
-      >
-        <CardHeader className="pb-3">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3 flex-1">
-              <Sparkles className="h-6 w-6 text-green-600" />
-              <div className="flex-1">
-                <div className="flex items-center gap-2">
-                  <CardTitle className="text-green-900">💡 Opportunités d'Économies</CardTitle>
-                  <Badge variant="outline" className="bg-green-100 text-green-800 border-green-300">
-                    {suggestions.length}
-                  </Badge>
-                </div>
-                <CardDescription className="text-green-700 mt-1">
-                  {isExpanded ? (
-                    <span className="flex items-center gap-1">
-                      <Users className="h-3 w-3" />
-                      Basé sur votre foyer de {householdSize} personne{householdSize > 1 ? 's' : ''}
-                    </span>
-                  ) : (
-                    `Économie totale possible : ${totalSavings.toFixed(0)}€/an`
-                  )}
-                </CardDescription>
-              </div>
+    <div className="space-y-6">
+      {/* Header Card */}
+      <div className="bg-gradient-to-br from-purple-50 to-blue-50 rounded-xl p-6 border border-purple-100">
+        <div className="flex items-start justify-between mb-4">
+          <div className="flex items-center gap-3">
+            <div className="p-3 bg-purple-100 rounded-lg">
+              <Sparkles className="h-6 w-6 text-purple-600" />
             </div>
-            
-            <div className="flex items-center gap-2">
-              <Button 
-                variant="ghost" 
-                size="sm"
-                onClick={(e) => { e.stopPropagation(); loadSuggestions(); }}
-                disabled={loading}
-              >
-                <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
-              </Button>
-              <Button variant="ghost" size="sm">
-                {isExpanded ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
-              </Button>
+            <div>
+              <h3 className="text-xl font-bold text-gray-900">Suggestions Intelligentes</h3>
+              <p className="text-sm text-gray-600">
+                Propulsé par l'IA Claude pour optimiser votre budget
+              </p>
             </div>
           </div>
-        </CardHeader>
-      </Card>
-
-      {isExpanded && (
-        <>
-          {(cacheStats.hits > 0 || cacheStats.aiCalls > 0) && (
-            <div className="flex gap-2 text-xs px-1">
-              <Badge variant="secondary" className="text-xs">⚡ {cacheStats.hits} en cache</Badge>
-              {cacheStats.aiCalls > 0 && (
-                <Badge variant="outline" className="text-xs">🤖 {cacheStats.aiCalls} nouvelle{cacheStats.aiCalls > 1 ? 's' : ''} analyse{cacheStats.aiCalls > 1 ? 's' : ''}</Badge>
-              )}
-            </div>
-          )}
-
-          {suggestions.map((item) => (
-            <SuggestionCard key={item.charge_id} chargeSuggestion={item} householdSize={householdSize} />
-          ))}
-        </>
-      )}
-    </div>
-  );
-}
-
-function SuggestionCard({ chargeSuggestion, householdSize }: { chargeSuggestion: ChargeSuggestion; householdSize: number }) {
-  const { charge_label, suggestion } = chargeSuggestion;
-  const competitors = suggestion.competitors.filter(c => c.potential_savings > 0).slice(0, 3);
-  if (competitors.length === 0) return null;
-  const bestSavings = competitors[0]?.potential_savings || 0;
-  const isIndividual = isIndividualCategory(suggestion.category);
-
-  return (
-    <Card className="border-orange-200 hover:border-orange-300 transition-colors">
-      <CardHeader className="pb-3">
-        <div className="flex items-start justify-between">
-          <div className="flex-1">
-            <div className="flex items-center gap-2 mb-1">
-              <TrendingDown className="h-5 w-5 text-orange-600" />
-              <CardTitle className="text-lg">{charge_label}</CardTitle>
-            </div>
-            <CardDescription className="flex items-center gap-2 flex-wrap">
-              <span>{getCategoryLabel(suggestion.category)}</span>
-              {isIndividual && householdSize > 1 && (
-                <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-200">
-                   <Users className="h-3 w-3 mr-1" />Prix/personne
-                </Badge>
-              )}
-            </CardDescription>
+          <div className="flex items-center gap-2 bg-white px-3 py-2 rounded-lg border border-gray-200">
+            <Users className="h-4 w-4 text-gray-500" />
+            <span className="text-sm font-medium">{memberCount} {memberCount > 1 ? 'personnes' : 'personne'}</span>
           </div>
-          <Badge className="bg-green-100 text-green-800 border-green-300">
-            Jusqu'à -{bestSavings.toFixed(0)}€/an
-          </Badge>
         </div>
-      </CardHeader>
 
-      <CardContent className="space-y-4">
-        {competitors.map((competitor, index) => (
-          <CompetitorCard key={index} competitor={competitor} rank={index + 1} />
-        ))}
-      </CardContent>
-    </Card>
-  );
-}
+        {/* Analyze Button */}
+        <button
+          onClick={loadSuggestions}
+          disabled={loading}
+          className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-purple-600 to-blue-600 text-white px-6 py-3 rounded-lg hover:from-purple-700 hover:to-blue-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium transition-all shadow-lg hover:shadow-xl"
+        >
+          {loading ? (
+            <>
+              <Loader2 className="h-5 w-5 animate-spin" />
+              Analyse en cours...
+            </>
+          ) : (
+            <>
+              <Lightbulb className="h-5 w-5" />
+              Analyser mes charges
+            </>
+          )}
+        </button>
 
-function CompetitorCard({ competitor, rank }: { competitor: Competitor; rank: number }) {
-  const getRankBadge = () => {
-    if (rank === 1) return <Badge className="bg-green-600 text-white border-0">🏆 Meilleure offre</Badge>;
-    if (rank === 2) return <Badge variant="outline" className="border-orange-400 text-orange-700 bg-orange-50">🥈 #2</Badge>;
-    return <Badge variant="outline" className="border-gray-400 text-gray-700 bg-gray-50">🥉 #3</Badge>;
-  };
-  const getCardStyle = () => {
-    if (rank === 1) return "border-2 border-green-300 bg-green-50/50";
-    if (rank === 2) return "border-2 border-orange-200 bg-orange-50/30";
-    return "border border-gray-300 bg-gray-50/50";
-  };
-  const websiteUrl = competitor.affiliate_link || competitor.website_url;
-
-  return (
-    <div className={`p-4 rounded-lg transition-all ${getCardStyle()}`}>
-      <div className="flex items-center justify-between mb-3">
-        {getRankBadge()}
-        <span className="text-lg font-bold text-green-700">-{competitor.potential_savings.toFixed(0)}€/an</span>
-      </div>
-      <h4 className="font-semibold text-gray-900 mb-2">{competitor.name}</h4>
-      <p className="text-sm text-gray-600 mb-3">{competitor.best_offer}</p>
-      <div className="flex items-center gap-2 mb-4">
-        <span className="text-sm text-muted-foreground">Prix:</span>
-        <span className="font-semibold text-primary">{competitor.typical_price.toFixed(2)}€/mois</span>
-      </div>
-      <div className="flex flex-wrap gap-2 pt-3 border-t border-gray-200">
-        {websiteUrl && (
-          <Button size="sm" className="flex-1 text-xs h-8" onClick={() => window.open(websiteUrl, '_blank')}>
-            <Globe className="h-3 w-3 mr-2" />
-            Voir le site
-          </Button>
+        {/* Cache Stats */}
+        {(cacheStats.hits > 0 || cacheStats.aiCalls > 0) && (
+          <div className="mt-4 flex items-center gap-4 text-sm text-gray-600">
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+              <span>{cacheStats.hits} résultats en cache</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+              <span>{cacheStats.aiCalls} analyses IA</span>
+            </div>
+          </div>
         )}
       </div>
+
+      {/* Error State */}
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-start gap-3">
+          <AlertCircle className="h-5 w-5 text-red-600 flex-shrink-0 mt-0.5" />
+          <div className="flex-1">
+            <p className="text-red-800 font-medium">Erreur</p>
+            <p className="text-red-600 text-sm">{error}</p>
+          </div>
+          <button onClick={() => setError(null)} className="text-red-600 hover:text-red-800">
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+      )}
+
+      {/* Total Savings Card */}
+      {totalSavings > 0 && (
+        <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl p-6 border border-green-200">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-green-700 font-medium mb-1">Économies Potentielles Totales</p>
+              <p className="text-4xl font-bold text-green-900">{totalSavings.toFixed(2)}€</p>
+              <p className="text-sm text-green-600 mt-1">par mois · {(totalSavings * 12).toFixed(2)}€ par an</p>
+            </div>
+            <div className="p-4 bg-green-100 rounded-full">
+              <TrendingUp className="h-8 w-8 text-green-600" />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Suggestions List */}
+      {suggestions.length > 0 && (
+        <div className="space-y-4">
+          <h4 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+            <Lightbulb className="h-5 w-5 text-yellow-500" />
+            Recommandations Personnalisées ({suggestions.length})
+          </h4>
+
+          {suggestions.map((chargeSuggestion) => {
+            const isExpanded = expandedCharges.has(chargeSuggestion.charge_id);
+            const topCompetitor = chargeSuggestion.suggestion.competitors[0];
+
+            return (
+              <div key={chargeSuggestion.charge_id} className="bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-lg transition-shadow">
+                {/* Charge Header */}
+                <button
+                  onClick={() => toggleCharge(chargeSuggestion.charge_id)}
+                  className="w-full p-6 flex items-center justify-between hover:bg-gray-50 transition"
+                >
+                  <div className="flex items-center gap-4 flex-1">
+                    <div className="p-3 bg-blue-50 rounded-lg">
+                      <TrendingUp className="h-6 w-6 text-blue-600" />
+                    </div>
+                    <div className="text-left flex-1">
+                      <h5 className="font-semibold text-gray-900">{chargeSuggestion.charge_label}</h5>
+                      <p className="text-sm text-gray-600 capitalize">{chargeSuggestion.suggestion.category}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-sm text-gray-600">Économie potentielle</p>
+                      <p className="text-2xl font-bold text-green-600">
+                        {topCompetitor.potential_savings.toFixed(2)}€
+                      </p>
+                      <p className="text-xs text-gray-500">par mois</p>
+                    </div>
+                  </div>
+                  {isExpanded ? (
+                    <ChevronUp className="h-5 w-5 text-gray-400 ml-4" />
+                  ) : (
+                    <ChevronDown className="h-5 w-5 text-gray-400 ml-4" />
+                  )}
+                </button>
+
+                {/* Expanded Details */}
+                {isExpanded && (
+                  <div className="px-6 pb-6 space-y-4 border-t border-gray-100 pt-4">
+                    {chargeSuggestion.suggestion.competitors.map((competitor, idx) => (
+                      <div key={idx} className="bg-gray-50 rounded-lg p-4 hover:bg-gray-100 transition">
+                        {/* Competitor Header */}
+                        <div className="flex items-start justify-between mb-3">
+                          <div className="flex-1">
+                            <h6 className="font-semibold text-gray-900 text-lg">{competitor.name}</h6>
+                            <div className="flex items-center gap-4 mt-2">
+                              <span className="text-2xl font-bold text-blue-600">
+                                {competitor.typical_price.toFixed(2)}€/mois
+                              </span>
+                              {competitor.potential_savings > 0 && (
+                                <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-medium">
+                                  -{competitor.potential_savings.toFixed(2)}€
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Best Offer */}
+                        <div className="bg-blue-50 rounded-lg p-3 mb-3">
+                          <p className="text-sm font-medium text-blue-900 mb-1">💡 Meilleure Offre</p>
+                          <p className="text-blue-800">{competitor.best_offer}</p>
+                        </div>
+
+                        {/* Pros & Cons */}
+                        <div className="grid md:grid-cols-2 gap-3 mb-3">
+                          <div>
+                            <p className="text-sm font-medium text-green-700 mb-2">✅ Avantages</p>
+                            <ul className="space-y-1">
+                              {competitor.pros.map((pro, i) => (
+                                <li key={i} className="text-sm text-gray-700">• {pro}</li>
+                              ))}
+                            </ul>
+                          </div>
+                          <div>
+                            <p className="text-sm font-medium text-orange-700 mb-2">⚠️ Inconvénients</p>
+                            <ul className="space-y-1">
+                              {competitor.cons.map((con, i) => (
+                                <li key={i} className="text-sm text-gray-700">• {con}</li>
+                              ))}
+                            </ul>
+                          </div>
+                        </div>
+
+                        {/* Contact Actions */}
+                        <div className="flex flex-wrap gap-2">
+                          {competitor.website_url && (
+                            <a
+                              href={getProviderLink(competitor)}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-sm font-medium"
+                            >
+                              <ExternalLink className="h-4 w-4" />
+                              Voir l'offre
+                            </a>
+                          )}
+                          {competitor.phone_number && (
+                            <a
+                              href={`tel:${competitor.phone_number}`}
+                              className="flex items-center gap-2 px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition text-sm font-medium"
+                            >
+                              <Phone className="h-4 w-4" />
+                              {competitor.phone_number}
+                            </a>
+                          )}
+                          {competitor.contact_email && (
+                            <a
+                              href={`mailto:${competitor.contact_email}`}
+                              className="flex items-center gap-2 px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition text-sm font-medium"
+                            >
+                              <Mail className="h-4 w-4" />
+                              Contact
+                            </a>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Empty State */}
+      {!loading && suggestions.length === 0 && !error && (
+        <div className="bg-gray-50 rounded-xl p-12 text-center">
+          <Lightbulb className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+          <h4 className="text-xl font-semibold text-gray-900 mb-2">Aucune suggestion disponible</h4>
+          <p className="text-gray-600 mb-6">
+            Cliquez sur "Analyser mes charges" pour obtenir des recommandations personnalisées
+          </p>
+        </div>
+      )}
     </div>
   );
 }

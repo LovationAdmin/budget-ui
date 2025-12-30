@@ -1,5 +1,7 @@
+// src/contexts/NotificationContext.tsx
 import { createContext, useContext, useState, useEffect, ReactNode, useCallback, useRef } from 'react';
 import { useAuth } from './AuthContext';
+import { BulkAnalyzeResponse } from '../services/api';
 
 export interface Notification {
   id: string;
@@ -18,6 +20,8 @@ interface NotificationContextType {
   connectToBudget: (budgetId: string, budgetName: string) => void;
   disconnectFromBudget: () => void;
   isConnected: boolean;
+  // NEW: Subscribe to market suggestions results
+  onSuggestionsReady: (callback: (data: BulkAnalyzeResponse) => void) => () => void;
 }
 
 const NotificationContext = createContext<NotificationContextType | undefined>(undefined);
@@ -35,24 +39,25 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isConnected, setIsConnected] = useState(false);
   
-  // CRITICAL FIX: Use useRef instead of useState for the socket instance
   const wsRef = useRef<WebSocket | null>(null);
   const currentBudgetIdRef = useRef<string | null>(null);
+  
+  // NEW: Store callbacks for market suggestions
+  const suggestionsCallbacksRef = useRef<Set<(data: BulkAnalyzeResponse) => void>>(new Set());
 
   const connectToBudget = useCallback((budgetId: string, budgetName: string) => {
-    // 1. Prevent connecting if already connected to the same budget
+    // Prevent connecting if already connected to the same budget
     if (wsRef.current?.readyState === WebSocket.OPEN && currentBudgetIdRef.current === budgetId) {
       console.log(`⚡ [Notifications] Already connected to budget ${budgetId}`);
       return;
     }
 
-    // 2. Close existing connection if switching budgets
+    // Close existing connection if switching budgets
     if (wsRef.current) {
       wsRef.current.close();
     }
 
     const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api/v1';
-    // Handle both http/https to ws/wss conversion
     const wsProtocol = API_URL.startsWith('https') ? 'wss' : 'ws';
     const wsBaseUrl = API_URL.replace(/^https?/, wsProtocol);
     
@@ -70,18 +75,37 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
         try {
           const message = JSON.parse(event.data);
           
-          // Ignore our own updates
-          if (message.type === 'budget_updated' && message.user !== user?.name) {
-            const newNotification: Notification = {
-              id: `${Date.now()}-${budgetId}`,
-              budgetId,
-              budgetName,
-              updatedBy: message.user || 'Un membre',
-              timestamp: new Date().toISOString(),
-              isRead: false
-            };
+          // Handle different message types
+          switch (message.type) {
+            case 'budget_updated':
+              // Ignore our own updates
+              if (message.user !== user?.name) {
+                const newNotification: Notification = {
+                  id: `${Date.now()}-${budgetId}`,
+                  budgetId,
+                  budgetName,
+                  updatedBy: message.user || 'Un membre',
+                  timestamp: new Date().toISOString(),
+                  isRead: false
+                };
+                setNotifications(prev => [newNotification, ...prev]);
+              }
+              break;
 
-            setNotifications(prev => [newNotification, ...prev]);
+            case 'suggestions_ready':
+              // NEW: Notify all subscribers that suggestions are ready
+              console.log('📊 [Notifications] Market suggestions ready:', message.data);
+              suggestionsCallbacksRef.current.forEach(callback => {
+                try {
+                  callback(message.data);
+                } catch (error) {
+                  console.error('Error in suggestions callback:', error);
+                }
+              });
+              break;
+
+            default:
+              console.log('📨 [Notifications] Unknown message type:', message.type);
           }
         } catch (error) {
           console.error('❌ [Notifications] Parse error:', error);
@@ -116,6 +140,18 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
     }
   }, []);
 
+  // NEW: Subscribe to market suggestions
+  const onSuggestionsReady = useCallback((callback: (data: BulkAnalyzeResponse) => void) => {
+    suggestionsCallbacksRef.current.add(callback);
+    console.log('📊 [Notifications] Subscribed to suggestions updates');
+    
+    // Return cleanup function
+    return () => {
+      suggestionsCallbacksRef.current.delete(callback);
+      console.log('📊 [Notifications] Unsubscribed from suggestions updates');
+    };
+  }, []);
+
   // Cleanup on unmount
   useEffect(() => {
     return () => {
@@ -136,14 +172,15 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
   const unreadCount = notifications.filter(n => !n.isRead).length;
 
   return (
-    <NotificationContext.Provider value={{ 
-      notifications, 
-      unreadCount, 
-      markAsRead, 
+    <NotificationContext.Provider value={{
+      notifications,
+      unreadCount,
+      markAsRead,
       markAllAsRead,
       connectToBudget,
       disconnectFromBudget,
-      isConnected
+      isConnected,
+      onSuggestionsReady,
     }}>
       {children}
     </NotificationContext.Provider>
