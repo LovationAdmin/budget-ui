@@ -1,5 +1,5 @@
 // src/pages/BudgetComplete.tsx
-// VERSION FINALE COMPATIBLE AVEC AUTO-SAVE
+// VERSION FINALE - OPTION A : DebouncedInput + markAsModified sur tous les changements
 
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
@@ -392,56 +392,52 @@ export default function BudgetComplete() {
   }, [saveNow, toast]);
 
   // ============================================================================
-  // DATA CHANGE HANDLERS
+  // ✅ OPTION A: DATA CHANGE HANDLERS AVEC markAsModified()
   // ============================================================================
-  const handleDataChange = useCallback(() => {
-    markAsModified();
-  }, [markAsModified]);
-
   const handlePeopleChange = useCallback((newPeople: Person[]) => {
     setPeople(newPeople);
-    handleDataChange();
-  }, [handleDataChange]);
+    markAsModified(); // ✅ Déclenche auto-save
+  }, [markAsModified]);
 
   const handleChargesChange = useCallback((newCharges: Charge[]) => {
     setCharges(newCharges);
-    handleDataChange();
-  }, [handleDataChange]);
+    markAsModified(); // ✅ Déclenche auto-save
+  }, [markAsModified]);
 
   const handleProjectsChange = useCallback((newProjects: Project[]) => {
     setProjects(newProjects);
-    handleDataChange();
-  }, [handleDataChange]);
+    markAsModified(); // ✅ Déclenche auto-save
+  }, [markAsModified]);
 
   const handleYearlyDataChange = useCallback((newData: YearlyData) => {
     setYearlyData(newData);
-    handleDataChange();
-  }, [handleDataChange]);
+    markAsModified(); // ✅ Déclenche auto-save
+  }, [markAsModified]);
 
   const handleYearlyExpensesChange = useCallback((newData: YearlyData) => {
     setYearlyExpenses(newData);
-    handleDataChange();
-  }, [handleDataChange]);
+    markAsModified(); // ✅ Déclenche auto-save
+  }, [markAsModified]);
 
   const handleOneTimeIncomesChange = useCallback((newData: OneTimeIncomes) => {
     setOneTimeIncomes(newData);
-    handleDataChange();
-  }, [handleDataChange]);
+    markAsModified(); // ✅ Déclenche auto-save
+  }, [markAsModified]);
 
   const handleMonthCommentsChange = useCallback((newData: MonthComments) => {
     setMonthComments(newData);
-    handleDataChange();
-  }, [handleDataChange]);
+    markAsModified(); // ✅ Déclenche auto-save
+  }, [markAsModified]);
 
   const handleProjectCommentsChange = useCallback((newData: ProjectComments) => {
     setProjectComments(newData);
-    handleDataChange();
-  }, [handleDataChange]);
+    markAsModified(); // ✅ Déclenche auto-save
+  }, [markAsModified]);
 
   const handleLockedMonthsChange = useCallback((newData: LockedMonths) => {
     setLockedMonths(newData);
-    handleDataChange();
-  }, [handleDataChange]);
+    markAsModified(); // ✅ Déclenche auto-save
+  }, [markAsModified]);
 
   // ============================================================================
   // NAVIGATION
@@ -500,7 +496,7 @@ export default function BudgetComplete() {
       />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Auto-save Indicators */}
+        {/* ✅ Auto-save Indicators */}
         {hasUnsavedChanges && !isSaving && !saving && (
           <div className="mb-4 flex items-center gap-2 px-4 py-2 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg">
             <svg className="w-4 h-4 text-orange-600 dark:text-orange-400" fill="currentColor" viewBox="0 0 20 20">
