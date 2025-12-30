@@ -41,7 +41,7 @@ import type {
 
 // ============================================================================
 // 🚀 OPTIMIZATION: Debounced Input Component
-// prevents the entire table from re-rendering on every single keystroke
+// prevents the entire table from re-rendering on every single keystroke (Numbers)
 // ============================================================================
 const DebouncedInput = ({ 
     value, 
@@ -526,7 +526,7 @@ export default function MonthlyTable({
                                   <PopoverContent className="w-64 p-3">
                                     <div className="space-y-2">
                                         <h4 className="font-medium text-xs text-muted-foreground mb-1">Note pour {project.label} ({month})</h4>
-                                        {/* 🔥 DEBOUNCED TEXTAREA */}
+                                        {/* 🔥 DEBOUNCED TEXTAREA - FIXED LATENCY HERE */}
                                         <DebouncedTextarea 
                                             value={comment || ''} 
                                             onChange={(val) => updateProjectComment(month, project.id, val)} 
@@ -562,7 +562,7 @@ export default function MonthlyTable({
                                     <PopoverContent className="w-64 p-3">
                                         <div className="space-y-2">
                                             <h4 className="font-medium text-xs text-muted-foreground mb-1">Note pour Épargne Générale</h4>
-                                            {/* 🔥 DEBOUNCED TEXTAREA */}
+                                            {/* 🔥 DEBOUNCED TEXTAREA - FIXED LATENCY HERE */}
                                             <DebouncedTextarea 
                                                 value={genSavingsComment || ''} 
                                                 onChange={(val) => updateProjectComment(month, GENERAL_SAVINGS_ID, val)} 
