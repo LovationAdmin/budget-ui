@@ -207,19 +207,46 @@ export default function BudgetComplete() {
   // ============================================================================
   // LOAD BUDGET
   // ============================================================================
+
   const loadBudget = useCallback(async () => {
     if (!id) return;
+    
+    console.log('🔍 [loadBudget] START - Budget ID:', id);
+    
     try {
-      const [budgetRes, dataRes] = await Promise.all([
-        budgetAPI.getById(id), 
-        budgetAPI.getData(id)
-      ]);
+      console.log('📡 [loadBudget] Fetching budget metadata...');
+      const budgetRes = await budgetAPI.getById(id);
+      console.log('✅ [loadBudget] Budget metadata received:', budgetRes.data);
+      
+      console.log('📡 [loadBudget] Fetching budget data...');
+      const dataRes = await budgetAPI.getData(id);
+      console.log('✅ [loadBudget] Budget data received:', dataRes.data);
+      
       setBudget(budgetRes.data);
       const rawData: RawBudgetData = dataRes.data.data;
+      
+      console.log('📊 [loadBudget] Raw data structure:', {
+        hasYearlyData: !!rawData.yearlyData,
+        years: rawData.yearlyData ? Object.keys(rawData.yearlyData) : [],
+        budgetTitle: rawData.budgetTitle,
+        peopleCount: rawData.people?.length || 0,
+        chargesCount: rawData.charges?.length || 0,
+        projectsCount: rawData.projects?.length || 0,
+      });
+      
       globalDataRef.current = rawData;
+      
       if (rawData.lastUpdated) setLastServerUpdate(rawData.lastUpdated);
       else setLastServerUpdate(new Date().toISOString());
+      
       const data = convertOldFormatToNew(rawData);
+      console.log('🔄 [loadBudget] Converted data:', {
+        budgetTitle: data.budgetTitle,
+        currentYear: data.currentYear,
+        yearlyDataKeys: Object.keys(data.yearlyData || {}),
+        yearlyExpensesKeys: Object.keys(data.yearlyExpenses || {}),
+      });
+      
       setBudgetTitle(data.budgetTitle || '');
       const savedYear = data.currentYear || new Date().getFullYear();
       setCurrentYear(savedYear);
@@ -232,16 +259,20 @@ export default function BudgetComplete() {
       setMonthComments(data.monthComments || {});
       setProjectComments(data.projectComments || {});
       setLockedMonths(data.lockedMonths || {});
+      
+      console.log('✅ [loadBudget] All states updated');
+      
       loadedRef.current = true;
     } catch (error) {
-      console.error('Error loading budget:', error);
+      console.error('❌ [loadBudget] ERROR:', error);
       toast({ 
         title: "Erreur", 
         description: "Impossible de charger les données.", 
         variant: "destructive" 
       });
     } finally { 
-      setLoading(false); 
+      setLoading(false);
+      console.log('🏁 [loadBudget] COMPLETE');
     }
   }, [id, toast]);
 
