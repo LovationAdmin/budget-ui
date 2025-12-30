@@ -3,7 +3,7 @@ import { BudgetNavbar } from '@/components/budget/BudgetNavbar';
 import { EmptyState } from '@/components/budget/EmptyState';
 import { useState, useEffect, useCallback, memo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { PiggyBank, Plus, ArrowRight, Trash2, Loader2 } from "lucide-react";
+import { PiggyBank, Plus, ArrowRight, Trash2, Loader2, FlaskConical } from "lucide-react";
 import { budgetAPI } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
@@ -80,13 +80,19 @@ const BudgetListSkeleton = memo(function BudgetListSkeleton() {
 interface BudgetCardProps {
   budget: Budget;
   onOpen: (id: string) => void;
+  onOpenBeta: (id: string) => void; // ✅ NOUVEAU
   onDelete: (budget: Budget) => void;
 }
 
-const BudgetCard = memo(function BudgetCard({ budget, onOpen, onDelete }: BudgetCardProps) {
+const BudgetCard = memo(function BudgetCard({ budget, onOpen, onOpenBeta, onDelete }: BudgetCardProps) {
   const handleOpen = useCallback(() => {
     onOpen(budget.id);
   }, [budget.id, onOpen]);
+
+  const handleOpenBeta = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
+    onOpenBeta(budget.id);
+  }, [budget.id, onOpenBeta]);
 
   const handleDelete = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
@@ -128,24 +134,37 @@ const BudgetCard = memo(function BudgetCard({ budget, onOpen, onDelete }: Budget
         )}
         
         <div className="flex items-center gap-2">
+          <Button 
+            variant="ghost" 
+            size="sm"
+            className="gap-1"
+          >
+            Ouvrir
+            <ArrowRight className="h-4 w-4" />
+          </Button>
+          
+          {/* 🧪 Bouton Beta */}
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleOpenBeta}
+            className="gap-1 text-purple-600 hover:text-purple-700 hover:bg-purple-50"
+            title="Tester Reality Check (Beta 2)"
+          >
+            <FlaskConical className="h-4 w-4" />
+            Beta
+          </Button>
+          
           {budget.is_owner && (
             <Button
               variant="ghost"
               size="icon"
               onClick={handleDelete}
-              className="text-muted-foreground hover:text-destructive opacity-0 group-hover:opacity-100 transition-opacity"
+              className="text-muted-foreground hover:text-destructive"
             >
               <Trash2 className="h-4 w-4" />
             </Button>
           )}
-          <Button 
-            variant="ghost" 
-            size="sm"
-            className="gap-1 opacity-0 group-hover:opacity-100 transition-opacity"
-          >
-            Ouvrir
-            <ArrowRight className="h-4 w-4" />
-          </Button>
         </div>
       </div>
     </div>
@@ -202,6 +221,10 @@ export default function Dashboard() {
   // ============================================================================
   const handleOpenBudget = useCallback((id: string) => {
     navigate(`/budget/${id}/complete`);
+  }, [navigate]);
+
+  const handleOpenBeta = useCallback((id: string) => {
+    navigate(`/beta2/${id}`);
   }, [navigate]);
 
   const handleCreateBudget = useCallback(async (e: React.FormEvent) => {
@@ -332,6 +355,7 @@ export default function Dashboard() {
                 key={budget.id}
                 budget={budget}
                 onOpen={handleOpenBudget}
+                onOpenBeta={handleOpenBeta}
                 onDelete={confirmDelete}
               />
             ))}
