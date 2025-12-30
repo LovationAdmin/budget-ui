@@ -1,8 +1,5 @@
-// src/contexts/NotificationContext.tsx - VERSION OPTIMISÉE
-import { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
-import { budgetAPI } from '../services/api';
+import { createContext, useContext, useState, useEffect, ReactNode, useCallback, useRef } from 'react';
 import { useAuth } from './AuthContext';
-import type { RawBudgetData } from '../utils/importConverter';
 
 export interface Notification {
   id: string;
@@ -20,6 +17,7 @@ interface NotificationContextType {
   markAllAsRead: () => void;
   connectToBudget: (budgetId: string, budgetName: string) => void;
   disconnectFromBudget: () => void;
+  isConnected: boolean;
 }
 
 const NotificationContext = createContext<NotificationContextType | undefined>(undefined);
@@ -32,108 +30,110 @@ export const useNotifications = () => {
   return context;
 };
 
-// ============================================================================
-// 🚀 VERSION OPTIMISÉE : WebSocket au lieu de polling
-// ============================================================================
-
 export const NotificationProvider = ({ children }: { children: ReactNode }) => {
   const { user } = useAuth();
   const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [activeWebSocket, setActiveWebSocket] = useState<WebSocket | null>(null);
-  const [connectedBudgetId, setConnectedBudgetId] = useState<string | null>(null);
-
-  // ============================================================================
-  // WebSocket Connection Management
-  // ============================================================================
+  const [isConnected, setIsConnected] = useState(false);
+  
+  // CRITICAL FIX: Use useRef instead of useState for the socket instance
+  // This prevents the dependency cycle that causes infinite loops
+  const wsRef = useRef<WebSocket | null>(null);
+  const currentBudgetIdRef = useRef<string | null>(null);
 
   const connectToBudget = useCallback((budgetId: string, budgetName: string) => {
-    // Fermer la connexion existante si présente
-    if (activeWebSocket) {
-      activeWebSocket.close();
+    // 1. Prevent connecting if already connected to the same budget
+    if (wsRef.current?.readyState === WebSocket.OPEN && currentBudgetIdRef.current === budgetId) {
+      console.log(`⚡ [Notifications] Already connected to budget ${budgetId}`);
+      return;
+    }
+
+    // 2. Close existing connection if switching budgets
+    if (wsRef.current) {
+      wsRef.current.close();
     }
 
     const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api/v1';
-    const wsUrl = API_URL.replace(/^http/, 'ws');
+    // Handle both http/https to ws/wss conversion
+    const wsProtocol = API_URL.startsWith('https') ? 'wss' : 'ws';
+    const wsBaseUrl = API_URL.replace(/^https?/, wsProtocol);
     
     try {
-      const ws = new WebSocket(`${wsUrl}/ws/budgets/${budgetId}`);
+      console.log(`🔌 [Notifications] Connecting to ${wsBaseUrl}/ws/budgets/${budgetId}...`);
+      const ws = new WebSocket(`${wsBaseUrl}/ws/budgets/${budgetId}`);
       
       ws.onopen = () => {
-        console.log(`✅ [Notifications] WebSocket connecté au budget ${budgetId}`);
-        setConnectedBudgetId(budgetId);
+        console.log(`✅ [Notifications] WebSocket Connected`);
+        setIsConnected(true);
+        currentBudgetIdRef.current = budgetId;
       };
 
       ws.onmessage = (event) => {
         try {
           const message = JSON.parse(event.data);
           
-          // Ne créer une notification que si l'update vient d'un autre utilisateur
+          // Ignore our own updates
           if (message.type === 'budget_updated' && message.user !== user?.name) {
             const newNotification: Notification = {
               id: `${Date.now()}-${budgetId}`,
               budgetId,
               budgetName,
-              updatedBy: message.user,
+              updatedBy: message.user || 'Un membre',
               timestamp: new Date().toISOString(),
               isRead: false
             };
 
             setNotifications(prev => [newNotification, ...prev]);
+            
+            // Optional: Trigger a browser notification or sound here
           }
         } catch (error) {
-          console.error('❌ [Notifications] Erreur parsing message:', error);
+          console.error('❌ [Notifications] Parse error:', error);
         }
       };
 
       ws.onerror = (error) => {
-        console.error('❌ [Notifications] WebSocket erreur:', error);
+        console.error('❌ [Notifications] WebSocket error:', error);
+        setIsConnected(false);
       };
 
       ws.onclose = () => {
-        console.log('🔌 [Notifications] WebSocket fermé');
-        setConnectedBudgetId(null);
+        console.log('🔌 [Notifications] WebSocket Closed');
+        setIsConnected(false);
+        currentBudgetIdRef.current = null;
+        wsRef.current = null;
       };
 
-      setActiveWebSocket(ws);
+      wsRef.current = ws;
     } catch (error) {
-      console.error('❌ [Notifications] Erreur création WebSocket:', error);
+      console.error('❌ [Notifications] Connection failed:', error);
     }
-  }, [user, activeWebSocket]);
+  }, [user?.name]); // Only depend on user name, not the socket itself
 
   const disconnectFromBudget = useCallback(() => {
-    if (activeWebSocket) {
-      activeWebSocket.close();
-      setActiveWebSocket(null);
-      setConnectedBudgetId(null);
+    if (wsRef.current) {
+      console.log('🔌 [Notifications] Manual disconnect');
+      wsRef.current.close();
+      wsRef.current = null;
+      currentBudgetIdRef.current = null;
+      setIsConnected(false);
     }
-  }, [activeWebSocket]);
+  }, []);
 
-  // ============================================================================
   // Cleanup on unmount
-  // ============================================================================
-
   useEffect(() => {
     return () => {
-      if (activeWebSocket) {
-        activeWebSocket.close();
+      if (wsRef.current) {
+        wsRef.current.close();
       }
     };
-  }, [activeWebSocket]);
-
-  // ============================================================================
-  // Notification Actions
-  // ============================================================================
+  }, []);
 
   const markAsRead = (id: string) => {
-    setNotifications(prev => 
-      prev.map(n => n.id === id ? { ...n, isRead: true } : n)
-    );
+    setNotifications(prev => prev.map(n => n.id === id ? { ...n, isRead: true } : n));
   };
 
   const markAllAsRead = () => {
-    setNotifications(prev => 
-      prev.map(n => ({ ...n, isRead: true }))
-    );
+    setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
   };
 
   const unreadCount = notifications.filter(n => !n.isRead).length;
@@ -145,7 +145,8 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
       markAsRead, 
       markAllAsRead,
       connectToBudget,
-      disconnectFromBudget
+      disconnectFromBudget,
+      isConnected
     }}>
       {children}
     </NotificationContext.Provider>
