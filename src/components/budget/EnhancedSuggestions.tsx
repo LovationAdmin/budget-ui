@@ -14,14 +14,16 @@ import {
   Loader2,
   X
 } from 'lucide-react';
-import { Charge, Person, BulkAnalyzeResponse, ChargeSuggestion } from '../../services/api';
+import { BulkAnalyzeResponse, ChargeSuggestion } from '../../services/api';
+import type { Charge, Person } from '../../utils/importConverter';
 import api from '../../services/api';
 import { useNotifications } from '../../contexts/NotificationContext';
 
 interface EnhancedSuggestionsProps {
   budgetId: string;
   charges: Charge[];
-  people: Person[];
+  people?: Person[];
+  memberCount?: number; // For backward compatibility
 }
 
 interface CacheStats {
@@ -29,7 +31,7 @@ interface CacheStats {
   aiCalls: number;
 }
 
-export default function EnhancedSuggestions({ budgetId, charges, people }: EnhancedSuggestionsProps) {
+export default function EnhancedSuggestions({ budgetId, charges, people, memberCount }: EnhancedSuggestionsProps) {
   const [suggestions, setSuggestions] = useState<ChargeSuggestion[]>([]);
   const [totalSavings, setTotalSavings] = useState(0);
   const [householdSize, setHouseholdSize] = useState(1);
@@ -38,7 +40,8 @@ export default function EnhancedSuggestions({ budgetId, charges, people }: Enhan
   const [error, setError] = useState<string | null>(null);
   const [expandedCharges, setExpandedCharges] = useState<Set<string>>(new Set());
 
-  const memberCount = people.length || 1;
+  // Support both people array and memberCount prop
+  const effectiveMemberCount = memberCount ?? people?.length ?? 1;
   const { onSuggestionsReady } = useNotifications();
 
   // FIXED: Subscribe to WebSocket suggestions instead of creating a new connection
@@ -77,7 +80,7 @@ export default function EnhancedSuggestions({ budgetId, charges, people }: Enhan
     }, 0);
     
     setTotalSavings(actualTotalSavings);
-    setHouseholdSize(data.household_size || memberCount);
+    setHouseholdSize(data.household_size || effectiveMemberCount);
   };
 
   const isRelevantCategory = (category: string): boolean => {
@@ -113,7 +116,7 @@ export default function EnhancedSuggestions({ budgetId, charges, people }: Enhan
       // Send request - results will arrive via WebSocket
       await api.post(`/budgets/${budgetId}/suggestions/bulk-analyze`, {
         charges: relevantCharges,
-        household_size: memberCount
+        household_size: effectiveMemberCount
       });
 
       // Don't set loading to false here - wait for WebSocket response
@@ -160,7 +163,7 @@ export default function EnhancedSuggestions({ budgetId, charges, people }: Enhan
           </div>
           <div className="flex items-center gap-2 bg-white px-3 py-2 rounded-lg border border-gray-200">
             <Users className="h-4 w-4 text-gray-500" />
-            <span className="text-sm font-medium">{memberCount} {memberCount > 1 ? 'personnes' : 'personne'}</span>
+            <span className="text-sm font-medium">{effectiveMemberCount} {effectiveMemberCount > 1 ? 'personnes' : 'personne'}</span>
           </div>
         </div>
 
