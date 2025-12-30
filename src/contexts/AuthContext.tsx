@@ -1,15 +1,12 @@
-// src/contexts/AuthContext.tsx - VERSION OPTIMISÉE
-import { createContext, useContext, useState, useEffect, ReactNode, useMemo, useCallback } from 'react';
-import { authAPI } from '../services/api';
+import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { authAPI, User as APIUser } from '../services/api';
 
-export interface User {
-  id: string;
-  name: string;
-  email: string;
-  avatar?: string;
-  country?: string;
-  postal_code?: string;
-  created_at: string;
+// ============================================================================
+// Extended User type that includes all fields needed in the frontend
+// ============================================================================
+export interface User extends APIUser {
+  created_at?: string;
+  updated_at?: string;
 }
 
 interface AuthContextType {
@@ -39,9 +36,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // ============================================================================
-  // 🚀 OPTIMISATION : Chargement initial avec useEffect
-  // ============================================================================
   useEffect(() => {
     const token = localStorage.getItem('token');
     const userData = localStorage.getItem('user');
@@ -58,18 +52,14 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     setLoading(false);
   }, []);
 
-  // ============================================================================
-  // 🚀 OPTIMISATION : useCallback pour éviter la recréation des fonctions
-  // ============================================================================
-
-  const signup = useCallback(async (name: string, email: string, password: string) => {
+  const signup = async (name: string, email: string, password: string) => {
     try {
       const response = await authAPI.signup({ name, email, password });
       const { token, user: userData } = response.data;
       
       localStorage.setItem('token', token);
       localStorage.setItem('user', JSON.stringify(userData));
-      setUser(userData);
+      setUser(userData as User);
       
       return { success: true };
     } catch (error: any) {
@@ -78,16 +68,16 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         error: error.response?.data?.error || 'Erreur lors de l\'inscription' 
       };
     }
-  }, []);
+  };
 
-  const login = useCallback(async (email: string, password: string) => {
+  const login = async (email: string, password: string) => {
     try {
       const response = await authAPI.login({ email, password });
       const { token, user: userData } = response.data;
       
       localStorage.setItem('token', token);
       localStorage.setItem('user', JSON.stringify(userData));
-      setUser(userData);
+      setUser(userData as User);
       
       return { success: true };
     } catch (error: any) {
@@ -96,38 +86,27 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         error: error.response?.data?.error || 'Identifiants invalides' 
       };
     }
-  }, []);
+  };
 
-  const logout = useCallback(() => {
+  const logout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     setUser(null);
-  }, []);
+  };
 
-  const updateUser = useCallback((updates: Partial<User>) => {
-    setUser(prevUser => {
-      if (!prevUser) return null;
-      
-      const updatedUser = { ...prevUser, ...updates };
+  // ============================================================================
+  // Update user state AND localStorage in sync
+  // ============================================================================
+  const updateUser = (updates: Partial<User>) => {
+    if (user) {
+      const updatedUser = { ...user, ...updates };
       localStorage.setItem('user', JSON.stringify(updatedUser));
-      return updatedUser;
-    });
-  }, []);
-
-  // ============================================================================
-  // 🚀 OPTIMISATION : useMemo pour éviter la recréation du contexte
-  // ============================================================================
-  const contextValue = useMemo(() => ({
-    user,
-    loading,
-    signup,
-    login,
-    logout,
-    updateUser
-  }), [user, loading, signup, login, logout, updateUser]);
+      setUser(updatedUser);
+    }
+  };
 
   return (
-    <AuthContext.Provider value={contextValue}>
+    <AuthContext.Provider value={{ user, signup, login, logout, loading, updateUser }}>
       {children}
     </AuthContext.Provider>
   );
