@@ -1,7 +1,5 @@
-// src/contexts/NotificationContext.tsx
 import { createContext, useContext, useState, useEffect, ReactNode, useCallback, useRef } from 'react';
 import { useAuth } from './AuthContext';
-import { BulkAnalyzeResponse } from '../services/api';
 
 export interface Notification {
   id: string;
@@ -12,6 +10,8 @@ export interface Notification {
   isRead: boolean;
 }
 
+type MessageCallback = (data: any) => void;
+
 interface NotificationContextType {
   notifications: Notification[];
   unreadCount: number;
@@ -20,8 +20,8 @@ interface NotificationContextType {
   connectToBudget: (budgetId: string, budgetName: string) => void;
   disconnectFromBudget: () => void;
   isConnected: boolean;
-  // NEW: Subscribe to market suggestions results
-  onSuggestionsReady: (callback: (data: BulkAnalyzeResponse) => void) => () => void;
+  // 🔥 NEW: Subscribe to specific message types
+  onSuggestionsReady: (callback: MessageCallback) => () => void;
 }
 
 const NotificationContext = createContext<NotificationContextType | undefined>(undefined);
@@ -42,17 +42,17 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
   const wsRef = useRef<WebSocket | null>(null);
   const currentBudgetIdRef = useRef<string | null>(null);
   
-  // NEW: Store callbacks for market suggestions
-  const suggestionsCallbacksRef = useRef<Set<(data: BulkAnalyzeResponse) => void>>(new Set());
+  // 🔥 NEW: Pub/Sub system for message types
+  const suggestionsCallbacksRef = useRef<Set<MessageCallback>>(new Set());
 
   const connectToBudget = useCallback((budgetId: string, budgetName: string) => {
-    // Prevent connecting if already connected to the same budget
+    // 1. Prevent connecting if already connected to the same budget
     if (wsRef.current?.readyState === WebSocket.OPEN && currentBudgetIdRef.current === budgetId) {
       console.log(`⚡ [Notifications] Already connected to budget ${budgetId}`);
       return;
     }
 
-    // Close existing connection if switching budgets
+    // 2. Close existing connection if switching budgets
     if (wsRef.current) {
       wsRef.current.close();
     }
@@ -75,37 +75,28 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
         try {
           const message = JSON.parse(event.data);
           
-          // Handle different message types
-          switch (message.type) {
-            case 'budget_updated':
-              // Ignore our own updates
-              if (message.user !== user?.name) {
-                const newNotification: Notification = {
-                  id: `${Date.now()}-${budgetId}`,
-                  budgetId,
-                  budgetName,
-                  updatedBy: message.user || 'Un membre',
-                  timestamp: new Date().toISOString(),
-                  isRead: false
-                };
-                setNotifications(prev => [newNotification, ...prev]);
+          // 🔥 FIXED: Handle different message types
+          if (message.type === 'budget_updated' && message.user !== user?.name) {
+            const newNotification: Notification = {
+              id: `${Date.now()}-${budgetId}`,
+              budgetId,
+              budgetName,
+              updatedBy: message.user || 'Un membre',
+              timestamp: new Date().toISOString(),
+              isRead: false
+            };
+            setNotifications(prev => [newNotification, ...prev]);
+          } 
+          else if (message.type === 'suggestions_ready') {
+            console.log('📊 [Notifications] Market suggestions ready:', message.data);
+            // Notify all subscribers
+            suggestionsCallbacksRef.current.forEach(callback => {
+              try {
+                callback(message.data);
+              } catch (err) {
+                console.error('❌ [Notifications] Callback error:', err);
               }
-              break;
-
-            case 'suggestions_ready':
-              // NEW: Notify all subscribers that suggestions are ready
-              console.log('📊 [Notifications] Market suggestions ready:', message.data);
-              suggestionsCallbacksRef.current.forEach(callback => {
-                try {
-                  callback(message.data);
-                } catch (error) {
-                  console.error('Error in suggestions callback:', error);
-                }
-              });
-              break;
-
-            default:
-              console.log('📨 [Notifications] Unknown message type:', message.type);
+            });
           }
         } catch (error) {
           console.error('❌ [Notifications] Parse error:', error);
@@ -140,15 +131,15 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
     }
   }, []);
 
-  // NEW: Subscribe to market suggestions
-  const onSuggestionsReady = useCallback((callback: (data: BulkAnalyzeResponse) => void) => {
-    suggestionsCallbacksRef.current.add(callback);
+  // 🔥 NEW: Subscribe to suggestions_ready messages
+  const onSuggestionsReady = useCallback((callback: MessageCallback) => {
     console.log('📊 [Notifications] Subscribed to suggestions updates');
+    suggestionsCallbacksRef.current.add(callback);
     
-    // Return cleanup function
+    // Return unsubscribe function
     return () => {
-      suggestionsCallbacksRef.current.delete(callback);
       console.log('📊 [Notifications] Unsubscribed from suggestions updates');
+      suggestionsCallbacksRef.current.delete(callback);
     };
   }, []);
 
@@ -172,15 +163,15 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
   const unreadCount = notifications.filter(n => !n.isRead).length;
 
   return (
-    <NotificationContext.Provider value={{
-      notifications,
-      unreadCount,
-      markAsRead,
+    <NotificationContext.Provider value={{ 
+      notifications, 
+      unreadCount, 
+      markAsRead, 
       markAllAsRead,
       connectToBudget,
       disconnectFromBudget,
       isConnected,
-      onSuggestionsReady,
+      onSuggestionsReady, // 🔥 NEW
     }}>
       {children}
     </NotificationContext.Provider>
