@@ -28,7 +28,7 @@ import { useNotifications } from '@/contexts/NotificationContext';
 interface EnhancedSuggestionsProps {
   budgetId: string;
   charges: Charge[];
-  memberCount: number; // people.length from parent (household size)
+  memberCount: number;
 }
 
 // ============================================================================
@@ -79,7 +79,7 @@ export default function EnhancedSuggestions({ budgetId, charges, memberCount }: 
   const [isExpanded, setIsExpanded] = useState(false);
   const [householdSize, setHouseholdSize] = useState(1);
 
-  const { onSuggestionsReady } = useNotifications();
+  const { onSuggestionsReady, isConnected } = useNotifications();
 
   // Subscribe to WebSocket suggestions
   useEffect(() => {
@@ -91,30 +91,35 @@ export default function EnhancedSuggestions({ budgetId, charges, memberCount }: 
     return unsubscribe;
   }, [onSuggestionsReady]);
 
-  // Auto-load on mount
+  // 🔥 FIX: Auto-load ONLY when WebSocket is connected
   useEffect(() => {
+    if (!isConnected) {
+      console.log('⏳ [EnhancedSuggestions] Waiting for WebSocket connection...');
+      return;
+    }
+
     const timer = setTimeout(() => {
       if (charges.length > 0) {
+        console.log('🚀 [EnhancedSuggestions] WebSocket connected, starting analysis...');
         loadSuggestions();
       }
-    }, 1000);
+    }, 500); // Reduced to 500ms since we already wait for WS
+
     return () => clearTimeout(timer);
-  }, [budgetId, charges.length, memberCount]);
+  }, [budgetId, charges.length, memberCount, isConnected]); // Added isConnected dependency
 
   const processResults = (data: any) => {
     const rawSuggestions = data.suggestions || [];
     
-    // Filter suggestions: only keep those with actual savings > 0
     const filteredSuggestions = rawSuggestions.filter((s: any) => {
       const hasPositiveSavings = s.suggestion.competitors.some((c: any) => c.potential_savings > 0);
       return hasPositiveSavings;
     });
 
-    // For each suggestion, filter out competitors with 0 or negative savings
     filteredSuggestions.forEach((s: any) => {
       s.suggestion.competitors = s.suggestion.competitors
         .filter((c: any) => c.potential_savings > 0)
-        .sort((a: any, b: any) => b.potential_savings - a.potential_savings); // Sort by savings DESC
+        .sort((a: any, b: any) => b.potential_savings - a.potential_savings);
     });
 
     setSuggestions(filteredSuggestions);
@@ -123,7 +128,6 @@ export default function EnhancedSuggestions({ budgetId, charges, memberCount }: 
       aiCalls: data.ai_calls_made || 0
     });
     
-    // Recalculate total savings
     const actualTotalSavings = filteredSuggestions.reduce((sum: number, s: any) => {
       const bestSaving = s.suggestion.competitors[0]?.potential_savings || 0;
       return sum + bestSaving;
@@ -160,7 +164,6 @@ export default function EnhancedSuggestions({ budgetId, charges, memberCount }: 
 
       console.log(`📊 [EnhancedSuggestions] Analyzing ${relevantCharges.length} charges...`);
 
-      // Send request - results will arrive via WebSocket
       await budgetAPI.bulkAnalyzeSuggestions(budgetId, {
         charges: relevantCharges,
         household_size: memberCount
@@ -168,7 +171,6 @@ export default function EnhancedSuggestions({ budgetId, charges, memberCount }: 
 
       console.log('✅ [EnhancedSuggestions] Analysis request sent, waiting for WebSocket response...');
 
-      // Fallback timeout: if no WebSocket response after 30 seconds, stop loading
       setTimeout(() => {
         if (loading) {
           console.warn('⚠️ [EnhancedSuggestions] No WebSocket response after 30s, stopping loader');
@@ -184,7 +186,6 @@ export default function EnhancedSuggestions({ budgetId, charges, memberCount }: 
     }
   };
 
-  // Loading
   if (loading && suggestions.length === 0) {
     return (
       <Card className="border-blue-200 bg-blue-50/30">
@@ -216,7 +217,6 @@ export default function EnhancedSuggestions({ budgetId, charges, memberCount }: 
     );
   }
 
-  // No suggestions with actual savings = excellent offers!
   if (suggestions.length === 0 && charges.length > 0) {
     const hasRelevant = charges.some(c => c.category && isRelevantCategory(c.category) && !c.ignoreSuggestions);
     
@@ -244,7 +244,6 @@ export default function EnhancedSuggestions({ budgetId, charges, memberCount }: 
 
   return (
     <div className="space-y-4">
-      {/* Header - Collapsable */}
       <Card 
         className="border-green-200 bg-green-50/50 cursor-pointer hover:bg-green-50 transition-colors"
         onClick={() => setIsExpanded(!isExpanded)}
@@ -290,7 +289,6 @@ export default function EnhancedSuggestions({ budgetId, charges, memberCount }: 
         </CardHeader>
       </Card>
 
-      {/* Expanded Content */}
       {isExpanded && (
         <>
           {(cacheStats.hits > 0 || cacheStats.aiCalls > 0) && (
@@ -312,16 +310,13 @@ export default function EnhancedSuggestions({ budgetId, charges, memberCount }: 
 }
 
 // ============================================================================
-// SUGGESTION CARD - Max 3 competitors with positive savings
+// SUGGESTION CARD
 // ============================================================================
 
 function SuggestionCard({ chargeSuggestion, householdSize }: { chargeSuggestion: ChargeSuggestion; householdSize: number }) {
   const { charge_label, suggestion } = chargeSuggestion;
-  
-  // Only show competitors with positive savings, max 3, already sorted by savings DESC
   const competitors = suggestion.competitors.slice(0, 3);
   
-  // If no competitors with positive savings, don't show this card
   if (competitors.length === 0) return null;
 
   const bestSavings = competitors[0]?.potential_savings || 0;
@@ -368,7 +363,7 @@ function SuggestionCard({ chargeSuggestion, householdSize }: { chargeSuggestion:
 }
 
 // ============================================================================
-// COMPETITOR CARD - With proper ranking
+// COMPETITOR CARD
 // ============================================================================
 
 function CompetitorCard({ competitor, rank }: { competitor: Competitor; rank: number }) {
@@ -388,23 +383,19 @@ function CompetitorCard({ competitor, rank }: { competitor: Competitor; rank: nu
 
   return (
     <div className={`p-4 rounded-lg transition-all ${getCardStyle()}`}>
-      {/* Header */}
       <div className="flex items-center justify-between mb-3">
         {getRankBadge()}
         <span className="text-lg font-bold text-green-700">-{competitor.potential_savings.toFixed(0)}€/an</span>
       </div>
 
-      {/* Name & Offer */}
       <h4 className="font-semibold text-gray-900 mb-2">{competitor.name}</h4>
       <p className="text-sm text-gray-600 mb-3">{competitor.best_offer}</p>
 
-      {/* Price */}
       <div className="flex items-center gap-2 mb-4">
         <span className="text-sm text-muted-foreground">Prix:</span>
         <span className="font-semibold text-primary">{competitor.typical_price.toFixed(2)}€/mois</span>
       </div>
 
-      {/* Pros & Cons */}
       {(competitor.pros?.length > 0 || competitor.cons?.length > 0) && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
           {competitor.pros?.length > 0 && (
@@ -434,7 +425,6 @@ function CompetitorCard({ competitor, rank }: { competitor: Competitor; rank: nu
         </div>
       )}
 
-      {/* Action Buttons */}
       <div className="flex flex-wrap gap-2 pt-3 border-t border-gray-200">
         {websiteUrl && (
           <Button 
