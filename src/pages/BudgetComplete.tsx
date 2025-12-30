@@ -1,4 +1,4 @@
-// src/pages/BudgetComplete.tsx - VERSION OPTIMISÉE COMPLÈTE
+// src/pages/BudgetComplete.tsx
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { budgetAPI } from '../services/api';
@@ -29,7 +29,6 @@ import StatsSection from '../components/budget/StatsSection';
 import ActionsBar from '../components/budget/ActionsBar';
 import MemberManagementSection from '../components/budget/MemberManagementSection';
 import { LayoutDashboard, Users, Receipt, Target, CalendarDays } from "lucide-react";
-import { ToastAction } from '@/components/ui/toast';
 import { useTutorial } from '../contexts/TutorialContext';
 import EnhancedSuggestions from '@/components/budget/EnhancedSuggestions';
 
@@ -77,7 +76,7 @@ export default function BudgetComplete() {
   const [people, setPeople] = useState<Person[]>([]);
   const [charges, setCharges] = useState<Charge[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
-  const [yearlyData, setYearlyData] = useState<YearlyData>({});         
+  const [yearlyData, setYearlyData] = useState<YearlyData>({});        
   const [yearlyExpenses, setYearlyExpenses] = useState<YearlyData>({});
   const [oneTimeIncomes, setOneTimeIncomes] = useState<OneTimeIncomes>({});
   const [monthComments, setMonthComments] = useState<MonthComments>({});
@@ -159,11 +158,6 @@ export default function BudgetComplete() {
     }, 30000);
     return () => clearInterval(saveInterval);
   }, [budgetTitle, currentYear, people, charges, projects, yearlyData, yearlyExpenses, oneTimeIncomes, monthComments, projectComments, lockedMonths]);
-
-  // ============================================================================
-  // ✅ POLLING SUPPRIMÉ - Remplacé par WebSocket (NotificationContext)
-  // Les notifications en temps réel sont gérées via useNotifications()
-  // ============================================================================
 
   // ============================================================================
   // Members Refresh Effect
@@ -508,17 +502,6 @@ export default function BudgetComplete() {
           />
         </div>
 
-        <div className="mt-6">
-          <StatsSection 
-            people={people} 
-            charges={charges} 
-            projects={projects} 
-            yearlyData={yearlyData} 
-            oneTimeIncomes={oneTimeIncomes} 
-            currentYear={currentYear} 
-          />
-        </div>
-
         <div id="calendar" className="mt-6">
           <MonthlyTable 
             currentYear={currentYear} 
@@ -539,6 +522,18 @@ export default function BudgetComplete() {
             onLockedMonthsChange={setLockedMonths} 
             onYearChange={handleYearChange} 
             projectCarryOvers={projectCarryOvers} 
+          />
+        </div>
+
+        {/* Removed id="overview" from here so the "Vue d'ensemble" navbar button scrolls to top */}
+        <div className="mt-6">
+          <StatsSection 
+            people={people} 
+            charges={charges} 
+            projects={projects} 
+            yearlyData={yearlyData} 
+            oneTimeIncomes={oneTimeIncomes} 
+            currentYear={currentYear} 
           />
         </div>
       </div>

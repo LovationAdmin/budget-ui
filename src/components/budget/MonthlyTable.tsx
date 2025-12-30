@@ -56,9 +56,9 @@ interface MonthlyTableProps {
   onProjectCommentsChange: (data: ProjectComments) => void;
   onLockedMonthsChange: (data: LockedMonths) => void;
   
-  // NEW: Navigation & Coherence Props
+  // Navigation & Coherence Props
   onYearChange: (year: number) => void;
-  projectCarryOvers?: Record<string, number>; // Montant cumulé des années précédentes
+  projectCarryOvers?: Record<string, number>;
   customChargeTotalCalculator?: (monthIndex: number) => number;
 }
 
@@ -85,6 +85,23 @@ const isChargeActive = (charge: Charge, year: number, monthIndex: number): boole
     return true;
 };
 
+const isPersonActive = (person: Person, year: number, monthIndex: number): boolean => {
+    const monthStart = new Date(year, monthIndex, 1);
+    const monthEnd = new Date(year, monthIndex + 1, 0);
+
+    if (person.startDate) {
+        const start = new Date(person.startDate);
+        if (start > monthEnd) return false;
+    }
+
+    if (person.endDate) {
+        const end = new Date(person.endDate);
+        if (end < monthStart) return false;
+    }
+
+    return true;
+};
+
 export default function MonthlyTable({
   currentYear,
   people,
@@ -102,8 +119,8 @@ export default function MonthlyTable({
   onMonthCommentsChange,
   onProjectCommentsChange,
   onLockedMonthsChange,
-  onYearChange, // <--- Destructured
-  projectCarryOvers = {}, // <--- Destructured with default
+  onYearChange,
+  projectCarryOvers = {},
   customChargeTotalCalculator
 }: MonthlyTableProps) {
   const [selectedMonth, setSelectedMonth] = useState<string | null>(null);
@@ -124,8 +141,15 @@ export default function MonthlyTable({
     });
   }, [projects.length]);
 
-  // --- Calculations ---
-  const getMonthlyBaseIncome = () => people.reduce((sum, person) => sum + person.salary, 0);
+  // --- Calculations (FIXED: Now considers person dates) ---
+  const getMonthlyBaseIncome = (monthIndex: number) => {
+    return people.reduce((sum, person) => {
+      if (!isPersonActive(person, currentYear, monthIndex)) {
+        return sum;
+      }
+      return sum + person.salary;
+    }, 0);
+  };
   
   const getMonthlyChargesTotal = (monthIndex: number) => {
     if (customChargeTotalCalculator) {
@@ -139,7 +163,7 @@ export default function MonthlyTable({
   const getMonthlyOneTimeIncome = (month: string) => oneTimeIncomes[month] || 0;
   
   const getMonthlyAvailableSavings = (month: string, monthIndex: number) => {
-    const baseIncome = getMonthlyBaseIncome();
+    const baseIncome = getMonthlyBaseIncome(monthIndex);
     const oneTime = getMonthlyOneTimeIncome(month);
     const chargesTotal = getMonthlyChargesTotal(monthIndex);
     return baseIncome + oneTime - chargesTotal;
@@ -156,9 +180,7 @@ export default function MonthlyTable({
     return available - totalAllocatedToProjects;
   };
 
-  // UPDATED: Now includes carryOver from previous years
   const getCumulativeProjectTotal = (projectId: string, upToMonthIndex: number) => {
-    // Start with the carry over from previous years (Dec 2025 -> Jan 2026)
     let total = projectCarryOvers[projectId] || 0;
     
     for (let i = 0; i <= upToMonthIndex; i++) {
@@ -170,7 +192,6 @@ export default function MonthlyTable({
     return total;
   };
 
-  // UPDATED: Now includes carryOver for general savings too
   const getCumulativeGeneralSavings = (upToMonthIndex: number) => {
     let total = projectCarryOvers[GENERAL_SAVINGS_ID] || 0;
     
@@ -254,7 +275,7 @@ export default function MonthlyTable({
                     <span className="hidden sm:inline">Tableau de Gestion</span>
                 </CardTitle>
                 
-                {/* NEW: Year Navigation in Table */}
+                {/* Year Navigation */}
                 <div className="flex items-center gap-1 bg-background rounded-lg border p-0.5">
                     <Button 
                         variant="ghost" 
@@ -358,13 +379,10 @@ export default function MonthlyTable({
                 </tr>
               </thead>
               <tbody className="divide-y divide-border/50 text-xs">
-                {/* Ligne de Report (Carry Over) affichée uniquement si on n'est pas en Janvier, 
-                    ou plus simplement, on l'intègre directement dans le cumul des mois.
-                    Ici, on garde le format simple, le cumul (∑) inclut le report.
-                */}
                 {MONTHS.map((month, monthIndex) => {
                   const isLocked = lockedMonths[month];
                   const hasComment = !!monthComments[month];
+                  const baseIncome = getMonthlyBaseIncome(monthIndex);
                   const chargesTotal = getMonthlyChargesTotal(monthIndex);
                   const availableToSave = getMonthlyAvailableSavings(month, monthIndex);
                   const genSavingsAllocation = getGeneralSavingsAllocation(month, monthIndex);
@@ -387,13 +405,13 @@ export default function MonthlyTable({
                             </div>
                         </div>
                       </td>
-                      {showIncome && <td className="px-2 py-2 text-center bg-success/5 font-medium text-success border-r border-dashed border-border/50">+{getMonthlyBaseIncome().toLocaleString()}</td>}
+                      {showIncome && <td className="px-2 py-2 text-center bg-success/5 font-medium text-success border-r border-dashed border-border/50">+{baseIncome.toLocaleString()} €</td>}
                       {showOneTime && (
                         <td className="px-2 py-2 bg-success/5 border-r border-dashed border-border/50">
                             <Input type="number" min="0" value={oneTimeIncomes[month] || ''} onChange={(e) => updateOneTimeIncome(month, parseFloat(e.target.value) || 0)} disabled={isLocked} className={cn("text-center h-7 text-xs font-medium border-success/20 focus-visible:ring-success/30 bg-background hover:bg-white shadow-sm p-1", oneTimeIncomes[month] ? "text-success font-bold" : "text-muted-foreground", isLocked && "opacity-50 cursor-not-allowed")} placeholder="-" />
                         </td>
                       )}
-                      {showCharges && <td className="px-2 py-2 text-center bg-destructive/5 font-medium text-destructive border-r border-dashed border-border/50">-{chargesTotal.toLocaleString()}</td>}
+                      {showCharges && <td className="px-2 py-2 text-center bg-destructive/5 font-medium text-destructive border-r border-dashed border-border/50">-{chargesTotal.toLocaleString()} €</td>}
                       <td className="px-2 py-2 text-center font-bold text-primary bg-primary/10 border-r-2 border-primary/20 text-sm">{availableToSave.toLocaleString()} €</td>
                       {visibleProjects.map((project) => {
                         const allocation = yearlyData[month]?.[project.id] || 0;
@@ -409,7 +427,7 @@ export default function MonthlyTable({
                               </div>
                               <div className="flex items-center justify-between px-0.5">
                                 <div className="text-[10px] text-muted-foreground flex items-center gap-0.5 bg-muted/30 px-1 py-0 rounded" title="Total Cumulé (incluant années précédentes)">
-                                  <span>∑</span><span className={cumulative >= 0 ? "text-success font-medium" : "text-destructive font-medium"}>{cumulative.toLocaleString()}</span>
+                                  <span>∑</span><span className={cumulative >= 0 ? "text-success font-medium" : "text-destructive font-medium"}>{cumulative.toLocaleString()} €</span>
                                 </div>
                                 <Popover>
                                   <PopoverTrigger asChild><Button variant="ghost" size="icon" className={cn("h-4 w-4 rounded-full p-0", comment ? "text-primary" : "text-muted-foreground/30")}>{comment ? <MessageCircle className="h-3 w-3" /> : <MessageSquarePlus className="h-3 w-3" />}</Button></PopoverTrigger>
@@ -425,11 +443,11 @@ export default function MonthlyTable({
                       <td className="px-1 py-2 bg-primary/5">
                         <div className="flex flex-col gap-1">
                             <div className="flex items-center gap-1">
-                                <Input type="text" value={genSavingsAllocation.toLocaleString()} disabled className="text-center h-7 text-xs px-1 font-bold bg-primary/10 border-primary/20 text-primary cursor-default shadow-none" />
+                                <Input type="text" value={`${genSavingsAllocation.toLocaleString()} €`} disabled className="text-center h-7 text-xs px-1 font-bold bg-primary/10 border-primary/20 text-primary cursor-default shadow-none" />
                                 <Input type="number" min="0" value={genSavingsExpense || ''} onChange={(e) => updateExpense(month, GENERAL_SAVINGS_ID, parseFloat(e.target.value) || 0)} disabled={isLocked} className={cn("text-center h-7 text-xs px-1 font-medium bg-background border-destructive/20 focus-visible:ring-destructive/30 shadow-sm", genSavingsExpense > 0 && "text-destructive font-bold bg-destructive/5", isLocked && "opacity-50")} placeholder="0" />
                             </div>
                             <div className="flex items-center justify-between px-0.5">
-                                <div className="text-[10px] text-muted-foreground flex items-center gap-0.5 bg-muted/30 px-1 py-0 rounded"><span>∑</span><span className={genSavingsCumulative >= 0 ? "text-success font-medium" : "text-destructive font-medium"}>{genSavingsCumulative.toLocaleString()}</span></div>
+                                <div className="text-[10px] text-muted-foreground flex items-center gap-0.5 bg-muted/30 px-1 py-0 rounded"><span>∑</span><span className={genSavingsCumulative >= 0 ? "text-success font-medium" : "text-destructive font-medium"}>{genSavingsCumulative.toLocaleString()} €</span></div>
                                 <Popover>
                                     <PopoverTrigger asChild><Button variant="ghost" size="icon" className={cn("h-4 w-4 rounded-full p-0", genSavingsComment ? "text-primary" : "text-muted-foreground/30")}>{genSavingsComment ? <MessageCircle className="h-3 w-3" /> : <MessageSquarePlus className="h-3 w-3" />}</Button></PopoverTrigger>
                                     <PopoverContent className="w-64 p-3"><div className="space-y-2"><h4 className="font-medium text-xs text-muted-foreground mb-1">Note pour Épargne Générale</h4><Textarea value={genSavingsComment || ''} onChange={(e) => updateProjectComment(month, GENERAL_SAVINGS_ID, e.target.value)} placeholder="Détail..." className="h-20 text-sm resize-none" /></div></PopoverContent>
