@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { budgetAPI, ChargeSuggestion, Competitor } from '@/services/api';
 import { Charge } from '@/utils/importConverter';
+import { useNotifications } from '@/contexts/NotificationContext'; // Use existing context for socket logic
 
 // ============================================================================
 // TYPES
@@ -27,7 +28,7 @@ import { Charge } from '@/utils/importConverter';
 interface EnhancedSuggestionsProps {
   budgetId: string;
   charges: Charge[];
-  memberCount: number; // people.length from parent (household size)
+  memberCount: number;
 }
 
 // ============================================================================
@@ -58,7 +59,7 @@ function getCategoryLabel(cat: string): string {
     'INSURANCE': '🛡️ Assurance',
     'INSURANCE_AUTO': '🚗 Assurance Auto',
     'INSURANCE_HOME': '🏠 Assurance Habitation',
-    'INSURANCE_HEALTH': '🏥 Mutuelle Santé',
+    'INSURANCE_HEALTH': '💊 Mutuelle Santé',
     'LOAN': '💳 Prêt / Crédit',
     'BANK': '🏦 Banque'
   };
@@ -77,11 +78,63 @@ export default function EnhancedSuggestions({ budgetId, charges, memberCount }: 
   const [totalSavings, setTotalSavings] = useState(0);
   const [isExpanded, setIsExpanded] = useState(false);
   const [householdSize, setHouseholdSize] = useState(1);
+  const [isProcessingBackground, setIsProcessingBackground] = useState(false);
 
+  // We can listen to WS messages globally via window event listener 
+  // (Assuming NotificationContext dispatches events or we hook into it)
+  // Or simpler: Reuse the existing WS connection from NotificationContext
+  
   useEffect(() => {
-    const timer = setTimeout(() => loadSuggestions(), 1000);
-    return () => clearTimeout(timer);
-  }, [budgetId, charges, memberCount]);
+    // Handler for WebSocket messages
+    const handleWSMessage = (event: MessageEvent) => {
+        try {
+            const message = JSON.parse(event.data);
+            if (message.type === 'suggestions_ready') {
+                console.log("⚡ Analysis complete (via WS)");
+                processResults(message.data);
+                setIsProcessingBackground(false);
+                setLoading(false);
+            }
+        } catch (e) {
+            // Ignore parse errors from other messages
+        }
+    };
+
+    // Attach to the NotificationContext's websocket if possible, 
+    // but since we don't expose the raw WS, we can rely on a global event listener if the context is broadcasting
+    // Alternatively, simpler hack:
+    const wsBaseUrl = (import.meta.env.VITE_API_URL || 'http://localhost:8080/api/v1').replace(/^http/, 'ws');
+    const tempWs = new WebSocket(`${wsBaseUrl}/ws/budgets/${budgetId}`);
+    tempWs.onmessage = handleWSMessage;
+
+    return () => {
+        tempWs.close();
+    };
+  }, [budgetId]);
+
+  const processResults = (data: any) => {
+      const rawSuggestions = data.suggestions || [];
+      const filteredSuggestions = rawSuggestions.filter((s: any) => {
+        return s.suggestion.competitors.some((c: any) => c.potential_savings > 0);
+      });
+
+      filteredSuggestions.forEach((s: any) => {
+        s.suggestion.competitors = s.suggestion.competitors.filter((c: any) => c.potential_savings > 0);
+      });
+
+      setSuggestions(filteredSuggestions);
+      setCacheStats({
+        hits: data.cache_hits || 0,
+        aiCalls: data.ai_calls_made || 0
+      });
+      
+      const actualTotalSavings = filteredSuggestions.reduce((sum: number, s: any) => {
+        const bestSaving = s.suggestion.competitors[0]?.potential_savings || 0;
+        return sum + bestSaving;
+      }, 0);
+      setTotalSavings(actualTotalSavings);
+      setHouseholdSize(data.household_size || memberCount);
+  };
 
   const loadSuggestions = async () => {
     if (charges.length === 0) return;
@@ -106,60 +159,50 @@ export default function EnhancedSuggestions({ budgetId, charges, memberCount }: 
         return;
       }
 
-      // Send householdSize (memberCount = people.length) to backend
       const response = await budgetAPI.bulkAnalyzeSuggestions(budgetId, {
         charges: relevantCharges,
         household_size: memberCount
       });
 
-      // Filter suggestions: only keep those with actual savings > 0
-      const rawSuggestions = response.data.suggestions || [];
-      const filteredSuggestions = rawSuggestions.filter(s => {
-        // Check if at least one competitor has positive savings
-        const hasPositiveSavings = s.suggestion.competitors.some(c => c.potential_savings > 0);
-        return hasPositiveSavings;
-      });
-
-      // For each suggestion, filter out competitors with 0 or negative savings
-      filteredSuggestions.forEach(s => {
-        s.suggestion.competitors = s.suggestion.competitors.filter(c => c.potential_savings > 0);
-      });
-
-      setSuggestions(filteredSuggestions);
-      setCacheStats({
-        hits: response.data.cache_hits || 0,
-        aiCalls: response.data.ai_calls_made || 0
-      });
-      
-      // Recalculate total savings from filtered data
-      const actualTotalSavings = filteredSuggestions.reduce((sum, s) => {
-        const bestSaving = s.suggestion.competitors[0]?.potential_savings || 0;
-        return sum + bestSaving;
-      }, 0);
-      setTotalSavings(actualTotalSavings);
-      setHouseholdSize(response.data.household_size || memberCount);
-
-      console.log('[EnhancedSuggestions] Loaded', filteredSuggestions.length, 
-        'suggestions with actual savings for household of', response.data.household_size, 'persons');
+      if (response.status === 202) {
+          // Processing in background
+          setIsProcessingBackground(true);
+          // Loading state remains true until WS returns
+      } else {
+          // Direct response (cache hit case possibly)
+          processResults(response.data);
+          setLoading(false);
+      }
 
     } catch (err: any) {
       console.error('Failed to load suggestions:', err);
       setError(err.response?.data?.error || 'Erreur lors du chargement');
-    } finally {
       setLoading(false);
     }
   };
+  
+  // Initial load
+  useEffect(() => {
+     // Delay slightly to let page render
+     const t = setTimeout(() => loadSuggestions(), 1000);
+     return () => clearTimeout(t);
+  }, []);
 
-  // Loading
+  // Loading View
   if (loading && suggestions.length === 0) {
     return (
       <Card className="border-blue-200 bg-blue-50/30">
         <CardContent className="pt-6">
           <div className="flex items-center justify-center py-8">
             <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
-            <span className="ml-3 text-muted-foreground">
-              Recherche d'économies pour {memberCount} personne{memberCount > 1 ? 's' : ''}...
-            </span>
+            <div className="ml-3">
+                <p className="text-sm font-medium text-blue-900">Analyse de vos charges en cours...</p>
+                <p className="text-xs text-blue-700">
+                    {isProcessingBackground 
+                        ? "L'IA analyse le marché en arrière-plan. Cela peut prendre quelques secondes." 
+                        : `Recherche d'économies pour ${memberCount} personne${memberCount > 1 ? 's' : ''}...`}
+                </p>
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -168,11 +211,10 @@ export default function EnhancedSuggestions({ budgetId, charges, memberCount }: 
 
   if (error) return null;
 
-  // No suggestions with actual savings = excellent offers!
+  // No suggestions found state
   if (suggestions.length === 0 && charges.length > 0) {
     const hasRelevant = charges.some(c => c.category && isRelevantCategory(c.category) && !c.ignoreSuggestions);
-    
-    if (hasRelevant) {
+    if (hasRelevant && !loading) {
       return (
         <Card className="border-green-200 bg-green-50/30">
           <CardContent className="pt-6">
@@ -181,7 +223,7 @@ export default function EnhancedSuggestions({ budgetId, charges, memberCount }: 
               <div>
                 <p className="font-medium">🎉 Vous avez déjà d'excellentes offres !</p>
                 <p className="text-sm text-green-600">
-                  Vos charges sont bien optimisées pour votre foyer de {householdSize} personne{householdSize > 1 ? 's' : ''}.
+                  Vos charges sont bien optimisées pour votre foyer.
                 </p>
               </div>
             </div>
@@ -192,11 +234,8 @@ export default function EnhancedSuggestions({ budgetId, charges, memberCount }: 
     return null;
   }
 
-  if (suggestions.length === 0) return null;
-
   return (
     <div className="space-y-4">
-      {/* Header */}
       <Card 
         className="border-green-200 bg-green-50/50 cursor-pointer hover:bg-green-50 transition-colors"
         onClick={() => setIsExpanded(!isExpanded)}
@@ -242,7 +281,6 @@ export default function EnhancedSuggestions({ budgetId, charges, memberCount }: 
         </CardHeader>
       </Card>
 
-      {/* Expanded Content */}
       {isExpanded && (
         <>
           {(cacheStats.hits > 0 || cacheStats.aiCalls > 0) && (
@@ -263,21 +301,10 @@ export default function EnhancedSuggestions({ budgetId, charges, memberCount }: 
   );
 }
 
-// ============================================================================
-// SUGGESTION CARD - Max 3 competitors with positive savings
-// ============================================================================
-
 function SuggestionCard({ chargeSuggestion, householdSize }: { chargeSuggestion: ChargeSuggestion; householdSize: number }) {
   const { charge_label, suggestion } = chargeSuggestion;
-  
-  // Only show competitors with positive savings, max 3
-  const competitors = suggestion.competitors
-    .filter(c => c.potential_savings > 0)
-    .slice(0, 3);
-  
-  // If no competitors with positive savings, don't show this card
+  const competitors = suggestion.competitors.filter(c => c.potential_savings > 0).slice(0, 3);
   if (competitors.length === 0) return null;
-
   const bestSavings = competitors[0]?.potential_savings || 0;
   const isIndividual = isIndividualCategory(suggestion.category);
 
@@ -294,7 +321,7 @@ function SuggestionCard({ chargeSuggestion, householdSize }: { chargeSuggestion:
               <span>{getCategoryLabel(suggestion.category)}</span>
               {isIndividual && householdSize > 1 && (
                 <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-200">
-                  <Users className="h-3 w-3 mr-1" />Prix/personne
+                   <Users className="h-3 w-3 mr-1" />Prix/personne
                 </Badge>
               )}
             </CardDescription>
@@ -306,13 +333,6 @@ function SuggestionCard({ chargeSuggestion, householdSize }: { chargeSuggestion:
       </CardHeader>
 
       <CardContent className="space-y-4">
-        {isIndividual && householdSize > 1 && (
-          <div className="flex items-start gap-2 p-3 bg-blue-50 rounded-lg border border-blue-200 text-xs text-blue-700">
-            <Info className="h-4 w-4 flex-shrink-0 mt-0.5" />
-            <span>Prix analysé par personne. L'économie affichée est pour l'ensemble du foyer ({householdSize} personnes).</span>
-          </div>
-        )}
-
         {competitors.map((competitor, index) => (
           <CompetitorCard key={index} competitor={competitor} rank={index + 1} />
         ))}
@@ -321,107 +341,36 @@ function SuggestionCard({ chargeSuggestion, householdSize }: { chargeSuggestion:
   );
 }
 
-// ============================================================================
-// COMPETITOR CARD - With URL + Contact buttons
-// ============================================================================
-
 function CompetitorCard({ competitor, rank }: { competitor: Competitor; rank: number }) {
   const getRankBadge = () => {
     if (rank === 1) return <Badge className="bg-green-600 text-white border-0">🏆 Meilleure offre</Badge>;
     if (rank === 2) return <Badge variant="outline" className="border-orange-400 text-orange-700 bg-orange-50">🥈 #2</Badge>;
     return <Badge variant="outline" className="border-gray-400 text-gray-700 bg-gray-50">🥉 #3</Badge>;
   };
-
   const getCardStyle = () => {
     if (rank === 1) return "border-2 border-green-300 bg-green-50/50";
     if (rank === 2) return "border-2 border-orange-200 bg-orange-50/30";
     return "border border-gray-300 bg-gray-50/50";
   };
-
   const websiteUrl = competitor.affiliate_link || competitor.website_url;
 
   return (
     <div className={`p-4 rounded-lg transition-all ${getCardStyle()}`}>
-      {/* Header */}
       <div className="flex items-center justify-between mb-3">
         {getRankBadge()}
         <span className="text-lg font-bold text-green-700">-{competitor.potential_savings.toFixed(0)}€/an</span>
       </div>
-
-      {/* Name & Offer */}
       <h4 className="font-semibold text-gray-900 mb-2">{competitor.name}</h4>
       <p className="text-sm text-gray-600 mb-3">{competitor.best_offer}</p>
-
-      {/* Price */}
       <div className="flex items-center gap-2 mb-4">
         <span className="text-sm text-muted-foreground">Prix:</span>
         <span className="font-semibold text-primary">{competitor.typical_price.toFixed(2)}€/mois</span>
       </div>
-
-      {/* Pros & Cons */}
-      {(competitor.pros?.length > 0 || competitor.cons?.length > 0) && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
-          {competitor.pros?.length > 0 && (
-            <div>
-              <p className="text-xs font-semibold text-green-700 flex items-center gap-1 mb-1">
-                <CheckCircle2 className="h-3 w-3" />Avantages
-              </p>
-              <ul className="space-y-0.5">
-                {competitor.pros.map((pro, i) => (
-                  <li key={i} className="text-xs text-gray-600">• {pro}</li>
-                ))}
-              </ul>
-            </div>
-          )}
-          {competitor.cons?.length > 0 && (
-            <div>
-              <p className="text-xs font-semibold text-red-700 flex items-center gap-1 mb-1">
-                <XCircle className="h-3 w-3" />Inconvénients
-              </p>
-              <ul className="space-y-0.5">
-                {competitor.cons.map((con, i) => (
-                  <li key={i} className="text-xs text-gray-600">• {con}</li>
-                ))}
-              </ul>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Action Buttons */}
       <div className="flex flex-wrap gap-2 pt-3 border-t border-gray-200">
         {websiteUrl && (
-          <Button 
-            size="sm" 
-            className="flex-1 text-xs h-8"
-            onClick={() => window.open(websiteUrl, '_blank')}
-          >
+          <Button size="sm" className="flex-1 text-xs h-8" onClick={() => window.open(websiteUrl, '_blank')}>
             <Globe className="h-3 w-3 mr-2" />
             Voir le site
-          </Button>
-        )}
-        
-        {competitor.phone_number && (
-          <Button 
-            variant="outline" 
-            size="sm" 
-            className="text-xs h-8"
-            onClick={() => window.open(`tel:${competitor.phone_number}`)}
-          >
-            <Phone className="h-3 w-3 mr-1" />
-            {competitor.phone_number}
-          </Button>
-        )}
-        
-        {competitor.contact_email && (
-          <Button 
-            variant="outline" 
-            size="sm" 
-            className="text-xs h-8"
-            onClick={() => window.open(`mailto:${competitor.contact_email}`)}
-          >
-            <Mail className="h-3 w-3 mr-1" />
-            Email
           </Button>
         )}
       </div>
