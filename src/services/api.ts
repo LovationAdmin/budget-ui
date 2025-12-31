@@ -170,6 +170,13 @@ export const authAPI = {
   
   resendVerification: (email: string) => 
     api.post('/auth/verify/resend', { email }),
+  
+  // 🆕 PASSWORD RESET (No Regression - Added)
+  forgotPassword: (email: string) =>
+    api.post('/auth/forgot-password', { email }),
+  
+  resetPassword: (token: string, new_password: string) =>
+    api.post('/auth/reset-password', { token, new_password }),
 };
 
 // ============================================================================

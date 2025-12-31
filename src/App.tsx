@@ -1,11 +1,13 @@
 // src/App.tsx
 import { Routes, Route, Navigate } from 'react-router-dom';
 import PrivateRoute from './components/PrivateRoute';
-import { Toaster } from "@/components/ui/toaster"; // IMPORTANT
+import { Toaster } from "@/components/ui/toaster";
 
 // Pages
 import Login from './pages/Login'; 
 import Signup from './pages/Signup';
+import ForgotPassword from './pages/ForgotPassword'; // 🆕 NEW
+import ResetPassword from './pages/ResetPassword';   // 🆕 NEW
 import Dashboard from './pages/Dashboard';
 import BudgetComplete from './pages/BudgetComplete';
 import Profile from './pages/Profile';
@@ -25,11 +27,28 @@ export default function App() {
   return (
     <>
       <Routes>
+        {/* ============================================ */}
+        {/* PUBLIC ROUTES */}
+        {/* ============================================ */}
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
+        
+        {/* 🆕 PASSWORD RESET ROUTES (NEW - No Regression) */}
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
+        
         <Route path="/invitation/accept" element={<AcceptInvitation />} />
         <Route path="/privacy" element={<PrivacyPolicy />} />
+        <Route path="/verify-email" element={<VerifyEmail />} />
+        <Route path="/terms" element={<Terms />} />
+        <Route path="/features" element={<Features />} />
+        <Route path="/about" element={<About />} />
+        <Route path="/help" element={<Help />} />
+        <Route path="/premium" element={<PremiumPage />} />
 
+        {/* ============================================ */}
+        {/* PROTECTED ROUTES */}
+        {/* ============================================ */}
         <Route path="/" element={
           <PrivateRoute>
             <Dashboard />
@@ -42,9 +61,18 @@ export default function App() {
           </PrivateRoute>
         } />
         
-        {/* BETA ROUTES */}
+        <Route path="/profile" element={
+          <PrivateRoute>
+            <Profile />
+          </PrivateRoute>
+        } />
+        
+        {/* ============================================ */}
+        {/* BETA ROUTES (Enable Banking) */}
+        {/* ============================================ */}
         {/* Enable Banking Callback (public route) */}
         <Route path="/beta2/callback" element={<EnableBankingCallbackPage />} />
+        
         {/* Beta 2 - Enable Banking */}
         <Route path="/beta2/:id" element={
           <PrivateRoute>
@@ -52,24 +80,14 @@ export default function App() {
           </PrivateRoute>
         } />
         
-        <Route path="/profile" element={
-          <PrivateRoute>
-            <Profile />
-          </PrivateRoute>
-        } />
-
-        <Route path="/premium" element={<PremiumPage />} />
+        {/* ============================================ */}
+        {/* ERROR ROUTES */}
+        {/* ============================================ */}
         <Route path="/404" element={<NotFound />} />
         <Route path="*" element={<Navigate to="/404" replace />} />
-        <Route path="/verify-email" element={<VerifyEmail />} />
-        <Route path="/terms" element={<Terms />} />
-        <Route path="/features" element={<Features />} />
-        <Route path="/about" element={<About />} />
-        <Route path="/help" element={<Help />} />
       </Routes>
 
-      {/* Ce composant est indispensable pour les notifications */}
-      
+      {/* Toast notifications (Required for all notifications) */}
       <Toaster />
     </>
   );
