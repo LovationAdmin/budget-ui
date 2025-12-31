@@ -100,7 +100,7 @@ export default function PeopleSection({ people, onPeopleChange }: PeopleSectionP
           
           {/* RIGHT SIDE: Total + Chevron */}
           <div className="flex items-center gap-4">
-            <div className="text-right hidden sm:block">
+            <div className="text-right">
                 <p className="text-2xl font-bold text-emerald-900">
                   {totalSalary.toLocaleString('fr-FR')} €
                 </p>
