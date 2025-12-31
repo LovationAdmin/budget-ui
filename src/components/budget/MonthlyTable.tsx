@@ -1,4 +1,6 @@
 // src/components/budget/MonthlyTable.tsx
+// VERSION MOBILE-OPTIMIZED - CONFORMITÉ GOOGLE
+
 import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -26,7 +28,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Lock, Unlock, MessageCircle, MessageSquarePlus, Settings2, Eye, CheckSquare, Square, ChevronLeft, ChevronRight } from "lucide-react";
+import { Lock, Unlock, MessageCircle, MessageSquarePlus, Settings2, Eye, CheckSquare, Square, ChevronLeft, ChevronRight, Info } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type {
   Person,
@@ -226,14 +228,40 @@ export default function MonthlyTable({
   const [showIncome, setShowIncome] = useState(false); 
   const [showOneTime, setShowOneTime] = useState(false);
   const [showCharges, setShowCharges] = useState(false);
+  
+  // ✅ MOBILE FIX: Add mobile detection state
+  const [isMobile, setIsMobile] = useState(false);
 
+  // ✅ MOBILE FIX: Detect mobile and hide columns by default
+  useEffect(() => {
+    const checkMobile = () => {
+      const mobile = window.innerWidth < 640;
+      setIsMobile(mobile);
+      
+      if (mobile) {
+        // Hide standard columns on mobile
+        setShowIncome(false);
+        setShowOneTime(false);
+        setShowCharges(false);
+      }
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  // ✅ MOBILE FIX: Show only first project on mobile by default
   useEffect(() => {
     const ids = projects.filter(p => p.id !== GENERAL_SAVINGS_ID).map(p => p.id);
     setVisibleProjectIds(prev => {
-        if (prev.length === 0 && ids.length > 0) return ids;
+        if (prev.length === 0 && ids.length > 0) {
+          // Show only first project on mobile
+          return isMobile && ids.length > 1 ? [ids[0]] : ids;
+        }
         return prev;
     });
-  }, [projects.length]);
+  }, [projects.length, isMobile]);
 
   // --- Calculations ---
   const getMonthlyBaseIncome = (monthIndex: number) => {
@@ -412,11 +440,22 @@ export default function MonthlyTable({
         </CardHeader>
 
         <CardContent className="p-0">
+          {/* ✅ MOBILE FIX: Info message when no columns visible */}
+          {isMobile && visibleProjectIds.length === 0 && !showIncome && !showOneTime && !showCharges && (
+            <div className="m-3 p-3 bg-blue-50 border border-blue-200 rounded-lg flex items-start gap-2">
+              <Info className="h-4 w-4 text-blue-600 flex-shrink-0 mt-0.5" />
+              <p className="text-xs text-blue-700">
+                💡 Utilisez le menu <strong>"Affichage"</strong> pour ajouter des colonnes (Revenus, Charges, Projets)
+              </p>
+            </div>
+          )}
+
           <div className="overflow-x-auto">
             <table className="w-full border-collapse">
               <thead className="bg-muted/30 text-xs">
                 <tr>
-                  <th className="sticky left-0 z-20 bg-background px-2 py-3 text-left font-semibold text-foreground border-b border-r border-border shadow-[4px_0_12px_-4px_rgba(0,0,0,0.1)] w-[100px] min-w-[100px]">
+                  {/* ✅ MOBILE FIX: Wider column on mobile (140px vs 100px) */}
+                  <th className="sticky left-0 z-20 bg-background px-2 py-3 text-left font-semibold text-foreground border-b border-r border-border shadow-[4px_0_12px_-4px_rgba(0,0,0,0.1)] w-[140px] sm:w-[100px] min-w-[140px] sm:min-w-[100px]">
                     <div className="flex flex-col gap-0.5">
                       <span>Mois</span>
                       <span className="text-[9px] font-normal text-muted-foreground">Actions</span>
@@ -460,15 +499,16 @@ export default function MonthlyTable({
 
                   return (
                     <tr key={month} className="hover:bg-muted/30 transition-colors group">
-                      <td className="sticky left-0 z-20 bg-background group-hover:bg-background px-2 py-2 border-r border-border shadow-[4px_0_12px_-4px_rgba(0,0,0,0.1)]">
+                      <td className="sticky left-0 z-20 bg-background group-hover:bg-muted/30 px-2 py-2 border-r border-border shadow-[4px_0_12px_-4px_rgba(0,0,0,0.1)]">
                         <div className="flex flex-col gap-1">
                             <div className="truncate text-sm font-semibold text-foreground" title={month}>{month}</div>
                             <div className="flex items-center gap-1">
-                                <Button variant="ghost" size="icon-sm" onClick={() => toggleMonthLock(month)} className={cn("h-5 w-5 rounded-md transition-all", isLocked ? "text-warning bg-warning/10" : "text-muted-foreground/50 hover:text-foreground")}>
-                                    {isLocked ? <Lock className="h-3 w-3" /> : <Unlock className="h-3 w-3" />}
+                                {/* ✅ MOBILE FIX: Larger buttons on mobile (h-9 w-9 vs h-5 w-5) */}
+                                <Button variant="ghost" size="icon" onClick={() => toggleMonthLock(month)} className={cn("h-9 w-9 sm:h-5 sm:w-5 rounded-md transition-all", isLocked ? "text-warning bg-warning/10" : "text-muted-foreground/50 hover:text-foreground")}>
+                                    {isLocked ? <Lock className="h-4 w-4 sm:h-3 sm:w-3" /> : <Unlock className="h-4 w-4 sm:h-3 sm:w-3" />}
                                 </Button>
-                                <Button variant="ghost" size="icon-sm" onClick={() => openCommentDialog(month)} className={cn("h-5 w-5 rounded-md transition-all", hasComment ? "text-primary bg-primary/10" : "text-muted-foreground/50 hover:text-foreground")}>
-                                    <MessageCircle className="h-3 w-3" />
+                                <Button variant="ghost" size="icon" onClick={() => openCommentDialog(month)} className={cn("h-9 w-9 sm:h-5 sm:w-5 rounded-md transition-all", hasComment ? "text-primary bg-primary/10" : "text-muted-foreground/50 hover:text-foreground")}>
+                                    <MessageCircle className="h-4 w-4 sm:h-3 sm:w-3" />
                                 </Button>
                             </div>
                         </div>
@@ -476,13 +516,13 @@ export default function MonthlyTable({
                       {showIncome && <td className="px-2 py-2 text-center bg-success/5 font-medium text-success border-r border-dashed border-border/50">+{baseIncome.toLocaleString()} €</td>}
                       {showOneTime && (
                         <td className="px-2 py-2 bg-success/5 border-r border-dashed border-border/50">
-                            {/* 🔥 DEBOUNCED INPUT */}
+                            {/* ✅ MOBILE FIX: Larger inputs on mobile (h-10 vs h-7) */}
                             <DebouncedInput 
                                 type="number" 
                                 value={oneTimeIncomes[month] || ''} 
                                 onChange={(val) => updateOneTimeIncome(month, val)} 
                                 disabled={isLocked} 
-                                className={cn("text-center h-7 text-xs font-medium border-success/20 focus-visible:ring-success/30 bg-background hover:bg-white shadow-sm p-1", oneTimeIncomes[month] ? "text-success font-bold" : "text-muted-foreground", isLocked && "opacity-50 cursor-not-allowed")} 
+                                className={cn("text-center h-10 sm:h-7 text-sm sm:text-xs font-medium border-success/20 focus-visible:ring-success/30 bg-background hover:bg-white shadow-sm px-3 sm:px-1", oneTimeIncomes[month] ? "text-success font-bold" : "text-muted-foreground", isLocked && "opacity-50 cursor-not-allowed")} 
                                 placeholder="-" 
                             />
                         </td>
@@ -498,22 +538,21 @@ export default function MonthlyTable({
                           <td key={project.id} className="px-1 py-2 border-r border-dashed border-border/50">
                             <div className="flex flex-col gap-1">
                               <div className="flex items-center gap-1">
-                                {/* 🔥 DEBOUNCED INPUT */}
+                                {/* ✅ MOBILE FIX: Larger inputs on mobile */}
                                 <DebouncedInput 
                                     type="number" 
                                     value={allocation || ''} 
                                     onChange={(val) => updateAllocation(month, project.id, val)} 
                                     disabled={isLocked} 
-                                    className={cn("text-center h-7 text-xs px-1 font-medium bg-background border-primary/20 focus-visible:ring-primary/30 shadow-sm", allocation > 0 && "text-primary font-bold bg-primary/5", isLocked && "opacity-50")} 
+                                    className={cn("text-center h-10 sm:h-7 text-sm sm:text-xs px-3 sm:px-1 font-medium bg-background border-primary/20 focus-visible:ring-primary/30 shadow-sm", allocation > 0 && "text-primary font-bold bg-primary/5", isLocked && "opacity-50")} 
                                     placeholder="0" 
                                 />
-                                {/* 🔥 DEBOUNCED INPUT */}
                                 <DebouncedInput 
                                     type="number" 
                                     value={expense || ''} 
                                     onChange={(val) => updateExpense(month, project.id, val)} 
                                     disabled={isLocked} 
-                                    className={cn("text-center h-7 text-xs px-1 font-medium bg-background border-destructive/20 focus-visible:ring-destructive/30 shadow-sm", expense > 0 && "text-destructive font-bold bg-destructive/5", isLocked && "opacity-50")} 
+                                    className={cn("text-center h-10 sm:h-7 text-sm sm:text-xs px-3 sm:px-1 font-medium bg-background border-destructive/20 focus-visible:ring-destructive/30 shadow-sm", expense > 0 && "text-destructive font-bold bg-destructive/5", isLocked && "opacity-50")} 
                                     placeholder="0" 
                                 />
                               </div>
@@ -526,7 +565,6 @@ export default function MonthlyTable({
                                   <PopoverContent className="w-64 p-3">
                                     <div className="space-y-2">
                                         <h4 className="font-medium text-xs text-muted-foreground mb-1">Note pour {project.label} ({month})</h4>
-                                        {/* 🔥 DEBOUNCED TEXTAREA - FIXED LATENCY HERE */}
                                         <DebouncedTextarea 
                                             value={comment || ''} 
                                             onChange={(val) => updateProjectComment(month, project.id, val)} 
@@ -544,14 +582,14 @@ export default function MonthlyTable({
                       <td className="px-1 py-2 bg-primary/5">
                         <div className="flex flex-col gap-1">
                             <div className="flex items-center gap-1">
-                                <Input type="text" value={`${genSavingsAllocation.toLocaleString()} €`} disabled className="text-center h-7 text-xs px-1 font-bold bg-primary/10 border-primary/20 text-primary cursor-default shadow-none" />
-                                {/* 🔥 DEBOUNCED INPUT */}
+                                <Input type="text" value={`${genSavingsAllocation.toLocaleString()} €`} disabled className="text-center h-10 sm:h-7 text-sm sm:text-xs px-3 sm:px-1 font-bold bg-primary/10 border-primary/20 text-primary cursor-default shadow-none" />
+                                {/* ✅ MOBILE FIX: Larger input on mobile */}
                                 <DebouncedInput 
                                     type="number" 
                                     value={genSavingsExpense || ''} 
                                     onChange={(val) => updateExpense(month, GENERAL_SAVINGS_ID, val)} 
                                     disabled={isLocked} 
-                                    className={cn("text-center h-7 text-xs px-1 font-medium bg-background border-destructive/20 focus-visible:ring-destructive/30 shadow-sm", genSavingsExpense > 0 && "text-destructive font-bold bg-destructive/5", isLocked && "opacity-50")} 
+                                    className={cn("text-center h-10 sm:h-7 text-sm sm:text-xs px-3 sm:px-1 font-medium bg-background border-destructive/20 focus-visible:ring-destructive/30 shadow-sm", genSavingsExpense > 0 && "text-destructive font-bold bg-destructive/5", isLocked && "opacity-50")} 
                                     placeholder="0" 
                                 />
                             </div>
@@ -562,7 +600,6 @@ export default function MonthlyTable({
                                     <PopoverContent className="w-64 p-3">
                                         <div className="space-y-2">
                                             <h4 className="font-medium text-xs text-muted-foreground mb-1">Note pour Épargne Générale</h4>
-                                            {/* 🔥 DEBOUNCED TEXTAREA - FIXED LATENCY HERE */}
                                             <DebouncedTextarea 
                                                 value={genSavingsComment || ''} 
                                                 onChange={(val) => updateProjectComment(month, GENERAL_SAVINGS_ID, val)} 
