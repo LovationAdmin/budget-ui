@@ -324,8 +324,8 @@ export default function Terms() {
               <div className="space-y-2">
                 <div className="flex items-center gap-2 text-gray-700">
                   <Mail className="h-5 w-5 text-primary" />
-                  <a href="mailto:support@budgetfamille.com" className="text-primary-600 hover:underline">
-                    support@budgetfamille.com
+                  <a href="mailto:lovation.pro@gmail.com" className="text-primary-600 hover:underline">
+                    lovation.pro@gmail.com
                   </a>
                 </div>
               </div>

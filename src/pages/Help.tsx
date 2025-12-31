@@ -309,11 +309,11 @@ export default function Help() {
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <a
-              href="mailto:support@budgetfamille.com"
+              href="mailto:lovation.pro@gmail.com"
               className="inline-flex items-center gap-2 bg-white text-primary px-6 py-3 rounded-lg hover:bg-gray-100 font-medium transition"
             >
               <Mail className="h-5 w-5" />
-              support@budgetfamille.com
+              lovation.pro@gmail.com
             </a>
           </div>
         </div>

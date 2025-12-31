@@ -874,7 +874,7 @@ const HELP_ARTICLES: HelpArticle[] = [
             <h4 className="font-semibold text-sm mb-2">🐛 J'ai trouvé un bug, comment le signaler ?</h4>
             <p className="text-xs text-gray-600">
               Utilisez le bouton 👎 sous n'importe quelle page pour nous envoyer un feedback détaillé.
-              Vous pouvez aussi nous contacter directement via support@budgetfamille.com.
+              Vous pouvez aussi nous contacter directement via lovation.pro@gmail.com.
             </p>
           </div>
 
@@ -1010,7 +1010,7 @@ export function HelpCenter({ open, onClose }: { open: boolean; onClose: () => vo
               variant="outline" 
               size="sm" 
               className="w-full"
-              onClick={() => window.open('mailto:support@budgetfamille.com')}
+              onClick={() => window.open('mailto:lovation.pro@gmail.com')}
             >
               <Mail className="h-3 w-3 mr-2" />
               Contacter le support
