@@ -1,4 +1,6 @@
 // src/components/budget/StatsSection.tsx
+// VERSION MOBILE-OPTIMIZED (Charts plus lisibles sur petits écrans)
+
 import { StatCard } from "./StatCard";
 import { Wallet, TrendingDown, PiggyBank, Scale } from "lucide-react";
 import { Bar, BarChart, CartesianGrid, XAxis, Tooltip, ResponsiveContainer, Legend } from "recharts";
@@ -173,14 +175,30 @@ export default function StatsSection({
             <CardTitle className="text-base font-medium">Répartition Mensuelle (Flux)</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="h-[200px] w-full">
+            {/* ✅ MOBILE FIX: Hauteur plus grande sur mobile pour meilleure lisibilité */}
+            <div className="h-[280px] sm:h-[200px] w-full">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={chartData} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
+                {/* ✅ MOBILE FIX: Margin left moins agressive pour éviter débordement */}
+                <BarChart data={chartData} margin={{ top: 5, right: 5, left: -10, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
-                  <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} dy={5} />
+                  {/* ✅ MOBILE FIX: Font-size légèrement augmentée (11 au lieu de 10) */}
+                  <XAxis 
+                    dataKey="name" 
+                    axisLine={false} 
+                    tickLine={false} 
+                    tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} 
+                    dy={5} 
+                  />
+                  {/* ✅ MOBILE FIX: Padding ajouté au tooltip */}
                   <Tooltip 
                     cursor={{ fill: "hsl(var(--muted)/0.2)" }} 
-                    contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', fontSize: '12px' }}
+                    contentStyle={{ 
+                      borderRadius: '12px', 
+                      border: 'none', 
+                      boxShadow: '0 4px 12px rgba(0,0,0,0.1)', 
+                      fontSize: '12px',
+                      padding: '8px 12px'
+                    }}
                     formatter={(value: number) => [`${value.toLocaleString('fr-FR')} €`, '']}
                   />
                   <Legend iconType="circle" wrapperStyle={{ fontSize: '11px', paddingTop: '5px' }} />
@@ -199,14 +217,30 @@ export default function StatsSection({
             <CardTitle className="text-base font-medium">Comparatif Revenus vs Sorties</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="h-[200px] w-full">
+            {/* ✅ MOBILE FIX: Hauteur plus grande sur mobile */}
+            <div className="h-[280px] sm:h-[200px] w-full">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={chartData} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
+                {/* ✅ MOBILE FIX: Margin left optimisée */}
+                <BarChart data={chartData} margin={{ top: 5, right: 5, left: -10, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
-                  <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} dy={5} />
+                  {/* ✅ MOBILE FIX: Font-size augmentée */}
+                  <XAxis 
+                    dataKey="name" 
+                    axisLine={false} 
+                    tickLine={false} 
+                    tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} 
+                    dy={5} 
+                  />
+                  {/* ✅ MOBILE FIX: Tooltip avec padding */}
                   <Tooltip 
                     cursor={{ fill: "hsl(var(--muted)/0.2)" }} 
-                    contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', fontSize: '12px' }}
+                    contentStyle={{ 
+                      borderRadius: '12px', 
+                      border: 'none', 
+                      boxShadow: '0 4px 12px rgba(0,0,0,0.1)', 
+                      fontSize: '12px',
+                      padding: '8px 12px'
+                    }}
                     formatter={(value: number) => [`${value.toLocaleString('fr-FR')} €`, '']}
                   />
                   <Legend iconType="circle" wrapperStyle={{ fontSize: '11px', paddingTop: '5px' }} />
