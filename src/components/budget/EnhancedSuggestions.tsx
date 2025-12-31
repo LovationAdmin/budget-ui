@@ -103,10 +103,10 @@ export default function EnhancedSuggestions({ budgetId, charges, memberCount }: 
         console.log('🚀 [EnhancedSuggestions] WebSocket connected, starting analysis...');
         loadSuggestions();
       }
-    }, 500); // Reduced to 500ms since we already wait for WS
+    }, 500);
 
     return () => clearTimeout(timer);
-  }, [budgetId, charges.length, memberCount, isConnected]); // Added isConnected dependency
+  }, [budgetId, charges.length, memberCount, isConnected]);
 
   const processResults = (data: any) => {
     const rawSuggestions = data.suggestions || [];
@@ -363,7 +363,7 @@ function SuggestionCard({ chargeSuggestion, householdSize }: { chargeSuggestion:
 }
 
 // ============================================================================
-// COMPETITOR CARD
+// COMPETITOR CARD - MOBILE OPTIMIZED
 // ============================================================================
 
 function CompetitorCard({ competitor, rank }: { competitor: Competitor; rank: number }) {
@@ -425,40 +425,46 @@ function CompetitorCard({ competitor, rank }: { competitor: Competitor; rank: nu
         </div>
       )}
 
-      <div className="flex flex-wrap gap-2 pt-3 border-t border-gray-200">
+      {/* ✅ MOBILE FIX: Boutons responsive et touch-friendly */}
+      <div className="flex flex-col sm:flex-row gap-2 pt-3 border-t border-gray-200">
         {websiteUrl && (
           <Button 
             size="sm" 
-            className="flex-1 text-xs h-8"
+            className="w-full sm:flex-1 h-10 sm:h-8 text-sm sm:text-xs"
             onClick={() => window.open(websiteUrl, '_blank')}
           >
-            <Globe className="h-3 w-3 mr-2" />
+            <Globe className="h-4 w-4 sm:h-3 sm:w-3 mr-2" />
             Voir le site
           </Button>
         )}
         
-        {competitor.phone_number && (
-          <Button 
-            variant="outline" 
-            size="sm" 
-            className="text-xs h-8"
-            onClick={() => window.open(`tel:${competitor.phone_number}`)}
-          >
-            <Phone className="h-3 w-3 mr-1" />
-            {competitor.phone_number}
-          </Button>
-        )}
-        
-        {competitor.contact_email && (
-          <Button 
-            variant="outline" 
-            size="sm" 
-            className="text-xs h-8"
-            onClick={() => window.open(`mailto:${competitor.contact_email}`)}
-          >
-            <Mail className="h-3 w-3 mr-1" />
-            Email
-          </Button>
+        {(competitor.phone_number || competitor.contact_email) && (
+          <div className="flex gap-2">
+            {competitor.phone_number && (
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="flex-1 sm:flex-initial h-10 sm:h-8 text-sm sm:text-xs"
+                onClick={() => window.open(`tel:${competitor.phone_number}`)}
+              >
+                <Phone className="h-4 w-4 sm:h-3 sm:w-3 mr-1" />
+                <span className="hidden sm:inline">{competitor.phone_number}</span>
+                <span className="sm:hidden">Appeler</span>
+              </Button>
+            )}
+            
+            {competitor.contact_email && (
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="flex-1 sm:flex-initial h-10 sm:h-8 text-sm sm:text-xs"
+                onClick={() => window.open(`mailto:${competitor.contact_email}`)}
+              >
+                <Mail className="h-4 w-4 sm:h-3 sm:w-3 mr-1" />
+                Email
+              </Button>
+            )}
+          </div>
         )}
       </div>
     </div>

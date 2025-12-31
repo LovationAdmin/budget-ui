@@ -372,12 +372,13 @@ function PersonItem({ person, onUpdate, onDelete }: PersonItemProps) {
           {person.salary.toLocaleString()} €
         </span>
 
+        {/* ✅ MOBILE FIX: Actions toujours visibles sur mobile, hover sur desktop */}
         {/* Bouton Éditer */}
         <Button
           variant="ghost"
           size="sm"
           onClick={() => setIsEditing(true)}
-          className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100 transition-opacity hover:text-emerald-700 hover:bg-emerald-50"
+          className="h-8 w-8 p-0 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity hover:text-emerald-700 hover:bg-emerald-50"
           title="Modifier"
         >
           <Pencil className="h-4 w-4" />
@@ -388,7 +389,7 @@ function PersonItem({ person, onUpdate, onDelete }: PersonItemProps) {
           variant="ghost"
           size="sm"
           onClick={() => onDelete(person.id)}
-          className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50 opacity-0 group-hover:opacity-100 transition-opacity"
+          className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity"
           title="Supprimer"
         >
           <Trash2 className="h-4 w-4" />
