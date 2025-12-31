@@ -1,4 +1,4 @@
-/* src/styles/mobile-fixes.css - VERSION OPTIMISÉE */
+/* src/styles/mobile-fixes.css - VERSION OPTIMISÉE COMPLÈTE */
 
 /* ============================================================================
    1. CRITICAL MOBILE FIXES (Google Compliance)
@@ -7,8 +7,6 @@
 /* Prevent font scaling issues in landscape on iOS */
 html {
   -webkit-text-size-adjust: 100%;
-  /* overflow-x: hidden here can sometimes break sticky headers, 
-     better to handle overflow on specific containers */
 }
 
 /* Ensure body doesn't cause horizontal scroll */
@@ -16,16 +14,13 @@ body {
   width: 100%;
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale; /* ✅ AJOUT : Meilleur rendu sur Firefox macOS */
+  -moz-osx-font-smoothing: grayscale;
 }
 
 /* ============================================================================
    2. IOS INPUT ZOOM FIX (The most important UX fix)
    ============================================================================ */
 
-/* Forces inputs to 16px on mobile to prevent iOS from zooming in when you tap them.
-   We use a media query so desktop users still get your smaller text designs.
-*/
 @media screen and (max-width: 768px) {
   input[type="text"],
   input[type="email"],
@@ -43,12 +38,10 @@ body {
    3. TAP HIGHLIGHT REMOVAL
    ============================================================================ */
 
-/* Removes the grey background when tapping links on mobile */
 * {
   -webkit-tap-highlight-color: transparent;
 }
 
-/* ✅ AJOUT : Améliorer la sélection de texte sur mobile */
 ::selection {
   background-color: rgba(102, 126, 234, 0.2);
   color: inherit;
@@ -60,13 +53,9 @@ body {
 }
 
 /* ============================================================================
-   4. TOUCH TARGET HELPERS (Utility classes)
+   4. TOUCH TARGET HELPERS
    ============================================================================ */
 
-/* Instead of forcing ALL buttons to be large, add this class 
-   only to specific elements Google complains about.
-   It creates an invisible hit area around the element.
-*/
 .touch-target-extend {
   position: relative;
 }
@@ -80,7 +69,7 @@ body {
   right: -10px;
 }
 
-/* ✅ AJOUT : Touch-friendly buttons minimum size */
+/* ✅ Minimum touch targets sur mobile */
 @media (pointer: coarse) {
   button,
   a[role="button"],
@@ -94,18 +83,15 @@ body {
    5. RESPONSIVE UTILS
    ============================================================================ */
 
-/* Ensure images never overflow their container */
 img, video {
   max-width: 100%;
   height: auto;
 }
 
-/* Fix for Radix UI Dialogs/Sheets on very narrow screens */
 [data-radix-popper-content-wrapper] {
   max-width: 100vw !important;
 }
 
-/* ✅ AJOUT : Fix pour les Radix Dialogs sur mobile */
 @media screen and (max-width: 768px) {
   [role="dialog"],
   [role="alertdialog"] {
@@ -115,10 +101,9 @@ img, video {
 }
 
 /* ============================================================================
-   6. SAFE AREA INSETS (iPhone notch/Dynamic Island support)
+   6. SAFE AREA INSETS (iPhone notch/Dynamic Island)
    ============================================================================ */
 
-/* ✅ AJOUT : Support pour les encoches iPhone et Dynamic Island */
 @supports (padding-top: env(safe-area-inset-top)) {
   body {
     padding-top: env(safe-area-inset-top);
@@ -127,12 +112,10 @@ img, video {
     padding-right: env(safe-area-inset-right);
   }
 
-  /* Navbar fixe avec safe area */
   .navbar-fixed-top {
     padding-top: max(1rem, env(safe-area-inset-top));
   }
 
-  /* Bottom sheets avec safe area */
   .bottom-sheet,
   [role="dialog"][data-position="bottom"] {
     padding-bottom: max(1rem, env(safe-area-inset-bottom));
@@ -143,14 +126,12 @@ img, video {
    7. SCROLL BEHAVIOR OPTIMIZATIONS
    ============================================================================ */
 
-/* ✅ AJOUT : Smooth scrolling natif */
 @media (prefers-reduced-motion: no-preference) {
   html {
     scroll-behavior: smooth;
   }
 }
 
-/* ✅ AJOUT : Momentum scrolling sur iOS */
 .scrollable,
 [role="dialog"],
 .overflow-y-auto {
@@ -161,7 +142,6 @@ img, video {
    8. KEYBOARD & FOCUS IMPROVEMENTS
    ============================================================================ */
 
-/* ✅ AJOUT : Meilleure visibilité du focus sur mobile */
 @media (pointer: coarse) {
   :focus-visible {
     outline: 3px solid rgba(102, 126, 234, 0.5);
@@ -169,7 +149,6 @@ img, video {
   }
 }
 
-/* ✅ AJOUT : Cacher le focus au tap, mais le montrer au clavier */
 :focus:not(:focus-visible) {
   outline: none;
 }
@@ -178,7 +157,6 @@ img, video {
    9. PREVENT ACCIDENTAL ZOOMS
    ============================================================================ */
 
-/* ✅ AJOUT : Empêcher le zoom double-tap sur les éléments interactifs */
 @media (pointer: coarse) {
   button,
   a,
@@ -193,7 +171,6 @@ img, video {
    10. LOADING & SKELETON OPTIMIZATIONS
    ============================================================================ */
 
-/* ✅ AJOUT : Améliorer l'apparence des skeletons sur mobile */
 @media screen and (max-width: 768px) {
   .skeleton,
   [data-skeleton] {
@@ -208,12 +185,8 @@ img, video {
   }
 
   @keyframes skeleton-shimmer {
-    0% {
-      background-position: 200% 0;
-    }
-    100% {
-      background-position: -200% 0;
-    }
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
   }
 }
 
@@ -221,7 +194,6 @@ img, video {
    11. ACCESSIBILITY IMPROVEMENTS
    ============================================================================ */
 
-/* ✅ AJOUT : Support pour les modes de contraste élevé */
 @media (prefers-contrast: high) {
   button,
   a {
@@ -229,7 +201,6 @@ img, video {
   }
 }
 
-/* ✅ AJOUT : Support pour le mode sombre système */
 @media (prefers-color-scheme: dark) {
   ::selection {
     background-color: rgba(102, 126, 234, 0.4);
@@ -240,7 +211,6 @@ img, video {
    12. PERFORMANCE OPTIMIZATIONS
    ============================================================================ */
 
-/* ✅ AJOUT : GPU acceleration pour animations sur mobile */
 @media (pointer: coarse) {
   .animate-slide-up,
   .animate-fade-in,
@@ -251,7 +221,6 @@ img, video {
   }
 }
 
-/* ✅ AJOUT : Désactiver les animations si demandé par l'utilisateur */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -260,5 +229,131 @@ img, video {
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
+  }
+}
+
+/* ============================================================================
+   13. ✅ NOUVEAUX BREAKPOINTS - XS (320-480px)
+   ============================================================================ */
+
+/* Très petits écrans (iPhone SE, petits Android) */
+@media screen and (max-width: 480px) {
+  /* Réduire les paddings/margins pour gagner de l'espace */
+  .p-4 { padding: 0.75rem !important; }
+  .p-3 { padding: 0.5rem !important; }
+  .gap-3 { gap: 0.5rem !important; }
+  .gap-4 { gap: 0.75rem !important; }
+  
+  /* Réduire la taille des titres */
+  h1 { font-size: 1.5rem !important; }
+  h2 { font-size: 1.25rem !important; }
+  h3 { font-size: 1.1rem !important; }
+  
+  /* Boutons full-width sur très petits écrans */
+  .btn-group-mobile {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  
+  .btn-group-mobile > button {
+    width: 100%;
+  }
+}
+
+/* ============================================================================
+   14. ✅ FIXES SPÉCIFIQUES BUDGET FAMILLE
+   ============================================================================ */
+
+/* Fix pour ChargesSection - Actions toujours visibles sur mobile */
+@media (pointer: coarse) {
+  /* Forcer l'affichage des boutons d'action sur mobile */
+  .group .group-hover\:opacity-100 {
+    opacity: 1 !important;
+  }
+}
+
+/* Fix pour les inputs date trop étroits */
+@media screen and (max-width: 640px) {
+  /* Forcer 1 colonne pour les dates sur mobile */
+  .grid-cols-2 {
+    grid-template-columns: repeat(1, minmax(0, 1fr)) !important;
+  }
+}
+
+/* Fix pour les badges qui débordent */
+@media screen and (max-width: 480px) {
+  /* Wrap des badges sur plusieurs lignes si nécessaire */
+  .flex-wrap-mobile {
+    flex-wrap: wrap;
+  }
+  
+  /* Réduire la taille des badges */
+  .badge-mobile-sm {
+    font-size: 0.65rem !important;
+    padding: 0.125rem 0.375rem !important;
+  }
+}
+
+/* Fix pour MonthlyTable - Scroll horizontal smooth */
+@media screen and (max-width: 768px) {
+  .table-container {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+  }
+  
+  .table-container::-webkit-scrollbar {
+    height: 6px;
+  }
+  
+  .table-container::-webkit-scrollbar-thumb {
+    background-color: rgba(0, 0, 0, 0.2);
+    border-radius: 3px;
+  }
+}
+
+/* Fix pour les Popovers trop larges sur mobile */
+@media screen and (max-width: 640px) {
+  [data-radix-popover-content] {
+    max-width: calc(100vw - 2rem) !important;
+  }
+}
+
+/* ============================================================================
+   15. ✅ UTILITY CLASSES MOBILES
+   ============================================================================ */
+
+/* Classes pour cacher/montrer selon le device */
+.mobile-only {
+  display: none;
+}
+
+@media (pointer: coarse) {
+  .mobile-only {
+    display: block;
+  }
+  
+  .desktop-only {
+    display: none !important;
+  }
+}
+
+/* Spacing réduit sur mobile */
+@media screen and (max-width: 640px) {
+  .mobile-compact {
+    padding: 0.5rem !important;
+    gap: 0.5rem !important;
+  }
+}
+
+/* Touch-friendly spacing */
+.touch-spacing {
+  padding: 0.75rem;
+}
+
+@media (pointer: fine) {
+  .touch-spacing {
+    padding: 0.5rem;
   }
 }

@@ -1,3 +1,6 @@
+// src/components/budget/ChargesSection.tsx
+// VERSION MOBILE-OPTIMIZED
+
 import { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -73,7 +76,7 @@ export default function ChargesSection({
       startDate: startDate || undefined,
       endDate: endDate || undefined,
       category: detectedCategory || undefined, 
-      ignoreSuggestions: false // Default to suggestions enabled
+      ignoreSuggestions: false
     };
     
     onChargesChange([...charges, newCharge]);
@@ -214,7 +217,8 @@ export default function ChargesSection({
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            {/* ✅ FIX : 1 colonne sur mobile, 2 sur desktop */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <Label htmlFor="start-date">Date début (optionnel)</Label>
                 <Input id="start-date" type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
@@ -251,7 +255,10 @@ export default function ChargesSection({
   );
 }
 
-// Sub-component
+// ============================================================================
+// ChargeItem - VERSION MOBILE-OPTIMIZED
+// ============================================================================
+
 interface ChargeItemProps {
   charge: Charge;
   onUpdate: (id: string, updates: Partial<Charge>) => void;
@@ -340,58 +347,109 @@ function ChargeItem({ charge, onUpdate, onDelete, onLinkTransaction, mappedTotal
     );
   }
 
+  // ✅ FIX : Layout vertical sur mobile, horizontal sur desktop
   return (
-    <div className="flex items-center justify-between p-3 bg-white rounded-lg hover:bg-orange-50/50 transition-colors group border border-transparent hover:border-orange-200">
+    <div className={cn(
+      "p-3 bg-white rounded-lg border border-transparent",
+      "hover:bg-orange-50/50 hover:border-orange-200 transition-colors group",
+      // ✅ MOBILE-FIRST: Vertical stack avec gap
+      "flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-2"
+    )}>
+      {/* Bloc 1 : Informations (label, badges, dates) */}
       <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <span className="font-medium text-sm truncate">{charge.label}</span>
           {charge.category && (
-            <span className="text-xs bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full">{getCategoryLabel(charge.category)}</span>
+            <span className="text-xs bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full whitespace-nowrap">
+              {getCategoryLabel(charge.category)}
+            </span>
           )}
           {charge.ignoreSuggestions && (
-             <span className="text-[10px] bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded border border-gray-200" title="Suggestions d'économies désactivées">
+             <span className="text-[10px] bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded border border-gray-200 whitespace-nowrap" title="Suggestions d'économies désactivées">
                 Suggestions OFF
              </span>
           )}
         </div>
         
-        {hasDates && <div className="flex items-center gap-1 mt-1 text-xs text-muted-foreground"><Clock className="h-3 w-3" /><span className="truncate">{dateText}</span></div>}
-        {hasRealityCheck && differsFromBudget && <div className="mt-1 text-xs text-indigo-600 font-medium">Réel: {mappedTotal.toFixed(2)}€</div>}
+        {hasDates && (
+          <div className="flex items-center gap-1 mt-1 text-xs text-muted-foreground">
+            <Clock className="h-3 w-3 flex-shrink-0" />
+            <span className="truncate">{dateText}</span>
+          </div>
+        )}
+        {hasRealityCheck && differsFromBudget && (
+          <div className="mt-1 text-xs text-indigo-600 font-medium">
+            Réel: {mappedTotal.toFixed(2)}€
+          </div>
+        )}
       </div>
 
-      <div className="flex items-center gap-2">
-        <span className="font-bold text-orange-900 text-sm whitespace-nowrap">{charge.amount.toFixed(2)}€</span>
+      {/* Bloc 2 : Montant + Actions */}
+      {/* ✅ FIX : Sur mobile, montant à gauche et boutons à droite */}
+      {/* Sur desktop, montant et boutons côte à côte */}
+      <div className="flex items-center justify-between sm:justify-end gap-2 sm:gap-1">
+        <span className="font-bold text-orange-900 text-sm sm:mr-2">
+          {charge.amount.toFixed(2)}€
+        </span>
 
-        {/* Action Buttons */}
-        <div className="flex opacity-0 group-hover:opacity-100 transition-opacity">
-            {/* Toggle Suggestions */}
-            <Button
-                variant="ghost"
-                size="icon-sm"
-                onClick={() => onUpdate(charge.id, { ignoreSuggestions: !charge.ignoreSuggestions })}
-                className={cn(
-                    "h-7 w-7 transition-colors",
-                    charge.ignoreSuggestions ? "text-gray-300 hover:text-gray-500" : "text-yellow-500 hover:bg-yellow-50"
-                )}
-                title={charge.ignoreSuggestions ? "Réactiver les suggestions" : "Désactiver les suggestions"}
-            >
-                {charge.ignoreSuggestions ? <LightbulbOff className="h-3.5 w-3.5" /> : <Lightbulb className="h-3.5 w-3.5" />}
-            </Button>
-
-            {onLinkTransaction && (
-                <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => onLinkTransaction(charge)}
-                    className={cn("h-8 w-8 p-0", hasRealityCheck && "text-indigo-600")}
-                    title={hasRealityCheck ? "Gérer le mapping" : "Lier aux transactions"}
-                >
-                    <LinkIcon className="h-4 w-4" />
-                </Button>
+        {/* ✅ FIX : Actions TOUJOURS visibles sur mobile (<640px) */}
+        {/* Visible au hover seulement sur desktop (≥640px) */}
+        <div className={cn(
+          "flex gap-0.5",
+          // ✅ CRITIQUE : Toujours visible sur mobile, hover sur desktop
+          "sm:opacity-0 sm:group-hover:opacity-100 sm:transition-opacity"
+        )}>
+          {/* Toggle Suggestions */}
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => onUpdate(charge.id, { ignoreSuggestions: !charge.ignoreSuggestions })}
+            className={cn(
+              "h-9 w-9 sm:h-7 sm:w-7 transition-colors",
+              charge.ignoreSuggestions ? "text-gray-300 hover:text-gray-500" : "text-yellow-500 hover:bg-yellow-50"
             )}
+            title={charge.ignoreSuggestions ? "Réactiver les suggestions" : "Désactiver les suggestions"}
+          >
+            {charge.ignoreSuggestions ? <LightbulbOff className="h-4 w-4 sm:h-3.5 sm:w-3.5" /> : <Lightbulb className="h-4 w-4 sm:h-3.5 sm:w-3.5" />}
+          </Button>
 
-            <Button variant="ghost" size="sm" onClick={() => setIsEditing(true)} className="h-8 w-8 p-0" title="Modifier">✏️</Button>
-            <Button variant="ghost" size="sm" onClick={() => onDelete(charge.id)} className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50" title="Supprimer"><Trash2 className="h-4 w-4" /></Button>
+          {/* Link Transaction */}
+          {onLinkTransaction && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => onLinkTransaction(charge)}
+              className={cn(
+                "h-9 w-9 sm:h-7 sm:w-7",
+                hasRealityCheck && "text-indigo-600"
+              )}
+              title={hasRealityCheck ? "Gérer le mapping" : "Lier aux transactions"}
+            >
+              <LinkIcon className="h-4 w-4" />
+            </Button>
+          )}
+
+          {/* Edit Button */}
+          <Button 
+            variant="ghost" 
+            size="icon"
+            onClick={() => setIsEditing(true)} 
+            className="h-9 w-9 sm:h-7 sm:w-7" 
+            title="Modifier"
+          >
+            ✏️
+          </Button>
+
+          {/* Delete Button */}
+          <Button 
+            variant="ghost" 
+            size="icon"
+            onClick={() => onDelete(charge.id)} 
+            className="h-9 w-9 sm:h-7 sm:w-7 text-red-600 hover:text-red-700 hover:bg-red-50" 
+            title="Supprimer"
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
         </div>
       </div>
     </div>
