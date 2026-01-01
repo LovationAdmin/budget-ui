@@ -1,5 +1,5 @@
 // src/components/budget/ChargesSection.tsx
-// VERSION MOBILE-OPTIMIZED
+// VERSION MOBILE-OPTIMIZED - MODE ÉDITION AMÉLIORÉ
 
 import { useState } from 'react';
 import { Button } from "@/components/ui/button";
@@ -15,7 +15,9 @@ import {
   ChevronDown, 
   ChevronUp,
   Lightbulb,
-  LightbulbOff
+  LightbulbOff,
+  Save,
+  X
 } from "lucide-react";
 import { 
   Popover,
@@ -153,7 +155,7 @@ export default function ChargesSection({
             <p className="text-xs">Cliquez sur "Ajouter une charge" pour commencer</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 gap-3">
             {charges.map((charge) => (
               <ChargeItem
                 key={charge.id}
@@ -217,7 +219,6 @@ export default function ChargesSection({
               />
             </div>
 
-            {/* ✅ FIX : 1 colonne sur mobile, 2 sur desktop */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <Label htmlFor="start-date">Date début (optionnel)</Label>
@@ -256,7 +257,7 @@ export default function ChargesSection({
 }
 
 // ============================================================================
-// ChargeItem - VERSION MOBILE-OPTIMIZED
+// ChargeItem - VERSION MOBILE-OPTIMIZED AVEC MODE ÉDITION VERTICAL
 // ============================================================================
 
 interface ChargeItemProps {
@@ -298,64 +299,124 @@ function ChargeItem({ charge, onUpdate, onDelete, onLinkTransaction, mappedTotal
   const hasRealityCheck = mappedTotal !== undefined && mappedTotal > 0;
   const differsFromBudget = hasRealityCheck && Math.abs(mappedTotal - charge.amount) > 0.5;
 
+  // ✅ MODE ÉDITION - LAYOUT VERTICAL MOBILE-FRIENDLY
   if (isEditing) {
     const hasEditDates = editStartDate || editEndDate;
+    
     return (
-      <div className="flex items-center gap-2 p-3 bg-white rounded-lg border border-orange-200">
-        <Input value={editLabel} onChange={(e) => setEditLabel(e.target.value)} className="flex-1 h-8" placeholder="Libellé" />
-        <Input type="number" step="0.01" value={editAmount} onChange={(e) => setEditAmount(e.target.value)} className="w-24 h-8" placeholder="0.00" />
-        
-        <Popover>
-            <PopoverTrigger asChild>
-                <Button variant="ghost" size="icon" className={cn("h-8 w-8 hover:bg-orange-50", hasEditDates ? "text-orange-600 bg-orange-50" : "text-muted-foreground")} title="Modifier la période">
-                    <Calendar className="h-4 w-4" />
-                </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-72 p-3">
-                <div className="space-y-3">
-                    <h4 className="font-medium text-xs text-muted-foreground">Période de facturation</h4>
-                    <div className="grid gap-2">
-                        <div className="grid grid-cols-3 items-center gap-2">
-                            <Label className="text-xs">Début</Label>
-                            <Input type="date" value={editStartDate || ''} onChange={(e) => setEditStartDate(e.target.value)} className="col-span-2 h-8 text-xs" />
-                        </div>
-                        <div className="grid grid-cols-3 items-center gap-2">
-                            <Label className="text-xs">Fin</Label>
-                            <Input type="date" value={editEndDate || ''} onChange={(e) => setEditEndDate(e.target.value)} className="col-span-2 h-8 text-xs" />
-                        </div>
-                    </div>
-                    {(editStartDate || editEndDate) && (
-                        <Button 
-                            variant="ghost" 
-                            size="sm" 
-                            className="w-full h-7 text-xs text-muted-foreground hover:text-destructive"
-                            onClick={() => {
-                                setEditStartDate(undefined);
-                                setEditEndDate(undefined);
-                            }}
-                        >
-                            Effacer les dates
-                        </Button>
-                    )}
-                </div>
-            </PopoverContent>
-        </Popover>
+      <div className="p-4 bg-white rounded-lg border-2 border-orange-300 shadow-lg space-y-3">
+        {/* Header mode édition */}
+        <div className="flex items-center justify-between pb-2 border-b border-orange-100">
+          <h4 className="font-medium text-sm text-orange-900">✏️ Mode édition</h4>
+          <div className="flex gap-1">
+            <Button 
+              size="sm" 
+              onClick={handleSave} 
+              className="h-8 px-3 bg-orange-600 hover:bg-orange-700 text-white"
+            >
+              <Save className="h-3.5 w-3.5 mr-1" />
+              Sauver
+            </Button>
+            <Button 
+              size="sm" 
+              variant="ghost" 
+              onClick={handleCancel} 
+              className="h-8 px-3"
+            >
+              <X className="h-3.5 w-3.5 mr-1" />
+              Annuler
+            </Button>
+          </div>
+        </div>
 
-        <Button size="sm" onClick={handleSave} className="h-8 w-8 p-0 bg-orange-600 hover:bg-orange-700">✓</Button>
-        <Button size="sm" variant="ghost" onClick={handleCancel} className="h-8 w-8 p-0">✕</Button>
+        {/* Champs d'édition - VERTICAL sur mobile */}
+        <div className="space-y-3">
+          {/* Libellé */}
+          <div className="space-y-1.5">
+            <Label htmlFor={`edit-label-${charge.id}`} className="text-xs font-medium">
+              Libellé
+            </Label>
+            <Input 
+              id={`edit-label-${charge.id}`}
+              value={editLabel} 
+              onChange={(e) => setEditLabel(e.target.value)} 
+              className="w-full"
+              placeholder="Nom de la charge"
+            />
+          </div>
+
+          {/* Montant */}
+          <div className="space-y-1.5">
+            <Label htmlFor={`edit-amount-${charge.id}`} className="text-xs font-medium">
+              Montant mensuel (€)
+            </Label>
+            <Input 
+              id={`edit-amount-${charge.id}`}
+              type="number" 
+              step="0.01" 
+              value={editAmount} 
+              onChange={(e) => setEditAmount(e.target.value)} 
+              className="w-full"
+              placeholder="0.00"
+            />
+          </div>
+
+          {/* Dates - 2 colonnes sur desktop, 1 sur mobile */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label htmlFor={`edit-start-${charge.id}`} className="text-xs font-medium text-muted-foreground">
+                Date début
+              </Label>
+              <Input 
+                id={`edit-start-${charge.id}`}
+                type="date" 
+                value={editStartDate || ''} 
+                onChange={(e) => setEditStartDate(e.target.value)} 
+                className="w-full"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor={`edit-end-${charge.id}`} className="text-xs font-medium text-muted-foreground">
+                Date fin
+              </Label>
+              <Input 
+                id={`edit-end-${charge.id}`}
+                type="date" 
+                value={editEndDate || ''} 
+                onChange={(e) => setEditEndDate(e.target.value)} 
+                className="w-full"
+              />
+            </div>
+          </div>
+
+          {/* Bouton effacer dates si présentes */}
+          {(editStartDate || editEndDate) && (
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="w-full text-xs text-muted-foreground hover:text-destructive"
+              onClick={() => {
+                setEditStartDate(undefined);
+                setEditEndDate(undefined);
+              }}
+            >
+              <X className="h-3 w-3 mr-1" />
+              Effacer les dates
+            </Button>
+          )}
+        </div>
       </div>
     );
   }
 
-  // ✅ FIX : Layout vertical sur mobile, horizontal sur desktop
+  // ✅ MODE AFFICHAGE - Layout adaptatif
   return (
     <div className={cn(
       "p-3 bg-white rounded-lg border border-transparent",
       "hover:bg-orange-50/50 hover:border-orange-200 transition-colors group",
-      // ✅ MOBILE-FIRST: Vertical stack avec gap
       "flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-2"
     )}>
-      {/* Bloc 1 : Informations (label, badges, dates) */}
+      {/* Bloc 1 : Informations */}
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 flex-wrap">
           <span className="font-medium text-sm truncate">{charge.label}</span>
@@ -385,19 +446,15 @@ function ChargeItem({ charge, onUpdate, onDelete, onLinkTransaction, mappedTotal
       </div>
 
       {/* Bloc 2 : Montant + Actions */}
-      {/* ✅ FIX : Sur mobile, montant à gauche et boutons à droite */}
-      {/* Sur desktop, montant et boutons côte à côte */}
       <div className="flex items-center justify-between sm:justify-end gap-2 sm:gap-1">
         <span className="font-bold text-orange-900 text-sm sm:mr-2">
           {charge.amount.toFixed(2)}€
         </span>
 
-        {/* ✅ FIX : Actions TOUJOURS visibles sur mobile (<640px) */}
-        {/* Visible au hover seulement sur desktop (≥640px) */}
+        {/* Actions - Toujours visibles sur mobile, hover sur desktop */}
         <div className={cn(
           "flex gap-0.5",
-          // ✅ CRITIQUE : Toujours visible sur mobile, hover sur desktop
-          "sm:opacity-0 sm:group-hover:opacity-100 sm:transition-opacity"
+          "opacity-100 sm:opacity-0 sm:group-hover:opacity-100 sm:transition-opacity"
         )}>
           {/* Toggle Suggestions */}
           <Button

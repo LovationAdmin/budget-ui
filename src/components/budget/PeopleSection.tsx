@@ -17,7 +17,9 @@ import {
   Clock, 
   ChevronDown, 
   ChevronUp,
-  Pencil
+  Pencil,
+  Save,
+  X
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Person } from '@/utils/importConverter';
@@ -37,8 +39,6 @@ export default function PeopleSection({ people, onPeopleChange }: PeopleSectionP
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [showAddForm, setShowAddForm] = useState(false);
-  
-  // Collapsible State
   const [isExpanded, setIsExpanded] = useState(true);
 
   const addPerson = (e: React.FormEvent) => {
@@ -83,7 +83,6 @@ export default function PeopleSection({ people, onPeopleChange }: PeopleSectionP
         onClick={() => setIsExpanded(!isExpanded)}
       >
         <div className="flex items-center justify-between">
-          {/* LEFT SIDE: Icon + Title + Count */}
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-100 text-emerald-600">
               <Users className="h-5 w-5" />
@@ -98,7 +97,6 @@ export default function PeopleSection({ people, onPeopleChange }: PeopleSectionP
             </div>
           </div>
           
-          {/* RIGHT SIDE: Total + Chevron */}
           <div className="flex items-center gap-4">
             <div className="text-right">
                 <p className="text-2xl font-bold text-emerald-900">
@@ -106,7 +104,6 @@ export default function PeopleSection({ people, onPeopleChange }: PeopleSectionP
                 </p>
                 <p className="text-xs text-emerald-700">Total mensuel</p>
             </div>
-
             <div className="text-emerald-700">
                 {isExpanded ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
             </div>
@@ -114,17 +111,14 @@ export default function PeopleSection({ people, onPeopleChange }: PeopleSectionP
         </div>
       </CardHeader>
 
-      {/* Collapsible Content */}
       {isExpanded && (
       <CardContent className="animate-accordion-down space-y-3">
-        
-        {/* List */}
         {people.length === 0 ? (
           <div className="text-center py-6 text-emerald-800/60 text-sm">
             Aucune personne ajoutée.
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 gap-3">
             {people.map((person) => (
               <PersonItem
                 key={person.id}
@@ -136,7 +130,6 @@ export default function PeopleSection({ people, onPeopleChange }: PeopleSectionP
           </div>
         )}
 
-        {/* Formulaire d'ajout / Bouton Ajouter (Style Charges) */}
         {!showAddForm ? (
           <Button 
             onClick={(e) => {
@@ -225,7 +218,7 @@ export default function PeopleSection({ people, onPeopleChange }: PeopleSectionP
 }
 
 // ============================================================================
-// COMPOSANT ITEM DE PERSONNE (Refactored to match ChargeItem)
+// COMPOSANT ITEM DE PERSONNE - MODE ÉDITION MOBILE-FRIENDLY
 // ============================================================================
 
 interface PersonItemProps {
@@ -264,90 +257,114 @@ function PersonItem({ person, onUpdate, onDelete }: PersonItemProps) {
     ? `${person.startDate ? new Date(person.startDate).toLocaleDateString(undefined, {month:'short', year:'2-digit'}) : '...'} → ${person.endDate ? new Date(person.endDate).toLocaleDateString(undefined, {month:'short', year:'2-digit'}) : '...'}`
     : null;
 
+  // ✅ MODE ÉDITION - LAYOUT VERTICAL MOBILE-FRIENDLY
   if (isEditing) {
-    const hasEditDates = editStartDate || editEndDate;
-
     return (
-      <div className="flex items-center gap-2 p-3 bg-white rounded-lg border border-emerald-200">
-        <Input
-          value={editName}
-          onChange={(e) => setEditName(e.target.value)}
-          className="flex-1 h-8"
-          placeholder="Nom"
-        />
-        <Input
-          type="number"
-          value={editSalary}
-          onChange={(e) => setEditSalary(e.target.value)}
-          className="w-24 h-8"
-          placeholder="0"
-        />
+      <div className="p-4 bg-white rounded-lg border-2 border-emerald-300 shadow-lg space-y-3">
+        {/* Header mode édition */}
+        <div className="flex items-center justify-between pb-2 border-b border-emerald-100">
+          <h4 className="font-medium text-sm text-emerald-900">✏️ Mode édition</h4>
+          <div className="flex gap-1">
+            <Button 
+              size="sm" 
+              onClick={handleSave} 
+              className="h-8 px-3 bg-emerald-600 hover:bg-emerald-700 text-white"
+            >
+              <Save className="h-3.5 w-3.5 mr-1" />
+              Sauver
+            </Button>
+            <Button 
+              size="sm" 
+              variant="ghost" 
+              onClick={handleCancel} 
+              className="h-8 px-3"
+            >
+              <X className="h-3.5 w-3.5 mr-1" />
+              Annuler
+            </Button>
+          </div>
+        </div>
 
-        {/* Date Editor Button (Popover) - Same pattern as Charges */}
-        <Popover>
-            <PopoverTrigger asChild>
-                <Button 
-                    variant="ghost" 
-                    size="icon" 
-                    className={cn(
-                        "h-8 w-8 hover:bg-emerald-50",
-                        hasEditDates ? "text-emerald-600 bg-emerald-50" : "text-muted-foreground"
-                    )}
-                    title="Modifier la période"
-                >
-                    <Calendar className="h-4 w-4" />
-                </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-72 p-3">
-                <div className="space-y-3">
-                    <h4 className="font-medium text-xs text-muted-foreground">Période d'activité</h4>
-                    <div className="grid gap-2">
-                        <div className="grid grid-cols-3 items-center gap-2">
-                            <Label className="text-xs">Début</Label>
-                            <Input
-                                type="date"
-                                value={editStartDate || ''}
-                                onChange={(e) => setEditStartDate(e.target.value)}
-                                className="col-span-2 h-8 text-xs"
-                            />
-                        </div>
-                        <div className="grid grid-cols-3 items-center gap-2">
-                            <Label className="text-xs">Fin</Label>
-                            <Input
-                                type="date"
-                                value={editEndDate || ''}
-                                onChange={(e) => setEditEndDate(e.target.value)}
-                                className="col-span-2 h-8 text-xs"
-                            />
-                        </div>
-                    </div>
-                    {(editStartDate || editEndDate) && (
-                        <Button 
-                            variant="ghost" 
-                            size="sm" 
-                            className="w-full h-7 text-xs text-muted-foreground hover:text-destructive"
-                            onClick={() => {
-                                setEditStartDate(undefined);
-                                setEditEndDate(undefined);
-                            }}
-                        >
-                            Effacer les dates
-                        </Button>
-                    )}
-                </div>
-            </PopoverContent>
-        </Popover>
+        {/* Champs d'édition - VERTICAL sur mobile */}
+        <div className="space-y-3">
+          {/* Nom */}
+          <div className="space-y-1.5">
+            <Label htmlFor={`edit-name-${person.id}`} className="text-xs font-medium">
+              Nom
+            </Label>
+            <Input 
+              id={`edit-name-${person.id}`}
+              value={editName}
+              onChange={(e) => setEditName(e.target.value)}
+              className="w-full"
+              placeholder="Nom de la personne"
+            />
+          </div>
 
-        <Button size="sm" onClick={handleSave} className="h-8 w-8 p-0 bg-emerald-600 hover:bg-emerald-700 text-white">
-          ✓
-        </Button>
-        <Button size="sm" variant="ghost" onClick={handleCancel} className="h-8 w-8 p-0">
-          ✕
-        </Button>
+          {/* Salaire */}
+          <div className="space-y-1.5">
+            <Label htmlFor={`edit-salary-${person.id}`} className="text-xs font-medium">
+              Salaire mensuel (€)
+            </Label>
+            <Input 
+              id={`edit-salary-${person.id}`}
+              type="number"
+              value={editSalary}
+              onChange={(e) => setEditSalary(e.target.value)}
+              className="w-full"
+              placeholder="0"
+            />
+          </div>
+
+          {/* Dates - 2 colonnes sur desktop, 1 sur mobile */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label htmlFor={`edit-start-${person.id}`} className="text-xs font-medium text-muted-foreground">
+                Date début
+              </Label>
+              <Input 
+                id={`edit-start-${person.id}`}
+                type="date"
+                value={editStartDate || ''}
+                onChange={(e) => setEditStartDate(e.target.value)}
+                className="w-full"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor={`edit-end-${person.id}`} className="text-xs font-medium text-muted-foreground">
+                Date fin
+              </Label>
+              <Input 
+                id={`edit-end-${person.id}`}
+                type="date"
+                value={editEndDate || ''}
+                onChange={(e) => setEditEndDate(e.target.value)}
+                className="w-full"
+              />
+            </div>
+          </div>
+
+          {/* Bouton effacer dates si présentes */}
+          {(editStartDate || editEndDate) && (
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="w-full text-xs text-muted-foreground hover:text-destructive"
+              onClick={() => {
+                setEditStartDate(undefined);
+                setEditEndDate(undefined);
+              }}
+            >
+              <X className="h-3 w-3 mr-1" />
+              Effacer les dates
+            </Button>
+          )}
+        </div>
       </div>
     );
   }
 
+  // ✅ MODE AFFICHAGE
   return (
     <div className="flex items-center justify-between p-3 bg-white rounded-lg hover:bg-emerald-50/50 transition-colors group border border-transparent hover:border-emerald-200">
       
@@ -372,28 +389,33 @@ function PersonItem({ person, onUpdate, onDelete }: PersonItemProps) {
           {person.salary.toLocaleString()} €
         </span>
 
-        {/* ✅ MOBILE FIX: Actions toujours visibles sur mobile, hover sur desktop */}
-        {/* Bouton Éditer */}
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => setIsEditing(true)}
-          className="h-8 w-8 p-0 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity hover:text-emerald-700 hover:bg-emerald-50"
-          title="Modifier"
-        >
-          <Pencil className="h-4 w-4" />
-        </Button>
+        {/* Actions - Toujours visibles sur mobile, hover sur desktop */}
+        <div className={cn(
+          "flex gap-0.5",
+          "opacity-100 sm:opacity-0 sm:group-hover:opacity-100 sm:transition-opacity"
+        )}>
+          {/* Bouton Éditer */}
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setIsEditing(true)}
+            className="h-9 w-9 sm:h-8 sm:w-8 hover:text-emerald-700 hover:bg-emerald-50"
+            title="Modifier"
+          >
+            <Pencil className="h-4 w-4" />
+          </Button>
 
-        {/* Bouton Supprimer */}
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => onDelete(person.id)}
-          className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity"
-          title="Supprimer"
-        >
-          <Trash2 className="h-4 w-4" />
-        </Button>
+          {/* Bouton Supprimer */}
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => onDelete(person.id)}
+            className="h-9 w-9 sm:h-8 sm:w-8 text-red-600 hover:text-red-700 hover:bg-red-50"
+            title="Supprimer"
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
+        </div>
       </div>
     </div>
   );
