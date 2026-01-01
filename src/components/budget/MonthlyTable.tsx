@@ -1,5 +1,5 @@
 // src/components/budget/MonthlyTable.tsx
-// VERSION MOBILE-OPTIMIZED - CONFORMITÉ GOOGLE
+// VERSION OPTIMISÉE - DRAWER MOBILE + TOUT DÉSÉLECTIONNÉ PAR DÉFAUT
 
 import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,6 +7,8 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Dialog,
   DialogContent,
@@ -22,12 +24,19 @@ import {
 } from "@/components/ui/popover";
 import { 
   DropdownMenu,
-  DropdownMenuCheckboxItem,
   DropdownMenuContent,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Drawer,
+  DrawerClose,
+  DrawerContent,
+  DrawerDescription,
+  DrawerFooter,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerTrigger,
+} from "@/components/ui/drawer";
 import { Lock, Unlock, MessageCircle, MessageSquarePlus, Settings2, Eye, CheckSquare, Square, ChevronLeft, ChevronRight, Info } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type {
@@ -42,8 +51,7 @@ import type {
 } from '@/utils/importConverter';
 
 // ============================================================================
-// 🚀 OPTIMIZATION: Debounced Input Component
-// prevents the entire table from re-rendering on every single keystroke (Numbers)
+// Debounced Input Component
 // ============================================================================
 const DebouncedInput = ({ 
     value, 
@@ -62,7 +70,6 @@ const DebouncedInput = ({
 }) => {
     const [localValue, setLocalValue] = useState<string | number>(value);
 
-    // Sync local value if prop changes externally (e.g. year switch)
     useEffect(() => {
         setLocalValue(value);
     }, [value]);
@@ -99,8 +106,7 @@ const DebouncedInput = ({
 };
 
 // ============================================================================
-// 🚀 OPTIMIZATION: Debounced Textarea Component
-// Fixes lag when typing comments inside popovers
+// Debounced Textarea Component
 // ============================================================================
 const DebouncedTextarea = ({ 
     value, 
@@ -224,26 +230,19 @@ export default function MonthlyTable({
   const [commentDialogOpen, setCommentDialogOpen] = useState(false);
   const [tempComment, setTempComment] = useState('');
   
+  // ✅ DEFAULT: Tout désélectionné par défaut
   const [visibleProjectIds, setVisibleProjectIds] = useState<string[]>([]);
   const [showIncome, setShowIncome] = useState(false); 
   const [showOneTime, setShowOneTime] = useState(false);
   const [showCharges, setShowCharges] = useState(false);
   
-  // ✅ MOBILE FIX: Add mobile detection state
   const [isMobile, setIsMobile] = useState(false);
+  const [drawerOpen, setDrawerOpen] = useState(false);
 
-  // ✅ MOBILE FIX: Detect mobile and hide columns by default
+  // Detect mobile
   useEffect(() => {
     const checkMobile = () => {
-      const mobile = window.innerWidth < 640;
-      setIsMobile(mobile);
-      
-      if (mobile) {
-        // Hide standard columns on mobile
-        setShowIncome(false);
-        setShowOneTime(false);
-        setShowCharges(false);
-      }
+      setIsMobile(window.innerWidth < 768);
     };
     
     checkMobile();
@@ -251,19 +250,7 @@ export default function MonthlyTable({
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
-  // ✅ MOBILE FIX: Show only first project on mobile by default
-  useEffect(() => {
-    const ids = projects.filter(p => p.id !== GENERAL_SAVINGS_ID).map(p => p.id);
-    setVisibleProjectIds(prev => {
-        if (prev.length === 0 && ids.length > 0) {
-          // Show only first project on mobile
-          return isMobile && ids.length > 1 ? [ids[0]] : ids;
-        }
-        return prev;
-    });
-  }, [projects.length, isMobile]);
-
-  // --- Calculations ---
+  // Calculations
   const getMonthlyBaseIncome = (monthIndex: number) => {
     return people.reduce((sum, person) => {
       if (!isPersonActive(person, currentYear, monthIndex)) {
@@ -324,8 +311,7 @@ export default function MonthlyTable({
     return total;
   };
 
-  // --- Updates ---
-  // Using useCallback to ensure stability
+  // Updates
   const updateAllocation = useCallback((month: string, projectId: string, amount: number) => {
     onYearlyDataChange({
       ...yearlyData,
@@ -384,6 +370,124 @@ export default function MonthlyTable({
   const showAllProjects = () => setVisibleProjectIds(standardProjects.map(p => p.id));
   const hideAllProjects = () => setVisibleProjectIds([]);
 
+  // Count visible columns
+  const visibleColumnsCount = 
+    (showIncome ? 1 : 0) + 
+    (showOneTime ? 1 : 0) + 
+    (showCharges ? 1 : 0) + 
+    visibleProjects.length;
+
+  // ============================================================================
+  // Column Settings Content (Shared)
+  // ============================================================================
+  const ColumnSettingsContent = () => (
+    <div className="space-y-4">
+      {/* Standard Columns */}
+      <div className="space-y-3">
+        <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
+          <Settings2 className="h-4 w-4" />
+          Colonnes Standards
+        </h3>
+        <div className="space-y-2">
+          <label className="flex items-center gap-3 p-3 rounded-lg hover:bg-muted/50 cursor-pointer transition-colors">
+            <Checkbox 
+              checked={showIncome} 
+              onCheckedChange={(checked) => setShowIncome(!!checked)}
+              id="show-income"
+            />
+            <div className="flex-1">
+              <div className="font-medium text-sm">Revenus (Salaires)</div>
+              <div className="text-xs text-muted-foreground">Salaires mensuels de l'équipe</div>
+            </div>
+          </label>
+          
+          <label className="flex items-center gap-3 p-3 rounded-lg hover:bg-muted/50 cursor-pointer transition-colors">
+            <Checkbox 
+              checked={showOneTime} 
+              onCheckedChange={(checked) => setShowOneTime(!!checked)}
+              id="show-onetime"
+            />
+            <div className="flex-1">
+              <div className="font-medium text-sm">Revenus (Ponctuels)</div>
+              <div className="text-xs text-muted-foreground">Primes, cadeaux, ventes...</div>
+            </div>
+          </label>
+          
+          <label className="flex items-center gap-3 p-3 rounded-lg hover:bg-muted/50 cursor-pointer transition-colors">
+            <Checkbox 
+              checked={showCharges} 
+              onCheckedChange={(checked) => setShowCharges(!!checked)}
+              id="show-charges"
+            />
+            <div className="flex-1">
+              <div className="font-medium text-sm">Charges Fixes</div>
+              <div className="text-xs text-muted-foreground">Loyer, EDF, assurances...</div>
+            </div>
+          </label>
+        </div>
+      </div>
+
+      {/* Separator */}
+      <div className="border-t border-border" />
+
+      {/* Projects */}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <h3 className="text-sm font-semibold text-foreground">Projets d'épargne</h3>
+          <div className="flex gap-2">
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={showAllProjects}
+              className="h-7 text-xs"
+            >
+              <CheckSquare className="h-3 w-3 mr-1" />
+              Tout
+            </Button>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={hideAllProjects}
+              className="h-7 text-xs"
+            >
+              <Square className="h-3 w-3 mr-1" />
+              Aucun
+            </Button>
+          </div>
+        </div>
+
+        {standardProjects.length === 0 ? (
+          <p className="text-sm text-muted-foreground text-center py-4">
+            Aucun projet d'épargne créé
+          </p>
+        ) : (
+          <ScrollArea className="h-[300px]">
+            <div className="space-y-2 pr-4">
+              {standardProjects.map((project) => (
+                <label 
+                  key={project.id}
+                  className="flex items-center gap-3 p-3 rounded-lg hover:bg-muted/50 cursor-pointer transition-colors"
+                >
+                  <Checkbox 
+                    checked={visibleProjectIds.includes(project.id)} 
+                    onCheckedChange={() => toggleProjectVisibility(project.id)}
+                    id={`project-${project.id}`}
+                  />
+                  <div className="flex-1">
+                    <div className="font-medium text-sm">{project.label}</div>
+                    <div className="text-xs text-muted-foreground">
+                      Allocation mensuelle
+                    </div>
+                  </div>
+                </label>
+              ))}
+            </div>
+          </ScrollArea>
+        )}
+      </div>
+    </div>
+  );
+
   return (
     <>
       <Card className="glass-card overflow-hidden animate-fade-in shadow-lg border-t-4 border-t-primary/20">
@@ -394,6 +498,7 @@ export default function MonthlyTable({
                     <span className="hidden sm:inline">Tableau de Gestion</span>
                 </CardTitle>
                 
+                {/* Year Selector */}
                 <div className="flex items-center gap-1 bg-background rounded-lg border p-0.5">
                     <Button variant="ghost" size="icon-sm" className="h-6 w-6" onClick={() => onYearChange(currentYear - 1)} title="Année précédente">
                         <ChevronLeft className="h-3 w-3" />
@@ -407,41 +512,57 @@ export default function MonthlyTable({
                 </div>
             </div>
 
-            <DropdownMenu>
+            {/* ✅ MOBILE: Drawer | DESKTOP: Dropdown Menu */}
+            {isMobile ? (
+              <Drawer open={drawerOpen} onOpenChange={setDrawerOpen}>
+                <DrawerTrigger asChild>
+                  <Button variant="outline" size="sm" className="gap-2 h-9 bg-background">
+                    <Eye className="h-4 w-4" />
+                    <Badge variant="secondary" className="h-5 px-1.5 text-[10px]">
+                      {visibleColumnsCount}
+                    </Badge>
+                  </Button>
+                </DrawerTrigger>
+                <DrawerContent>
+                  <DrawerHeader className="text-left">
+                    <DrawerTitle>Affichage du tableau</DrawerTitle>
+                    <DrawerDescription>
+                      Choisissez les colonnes à afficher ({visibleColumnsCount} sélectionnée{visibleColumnsCount > 1 ? 's' : ''})
+                    </DrawerDescription>
+                  </DrawerHeader>
+                  <div className="px-4 pb-4 max-h-[60vh] overflow-y-auto">
+                    <ColumnSettingsContent />
+                  </div>
+                  <DrawerFooter>
+                    <DrawerClose asChild>
+                      <Button variant="default" className="w-full">
+                        Appliquer
+                      </Button>
+                    </DrawerClose>
+                  </DrawerFooter>
+                </DrawerContent>
+              </Drawer>
+            ) : (
+              <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                    <Button variant="outline" size="sm" className="gap-2 h-9 bg-background">
-                        <Eye className="h-4 w-4" />
-                        <span className="hidden sm:inline">Affichage</span>
-                        <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-[10px]">
-                            {visibleProjects.length}
-                        </Badge>
-                    </Button>
+                  <Button variant="outline" size="sm" className="gap-2 h-9 bg-background">
+                    <Eye className="h-4 w-4" />
+                    <span className="hidden sm:inline">Affichage</span>
+                    <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-[10px]">
+                      {visibleColumnsCount}
+                    </Badge>
+                  </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-64">
-                    <DropdownMenuLabel>Colonnes Standards</DropdownMenuLabel>
-                    <DropdownMenuCheckboxItem checked={showIncome} onCheckedChange={setShowIncome} onSelect={(e) => e.preventDefault()}>Revenus (Salaires)</DropdownMenuCheckboxItem>
-                    <DropdownMenuCheckboxItem checked={showOneTime} onCheckedChange={setShowOneTime} onSelect={(e) => e.preventDefault()}>Revenus (Ponctuels)</DropdownMenuCheckboxItem>
-                    <DropdownMenuCheckboxItem checked={showCharges} onCheckedChange={setShowCharges} onSelect={(e) => e.preventDefault()}>Charges Fixes</DropdownMenuCheckboxItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuLabel>Projets</DropdownMenuLabel>
-                    <div className="p-2 flex gap-2">
-                        <Button variant="ghost" size="sm" className="flex-1 h-7 text-xs bg-muted/50" onClick={(e) => { e.preventDefault(); showAllProjects(); }}><CheckSquare className="h-3 w-3 mr-1" /> Tout</Button>
-                        <Button variant="ghost" size="sm" className="flex-1 h-7 text-xs bg-muted/50" onClick={(e) => { e.preventDefault(); hideAllProjects(); }}><Square className="h-3 w-3 mr-1" /> Aucun</Button>
-                    </div>
-                    <div className="max-h-[200px] overflow-y-auto">
-                        {standardProjects.map((project) => (
-                            <DropdownMenuCheckboxItem key={project.id} checked={visibleProjectIds.includes(project.id)} onCheckedChange={() => toggleProjectVisibility(project.id)} onSelect={(e) => e.preventDefault()}>
-                                {project.label}
-                            </DropdownMenuCheckboxItem>
-                        ))}
-                    </div>
+                <DropdownMenuContent align="end" className="w-80 p-3">
+                  <ColumnSettingsContent />
                 </DropdownMenuContent>
-            </DropdownMenu>
+              </DropdownMenu>
+            )}
         </CardHeader>
 
         <CardContent className="p-0">
-          {/* ✅ MOBILE FIX: Info message when no columns visible */}
-          {isMobile && visibleProjectIds.length === 0 && !showIncome && !showOneTime && !showCharges && (
+          {/* Info message when no columns visible */}
+          {visibleColumnsCount === 0 && (
             <div className="m-3 p-3 bg-blue-50 border border-blue-200 rounded-lg flex items-start gap-2">
               <Info className="h-4 w-4 text-blue-600 flex-shrink-0 mt-0.5" />
               <p className="text-xs text-blue-700">
@@ -452,9 +573,9 @@ export default function MonthlyTable({
 
           <div className="overflow-x-auto">
             <table className="w-full border-collapse">
+              {/* TABLE HEAD - Keep existing */}
               <thead className="bg-muted/30 text-xs">
                 <tr>
-                  {/* ✅ MOBILE FIX: Wider column on mobile (140px vs 100px) */}
                   <th className="sticky left-0 z-20 bg-background px-2 py-3 text-left font-semibold text-foreground border-b border-r border-border shadow-[4px_0_12px_-4px_rgba(0,0,0,0.1)] w-[140px] sm:w-[100px] min-w-[140px] sm:min-w-[100px]">
                     <div className="flex flex-col gap-0.5">
                       <span>Mois</span>
@@ -485,6 +606,8 @@ export default function MonthlyTable({
                   </th>
                 </tr>
               </thead>
+              
+              {/* TABLE BODY - Keep existing implementation */}
               <tbody className="divide-y divide-border/50 text-xs">
                 {MONTHS.map((month, monthIndex) => {
                   const isLocked = lockedMonths[month];
@@ -503,7 +626,6 @@ export default function MonthlyTable({
                         <div className="flex flex-col gap-1">
                             <div className="truncate text-sm font-semibold text-foreground" title={month}>{month}</div>
                             <div className="flex items-center gap-1">
-                                {/* ✅ MOBILE FIX: Larger buttons on mobile (h-9 w-9 vs h-5 w-5) */}
                                 <Button variant="ghost" size="icon" onClick={() => toggleMonthLock(month)} className={cn("h-9 w-9 sm:h-5 sm:w-5 rounded-md transition-all", isLocked ? "text-warning bg-warning/10" : "text-muted-foreground/50 hover:text-foreground")}>
                                     {isLocked ? <Lock className="h-4 w-4 sm:h-3 sm:w-3" /> : <Unlock className="h-4 w-4 sm:h-3 sm:w-3" />}
                                 </Button>
@@ -516,7 +638,6 @@ export default function MonthlyTable({
                       {showIncome && <td className="px-2 py-2 text-center bg-success/5 font-medium text-success border-r border-dashed border-border/50">+{baseIncome.toLocaleString()} €</td>}
                       {showOneTime && (
                         <td className="px-2 py-2 bg-success/5 border-r border-dashed border-border/50">
-                            {/* ✅ MOBILE FIX: Larger inputs on mobile (h-10 vs h-7) */}
                             <DebouncedInput 
                                 type="number" 
                                 value={oneTimeIncomes[month] || ''} 
@@ -538,7 +659,6 @@ export default function MonthlyTable({
                           <td key={project.id} className="px-1 py-2 border-r border-dashed border-border/50">
                             <div className="flex flex-col gap-1">
                               <div className="flex items-center gap-1">
-                                {/* ✅ MOBILE FIX: Larger inputs on mobile */}
                                 <DebouncedInput 
                                     type="number" 
                                     value={allocation || ''} 
@@ -583,7 +703,6 @@ export default function MonthlyTable({
                         <div className="flex flex-col gap-1">
                             <div className="flex items-center gap-1">
                                 <Input type="text" value={`${genSavingsAllocation.toLocaleString()} €`} disabled className="text-center h-10 sm:h-7 text-sm sm:text-xs px-3 sm:px-1 font-bold bg-primary/10 border-primary/20 text-primary cursor-default shadow-none" />
-                                {/* ✅ MOBILE FIX: Larger input on mobile */}
                                 <DebouncedInput 
                                     type="number" 
                                     value={genSavingsExpense || ''} 
