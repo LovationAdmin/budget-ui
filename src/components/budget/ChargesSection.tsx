@@ -1,6 +1,3 @@
-// src/components/budget/ChargesSection.tsx
-// VERSION MOBILE-OPTIMIZED - MODE ÉDITION AMÉLIORÉ
-
 import { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,7 +6,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { 
   Plus, 
   Trash2, 
-  Calendar, 
   Clock, 
   Link as LinkIcon, 
   ChevronDown, 
@@ -17,16 +13,13 @@ import {
   Lightbulb,
   LightbulbOff,
   Save,
-  X
+  X,
+  Sparkles
 } from "lucide-react";
-import { 
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import type { Charge } from '@/utils/importConverter';
 import { budgetAPI } from '@/services/api';
+import { useToast } from "@/hooks/use-toast"; // Fixed import path if needed
 
 interface ChargesSectionProps {
   charges: Charge[];
@@ -41,6 +34,7 @@ export default function ChargesSection({
     onLinkTransaction,
     mappedTotals = {} 
 }: ChargesSectionProps) {
+  const { toast } = useToast();
   const [newChargeLabel, setNewChargeLabel] = useState('');
   const [newChargeAmount, setNewChargeAmount] = useState('');
   const [startDate, setStartDate] = useState('');
@@ -49,7 +43,8 @@ export default function ChargesSection({
   const [isExpanded, setIsExpanded] = useState(true);
   const [detectedCategory, setDetectedCategory] = useState<string>('');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
-
+  
+  // Logic to detect category when user types
   const handleLabelBlur = async () => {
       if (!newChargeLabel.trim() || newChargeLabel.length < 3) return;
       setIsAnalyzing(true);
@@ -108,10 +103,18 @@ export default function ChargesSection({
       ENERGY: '⚡ Énergie',
       INTERNET: '🌐 Internet',
       MOBILE: '📱 Mobile',
+      INSURANCE: '🛡️ Assurance',
       INSURANCE_AUTO: '🚗 Assurance Auto',
       INSURANCE_HOME: '🏠 Assurance Habitation',
-      INSURANCE_HEALTH: '🏥 Assurance Santé',
-      LOAN: '💳 Prêt',
+      INSURANCE_HEALTH: '⚕️ Mutuelle Santé',
+      LOAN: '💸 Prêt',
+      BANK: '🏛️ Banque',
+      TRANSPORT: '🚌 Transport',
+      LEISURE: '⚽ Loisirs',
+      LEISURE_SPORT: '💪 Sport / Fitness',
+      LEISURE_STREAMING: '🎬 Streaming',
+      SUBSCRIPTION: '🔄 Abonnement',
+      HOUSING: '🏠 Logement',
       OTHER: '📦 Autre'
     };
     return labels[category] || category;
@@ -301,8 +304,6 @@ function ChargeItem({ charge, onUpdate, onDelete, onLinkTransaction, mappedTotal
 
   // ✅ MODE ÉDITION - LAYOUT VERTICAL MOBILE-FRIENDLY
   if (isEditing) {
-    const hasEditDates = editStartDate || editEndDate;
-    
     return (
       <div className="p-4 bg-white rounded-lg border-2 border-orange-300 shadow-lg space-y-3">
         {/* Header mode édition */}
