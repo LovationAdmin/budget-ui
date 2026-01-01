@@ -14,12 +14,13 @@ import {
   LightbulbOff,
   Save,
   X,
-  Sparkles
+  Sparkles,
+  Loader2
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Charge } from '@/utils/importConverter';
 import { budgetAPI } from '@/services/api';
-import { useToast } from "@/hooks/use-toast"; // Fixed import path if needed
+import { useToast } from "@/hooks/use-toast";
 
 interface ChargesSectionProps {
   charges: Charge[];
@@ -44,7 +45,62 @@ export default function ChargesSection({
   const [detectedCategory, setDetectedCategory] = useState<string>('');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   
-  // Logic to detect category when user types
+  // ✅ AUTO-DETECT STATE
+  const [isAutoCategorizing, setIsAutoCategorizing] = useState(false);
+
+  // Check if we have charges that need categorization (Empty or OTHER)
+  const uncategorizedCount = charges.filter(c => !c.category || c.category === 'OTHER').length;
+
+  // ✅ BATCH AUTO-CATEGORIZE FUNCTION
+  const handleAutoCategorizeAll = async () => {
+    if (uncategorizedCount === 0) return;
+    setIsAutoCategorizing(true);
+    let updatedCount = 0;
+
+    // Create a copy of charges to update
+    const updatedCharges = [...charges];
+
+    try {
+        // Process in parallel for speed
+        await Promise.all(updatedCharges.map(async (charge, index) => {
+            // Only process OTHER or empty categories
+            if (!charge.category || charge.category === 'OTHER') {
+                try {
+                    const res = await budgetAPI.categorize(charge.label);
+                    if (res.data.category && res.data.category !== 'OTHER') {
+                        updatedCharges[index] = { ...charge, category: res.data.category };
+                        updatedCount++;
+                    }
+                } catch (err) {
+                    console.error(`Failed to categorize ${charge.label}`, err);
+                }
+            }
+        }));
+
+        if (updatedCount > 0) {
+            onChargesChange(updatedCharges);
+            toast({ 
+                title: "Catégorisation terminée", 
+                description: `${updatedCount} charge(s) mise(s) à jour avec succès.`,
+                variant: "default" // Using default variant for success to match shadcn
+            });
+        } else {
+            toast({ 
+                title: "Analyse terminée", 
+                description: "Aucune nouvelle catégorie n'a pu être détectée.", 
+            });
+        }
+    } catch (error) {
+        toast({ 
+            title: "Erreur", 
+            description: "Une erreur est survenue pendant l'analyse.", 
+            variant: "destructive" 
+        });
+    } finally {
+        setIsAutoCategorizing(false);
+    }
+  };
+
   const handleLabelBlur = async () => {
       if (!newChargeLabel.trim() || newChargeLabel.length < 3) return;
       setIsAnalyzing(true);
@@ -137,6 +193,27 @@ export default function ChargesSection({
           </CardTitle>
           
           <div className="flex items-center gap-4">
+             {/* ✅ BUTTON: Auto Categorize (Visible only if needed) */}
+             {uncategorizedCount > 0 && (
+                <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="hidden sm:flex h-8 bg-white/50 border-orange-200 text-orange-700 hover:bg-white hover:text-orange-800"
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        handleAutoCategorizeAll();
+                    }}
+                    disabled={isAutoCategorizing}
+                >
+                    {isAutoCategorizing ? (
+                        <Loader2 className="h-3.5 w-3.5 mr-2 animate-spin" />
+                    ) : (
+                        <Sparkles className="h-3.5 w-3.5 mr-2" />
+                    )}
+                    Catégoriser ({uncategorizedCount})
+                </Button>
+            )}
+
             <div className="text-right">
                 <p className="text-2xl font-bold text-orange-900">
                 {totalCharges.toFixed(0)}€
@@ -152,6 +229,23 @@ export default function ChargesSection({
 
       {isExpanded && (
       <CardContent className="space-y-3 animate-accordion-down">
+        {/* Mobile Button for categorization */}
+        {uncategorizedCount > 0 && (
+            <Button 
+                variant="outline" 
+                size="sm" 
+                className="w-full sm:hidden mb-2 bg-white/50 border-orange-200 text-orange-700"
+                onClick={(e) => {
+                    e.stopPropagation();
+                    handleAutoCategorizeAll();
+                }}
+                disabled={isAutoCategorizing}
+            >
+                {isAutoCategorizing ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Sparkles className="h-4 w-4 mr-2" />}
+                Détecter les catégories ({uncategorizedCount})
+            </Button>
+        )}
+
         {charges.length === 0 ? (
           <div className="text-center py-8 text-muted-foreground">
             <p className="mb-2">Aucune charge enregistrée</p>
