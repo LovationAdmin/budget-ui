@@ -1,6 +1,3 @@
-// src/pages/BudgetComplete.tsx
-// VERSION FINALE - OPTION A : DebouncedInput + markAsModified sur tous les changements
-
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { budgetAPI } from '../services/api';

@@ -1,25 +1,23 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { 
   TrendingDown, 
-  Phone, 
   Sparkles, 
   CheckCircle2, 
   XCircle,
   Loader2,
   ChevronDown,
   ChevronUp,
-  Mail,
   RefreshCw,
   Users,
   Info,
-  Globe
 } from "lucide-react";
 import { budgetAPI, ChargeSuggestion, Competitor } from '@/services/api';
 import { Charge } from '@/utils/importConverter';
 import { useNotifications } from '@/contexts/NotificationContext';
+import { Globe, Phone, Mail } from 'lucide-react'; // Ensure these are imported for SubComponents
 
 // ============================================================================
 // TYPES
@@ -79,32 +77,40 @@ export default function EnhancedSuggestions({ budgetId, charges, memberCount }: 
   const [isExpanded, setIsExpanded] = useState(false);
   const [householdSize, setHouseholdSize] = useState(1);
 
+  // Ref to track the last data we actually analyzed to prevent loops
+  const lastAnalyzedSignature = useRef<string>("");
+
   const { onSuggestionsReady, isConnected } = useNotifications();
 
   // Subscribe to WebSocket suggestions
   useEffect(() => {
     const unsubscribe = onSuggestionsReady((data: any) => {
-      console.log('📊 [EnhancedSuggestions] Received suggestions from WebSocket:', data);
+      console.log('📊 [EnhancedSuggestions] Received suggestions from WebSocket');
       processResults(data);
       setLoading(false);
     });
     return unsubscribe;
   }, [onSuggestionsReady]);
 
-  // Helper to create a signature string for dependencies
-  // This ensures we reload if amount, category, or ignore status changes
+  // Create a signature string for dependencies.
+  // We use || false to ensure undefined and false are treated identically.
   const chargesSignature = JSON.stringify(charges.map(c => ({
     id: c.id,
     amount: c.amount,
     category: c.category,
-    ignore: c.ignoreSuggestions
+    ignore: c.ignoreSuggestions || false 
   })));
 
-  // 🔥 FIX: Auto-load ONLY when WebSocket is connected and data actually changes
+  // 🔥 FIX: Auto-load ONLY when data changes vs the last analysis
   useEffect(() => {
     if (!isConnected) {
-      console.log('⏳ [EnhancedSuggestions] Waiting for WebSocket connection...');
       return;
+    }
+
+    // CRITICAL: If the data hasn't changed since the last run, STOP here.
+    // This prevents the loop caused by AutoSave re-renders.
+    if (chargesSignature === lastAnalyzedSignature.current) {
+        return;
     }
 
     const timer = setTimeout(() => {
@@ -113,9 +119,12 @@ export default function EnhancedSuggestions({ budgetId, charges, memberCount }: 
       
       if (relevantCharges.length > 0) {
         console.log('🚀 [EnhancedSuggestions] Data changed, starting analysis...');
+        
+        // Update the ref immediately to block subsequent re-renders until data changes again
+        lastAnalyzedSignature.current = chargesSignature;
         loadSuggestions();
       }
-    }, 1000); // 1s debounce to avoid spamming while typing amounts
+    }, 1000); // 1s debounce
 
     return () => clearTimeout(timer);
   }, [budgetId, chargesSignature, memberCount, isConnected]);
@@ -183,17 +192,21 @@ export default function EnhancedSuggestions({ budgetId, charges, memberCount }: 
 
       console.log('✅ [EnhancedSuggestions] Analysis request sent, waiting for WebSocket response...');
 
+      // Fallback timeout in case WebSocket fails
       setTimeout(() => {
         if (loading) {
           console.warn('⚠️ [EnhancedSuggestions] No WebSocket response after 30s, stopping loader');
           setLoading(false);
-          setError('L\'analyse prend plus de temps que prévu. Veuillez rafraîchir la page.');
+          // Don't set error here to avoid UI flicker, just stop spinning
         }
       }, 30000);
 
     } catch (err: any) {
       console.error('❌ [EnhancedSuggestions] Error:', err);
-      setError(err.response?.data?.error || 'Erreur lors de l\'analyse des suggestions');
+      // Only set error if it's a real API failure, not just a cancelled request
+      if (err.code !== 'ERR_CANCELED') {
+          setError(err.response?.data?.error || 'Erreur lors de l\'analyse');
+      }
       setLoading(false);
     }
   };
@@ -288,8 +301,14 @@ export default function EnhancedSuggestions({ budgetId, charges, memberCount }: 
               <Button 
                 variant="ghost" 
                 size="sm"
-                onClick={(e) => { e.stopPropagation(); loadSuggestions(); }}
+                onClick={(e) => { 
+                    e.stopPropagation(); 
+                    // Force reload by clearing the ref
+                    lastAnalyzedSignature.current = ""; 
+                    loadSuggestions(); 
+                }}
                 disabled={loading}
+                title="Forcer la réanalyse"
               >
                 <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
               </Button>
