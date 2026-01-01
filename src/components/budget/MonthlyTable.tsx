@@ -366,7 +366,7 @@ export default function MonthlyTable({
                         onCheckedChange={setShowIncome}
                         onSelect={(e) => e.preventDefault()}
                     >
-                        Revenus (Salaires)
+                        Revenus
                     </DropdownMenuCheckboxItem>
                     <DropdownMenuCheckboxItem 
                         checked={showOneTime} 
@@ -380,7 +380,7 @@ export default function MonthlyTable({
                         onCheckedChange={setShowCharges}
                         onSelect={(e) => e.preventDefault()}
                     >
-                        Charges Fixes
+                        Charges
                     </DropdownMenuCheckboxItem>
                     
                     <DropdownMenuSeparator />

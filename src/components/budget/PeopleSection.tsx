@@ -89,7 +89,7 @@ export default function PeopleSection({ people, onPeopleChange }: PeopleSectionP
             </div>
             <div>
               <CardTitle className="font-display text-lg flex items-center gap-2 text-emerald-900">
-                Revenus (Salaires)
+                Revenus
                 <span className="text-sm font-normal text-emerald-700/70">
                   ({people.length} personne{people.length > 1 ? 's' : ''})
                 </span>
