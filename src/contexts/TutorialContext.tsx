@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
 
 interface TutorialContextType {
   isOpen: boolean;
@@ -29,16 +29,18 @@ export const TutorialProvider = ({ children }: { children: ReactNode }) => {
     }
   }, []);
 
-  const startTutorial = () => {
+  // ✅ FIX: Use useCallback to stabilize reference
+  const startTutorial = useCallback(() => {
     setIsOpen(true);
-  };
+  }, []);
 
-  const closeTutorial = () => {
+  // ✅ FIX: Use useCallback here too
+  const closeTutorial = useCallback(() => {
     setIsOpen(false);
     // Mark as seen when closed (or finished)
     localStorage.setItem('hasSeenTutorial', 'true');
     setHasSeenTutorial(true);
-  };
+  }, []);
 
   return (
     <TutorialContext.Provider value={{ isOpen, startTutorial, closeTutorial, hasSeenTutorial }}>

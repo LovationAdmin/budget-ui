@@ -17,7 +17,7 @@ import {
 import { budgetAPI, ChargeSuggestion, Competitor } from '@/services/api';
 import { Charge } from '@/utils/importConverter';
 import { useNotifications } from '@/contexts/NotificationContext';
-import { Globe, Phone, Mail } from 'lucide-react'; // Ensure these are imported for SubComponents
+import { Globe, Phone, Mail } from 'lucide-react';
 
 // ============================================================================
 // TYPES
@@ -103,12 +103,10 @@ export default function EnhancedSuggestions({ budgetId, charges, memberCount }: 
 
   // 🔥 FIX: Auto-load ONLY when data changes vs the last analysis
   useEffect(() => {
-    if (!isConnected) {
-      return;
-    }
+    // If WS not connected yet, wait.
+    if (!isConnected) return;
 
     // CRITICAL: If the data hasn't changed since the last run, STOP here.
-    // This prevents the loop caused by AutoSave re-renders.
     if (chargesSignature === lastAnalyzedSignature.current) {
         return;
     }
@@ -117,17 +115,17 @@ export default function EnhancedSuggestions({ budgetId, charges, memberCount }: 
       // Check if there are any relevant charges to analyze
       const relevantCharges = charges.filter(c => c.category && isRelevantCategory(c.category) && !c.ignoreSuggestions);
       
+      // Update Ref IMMEDIATELY before async call to lock it and prevent double-firing
+      lastAnalyzedSignature.current = chargesSignature;
+
       if (relevantCharges.length > 0) {
-        console.log('🚀 [EnhancedSuggestions] Data changed, starting analysis...');
-        
-        // Update the ref immediately to block subsequent re-renders until data changes again
-        lastAnalyzedSignature.current = chargesSignature;
+        console.log('🚀 [EnhancedSuggestions] Data changed (debounced), starting analysis...');
         loadSuggestions();
       }
-    }, 1000); // 1s debounce
+    }, 2000); // 🟢 Increased to 2000ms to allow AutoSave/Reload cycle to settle
 
     return () => clearTimeout(timer);
-  }, [budgetId, chargesSignature, memberCount, isConnected]);
+  }, [budgetId, chargesSignature, memberCount, isConnected]); // 🟢 Removed 'charges' object, relying on signature
 
   const processResults = (data: any) => {
     const rawSuggestions = data.suggestions || [];
@@ -161,6 +159,7 @@ export default function EnhancedSuggestions({ budgetId, charges, memberCount }: 
   };
 
   const loadSuggestions = async () => {
+    // Double check charges exist
     if (charges.length === 0) return;
 
     setLoading(true);
@@ -197,13 +196,11 @@ export default function EnhancedSuggestions({ budgetId, charges, memberCount }: 
         if (loading) {
           console.warn('⚠️ [EnhancedSuggestions] No WebSocket response after 30s, stopping loader');
           setLoading(false);
-          // Don't set error here to avoid UI flicker, just stop spinning
         }
       }, 30000);
 
     } catch (err: any) {
       console.error('❌ [EnhancedSuggestions] Error:', err);
-      // Only set error if it's a real API failure, not just a cancelled request
       if (err.code !== 'ERR_CANCELED') {
           setError(err.response?.data?.error || 'Erreur lors de l\'analyse');
       }
