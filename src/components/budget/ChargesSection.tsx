@@ -125,7 +125,7 @@ export default function ChargesSection({
       >
         <div className="flex items-center justify-between">
           <CardTitle className="text-orange-900 flex items-center gap-2">
-            🧾 Charges Mensuelles
+            🧾 Charges Mensuelles/Ponctuelles
             <span className="text-sm font-normal text-muted-foreground">
               ({charges.length} charge{charges.length > 1 ? 's' : ''})
             </span>
