@@ -176,7 +176,8 @@ export default function EnhancedSuggestions({ budgetId, charges, memberCount }: 
           category: c.category!,
           label: c.label,
           amount: c.amount,
-          merchant_name: ''
+          // ✅ FIX: Pass the label as merchant_name so the backend can filter it out
+          merchant_name: c.label 
         }));
 
       if (relevantCharges.length === 0) {
@@ -253,7 +254,7 @@ export default function EnhancedSuggestions({ budgetId, charges, memberCount }: 
               <div>
                 <p className="font-medium">🎉 Vous avez déjà d'excellentes offres !</p>
                 <p className="text-sm text-green-600">
-                  Vos charges sont bien optimisées pour votre foyer de {householdSize} personne{householdSize > 1 ? 's' : ''}.
+                  Vos charges sont bien optimisées pour votre foyer.
                 </p>
               </div>
             </div>
