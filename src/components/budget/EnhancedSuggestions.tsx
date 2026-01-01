@@ -33,7 +33,6 @@ interface EnhancedSuggestionsProps {
 // HELPERS
 // ============================================================================
 
-// ✅ FIX: Added split categories and others
 const RELEVANT_CATEGORIES = [
   'ENERGY', 'INTERNET', 'MOBILE', 'INSURANCE',
   'INSURANCE_AUTO', 'INSURANCE_HOME', 'INSURANCE_HEALTH',
@@ -64,8 +63,8 @@ function getCategoryLabel(cat: string): string {
     'BANK': '🏛️ Banque',
     'TRANSPORT': '🚌 Transport',
     'LEISURE': '⚽ Loisirs',
-    'LEISURE_SPORT': '💪 Sport / Fitness', // ✅ NEW
-    'LEISURE_STREAMING': '🎬 Streaming',    // ✅ NEW
+    'LEISURE_SPORT': '💪 Sport / Fitness',
+    'LEISURE_STREAMING': '🎬 Streaming',
     'SUBSCRIPTION': '🔄 Abonnement',
     'HOUSING': '🏠 Logement'
   };
@@ -108,7 +107,7 @@ export default function EnhancedSuggestions({ budgetId, charges, memberCount }: 
     ignore: c.ignoreSuggestions || false 
   })));
 
-  // ✅ Loop Protection Logic (Increased debounce)
+  // Loop Protection Logic
   useEffect(() => {
     if (!isConnected) return;
 
@@ -119,7 +118,6 @@ export default function EnhancedSuggestions({ budgetId, charges, memberCount }: 
     const timer = setTimeout(() => {
       const relevantCharges = charges.filter(c => c.category && isRelevantCategory(c.category) && !c.ignoreSuggestions);
       
-      // Update Ref IMMEDIATELY before async call to lock it
       lastAnalyzedSignature.current = chargesSignature;
 
       if (relevantCharges.length > 0) {
@@ -157,9 +155,6 @@ export default function EnhancedSuggestions({ budgetId, charges, memberCount }: 
     }, 0);
     setTotalSavings(actualTotalSavings);
     setHouseholdSize(data.household_size || memberCount);
-
-    console.log('[EnhancedSuggestions] Loaded', filteredSuggestions.length, 
-      'suggestions with actual savings for household of', data.household_size || memberCount, 'persons');
   };
 
   const loadSuggestions = async () => {
@@ -176,7 +171,6 @@ export default function EnhancedSuggestions({ budgetId, charges, memberCount }: 
           category: c.category!,
           label: c.label,
           amount: c.amount,
-          // ✅ FIX: Pass the label as merchant_name so the backend can filter it out
           merchant_name: c.label 
         }));
 
@@ -192,8 +186,6 @@ export default function EnhancedSuggestions({ budgetId, charges, memberCount }: 
         charges: relevantCharges,
         household_size: memberCount
       });
-
-      console.log('✅ [EnhancedSuggestions] Analysis request sent, waiting for WebSocket response...');
 
       setTimeout(() => {
         if (loading) {
@@ -244,7 +236,6 @@ export default function EnhancedSuggestions({ budgetId, charges, memberCount }: 
 
   if (suggestions.length === 0 && charges.length > 0) {
     const hasRelevant = charges.some(c => c.category && isRelevantCategory(c.category) && !c.ignoreSuggestions);
-    
     if (hasRelevant) {
       return (
         <Card className="border-green-200 bg-green-50/30">
@@ -330,18 +321,27 @@ export default function EnhancedSuggestions({ budgetId, charges, memberCount }: 
             </div>
           )}
 
-          {suggestions.map((item) => (
-            <SuggestionCard key={item.charge_id} chargeSuggestion={item} householdSize={householdSize} />
-          ))}
+          <div className="space-y-2">
+            {suggestions.map((item) => (
+              <SuggestionCard key={item.charge_id} chargeSuggestion={item} householdSize={householdSize} />
+            ))}
+          </div>
         </>
       )}
     </div>
   );
 }
 
+// ============================================================================
+// SUGGESTION CARD - MODIFIED TO BE COLLAPSIBLE
+// ============================================================================
+
 function SuggestionCard({ chargeSuggestion, householdSize }: { chargeSuggestion: ChargeSuggestion; householdSize: number }) {
   const { charge_label, suggestion } = chargeSuggestion;
   const competitors = suggestion.competitors.slice(0, 3);
+  
+  // ✅ NEW STATE: Collapsed by default
+  const [isOpen, setIsOpen] = useState(false);
   
   if (competitors.length === 0) return null;
 
@@ -350,7 +350,10 @@ function SuggestionCard({ chargeSuggestion, householdSize }: { chargeSuggestion:
 
   return (
     <Card className="border-orange-200 hover:border-orange-300 transition-colors">
-      <CardHeader className="pb-3">
+      <CardHeader 
+        className="pb-3 cursor-pointer hover:bg-orange-50/30 transition-colors"
+        onClick={() => setIsOpen(!isOpen)}
+      >
         <div className="flex items-start justify-between">
           <div className="flex-1">
             <div className="flex items-center gap-2 mb-1">
@@ -366,24 +369,33 @@ function SuggestionCard({ chargeSuggestion, householdSize }: { chargeSuggestion:
               )}
             </CardDescription>
           </div>
-          <Badge className="bg-green-100 text-green-800 border-green-300">
-            Jusqu'à -{bestSavings.toFixed(0)}€/an
-          </Badge>
+          
+          <div className="flex items-center gap-2">
+            <Badge className="bg-green-100 text-green-800 border-green-300">
+                Jusqu'à -{bestSavings.toFixed(0)}€/an
+            </Badge>
+            <div className="text-muted-foreground">
+                {isOpen ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
+            </div>
+          </div>
         </div>
       </CardHeader>
 
-      <CardContent className="space-y-4">
-        {isIndividual && householdSize > 1 && (
-          <div className="flex items-start gap-2 p-3 bg-blue-50 rounded-lg border border-blue-200 text-xs text-blue-700">
-            <Info className="h-4 w-4 flex-shrink-0 mt-0.5" />
-            <span>Prix analysé par personne. L'économie affichée est pour l'ensemble du foyer ({householdSize} personnes).</span>
-          </div>
-        )}
+      {/* ✅ COLLAPSIBLE CONTENT */}
+      {isOpen && (
+        <CardContent className="space-y-4 pt-0">
+            {isIndividual && householdSize > 1 && (
+            <div className="flex items-start gap-2 p-3 bg-blue-50 rounded-lg border border-blue-200 text-xs text-blue-700">
+                <Info className="h-4 w-4 flex-shrink-0 mt-0.5" />
+                <span>Prix analysé par personne. L'économie affichée est pour l'ensemble du foyer ({householdSize} personnes).</span>
+            </div>
+            )}
 
-        {competitors.map((competitor, index) => (
-          <CompetitorCard key={index} competitor={competitor} rank={index + 1} />
-        ))}
-      </CardContent>
+            {competitors.map((competitor, index) => (
+            <CompetitorCard key={index} competitor={competitor} rank={index + 1} />
+            ))}
+        </CardContent>
+      )}
     </Card>
   );
 }
