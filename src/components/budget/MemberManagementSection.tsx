@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { MemberAvatar } from "./MemberAvatar";
 import { Badge } from "@/components/ui/badge";
-import { Users, UserPlus, UserMinus, Mail, Trash2, Crown, Loader2, RefreshCw } from "lucide-react";
+import { Users, UserPlus, UserMinus, Mail, Trash2, Loader2, RefreshCw } from "lucide-react";
 import { budgetAPI } from '@/services/api';
 import { useToast } from '@/hooks/use-toast';
 import {
@@ -23,7 +23,7 @@ interface BudgetMember {
     id: string;
     name: string;
     email: string;
-    avatar?: string; // NEW: Added avatar field
+    avatar?: string;
   } | null;
   role: 'owner' | 'member';
 }
@@ -147,7 +147,6 @@ export default function MemberManagementSection({
                 const user = member.user!;
                 return (
                   <div key={member.id} className="flex items-center gap-3 p-3 rounded-xl border border-border/50 bg-card/50 hover:bg-card transition-all">
-                    {/* NEW: Pass the avatar image here */}
                     <MemberAvatar name={user.name} image={user.avatar} size="md" />
                     
                     <div className="flex-1 min-w-0">
@@ -156,10 +155,10 @@ export default function MemberManagementSection({
                       </p>
                       <p className="text-sm text-muted-foreground truncate">{user.email}</p>
                     </div>
+                    
+                    {/* ✅ MODIFICATION : Badge "Membre" seulement pour les non-propriétaires */}
                     <div className="flex items-center gap-2">
-                      {member.role === 'owner' ? (
-                        <Badge variant="default" className="gap-1"><Crown className="h-3 w-3" />Propriétaire</Badge>
-                      ) : (
+                      {member.role !== 'owner' && (
                         <Badge variant="secondary" className="gap-1"><UserPlus className="h-3 w-3" />Membre</Badge>
                       )}
                       {budget.is_owner && user.id !== currentUserId && member.role !== 'owner' && (
