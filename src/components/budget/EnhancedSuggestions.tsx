@@ -59,9 +59,9 @@ function getCategoryLabel(cat: string): string {
     'INSURANCE': '🛡️ Assurance',
     'INSURANCE_AUTO': '🚗 Assurance Auto',
     'INSURANCE_HOME': '🏠 Assurance Habitation',
-    'INSURANCE_HEALTH': '🏥 Mutuelle Santé',
-    'LOAN': '💳 Prêt / Crédit',
-    'BANK': '🏦 Banque'
+    'INSURANCE_HEALTH': '⚕️ Mutuelle Santé',
+    'LOAN': '💸 Prêt / Crédit',
+    'BANK': '🏛️ Banque'
   };
   return labels[cat.toUpperCase()] || cat;
 }
@@ -91,7 +91,16 @@ export default function EnhancedSuggestions({ budgetId, charges, memberCount }: 
     return unsubscribe;
   }, [onSuggestionsReady]);
 
-  // 🔥 FIX: Auto-load ONLY when WebSocket is connected
+  // Helper to create a signature string for dependencies
+  // This ensures we reload if amount, category, or ignore status changes
+  const chargesSignature = JSON.stringify(charges.map(c => ({
+    id: c.id,
+    amount: c.amount,
+    category: c.category,
+    ignore: c.ignoreSuggestions
+  })));
+
+  // 🔥 FIX: Auto-load ONLY when WebSocket is connected and data actually changes
   useEffect(() => {
     if (!isConnected) {
       console.log('⏳ [EnhancedSuggestions] Waiting for WebSocket connection...');
@@ -99,14 +108,17 @@ export default function EnhancedSuggestions({ budgetId, charges, memberCount }: 
     }
 
     const timer = setTimeout(() => {
-      if (charges.length > 0) {
-        console.log('🚀 [EnhancedSuggestions] WebSocket connected, starting analysis...');
+      // Check if there are any relevant charges to analyze
+      const relevantCharges = charges.filter(c => c.category && isRelevantCategory(c.category) && !c.ignoreSuggestions);
+      
+      if (relevantCharges.length > 0) {
+        console.log('🚀 [EnhancedSuggestions] Data changed, starting analysis...');
         loadSuggestions();
       }
-    }, 500);
+    }, 1000); // 1s debounce to avoid spamming while typing amounts
 
     return () => clearTimeout(timer);
-  }, [budgetId, charges.length, memberCount, isConnected]);
+  }, [budgetId, chargesSignature, memberCount, isConnected]);
 
   const processResults = (data: any) => {
     const rawSuggestions = data.suggestions || [];
