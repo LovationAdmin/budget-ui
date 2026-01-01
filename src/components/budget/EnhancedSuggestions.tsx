@@ -33,13 +33,15 @@ interface EnhancedSuggestionsProps {
 // HELPERS
 // ============================================================================
 
+// ✅ FIX 1: Added missing categories here so they are not filtered out
 const RELEVANT_CATEGORIES = [
   'ENERGY', 'INTERNET', 'MOBILE', 'INSURANCE',
   'INSURANCE_AUTO', 'INSURANCE_HOME', 'INSURANCE_HEALTH',
-  'LOAN', 'BANK'
+  'LOAN', 'BANK',
+  'TRANSPORT', 'LEISURE', 'SUBSCRIPTION', 'HOUSING' 
 ];
 
-const INDIVIDUAL_CATEGORIES = ['MOBILE', 'INSURANCE_AUTO', 'INSURANCE_HEALTH', 'TRANSPORT'];
+const INDIVIDUAL_CATEGORIES = ['MOBILE', 'INSURANCE_AUTO', 'INSURANCE_HEALTH', 'TRANSPORT', 'LEISURE'];
 
 function isRelevantCategory(cat: string): boolean {
   return RELEVANT_CATEGORIES.includes(cat.toUpperCase());
@@ -59,7 +61,11 @@ function getCategoryLabel(cat: string): string {
     'INSURANCE_HOME': '🏠 Assurance Habitation',
     'INSURANCE_HEALTH': '⚕️ Mutuelle Santé',
     'LOAN': '💸 Prêt / Crédit',
-    'BANK': '🏛️ Banque'
+    'BANK': '🏛️ Banque',
+    'TRANSPORT': '🚌 Transport',
+    'LEISURE': '⚽ Loisirs',
+    'SUBSCRIPTION': '🔄 Abonnement',
+    'HOUSING': '🏠 Logement'
   };
   return labels[cat.toUpperCase()] || cat;
 }
@@ -93,7 +99,6 @@ export default function EnhancedSuggestions({ budgetId, charges, memberCount }: 
   }, [onSuggestionsReady]);
 
   // Create a signature string for dependencies.
-  // We use || false to ensure undefined and false are treated identically.
   const chargesSignature = JSON.stringify(charges.map(c => ({
     id: c.id,
     amount: c.amount,
@@ -101,12 +106,11 @@ export default function EnhancedSuggestions({ budgetId, charges, memberCount }: 
     ignore: c.ignoreSuggestions || false 
   })));
 
-  // 🔥 FIX: Auto-load ONLY when data changes vs the last analysis
+  // ✅ FIX 2: Loop Protection Logic
   useEffect(() => {
-    // If WS not connected yet, wait.
     if (!isConnected) return;
 
-    // CRITICAL: If the data hasn't changed since the last run, STOP here.
+    // Strict check: If signature matches what we last processed, DO NOT RUN.
     if (chargesSignature === lastAnalyzedSignature.current) {
         return;
     }
@@ -115,17 +119,17 @@ export default function EnhancedSuggestions({ budgetId, charges, memberCount }: 
       // Check if there are any relevant charges to analyze
       const relevantCharges = charges.filter(c => c.category && isRelevantCategory(c.category) && !c.ignoreSuggestions);
       
-      // Update Ref IMMEDIATELY before async call to lock it and prevent double-firing
+      // Update Ref IMMEDIATELY before async call to lock it
       lastAnalyzedSignature.current = chargesSignature;
 
       if (relevantCharges.length > 0) {
         console.log('🚀 [EnhancedSuggestions] Data changed (debounced), starting analysis...');
         loadSuggestions();
       }
-    }, 2000); // 🟢 Increased to 2000ms to allow AutoSave/Reload cycle to settle
+    }, 2000); // Increased debounce to 2s to allow AutoSave to settle
 
     return () => clearTimeout(timer);
-  }, [budgetId, chargesSignature, memberCount, isConnected]); // 🟢 Removed 'charges' object, relying on signature
+  }, [budgetId, chargesSignature, memberCount, isConnected]);
 
   const processResults = (data: any) => {
     const rawSuggestions = data.suggestions || [];
@@ -159,7 +163,6 @@ export default function EnhancedSuggestions({ budgetId, charges, memberCount }: 
   };
 
   const loadSuggestions = async () => {
-    // Double check charges exist
     if (charges.length === 0) return;
 
     setLoading(true);
@@ -191,7 +194,6 @@ export default function EnhancedSuggestions({ budgetId, charges, memberCount }: 
 
       console.log('✅ [EnhancedSuggestions] Analysis request sent, waiting for WebSocket response...');
 
-      // Fallback timeout in case WebSocket fails
       setTimeout(() => {
         if (loading) {
           console.warn('⚠️ [EnhancedSuggestions] No WebSocket response after 30s, stopping loader');
@@ -300,7 +302,6 @@ export default function EnhancedSuggestions({ budgetId, charges, memberCount }: 
                 size="sm"
                 onClick={(e) => { 
                     e.stopPropagation(); 
-                    // Force reload by clearing the ref
                     lastAnalyzedSignature.current = ""; 
                     loadSuggestions(); 
                 }}
@@ -336,10 +337,6 @@ export default function EnhancedSuggestions({ budgetId, charges, memberCount }: 
     </div>
   );
 }
-
-// ============================================================================
-// SUGGESTION CARD
-// ============================================================================
 
 function SuggestionCard({ chargeSuggestion, householdSize }: { chargeSuggestion: ChargeSuggestion; householdSize: number }) {
   const { charge_label, suggestion } = chargeSuggestion;
@@ -389,10 +386,6 @@ function SuggestionCard({ chargeSuggestion, householdSize }: { chargeSuggestion:
     </Card>
   );
 }
-
-// ============================================================================
-// COMPETITOR CARD - MOBILE OPTIMIZED
-// ============================================================================
 
 function CompetitorCard({ competitor, rank }: { competitor: Competitor; rank: number }) {
   const getRankBadge = () => {
@@ -453,7 +446,6 @@ function CompetitorCard({ competitor, rank }: { competitor: Competitor; rank: nu
         </div>
       )}
 
-      {/* ✅ MOBILE FIX: Boutons responsive et touch-friendly */}
       <div className="flex flex-col sm:flex-row gap-2 pt-3 border-t border-gray-200">
         {websiteUrl && (
           <Button 
