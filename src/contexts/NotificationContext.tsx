@@ -76,16 +76,45 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
           const message = JSON.parse(event.data);
           
           // 🔥 FIXED: Handle different message types
-          if (message.type === 'budget_updated' && message.user !== user?.name) {
-            const newNotification: Notification = {
-              id: `${Date.now()}-${budgetId}`,
-              budgetId,
-              budgetName,
-              updatedBy: message.user || 'Un membre',
-              timestamp: new Date().toISOString(),
-              isRead: false
-            };
-            setNotifications(prev => [newNotification, ...prev]);
+          if (message.type === 'budget_updated') {
+            // 🔥 PROTECTION 1: Ne pas notifier l'utilisateur qui a fait la modification
+            if (message.user === user?.name) {
+              console.log('🚫 [Notifications] Ignoring own update');
+              return;
+            }
+
+            // 🔥 PROTECTION 2: Déduplication - Garder seulement la notification la plus récente
+            setNotifications(prev => {
+              // Chercher une notification récente (< 5 secondes) pour le même utilisateur sur ce budget
+              const recentNotification = prev.find(n => 
+                n.budgetId === budgetId && 
+                n.updatedBy === message.user &&
+                (Date.now() - new Date(n.timestamp).getTime()) < 5000 // 5 secondes
+              );
+
+              if (recentNotification) {
+                console.log('🔄 [Notifications] Updating existing notification timestamp');
+                // Mettre à jour seulement le timestamp
+                return prev.map(n => 
+                  n.id === recentNotification.id 
+                    ? { ...n, timestamp: new Date().toISOString(), isRead: false }
+                    : n
+                );
+              }
+
+              // Créer une nouvelle notification
+              const newNotification: Notification = {
+                id: `${Date.now()}-${budgetId}`,
+                budgetId,
+                budgetName,
+                updatedBy: message.user || 'Un membre',
+                timestamp: new Date().toISOString(),
+                isRead: false
+              };
+              
+              console.log('📬 [Notifications] New notification from:', message.user);
+              return [newNotification, ...prev];
+            });
           } 
           else if (message.type === 'suggestions_ready') {
             console.log('📊 [Notifications] Market suggestions ready:', message.data);
