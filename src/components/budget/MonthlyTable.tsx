@@ -348,7 +348,7 @@ export default function MonthlyTable({
             </div>
 
             {/* ✅ DROPDOWN SIMPLE ET COMPACT */}
-            <DropdownMenu>
+            <DropdownMenu modal={false}>
                 <DropdownMenuTrigger asChild>
                     <Button variant="outline" size="sm" className="gap-2 h-9">
                         <Eye className="h-4 w-4" />
@@ -364,18 +364,21 @@ export default function MonthlyTable({
                     <DropdownMenuCheckboxItem 
                         checked={showIncome} 
                         onCheckedChange={setShowIncome}
+                        onSelect={(e) => e.preventDefault()}
                     >
                         Revenus (Salaires)
                     </DropdownMenuCheckboxItem>
                     <DropdownMenuCheckboxItem 
                         checked={showOneTime} 
                         onCheckedChange={setShowOneTime}
+                        onSelect={(e) => e.preventDefault()}
                     >
                         Revenus (Ponctuels)
                     </DropdownMenuCheckboxItem>
                     <DropdownMenuCheckboxItem 
                         checked={showCharges} 
                         onCheckedChange={setShowCharges}
+                        onSelect={(e) => e.preventDefault()}
                     >
                         Charges Fixes
                     </DropdownMenuCheckboxItem>
@@ -413,6 +416,7 @@ export default function MonthlyTable({
                                     key={project.id}
                                     checked={visibleProjectIds.includes(project.id)} 
                                     onCheckedChange={() => toggleProjectVisibility(project.id)}
+                                    onSelect={(e) => e.preventDefault()}
                                 >
                                     {project.label}
                                 </DropdownMenuCheckboxItem>
