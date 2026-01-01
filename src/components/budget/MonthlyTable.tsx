@@ -1,5 +1,5 @@
 // src/components/budget/MonthlyTable.tsx
-// VERSION OPTIMISÉE - DRAWER MOBILE + TOUT DÉSÉLECTIONNÉ PAR DÉFAUT
+// VERSION SIMPLE - DROPDOWN COMPACT ET INTUITIF
 
 import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,8 +7,6 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Checkbox } from "@/components/ui/checkbox";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Dialog,
   DialogContent,
@@ -24,19 +22,12 @@ import {
 } from "@/components/ui/popover";
 import { 
   DropdownMenu,
+  DropdownMenuCheckboxItem,
   DropdownMenuContent,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  Drawer,
-  DrawerClose,
-  DrawerContent,
-  DrawerDescription,
-  DrawerFooter,
-  DrawerHeader,
-  DrawerTitle,
-  DrawerTrigger,
-} from "@/components/ui/drawer";
 import { Lock, Unlock, MessageCircle, MessageSquarePlus, Settings2, Eye, CheckSquare, Square, ChevronLeft, ChevronRight, Info } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type {
@@ -50,17 +41,8 @@ import type {
   LockedMonths
 } from '@/utils/importConverter';
 
-// ============================================================================
 // Debounced Input Component
-// ============================================================================
-const DebouncedInput = ({ 
-    value, 
-    onChange, 
-    type = "text", 
-    className, 
-    placeholder, 
-    disabled 
-}: { 
+const DebouncedInput = ({ value, onChange, type = "text", className, placeholder, disabled }: { 
     value: string | number; 
     onChange: (val: number) => void; 
     type?: string; 
@@ -81,23 +63,13 @@ const DebouncedInput = ({
         }
     };
 
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        setLocalValue(e.target.value);
-    };
-
-    const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-        if (e.key === 'Enter') {
-            e.currentTarget.blur();
-        }
-    };
-
     return (
         <Input 
             type={type}
             value={localValue} 
-            onChange={handleChange} 
+            onChange={(e) => setLocalValue(e.target.value)} 
             onBlur={handleBlur}
-            onKeyDown={handleKeyDown}
+            onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()}
             className={className} 
             placeholder={placeholder}
             disabled={disabled}
@@ -105,16 +77,8 @@ const DebouncedInput = ({
     );
 };
 
-// ============================================================================
 // Debounced Textarea Component
-// ============================================================================
-const DebouncedTextarea = ({ 
-    value, 
-    onChange, 
-    className, 
-    placeholder,
-    ...props
-}: { 
+const DebouncedTextarea = ({ value, onChange, className, placeholder, ...props }: { 
     value: string; 
     onChange: (val: string) => void; 
     className?: string; 
@@ -133,14 +97,10 @@ const DebouncedTextarea = ({
         }
     };
 
-    const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-        setLocalValue(e.target.value);
-    };
-
     return (
         <Textarea 
             value={localValue} 
-            onChange={handleChange} 
+            onChange={(e) => setLocalValue(e.target.value)} 
             onBlur={handleBlur}
             className={className} 
             placeholder={placeholder}
@@ -235,20 +195,6 @@ export default function MonthlyTable({
   const [showIncome, setShowIncome] = useState(false); 
   const [showOneTime, setShowOneTime] = useState(false);
   const [showCharges, setShowCharges] = useState(false);
-  
-  const [isMobile, setIsMobile] = useState(false);
-  const [drawerOpen, setDrawerOpen] = useState(false);
-
-  // Detect mobile
-  useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth < 768);
-    };
-    
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
-  }, []);
 
   // Calculations
   const getMonthlyBaseIncome = (monthIndex: number) => {
@@ -377,117 +323,6 @@ export default function MonthlyTable({
     (showCharges ? 1 : 0) + 
     visibleProjects.length;
 
-  // ============================================================================
-  // Column Settings Content (Shared)
-  // ============================================================================
-  const ColumnSettingsContent = () => (
-    <div className="space-y-4">
-      {/* Standard Columns */}
-      <div className="space-y-3">
-        <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
-          <Settings2 className="h-4 w-4" />
-          Colonnes Standards
-        </h3>
-        <div className="space-y-2">
-          <label className="flex items-center gap-3 p-3 rounded-lg hover:bg-muted/50 cursor-pointer transition-colors">
-            <Checkbox 
-              checked={showIncome} 
-              onCheckedChange={(checked) => setShowIncome(!!checked)}
-              id="show-income"
-            />
-            <div className="flex-1">
-              <div className="font-medium text-sm">Revenus (Salaires)</div>
-              <div className="text-xs text-muted-foreground">Salaires mensuels de l'équipe</div>
-            </div>
-          </label>
-          
-          <label className="flex items-center gap-3 p-3 rounded-lg hover:bg-muted/50 cursor-pointer transition-colors">
-            <Checkbox 
-              checked={showOneTime} 
-              onCheckedChange={(checked) => setShowOneTime(!!checked)}
-              id="show-onetime"
-            />
-            <div className="flex-1">
-              <div className="font-medium text-sm">Revenus (Ponctuels)</div>
-              <div className="text-xs text-muted-foreground">Primes, cadeaux, ventes...</div>
-            </div>
-          </label>
-          
-          <label className="flex items-center gap-3 p-3 rounded-lg hover:bg-muted/50 cursor-pointer transition-colors">
-            <Checkbox 
-              checked={showCharges} 
-              onCheckedChange={(checked) => setShowCharges(!!checked)}
-              id="show-charges"
-            />
-            <div className="flex-1">
-              <div className="font-medium text-sm">Charges Fixes</div>
-              <div className="text-xs text-muted-foreground">Loyer, EDF, assurances...</div>
-            </div>
-          </label>
-        </div>
-      </div>
-
-      {/* Separator */}
-      <div className="border-t border-border" />
-
-      {/* Projects */}
-      <div className="space-y-3">
-        <div className="flex items-center justify-between">
-          <h3 className="text-sm font-semibold text-foreground">Projets d'épargne</h3>
-          <div className="flex gap-2">
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              onClick={showAllProjects}
-              className="h-7 text-xs"
-            >
-              <CheckSquare className="h-3 w-3 mr-1" />
-              Tout
-            </Button>
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              onClick={hideAllProjects}
-              className="h-7 text-xs"
-            >
-              <Square className="h-3 w-3 mr-1" />
-              Aucun
-            </Button>
-          </div>
-        </div>
-
-        {standardProjects.length === 0 ? (
-          <p className="text-sm text-muted-foreground text-center py-4">
-            Aucun projet d'épargne créé
-          </p>
-        ) : (
-          <ScrollArea className="h-[300px]">
-            <div className="space-y-2 pr-4">
-              {standardProjects.map((project) => (
-                <label 
-                  key={project.id}
-                  className="flex items-center gap-3 p-3 rounded-lg hover:bg-muted/50 cursor-pointer transition-colors"
-                >
-                  <Checkbox 
-                    checked={visibleProjectIds.includes(project.id)} 
-                    onCheckedChange={() => toggleProjectVisibility(project.id)}
-                    id={`project-${project.id}`}
-                  />
-                  <div className="flex-1">
-                    <div className="font-medium text-sm">{project.label}</div>
-                    <div className="text-xs text-muted-foreground">
-                      Allocation mensuelle
-                    </div>
-                  </div>
-                </label>
-              ))}
-            </div>
-          </ScrollArea>
-        )}
-      </div>
-    </div>
-  );
-
   return (
     <>
       <Card className="glass-card overflow-hidden animate-fade-in shadow-lg border-t-4 border-t-primary/20">
@@ -512,52 +347,80 @@ export default function MonthlyTable({
                 </div>
             </div>
 
-            {/* ✅ MOBILE: Drawer | DESKTOP: Dropdown Menu */}
-            {isMobile ? (
-              <Drawer open={drawerOpen} onOpenChange={setDrawerOpen}>
-                <DrawerTrigger asChild>
-                  <Button variant="outline" size="sm" className="gap-2 h-9 bg-background">
-                    <Eye className="h-4 w-4" />
-                    <Badge variant="secondary" className="h-5 px-1.5 text-[10px]">
-                      {visibleColumnsCount}
-                    </Badge>
-                  </Button>
-                </DrawerTrigger>
-                <DrawerContent>
-                  <DrawerHeader className="text-left">
-                    <DrawerTitle>Affichage du tableau</DrawerTitle>
-                    <DrawerDescription>
-                      Choisissez les colonnes à afficher ({visibleColumnsCount} sélectionnée{visibleColumnsCount > 1 ? 's' : ''})
-                    </DrawerDescription>
-                  </DrawerHeader>
-                  <div className="px-4 pb-4 max-h-[60vh] overflow-y-auto">
-                    <ColumnSettingsContent />
-                  </div>
-                  <DrawerFooter>
-                    <DrawerClose asChild>
-                      <Button variant="default" className="w-full">
-                        Appliquer
-                      </Button>
-                    </DrawerClose>
-                  </DrawerFooter>
-                </DrawerContent>
-              </Drawer>
-            ) : (
-              <DropdownMenu>
+            {/* ✅ DROPDOWN SIMPLE ET COMPACT */}
+            <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="sm" className="gap-2 h-9 bg-background">
-                    <Eye className="h-4 w-4" />
-                    <span className="hidden sm:inline">Affichage</span>
-                    <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-[10px]">
-                      {visibleColumnsCount}
-                    </Badge>
-                  </Button>
+                    <Button variant="outline" size="sm" className="gap-2 h-9">
+                        <Eye className="h-4 w-4" />
+                        <span className="hidden sm:inline">Affichage</span>
+                        <Badge variant="secondary" className="h-5 px-1.5 text-[10px]">
+                            {visibleColumnsCount}
+                        </Badge>
+                    </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-80 p-3">
-                  <ColumnSettingsContent />
+                <DropdownMenuContent align="end" className="w-56">
+                    {/* Colonnes Standards */}
+                    <DropdownMenuLabel className="text-xs">Colonnes Standards</DropdownMenuLabel>
+                    <DropdownMenuCheckboxItem 
+                        checked={showIncome} 
+                        onCheckedChange={setShowIncome}
+                    >
+                        Revenus (Salaires)
+                    </DropdownMenuCheckboxItem>
+                    <DropdownMenuCheckboxItem 
+                        checked={showOneTime} 
+                        onCheckedChange={setShowOneTime}
+                    >
+                        Revenus (Ponctuels)
+                    </DropdownMenuCheckboxItem>
+                    <DropdownMenuCheckboxItem 
+                        checked={showCharges} 
+                        onCheckedChange={setShowCharges}
+                    >
+                        Charges Fixes
+                    </DropdownMenuCheckboxItem>
+                    
+                    <DropdownMenuSeparator />
+                    
+                    {/* Projets */}
+                    <DropdownMenuLabel className="text-xs flex items-center justify-between">
+                        <span>Projets</span>
+                        <div className="flex gap-1">
+                            <button 
+                                onClick={(e) => { e.preventDefault(); showAllProjects(); }}
+                                className="text-[10px] text-muted-foreground hover:text-foreground px-1"
+                            >
+                                Tout
+                            </button>
+                            <span className="text-muted-foreground">|</span>
+                            <button 
+                                onClick={(e) => { e.preventDefault(); hideAllProjects(); }}
+                                className="text-[10px] text-muted-foreground hover:text-foreground px-1"
+                            >
+                                Aucun
+                            </button>
+                        </div>
+                    </DropdownMenuLabel>
+                    
+                    {standardProjects.length === 0 ? (
+                        <div className="px-2 py-3 text-xs text-center text-muted-foreground">
+                            Aucun projet
+                        </div>
+                    ) : (
+                        <div className="max-h-[200px] overflow-y-auto">
+                            {standardProjects.map((project) => (
+                                <DropdownMenuCheckboxItem 
+                                    key={project.id}
+                                    checked={visibleProjectIds.includes(project.id)} 
+                                    onCheckedChange={() => toggleProjectVisibility(project.id)}
+                                >
+                                    {project.label}
+                                </DropdownMenuCheckboxItem>
+                            ))}
+                        </div>
+                    )}
                 </DropdownMenuContent>
-              </DropdownMenu>
-            )}
+            </DropdownMenu>
         </CardHeader>
 
         <CardContent className="p-0">
@@ -566,14 +429,13 @@ export default function MonthlyTable({
             <div className="m-3 p-3 bg-blue-50 border border-blue-200 rounded-lg flex items-start gap-2">
               <Info className="h-4 w-4 text-blue-600 flex-shrink-0 mt-0.5" />
               <p className="text-xs text-blue-700">
-                💡 Utilisez le menu <strong>"Affichage"</strong> pour ajouter des colonnes (Revenus, Charges, Projets)
+                💡 Cliquez sur <strong>"Affichage"</strong> pour sélectionner les colonnes à afficher
               </p>
             </div>
           )}
 
           <div className="overflow-x-auto">
             <table className="w-full border-collapse">
-              {/* TABLE HEAD - Keep existing */}
               <thead className="bg-muted/30 text-xs">
                 <tr>
                   <th className="sticky left-0 z-20 bg-background px-2 py-3 text-left font-semibold text-foreground border-b border-r border-border shadow-[4px_0_12px_-4px_rgba(0,0,0,0.1)] w-[140px] sm:w-[100px] min-w-[140px] sm:min-w-[100px]">
@@ -606,8 +468,6 @@ export default function MonthlyTable({
                   </th>
                 </tr>
               </thead>
-              
-              {/* TABLE BODY - Keep existing implementation */}
               <tbody className="divide-y divide-border/50 text-xs">
                 {MONTHS.map((month, monthIndex) => {
                   const isLocked = lockedMonths[month];
@@ -677,7 +537,7 @@ export default function MonthlyTable({
                                 />
                               </div>
                               <div className="flex items-center justify-between px-0.5">
-                                <div className="text-[10px] text-muted-foreground flex items-center gap-0.5 bg-muted/30 px-1 py-0 rounded" title="Total Cumulé (incluant années précédentes)">
+                                <div className="text-[10px] text-muted-foreground flex items-center gap-0.5 bg-muted/30 px-1 py-0 rounded" title="Total Cumulé">
                                   <span>∑</span><span className={cumulative >= 0 ? "text-success font-medium" : "text-destructive font-medium"}>{cumulative.toLocaleString()} €</span>
                                 </div>
                                 <Popover>
