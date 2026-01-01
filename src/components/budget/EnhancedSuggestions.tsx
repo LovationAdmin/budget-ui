@@ -33,15 +33,15 @@ interface EnhancedSuggestionsProps {
 // HELPERS
 // ============================================================================
 
-// ✅ FIX 1: Added missing categories here so they are not filtered out
+// ✅ FIX: Added split categories and others
 const RELEVANT_CATEGORIES = [
   'ENERGY', 'INTERNET', 'MOBILE', 'INSURANCE',
   'INSURANCE_AUTO', 'INSURANCE_HOME', 'INSURANCE_HEALTH',
   'LOAN', 'BANK',
-  'TRANSPORT', 'LEISURE', 'SUBSCRIPTION', 'HOUSING' 
+  'TRANSPORT', 'LEISURE', 'LEISURE_SPORT', 'LEISURE_STREAMING', 'SUBSCRIPTION', 'HOUSING' 
 ];
 
-const INDIVIDUAL_CATEGORIES = ['MOBILE', 'INSURANCE_AUTO', 'INSURANCE_HEALTH', 'TRANSPORT', 'LEISURE'];
+const INDIVIDUAL_CATEGORIES = ['MOBILE', 'INSURANCE_AUTO', 'INSURANCE_HEALTH', 'TRANSPORT', 'LEISURE_SPORT'];
 
 function isRelevantCategory(cat: string): boolean {
   return RELEVANT_CATEGORIES.includes(cat.toUpperCase());
@@ -64,6 +64,8 @@ function getCategoryLabel(cat: string): string {
     'BANK': '🏛️ Banque',
     'TRANSPORT': '🚌 Transport',
     'LEISURE': '⚽ Loisirs',
+    'LEISURE_SPORT': '💪 Sport / Fitness', // ✅ NEW
+    'LEISURE_STREAMING': '🎬 Streaming',    // ✅ NEW
     'SUBSCRIPTION': '🔄 Abonnement',
     'HOUSING': '🏠 Logement'
   };
@@ -106,17 +108,15 @@ export default function EnhancedSuggestions({ budgetId, charges, memberCount }: 
     ignore: c.ignoreSuggestions || false 
   })));
 
-  // ✅ FIX 2: Loop Protection Logic
+  // ✅ Loop Protection Logic (Increased debounce)
   useEffect(() => {
     if (!isConnected) return;
 
-    // Strict check: If signature matches what we last processed, DO NOT RUN.
     if (chargesSignature === lastAnalyzedSignature.current) {
         return;
     }
 
     const timer = setTimeout(() => {
-      // Check if there are any relevant charges to analyze
       const relevantCharges = charges.filter(c => c.category && isRelevantCategory(c.category) && !c.ignoreSuggestions);
       
       // Update Ref IMMEDIATELY before async call to lock it
@@ -126,7 +126,7 @@ export default function EnhancedSuggestions({ budgetId, charges, memberCount }: 
         console.log('🚀 [EnhancedSuggestions] Data changed (debounced), starting analysis...');
         loadSuggestions();
       }
-    }, 2000); // Increased debounce to 2s to allow AutoSave to settle
+    }, 2000); 
 
     return () => clearTimeout(timer);
   }, [budgetId, chargesSignature, memberCount, isConnected]);
