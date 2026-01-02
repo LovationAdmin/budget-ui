@@ -1,6 +1,6 @@
 // src/pages/Terms.tsx
 import { useNavigate } from 'react-router-dom';
-import { BudgetNavbar } from '@/components/budget/BudgetNavbar';
+import Navbar from '@/components/Navbar';
 import { useAuth } from '@/contexts/AuthContext';
 import { ArrowLeft, FileText, Shield, Users, Database, Mail } from 'lucide-react';
 import { Footer } from '@/components/Footer';
@@ -10,13 +10,9 @@ export default function Terms() {
   const { user } = useAuth();
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary-50 to-purple-50">
-      <BudgetNavbar 
-        budgetTitle="Conditions Générales"
-        userName={user?.name}
-        userAvatar={user?.avatar}
-        items={[]}
-      />
+      <div className="min-h-screen bg-gradient-to-br from-primary-50 to-purple-50 flex flex-col">
+        {/* ✅ CHANGÉ : Utilisation du composant Navbar avec items de navigation */}
+        <Navbar />
 
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <button

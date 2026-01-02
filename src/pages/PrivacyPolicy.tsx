@@ -1,4 +1,4 @@
-import { BudgetNavbar } from '@/components/budget/BudgetNavbar';
+import Navbar from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
 import { Shield, Lock, EyeOff, Trash2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
@@ -8,9 +8,10 @@ export default function PrivacyPolicy() {
   const { user } = useAuth();
 
   return (
-    <div className="min-h-screen flex flex-col bg-gray-50">
-      <BudgetNavbar items={[]} userName={user?.name} userAvatar={user?.avatar} />
-      
+      <div className="min-h-screen bg-gradient-to-br from-primary-50 to-purple-50 flex flex-col">
+        {/* ✅ CHANGÉ : Utilisation du composant Navbar avec items de navigation */}
+      <Navbar />
+
       <main className="flex-1 container mx-auto px-4 py-12 max-w-4xl">
         <div className="text-center mb-12">
           <div className="inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-green-100 text-green-600 mb-6">

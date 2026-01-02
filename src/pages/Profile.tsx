@@ -260,9 +260,10 @@ export default function Profile() {
   // ============================================================================
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-12">
-      <BudgetNavbar items={[]} userName={user?.name} userAvatar={user?.avatar} />
-      
+      <div className="min-h-screen bg-gradient-to-br from-primary-50 to-purple-50 flex flex-col">
+        {/* ✅ CHANGÉ : Utilisation du composant Navbar avec items de navigation */}
+      <Navbar />
+            
       <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <Button 
           variant="ghost" 

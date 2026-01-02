@@ -584,23 +584,16 @@ export default function BudgetComplete() {
   // ============================================================================
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-primary-50 to-purple-50 flex items-center justify-center">
-        <BudgetNavbar items={[]} />
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
-      </div>
+      <div className="min-h-screen bg-gradient-to-br from-primary-50 to-purple-50 flex flex-col">
+        {/* ✅ CHANGÉ : Utilisation du composant Navbar avec items de navigation */}
+      <Navbar />
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary-50 to-purple-50">
-      <BudgetNavbar 
-        budgetTitle={budget?.name} 
-        userName={user?.name}
-        userAvatar={user?.avatar}
-        items={BUDGET_NAV_ITEMS}
-        onSectionChange={handleSectionChange}
-        currentSection="overview"
-      />
+      <div className="min-h-screen bg-gradient-to-br from-primary-50 to-purple-50 flex flex-col">
+        {/* ✅ CHANGÉ : Utilisation du composant Navbar avec items de navigation */}
+      <Navbar />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* ✅ Auto-save Indicators */}

@@ -1,5 +1,3 @@
-// src/pages/Dashboard.tsx - VERSION OPTIMISÉE
-import { BudgetNavbar } from '@/components/budget/BudgetNavbar';
 import { EmptyState } from '@/components/budget/EmptyState';
 import { useState, useEffect, useCallback, memo } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -11,6 +9,7 @@ import { MemberAvatarGroup } from '../components/budget/MemberAvatar';
 import { Button } from '../components/ui/button';
 import { Skeleton } from '../components/ui/skeleton';
 import { Footer } from '@/components/Footer';
+import Navbar from '@/components/Navbar';
 import {
   Dialog,
   DialogContent,
@@ -46,7 +45,7 @@ interface Budget {
 }
 
 // ============================================================================
-// 🚀 OPTIMISATION 1 : Skeleton Loading Component
+// SKELETON LOADING COMPONENT
 // ============================================================================
 const BudgetListSkeleton = memo(function BudgetListSkeleton() {
   return (
@@ -75,12 +74,12 @@ const BudgetListSkeleton = memo(function BudgetListSkeleton() {
 });
 
 // ============================================================================
-// 🚀 OPTIMISATION 2 : Budget Card Component mémoïsé
+// BUDGET CARD COMPONENT
 // ============================================================================
 interface BudgetCardProps {
   budget: Budget;
   onOpen: (id: string) => void;
-  onOpenBeta: (id: string) => void; // ✅ NOUVEAU
+  onOpenBeta: (id: string) => void;
   onDelete: (budget: Budget) => void;
 }
 
@@ -143,7 +142,7 @@ const BudgetCard = memo(function BudgetCard({ budget, onOpen, onOpenBeta, onDele
             <ArrowRight className="h-4 w-4" />
           </Button>
           
-          {/* 🧪 Bouton Beta */}
+          {/* Bouton Beta */}
           <Button
             variant="ghost"
             size="sm"
@@ -170,7 +169,6 @@ const BudgetCard = memo(function BudgetCard({ budget, onOpen, onOpenBeta, onDele
     </div>
   );
 }, (prevProps, nextProps) => {
-  // Ne re-render que si le budget change
   return (
     prevProps.budget.id === nextProps.budget.id &&
     prevProps.budget.name === nextProps.budget.name &&
@@ -179,7 +177,7 @@ const BudgetCard = memo(function BudgetCard({ budget, onOpen, onOpenBeta, onDele
 });
 
 // ============================================================================
-// 🚀 MAIN COMPONENT
+// MAIN COMPONENT
 // ============================================================================
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -216,9 +214,6 @@ export default function Dashboard() {
     loadBudgets();
   }, [loadBudgets]);
 
-  // ============================================================================
-  // 🚀 OPTIMISATION 3 : useCallback pour toutes les fonctions
-  // ============================================================================
   const handleOpenBudget = useCallback((id: string) => {
     navigate(`/budget/${id}/complete`);
   }, [navigate]);
@@ -299,17 +294,8 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary-50 to-purple-50 flex flex-col">
-      <BudgetNavbar 
-        budgetTitle="Budget Famille"
-        userName={user?.name || 'Utilisateur'}
-        userAvatar={user?.avatar}
-        items={[]}
-        onSectionChange={(section) => {
-          if (section === 'profile') {
-            navigate('/profile');
-          }
-        }}
-      />
+      {/* ✅ CHANGÉ : Utilisation du composant Navbar avec items de navigation */}
+      <Navbar />
       
       <main className="flex-1 mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
         <div className="mb-8 animate-slide-up">
@@ -335,9 +321,6 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* ============================================================================
-            🚀 OPTIMISATION 4 : Skeleton Loading au lieu de spinner
-            ============================================================================ */}
         {loading ? (
           <BudgetListSkeleton />
         ) : budgets.length === 0 ? (

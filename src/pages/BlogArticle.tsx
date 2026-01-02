@@ -3,7 +3,7 @@
 
 import { useParams, useNavigate } from 'react-router-dom';
 import { blogArticles } from '@/data/blog-articles';
-import { BudgetNavbar } from '@/components/budget/BudgetNavbar';
+import Navbar from '@/components/Navbar';
 import { useAuth } from '@/contexts/AuthContext';
 import { Footer } from '@/components/Footer';
 import { ArrowLeft, Calendar, Clock, Tag, User } from 'lucide-react';
@@ -20,13 +20,10 @@ export default function BlogArticle() {
   // Si l'article n'existe pas, afficher une erreur
   if (!article) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-primary-50 to-purple-50">
-        <BudgetNavbar 
-          budgetTitle="Blog"
-          userName={user?.name}
-          userAvatar={user?.avatar}
-          items={[]}
-        />
+        <div className="min-h-screen bg-gradient-to-br from-primary-50 to-purple-50 flex flex-col">
+          {/* ✅ CHANGÉ : Utilisation du composant Navbar avec items de navigation */}
+        <Navbar />
+        
         <div className="max-w-4xl mx-auto px-4 py-20 text-center">
           <h1 className="text-3xl font-bold text-gray-900 mb-4">Article non trouvé</h1>
           <p className="text-gray-600 mb-8">Désolé, cet article n'existe pas ou a été supprimé.</p>
@@ -41,13 +38,9 @@ export default function BlogArticle() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary-50 to-purple-50">
-      <BudgetNavbar 
-        budgetTitle="Blog"
-        userName={user?.name}
-        userAvatar={user?.avatar}
-        items={[]}
-      />
+    <div className="min-h-screen bg-gradient-to-br from-primary-50 to-purple-50 flex flex-col">
+      {/* ✅ CHANGÉ : Utilisation du composant Navbar avec items de navigation */}
+    <Navbar />
 
       <article className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {/* Bouton retour */}
