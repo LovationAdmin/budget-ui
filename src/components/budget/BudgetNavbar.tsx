@@ -1,4 +1,6 @@
-// src/components/budget/BudgetNavbar.tsx - VERSION OPTIMISÉE
+// src/components/budget/BudgetNavbar.tsx
+// ✅ VERSION AMÉLIORÉE - Menu mobile avec scroll optimisé
+
 import { useState, memo, useCallback } from 'react';
 import { cn } from "@/lib/utils";
 import { 
@@ -51,9 +53,6 @@ interface BudgetNavbarProps {
   className?: string;
 }
 
-// ============================================================================
-// 🚀 OPTIMISATION 1 : React.memo avec comparaison personnalisée
-// ============================================================================
 export const BudgetNavbar = memo(function BudgetNavbar({
   budgetTitle = "Budget Famille",
   items = [],
@@ -71,9 +70,6 @@ export const BudgetNavbar = memo(function BudgetNavbar({
   const { startTutorial } = useTutorial();
   const [helpOpen, setHelpOpen] = useState(false);
 
-  // ============================================================================
-  // 🚀 OPTIMISATION 2 : useCallback pour toutes les fonctions
-  // ============================================================================
   const handleLogout = useCallback(() => {
     logout();
     navigate('/login');
@@ -137,9 +133,9 @@ export const BudgetNavbar = memo(function BudgetNavbar({
             </div>
           </div>
 
-          {/* Center: Navigation */}
+          {/* Center: Navigation - Desktop only */}
           <nav className="hidden lg:flex items-center gap-1">
-            {items.map((item) => {
+            {items.slice(0, 5).map((item) => {
               const Icon = item.icon;
               const isActive = currentSection === item.id;
               return (
@@ -276,28 +272,34 @@ export const BudgetNavbar = memo(function BudgetNavbar({
           </div>
         </div>
       </header>
+
+      {/* ============================================================================ */}
+      {/* 🎯 MOBILE SIDEBAR MENU - Amélioré avec ScrollArea */}
+      {/* ============================================================================ */}
       {menuOpen && items.length > 0 && (
-        <div className="lg:hidden fixed inset-0 z-40 flex">
+        <div className="lg:hidden fixed inset-0 z-[100] flex">
           {/* Overlay */}
           <div 
-            className="fixed inset-0 bg-black bg-opacity-50"
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm"
             onClick={onMenuClick}
           />
           
-          {/* Sidebar */}
-          <div className="relative bg-white h-full w-56 shadow-xl transform transition-transform duration-300 ease-in-out">
-            <div className="p-6">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-lg font-semibold text-gray-900">Menu</h2>
-                <button
-                  onClick={onMenuClick}
-                  className="p-2 rounded-lg hover:bg-gray-100"
-                >
-                  <X className="h-5 w-5" />
-                </button>
-              </div>
-              
-              <nav className="flex flex-col gap-2">
+          {/* Sidebar avec ScrollArea */}
+          <div className="relative bg-background h-full w-72 sm:w-80 shadow-2xl transform transition-transform duration-300 ease-in-out flex flex-col">
+            {/* Header fixe */}
+            <div className="flex items-center justify-between p-6 border-b bg-background">
+              <h2 className="text-lg font-semibold">Navigation</h2>
+              <button
+                onClick={onMenuClick}
+                className="p-2 rounded-lg hover:bg-accent transition-colors"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            
+            {/* Menu avec scroll */}
+            <ScrollArea className="flex-1">
+              <nav className="flex flex-col gap-1 p-4">
                 {items.map((item) => {
                   const Icon = item.icon;
                   const isActive = currentSection === item.id;
@@ -309,10 +311,10 @@ export const BudgetNavbar = memo(function BudgetNavbar({
                         onMenuClick?.(); // Fermer le menu après clic
                       }}
                       className={cn(
-                        "flex items-center gap-3 p-3 rounded-lg text-left transition-colors",
+                        "flex items-center gap-3 p-3 rounded-xl text-left transition-all duration-200",
                         isActive 
-                          ? "bg-primary text-white" 
-                          : "hover:bg-gray-100 text-gray-700"
+                          ? "bg-primary text-primary-foreground shadow-soft" 
+                          : "hover:bg-accent text-foreground"
                       )}
                     >
                       <Icon className="h-5 w-5 flex-shrink-0" />
@@ -321,6 +323,13 @@ export const BudgetNavbar = memo(function BudgetNavbar({
                   );
                 })}
               </nav>
+            </ScrollArea>
+
+            {/* Footer fixe (optionnel) */}
+            <div className="p-4 border-t bg-muted/30">
+              <p className="text-xs text-muted-foreground text-center">
+                Budget Famille © 2025
+              </p>
             </div>
           </div>
         </div>
@@ -330,10 +339,6 @@ export const BudgetNavbar = memo(function BudgetNavbar({
     </>
   );
 }, (prevProps, nextProps) => {
-  // ============================================================================
-  // 🚀 OPTIMISATION 3 : Comparaison personnalisée pour éviter re-renders
-  // ============================================================================
-  // Ne re-render que si ces props changent vraiment
   return (
     prevProps.budgetTitle === nextProps.budgetTitle &&
     prevProps.currentSection === nextProps.currentSection &&
