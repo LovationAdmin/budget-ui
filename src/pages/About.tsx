@@ -33,10 +33,10 @@ export default function About() {
   ];
 
   const milestones = [
-    { year: "2024", title: "Lancement", description: "Budget Famille voit le jour" },
-    { year: "2024 Q3", title: "1000+ Utilisateurs", description: "Une communauté grandissante" },
-    { year: "2024 Q4", title: "Beta 2", description: "Connexion bancaire et IA" },
-    { year: "2025", title: "Expansion", description: "10 pays européens supportés" }
+    { year: "2025", title: "Lancement", description: "Budget Famille voit le jour" },
+    { year: "2025 Q1", title: "Beta Privée", description: "Tests avec amis et famille" },
+    { year: "2025 Q2", title: "Beta 2", description: "Connexion bancaire et IA" },
+    { year: "2025 Q3", title: "Expansion", description: "10 pays européens supportés" }
   ];
 
   return (

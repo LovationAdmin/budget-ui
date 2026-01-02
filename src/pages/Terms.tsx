@@ -39,7 +39,7 @@ export default function Terms() {
               Conditions Générales d'Utilisation
             </h1>
             <p className="text-gray-600">
-              Dernière mise à jour : 30 décembre 2024
+              Dernière mise à jour : 2 janvier 2025
             </p>
           </div>
 

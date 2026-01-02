@@ -54,7 +54,7 @@ const blogPosts: BlogPost[] = [
     excerpt: "Notre IA a analysé des milliers de budgets et identifié les postes de dépenses où les familles peuvent économiser le plus. Voici comment réduire vos charges fixes sans sacrifier votre confort.",
     category: "Économies",
     author: "Sophie Martin",
-    publishedAt: "2024-12-28",
+    publishedAt: "2025-12-28",
     readTime: "6 min",
     tags: ["Économies", "Abonnements", "IA", "Optimisation"],
     featured: true
@@ -66,7 +66,7 @@ const blogPosts: BlogPost[] = [
     excerpt: "L'argent est la première cause de disputes dans les couples. Découvrez nos 7 règles d'or pour une gestion financière harmonieuse à deux, avec transparence et respect.",
     category: "Couple",
     author: "Thomas Dubois",
-    publishedAt: "2024-12-20",
+    publishedAt: "2025-12-20",
     readTime: "8 min",
     tags: ["Couple", "Communication", "Collaboration", "Budget"],
     featured: true
@@ -78,7 +78,7 @@ const blogPosts: BlogPost[] = [
     excerpt: "Livret A, assurance-vie, PEA... Quel placement choisir pour préparer l'avenir de vos enfants ? Comparatif complet des solutions d'épargne adaptées aux familles en 2025.",
     category: "Épargne",
     author: "Laurent Bernard",
-    publishedAt: "2024-12-15",
+    publishedAt: "2025-12-15",
     readTime: "10 min",
     tags: ["Épargne", "Enfants", "Placements", "Avenir"],
     featured: false
@@ -90,7 +90,7 @@ const blogPosts: BlogPost[] = [
     excerpt: "PSD2, Open Banking, agrégation de comptes... Ces termes vous semblent flous ? Découvrez comment connecter votre banque en toute sécurité et les avantages concrets pour votre budget.",
     category: "Technologie",
     author: "Marie Leroy",
-    publishedAt: "2024-12-10",
+    publishedAt: "2025-12-10",
     readTime: "5 min",
     tags: ["PSD2", "Sécurité", "Banking", "Technologie"],
     featured: false

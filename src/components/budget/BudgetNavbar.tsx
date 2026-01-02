@@ -8,7 +8,8 @@ import {
   LogOut,
   User,
   LucideIcon,
-  HelpCircle
+  HelpCircle,
+  X
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { MemberAvatar } from "./MemberAvatar";
@@ -44,6 +45,7 @@ interface BudgetNavbarProps {
   currentSection?: string;
   onSectionChange?: (section: string) => void;
   onMenuClick?: () => void;
+  menuOpen?: boolean;
   userName?: string;
   userAvatar?: string;
   className?: string;
@@ -58,6 +60,7 @@ export const BudgetNavbar = memo(function BudgetNavbar({
   currentSection,
   onSectionChange,
   onMenuClick,
+  menuOpen = false,
   userName = "Utilisateur",
   userAvatar,
   className,
@@ -273,8 +276,56 @@ export const BudgetNavbar = memo(function BudgetNavbar({
           </div>
         </div>
       </header>
+      {menuOpen && items.length > 0 && (
+        <div className="lg:hidden fixed inset-0 z-40 flex">
+          {/* Overlay */}
+          <div 
+            className="fixed inset-0 bg-black bg-opacity-50"
+            onClick={onMenuClick}
+          />
+          
+          {/* Sidebar */}
+          <div className="relative bg-white h-full w-56 shadow-xl transform transition-transform duration-300 ease-in-out">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-lg font-semibold text-gray-900">Menu</h2>
+                <button
+                  onClick={onMenuClick}
+                  className="p-2 rounded-lg hover:bg-gray-100"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+              
+              <nav className="flex flex-col gap-2">
+                {items.map((item) => {
+                  const Icon = item.icon;
+                  const isActive = currentSection === item.id;
+                  return (
+                    <button
+                      key={item.id}
+                      onClick={() => {
+                        handleSectionClick(item.id);
+                        onMenuClick?.(); // Fermer le menu après clic
+                      }}
+                      className={cn(
+                        "flex items-center gap-3 p-3 rounded-lg text-left transition-colors",
+                        isActive 
+                          ? "bg-primary text-white" 
+                          : "hover:bg-gray-100 text-gray-700"
+                      )}
+                    >
+                      <Icon className="h-5 w-5 flex-shrink-0" />
+                      <span className="font-medium">{item.label}</span>
+                    </button>
+                  );
+                })}
+              </nav>
+            </div>
+          </div>
+        </div>
+      )}
 
-      {/* Help Center Dialog */}
       <HelpCenter open={helpOpen} onClose={handleHelpClose} />
     </>
   );
@@ -289,8 +340,8 @@ export const BudgetNavbar = memo(function BudgetNavbar({
     prevProps.userName === nextProps.userName &&
     prevProps.userAvatar === nextProps.userAvatar &&
     prevProps.items === nextProps.items &&
-    prevProps.className === nextProps.className
-    // onSectionChange et onMenuClick sont des fonctions stables grâce à useCallback du parent
+    prevProps.className === nextProps.className &&
+    prevProps.menuOpen === nextProps.menuOpen 
   );
 });
 

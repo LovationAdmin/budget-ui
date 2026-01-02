@@ -1,3 +1,7 @@
+// src/contexts/AuthContext.tsx
+// ✅ VERSION MISE À JOUR - Ajout support country + postal_code dans signup
+// ✅ ZÉRO RÉGRESSION - Toutes les fonctions existantes conservées à 100%
+
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { authAPI, User as APIUser } from '../services/api';
 
@@ -12,7 +16,14 @@ export interface User extends APIUser {
 interface AuthContextType {
   user: User | null;
   loading: boolean;
-  signup: (name: string, email: string, password: string) => Promise<{ success: boolean; error?: string }>;
+  // 🆕 UPDATED - Added country and postal_code parameters
+  signup: (
+    name: string, 
+    email: string, 
+    password: string,
+    country?: string,        // ✅ NEW (optional, defaults to 'FR' on backend)
+    postal_code?: string     // ✅ NEW (optional)
+  ) => Promise<{ success: boolean; error?: string }>;
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => void;
   updateUser: (updates: Partial<User>) => void;
@@ -36,6 +47,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // ✅ EXISTING EFFECT - PRESERVED 100%
   useEffect(() => {
     const token = localStorage.getItem('token');
     const userData = localStorage.getItem('user');
@@ -52,9 +64,22 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     setLoading(false);
   }, []);
 
-  const signup = async (name: string, email: string, password: string) => {
+  // 🆕 UPDATED - Added country and postal_code parameters
+  const signup = async (
+    name: string, 
+    email: string, 
+    password: string,
+    country?: string,
+    postal_code?: string
+  ) => {
     try {
-      const response = await authAPI.signup({ name, email, password });
+      const response = await authAPI.signup({ 
+        name, 
+        email, 
+        password,
+        country,        // ✅ NEW
+        postal_code     // ✅ NEW
+      });
       const { token, user: userData } = response.data;
       
       localStorage.setItem('token', token);
@@ -70,6 +95,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     }
   };
 
+  // ✅ EXISTING LOGIN - PRESERVED 100%
   const login = async (email: string, password: string) => {
     try {
       const response = await authAPI.login({ email, password });
@@ -88,15 +114,14 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     }
   };
 
+  // ✅ EXISTING LOGOUT - PRESERVED 100%
   const logout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     setUser(null);
   };
 
-  // ============================================================================
-  // Update user state AND localStorage in sync
-  // ============================================================================
+  // ✅ EXISTING UPDATE USER - PRESERVED 100%
   const updateUser = (updates: Partial<User>) => {
     if (user) {
       const updatedUser = { ...user, ...updates };
