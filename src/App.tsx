@@ -1,6 +1,6 @@
 // src/App.tsx
-// ✅ VERSION MISE À JOUR - Ajout des nouvelles routes marketing
-// ✅ AUCUNE RÉGRESSION - Toutes les routes existantes conservées à 100%
+// ✅ VERSION CORRIGÉE - Ajout route /blog/:slug pour BlogArticle
+// ✅ AUCUNE RÉGRESSION - Toutes les routes existantes conservées
 
 import { Routes, Route, Navigate } from 'react-router-dom';
 import PrivateRoute from './components/PrivateRoute';
@@ -9,8 +9,8 @@ import { Toaster } from "@/components/ui/toaster";
 // Pages existantes (CONSERVÉES)
 import Login from './pages/Login'; 
 import Signup from './pages/Signup';
-import ForgotPassword from './pages/ForgotPassword'; // 🆕 NEW
-import ResetPassword from './pages/ResetPassword';   // 🆕 NEW
+import ForgotPassword from './pages/ForgotPassword';
+import ResetPassword from './pages/ResetPassword';
 import Dashboard from './pages/Dashboard';
 import BudgetComplete from './pages/BudgetComplete';
 import Profile from './pages/Profile';
@@ -18,7 +18,7 @@ import NotFound from './pages/NotFound';
 import AcceptInvitation from './pages/AcceptInvitation';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import VerifyEmail from './pages/VerifyEmail';
-import Beta2Page from './pages/Beta2Page'; // Enable Banking
+import Beta2Page from './pages/Beta2Page';
 import EnableBankingCallbackPage from './pages/EnableBankingCallbackPage';
 import PremiumPage from './pages/PremiumPage';
 import Terms from './pages/Terms';
@@ -26,9 +26,10 @@ import Features from './pages/Features';
 import About from './pages/About';
 import Help from './pages/Help';
 
-// 🆕 NOUVELLES PAGES MARKETING
+// Pages Marketing
 import SmartTools from './pages/SmartTools';
 import Blog from './pages/Blog';
+import BlogArticle from './pages/BlogArticle'; // ✅ AJOUTÉ
 
 export default function App() {
   return (
@@ -40,7 +41,7 @@ export default function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
         
-        {/* 🆕 PASSWORD RESET ROUTES (NEW - No Regression) */}
+        {/* Password Reset Routes */}
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password" element={<ResetPassword />} />
         
@@ -53,10 +54,13 @@ export default function App() {
         <Route path="/help" element={<Help />} />
         <Route path="/premium" element={<PremiumPage />} />
 
-        {/* 🆕 NOUVELLES ROUTES MARKETING (3 routes ajoutées) */}
+        {/* Marketing Routes */}
         <Route path="/smart-tools" element={<SmartTools />} />
-        <Route path="/outils-ia" element={<SmartTools />} /> {/* Alias FR */}
+        <Route path="/outils-ia" element={<SmartTools />} />
         <Route path="/blog" element={<Blog />} />
+        
+        {/* ✅ CORRIGÉ : Route pour les articles de blog individuels */}
+        <Route path="/blog/:slug" element={<BlogArticle />} />
 
         {/* ============================================ */}
         {/* PROTECTED ROUTES */}
@@ -67,7 +71,7 @@ export default function App() {
           </PrivateRoute>
         } />
         
-        {/* ✅ ROUTE CORRIGÉE : /budget/:id/complete (pas /budget/:id) */}
+        {/* Budget Routes */}
         <Route path="/budget/:id/complete" element={
           <PrivateRoute>
             <BudgetComplete />
@@ -83,10 +87,10 @@ export default function App() {
         {/* ============================================ */}
         {/* BETA ROUTES (Enable Banking) */}
         {/* ============================================ */}
-        {/* ✅ Enable Banking Callback (public route) */}
+        {/* Enable Banking Callback (public route) */}
         <Route path="/beta2/callback" element={<EnableBankingCallbackPage />} />
         
-        {/* ✅ Beta 2 - Enable Banking (protected route) */}
+        {/* Beta 2 - Enable Banking (protected route) */}
         <Route path="/beta2/:id" element={
           <PrivateRoute>
             <Beta2Page />

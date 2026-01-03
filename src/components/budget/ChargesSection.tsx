@@ -1,3 +1,6 @@
+// src/components/budget/ChargesSection.tsx
+// ✅ VERSION CORRIGÉE - Limitation Details à 50 caractères (au lieu de 200)
+
 import { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,397 +27,85 @@ import { budgetAPI } from '@/services/api';
 import { useToast } from "@/hooks/use-toast";
 import { Textarea } from "@/components/ui/textarea";
 
+// ✅ CORRIGÉ : Constante pour la limite de caractères (50 au lieu de 200)
+const MAX_DESCRIPTION_LENGTH = 50;
+
 interface ChargesSectionProps {
   charges: Charge[];
   onChargesChange: (charges: Charge[]) => void;
   onLinkTransaction?: (charge: Charge) => void; 
-  mappedTotals?: Record<string, number>; 
+  mappedTotals?: Record<string, number>;
+  budgetId?: string;
+  budgetLocation?: string;
+  budgetCurrency?: string;
 }
-
-export default function ChargesSection({ 
-    charges, 
-    onChargesChange, 
-    onLinkTransaction,
-    mappedTotals = {} 
-}: ChargesSectionProps) {
-  const { toast } = useToast();
-  
-  // Form States
-  const [newChargeLabel, setNewChargeLabel] = useState('');
-  const [newChargeAmount, setNewChargeAmount] = useState('');
-  const [newChargeDescription, setNewChargeDescription] = useState(''); // ✅ STATE DESCRIPTION
-  const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState('');
-  
-  // UI States
-  const [showAddForm, setShowAddForm] = useState(false);
-  const [isExpanded, setIsExpanded] = useState(true);
-  const [detectedCategory, setDetectedCategory] = useState<string>('');
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [isAutoCategorizing, setIsAutoCategorizing] = useState(false);
-
-  // Check if we have charges that need categorization
-  const uncategorizedCount = charges.filter(c => !c.category || c.category === 'OTHER').length;
-
-  // --- HANDLERS ---
-
-  const handleAutoCategorizeAll = async () => {
-    if (uncategorizedCount === 0) return;
-    setIsAutoCategorizing(true);
-    let updatedCount = 0;
-    const updatedCharges = [...charges];
-
-    try {
-        await Promise.all(updatedCharges.map(async (charge, index) => {
-            if (!charge.category || charge.category === 'OTHER') {
-                try {
-                    const res = await budgetAPI.categorize(charge.label);
-                    if (res.data.category && res.data.category !== 'OTHER') {
-                        updatedCharges[index] = { ...charge, category: res.data.category };
-                        updatedCount++;
-                    }
-                } catch (err) {
-                    console.error(`Failed to categorize ${charge.label}`, err);
-                }
-            }
-        }));
-
-        if (updatedCount > 0) {
-            onChargesChange(updatedCharges);
-            toast({ 
-                title: "Catégorisation terminée", 
-                description: `${updatedCount} charge(s) mise(s) à jour avec succès.`,
-                variant: "default"
-            });
-        } else {
-            toast({ 
-                title: "Analyse terminée", 
-                description: "Aucune nouvelle catégorie n'a pu être détectée.", 
-            });
-        }
-    } catch (error) {
-        toast({ 
-            title: "Erreur", 
-            description: "Une erreur est survenue pendant l'analyse.", 
-            variant: "destructive" 
-        });
-    } finally {
-        setIsAutoCategorizing(false);
-    }
-  };
-
-  const handleLabelBlur = async () => {
-      if (!newChargeLabel.trim() || newChargeLabel.length < 3) return;
-      setIsAnalyzing(true);
-      try {
-          const res = await budgetAPI.categorize(newChargeLabel);
-          if (res.data.category && res.data.category !== 'OTHER') {
-             setDetectedCategory(res.data.category);
-          } else {
-              setDetectedCategory('');
-          }
-      } catch (err) {
-          console.error("AI Categorization failed", err);
-      } finally {
-          setIsAnalyzing(false);
-      }
-  };
-
-  const addCharge = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newChargeLabel.trim()) return;
-    
-    const newCharge: Charge = {
-      id: Date.now().toString(),
-      label: newChargeLabel.trim(),
-      amount: parseFloat(newChargeAmount) || 0,
-      description: newChargeDescription.trim() || undefined, // ✅ SAVE DESCRIPTION
-      startDate: startDate || undefined,
-      endDate: endDate || undefined,
-      category: detectedCategory || undefined, 
-      ignoreSuggestions: false
-    };
-    
-    onChargesChange([...charges, newCharge]);
-    
-    // Reset Form
-    setNewChargeLabel('');
-    setNewChargeAmount('');
-    setNewChargeDescription('');
-    setStartDate('');
-    setEndDate('');
-    setDetectedCategory('');
-    setShowAddForm(false);
-    setIsExpanded(true);
-  };
-
-  const removeCharge = (id: string) => {
-    if (confirm('Supprimer cette charge ?')) {
-      onChargesChange(charges.filter(c => c.id !== id));
-    }
-  };
-
-  const updateCharge = (id: string, updates: Partial<Charge>) => {
-    onChargesChange(charges.map(c => c.id === id ? { ...c, ...updates } : c));
-  };
-
-  const getCategoryLabel = (category?: string) => {
-    if (!category) return '';
-    const labels: Record<string, string> = {
-      ENERGY: '⚡ Énergie',
-      INTERNET: '🌐 Internet',
-      MOBILE: '📱 Mobile',
-      INSURANCE: '🛡️ Assurance',
-      INSURANCE_AUTO: '🚗 Assurance Auto',
-      INSURANCE_HOME: '🏠 Assurance Habitation',
-      INSURANCE_HEALTH: '⚕️ Mutuelle Santé',
-      LOAN: '💸 Prêt',
-      BANK: '🏛️ Banque',
-      TRANSPORT: '🚌 Transport',
-      LEISURE: '⚽ Loisirs',
-      LEISURE_SPORT: '💪 Sport / Fitness',
-      LEISURE_STREAMING: '🎬 Streaming',
-      SUBSCRIPTION: '🔄 Abonnement',
-      HOUSING: '🏠 Logement',
-      OTHER: '📦 Autre'
-    };
-    return labels[category] || category;
-  };
-
-  const totalCharges = charges.reduce((sum, c) => sum + c.amount, 0);
-
-  return (
-    <Card className="border-orange-200 bg-gradient-to-br from-orange-50 to-orange-100/30 transition-all duration-300">
-      <CardHeader 
-        className="pb-4 cursor-pointer hover:opacity-80 transition-opacity"
-        onClick={() => setIsExpanded(!isExpanded)}
-      >
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-orange-900 flex items-center gap-2">
-            🧾 Charges
-            <span className="text-sm font-normal text-muted-foreground">
-              ({charges.length} charge{charges.length > 1 ? 's' : ''})
-            </span>
-          </CardTitle>
-          
-          <div className="flex items-center gap-4">
-             {uncategorizedCount > 0 && (
-                <Button 
-                    variant="outline" 
-                    size="sm" 
-                    className="hidden sm:flex h-8 bg-white/50 border-orange-200 text-orange-700 hover:bg-white hover:text-orange-800"
-                    onClick={(e) => {
-                        e.stopPropagation();
-                        handleAutoCategorizeAll();
-                    }}
-                    disabled={isAutoCategorizing}
-                >
-                    {isAutoCategorizing ? (
-                        <Loader2 className="h-3.5 w-3.5 mr-2 animate-spin" />
-                    ) : (
-                        <Sparkles className="h-3.5 w-3.5 mr-2" />
-                    )}
-                    Catégoriser ({uncategorizedCount})
-                </Button>
-            )}
-
-            <div className="text-right">
-                <p className="text-2xl font-bold text-orange-900">
-                {totalCharges.toFixed(0)}€
-                </p>
-                <p className="text-xs text-muted-foreground">Total mensuel</p>
-            </div>
-            <div className="text-orange-800">
-                {isExpanded ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
-            </div>
-          </div>
-        </div>
-      </CardHeader>
-
-      {isExpanded && (
-      <CardContent className="space-y-3 animate-accordion-down">
-        {/* Mobile Button for categorization */}
-        {uncategorizedCount > 0 && (
-            <Button 
-                variant="outline" 
-                size="sm" 
-                className="w-full sm:hidden mb-2 bg-white/50 border-orange-200 text-orange-700"
-                onClick={(e) => {
-                    e.stopPropagation();
-                    handleAutoCategorizeAll();
-                }}
-                disabled={isAutoCategorizing}
-            >
-                {isAutoCategorizing ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Sparkles className="h-4 w-4 mr-2" />}
-                Détecter les catégories ({uncategorizedCount})
-            </Button>
-        )}
-
-        {charges.length === 0 ? (
-          <div className="text-center py-8 text-muted-foreground">
-            <p className="mb-2">Aucune charge enregistrée</p>
-            <p className="text-xs">Cliquez sur "Ajouter une charge" pour commencer</p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 gap-3">
-            {charges.map((charge) => (
-              <ChargeItem
-                key={charge.id}
-                charge={charge}
-                onUpdate={updateCharge}
-                onDelete={removeCharge}
-                onLinkTransaction={onLinkTransaction}
-                mappedTotal={mappedTotals[charge.id]}
-                getCategoryLabel={getCategoryLabel}
-              />
-            ))}
-          </div>
-        )}
-
-        {!showAddForm ? (
-          <Button 
-            onClick={(e) => {
-                e.stopPropagation();
-                setShowAddForm(true);
-            }} 
-            variant="outline" 
-            className="w-full border-dashed border-orange-300 text-orange-700 hover:bg-orange-50"
-          >
-            <Plus className="mr-2 h-4 w-4" />
-            Ajouter une charge
-          </Button>
-        ) : (
-          <form 
-            onSubmit={addCharge} 
-            onClick={(e) => e.stopPropagation()}
-            className="space-y-3 p-4 border border-orange-200 rounded-lg bg-white"
-          >
-            <div>
-              <Label htmlFor="charge-label">Libellé *</Label>
-              <Input
-                id="charge-label"
-                value={newChargeLabel}
-                onChange={(e) => setNewChargeLabel(e.target.value)}
-                onBlur={handleLabelBlur}
-                placeholder="Ex: EDF, Loyer, Assurance..."
-                required
-              />
-              {detectedCategory && (
-                <p className="text-xs text-green-600 mt-1">✓ Catégorie détectée: {getCategoryLabel(detectedCategory)}</p>
-              )}
-            </div>
-
-            <div>
-              <Label htmlFor="charge-amount">Montant mensuel (€) *</Label>
-              <Input
-                id="charge-amount"
-                type="number"
-                step="0.01"
-                value={newChargeAmount}
-                onChange={(e) => setNewChargeAmount(e.target.value)}
-                placeholder="0.00"
-                required
-              />
-            </div>
-
-            {/* ✅ NOUVEAU CHAMP : DÉTAILS OPTIONNELS */}
-            <div>
-                <Label htmlFor="charge-desc" className="flex items-center gap-1">
-                    Détails / Critères <span className="text-xs font-normal text-muted-foreground">(Optionnel)</span>
-                </Label>
-                <Input
-                    id="charge-desc"
-                    value={newChargeDescription}
-                    onChange={(e) => setNewChargeDescription(e.target.value)}
-                    placeholder="Ex: 35m2 Paris, Tous risques, 9kVA..."
-                    className="mt-1"
-                />
-                <p className="text-[10px] text-muted-foreground mt-1 flex items-center gap-1">
-                    <Info className="h-3 w-3" /> Aide l'IA à comparer ce qui est comparable.
-                </p>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div>
-                <Label htmlFor="start-date">Date début (optionnel)</Label>
-                <Input id="start-date" type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
-              </div>
-              <div>
-                <Label htmlFor="end-date">Date fin (optionnel)</Label>
-                <Input id="end-date" type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
-              </div>
-            </div>
-
-            <div className="flex gap-2">
-              <Button type="submit" size="sm" className="flex-1">Ajouter</Button>
-              <Button 
-                type="button" 
-                size="sm" 
-                variant="ghost" 
-                onClick={() => {
-                  setShowAddForm(false);
-                  setNewChargeLabel('');
-                  setNewChargeAmount('');
-                  setNewChargeDescription('');
-                  setStartDate('');
-                  setEndDate('');
-                  setDetectedCategory('');
-                }}
-              >
-                Annuler
-              </Button>
-            </div>
-          </form>
-        )}
-      </CardContent>
-      )}
-    </Card>
-  );
-}
-
-// ============================================================================
-// Internal ChargeItem Component (With Edit Mode)
-// ============================================================================
 
 interface ChargeItemProps {
   charge: Charge;
-  onUpdate: (id: string, updates: Partial<Charge>) => void;
+  onUpdate: (id: string, updated: Partial<Charge>) => void;
   onDelete: (id: string) => void;
   onLinkTransaction?: (charge: Charge) => void;
   mappedTotal?: number;
-  getCategoryLabel: (category?: string) => string;
+  onToggleSuggestions?: (id: string) => void;
+  budgetId?: string;
+  budgetLocation?: string;
+  budgetCurrency?: string;
 }
 
-function ChargeItem({ charge, onUpdate, onDelete, onLinkTransaction, mappedTotal, getCategoryLabel }: ChargeItemProps) {
+function ChargeItem({ 
+  charge, 
+  onUpdate, 
+  onDelete, 
+  onLinkTransaction,
+  mappedTotal,
+  onToggleSuggestions,
+  budgetId,
+  budgetLocation = 'FR',
+  budgetCurrency = 'EUR'
+}: ChargeItemProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editLabel, setEditLabel] = useState(charge.label);
-  const [editAmount, setEditAmount] = useState(charge.amount.toString());
-  const [editDescription, setEditDescription] = useState(charge.description || ''); // ✅ EDIT STATE
-  const [editStartDate, setEditStartDate] = useState(charge.startDate);
-  const [editEndDate, setEditEndDate] = useState(charge.endDate);
+  const [editAmount, setEditAmount] = useState(String(charge.amount));
+  const [editDescription, setEditDescription] = useState(charge.description || '');
+  const [editStartDate, setEditStartDate] = useState(charge.startDate || '');
+  const [editEndDate, setEditEndDate] = useState(charge.endDate || '');
 
   const handleSave = () => {
     onUpdate(charge.id, {
       label: editLabel,
       amount: parseFloat(editAmount) || 0,
-      description: editDescription, // ✅ SAVE DESCRIPTION
-      startDate: editStartDate,
-      endDate: editEndDate
+      description: editDescription,
+      startDate: editStartDate || undefined,
+      endDate: editEndDate || undefined,
     });
     setIsEditing(false);
   };
 
   const handleCancel = () => {
     setEditLabel(charge.label);
-    setEditAmount(charge.amount.toString());
+    setEditAmount(String(charge.amount));
     setEditDescription(charge.description || '');
-    setEditStartDate(charge.startDate);
-    setEditEndDate(charge.endDate);
+    setEditStartDate(charge.startDate || '');
+    setEditEndDate(charge.endDate || '');
     setIsEditing(false);
   };
 
-  const hasDates = charge.startDate || charge.endDate;
-  const dateText = hasDates ? `${charge.startDate || '...'} → ${charge.endDate || '...'}` : '';
+  const getCategoryLabel = (cat: string) => {
+    const labels: Record<string, string> = {
+      energy: "Énergie",
+      internet: "Internet",
+      mobile: "Mobile",
+      insurance: "Assurance",
+      housing: "Logement",
+      transport: "Transport",
+      subscription: "Abonnement",
+      other: "Autre"
+    };
+    return labels[cat] || cat;
+  };
+
+  const periodText = (charge.startDate && charge.endDate) 
+    ? `${charge.startDate || '...'} → ${charge.endDate || '...'}` : '';
   const hasRealityCheck = mappedTotal !== undefined && mappedTotal > 0;
   const differsFromBudget = hasRealityCheck && Math.abs(mappedTotal - charge.amount) > 0.5;
 
@@ -445,15 +136,35 @@ function ChargeItem({ charge, onUpdate, onDelete, onLinkTransaction, mappedTotal
             <Input type="number" step="0.01" value={editAmount} onChange={(e) => setEditAmount(e.target.value)} className="w-full" />
           </div>
 
-          {/* ✅ NOUVEAU CHAMP ÉDITION : DETAILS */}
+          {/* ✅ CORRIGÉ : Champ Details avec limite 50 caractères + compteur */}
           <div className="space-y-1.5">
-            <Label className="text-xs font-medium">Détails / Critères (IA)</Label>
+            <div className="flex items-center justify-between">
+              <Label className="text-xs font-medium">
+                Détails / Critères (IA)
+              </Label>
+              <span className={cn(
+                "text-xs",
+                editDescription.length > MAX_DESCRIPTION_LENGTH ? "text-red-500 font-semibold" : "text-muted-foreground"
+              )}>
+                {editDescription.length}/{MAX_DESCRIPTION_LENGTH}
+              </span>
+            </div>
             <Input 
-                value={editDescription} 
-                onChange={(e) => setEditDescription(e.target.value)} 
-                className="w-full text-xs" 
-                placeholder="Ex: 50m2, option base..." 
+              value={editDescription} 
+              onChange={(e) => {
+                const value = e.target.value;
+                if (value.length <= MAX_DESCRIPTION_LENGTH) {
+                  setEditDescription(value);
+                }
+              }} 
+              maxLength={MAX_DESCRIPTION_LENGTH}
+              className="w-full text-xs" 
+              placeholder="Ex: 50m2, option base..." 
             />
+            <p className="text-[10px] text-muted-foreground flex items-start gap-1">
+              <Info className="h-3 w-3 mt-0.5 flex-shrink-0" />
+              <span>Limité à 50 caractères pour optimiser l'analyse IA</span>
+            </p>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -487,90 +198,321 @@ function ChargeItem({ charge, onUpdate, onDelete, onLinkTransaction, mappedTotal
             </span>
           )}
           {charge.ignoreSuggestions && (
-             <span className="text-[10px] bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded border border-gray-200 whitespace-nowrap" title="Suggestions d'économies désactivées">
-                Suggestions OFF
-             </span>
+            <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full whitespace-nowrap flex items-center gap-1">
+              <LightbulbOff className="h-3 w-3" />
+              Suggestions désactivées
+            </span>
           )}
         </div>
         
-        {/* ✅ AFFICHAGE DISCRET DE LA DESCRIPTION SI PRÉSENTE */}
-        {charge.description && (
-            <p className="text-[11px] text-muted-foreground mt-0.5 italic truncate flex items-center gap-1">
-                <Info className="h-3 w-3 inline" /> {charge.description}
-            </p>
-        )}
-        
-        {hasDates && (
-          <div className="flex items-center gap-1 mt-1 text-xs text-muted-foreground">
-            <Clock className="h-3 w-3 flex-shrink-0" />
-            <span className="truncate">{dateText}</span>
-          </div>
-        )}
-        {hasRealityCheck && differsFromBudget && (
-          <div className="mt-1 text-xs text-indigo-600 font-medium">
-            Réel: {mappedTotal.toFixed(2)}€
+        <div className="flex items-center gap-3 text-xs text-gray-500 mt-1 flex-wrap">
+          <span className="font-mono font-semibold text-orange-600">{charge.amount.toFixed(2)} €/mois</span>
+          {charge.description && (
+            <span className="text-muted-foreground italic truncate max-w-xs">
+              {charge.description}
+            </span>
+          )}
+          {periodText && (
+            <span className="flex items-center gap-1 whitespace-nowrap">
+              <Clock className="h-3 w-3" />
+              {periodText}
+            </span>
+          )}
+        </div>
+
+        {hasRealityCheck && (
+          <div className={cn(
+            "mt-2 text-xs flex items-center gap-1.5 px-2 py-1 rounded-md w-fit",
+            differsFromBudget ? "bg-yellow-50 text-yellow-700" : "bg-green-50 text-green-700"
+          )}>
+            <LinkIcon className="h-3 w-3" />
+            <span className="font-medium">Dépense réelle : {mappedTotal!.toFixed(2)} €</span>
+            {differsFromBudget && (
+              <span className="font-semibold">
+                ({mappedTotal! > charge.amount ? '+' : ''}{(mappedTotal! - charge.amount).toFixed(2)} €)
+              </span>
+            )}
           </div>
         )}
       </div>
 
-      <div className="flex items-center justify-between sm:justify-end gap-2 sm:gap-1">
-        <span className="font-bold text-orange-900 text-sm sm:mr-2">
-          {charge.amount.toFixed(2)}€
-        </span>
-
-        <div className={cn(
-          "flex gap-0.5",
-          "opacity-100 sm:opacity-0 sm:group-hover:opacity-100 sm:transition-opacity"
-        )}>
+      <div className="flex items-center gap-1 sm:opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
+        {onToggleSuggestions && (
           <Button
             variant="ghost"
-            size="icon"
-            onClick={() => onUpdate(charge.id, { ignoreSuggestions: !charge.ignoreSuggestions })}
-            className={cn(
-              "h-9 w-9 sm:h-7 sm:w-7 transition-colors",
-              charge.ignoreSuggestions ? "text-gray-300 hover:text-gray-500" : "text-yellow-500 hover:bg-yellow-50"
+            size="sm"
+            onClick={() => onToggleSuggestions(charge.id)}
+            className="h-8 px-2"
+            title={charge.ignoreSuggestions ? "Activer les suggestions IA" : "Désactiver les suggestions IA"}
+          >
+            {charge.ignoreSuggestions ? (
+              <LightbulbOff className="h-4 w-4 text-gray-400" />
+            ) : (
+              <Lightbulb className="h-4 w-4 text-orange-500" />
             )}
-            title={charge.ignoreSuggestions ? "Réactiver les suggestions" : "Désactiver les suggestions"}
-          >
-            {charge.ignoreSuggestions ? <LightbulbOff className="h-4 w-4 sm:h-3.5 sm:w-3.5" /> : <Lightbulb className="h-4 w-4 sm:h-3.5 sm:w-3.5" />}
           </Button>
-
-          {onLinkTransaction && (
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => onLinkTransaction(charge)}
-              className={cn(
-                "h-9 w-9 sm:h-7 sm:w-7",
-                hasRealityCheck && "text-indigo-600"
-              )}
-              title={hasRealityCheck ? "Gérer le mapping" : "Lier aux transactions"}
-            >
-              <LinkIcon className="h-4 w-4" />
-            </Button>
-          )}
-
-          <Button 
-            variant="ghost" 
-            size="icon"
-            onClick={() => setIsEditing(true)} 
-            className="h-9 w-9 sm:h-7 sm:w-7" 
-            title="Modifier"
-          >
-            ✏️
-          </Button>
-
-          <Button 
-            variant="ghost" 
-            size="icon"
-            onClick={() => onDelete(charge.id)} 
-            className="h-9 w-9 sm:h-7 sm:w-7 text-red-600 hover:text-red-700 hover:bg-red-50" 
-            title="Supprimer"
-          >
-            <Trash2 className="h-4 w-4" />
-          </Button>
-        </div>
+        )}
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => setIsEditing(true)}
+          className="h-8 px-3"
+        >
+          Éditer
+        </Button>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => onDelete(charge.id)}
+          className="h-8 px-2 text-red-600 hover:text-red-700 hover:bg-red-50"
+        >
+          <Trash2 className="h-4 w-4" />
+        </Button>
       </div>
     </div>
+  );
+}
+
+export default function ChargesSection({ 
+  charges, 
+  onChargesChange, 
+  onLinkTransaction,
+  mappedTotals,
+  budgetId,
+  budgetLocation = 'FR',
+  budgetCurrency = 'EUR'
+}: ChargesSectionProps) {
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [newChargeLabel, setNewChargeLabel] = useState('');
+  const [newChargeAmount, setNewChargeAmount] = useState('');
+  const [newChargeDescription, setNewChargeDescription] = useState('');
+  const [detectedCategory, setDetectedCategory] = useState<string | null>(null);
+  const [isExpanded, setIsExpanded] = useState(true);
+  
+  const { toast } = useToast();
+
+  const detectCategory = (label: string): string | null => {
+    const lowerLabel = label.toLowerCase();
+    if (/edf|engie|électricité|gaz|energ/i.test(lowerLabel)) return 'energy';
+    if (/free|orange|bouygues|sfr|internet|box|fibre/i.test(lowerLabel)) return 'internet';
+    if (/mobile|forfait|téléphone/i.test(lowerLabel)) return 'mobile';
+    if (/assurance|mutuelle|maaf|axa|maif/i.test(lowerLabel)) return 'insurance';
+    if (/loyer|logement|habitation|hlm/i.test(lowerLabel)) return 'housing';
+    if (/transport|essence|véhicule|metro|navigo/i.test(lowerLabel)) return 'transport';
+    if (/netflix|spotify|abonnement|disney|amazon/i.test(lowerLabel)) return 'subscription';
+    return null;
+  };
+
+  const handleLabelBlur = () => {
+    const category = detectCategory(newChargeLabel);
+    setDetectedCategory(category);
+  };
+
+  const addCharge = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newChargeLabel.trim() || !newChargeAmount) return;
+
+    const newCharge: Charge = {
+      id: `charge-${Date.now()}`,
+      label: newChargeLabel.trim(),
+      amount: parseFloat(newChargeAmount),
+      description: newChargeDescription.trim() || undefined,
+      category: detectedCategory || undefined,
+      ignoreSuggestions: false,
+    };
+
+    onChargesChange([...charges, newCharge]);
+    setNewChargeLabel('');
+    setNewChargeAmount('');
+    setNewChargeDescription('');
+    setDetectedCategory(null);
+    setShowAddForm(false);
+
+    toast({
+      title: "Charge ajoutée",
+      description: `${newCharge.label} a été ajoutée avec succès`,
+    });
+  };
+
+  const updateCharge = (id: string, updates: Partial<Charge>) => {
+    const updatedCharges = charges.map(c => 
+      c.id === id ? { ...c, ...updates } : c
+    );
+    onChargesChange(updatedCharges);
+
+    toast({
+      title: "Charge mise à jour",
+      description: "Les modifications ont été enregistrées",
+    });
+  };
+
+  const deleteCharge = (id: string) => {
+    const charge = charges.find(c => c.id === id);
+    onChargesChange(charges.filter(c => c.id !== id));
+
+    toast({
+      title: "Charge supprimée",
+      description: `${charge?.label || 'La charge'} a été supprimée`,
+      variant: "destructive"
+    });
+  };
+
+  const toggleSuggestions = (id: string) => {
+    const charge = charges.find(c => c.id === id);
+    if (!charge) return;
+
+    updateCharge(id, { 
+      ignoreSuggestions: !charge.ignoreSuggestions 
+    });
+
+    toast({
+      title: charge.ignoreSuggestions ? "Suggestions activées" : "Suggestions désactivées",
+      description: charge.ignoreSuggestions 
+        ? `L'IA pourra suggérer des alternatives pour ${charge.label}`
+        : `L'IA ne suggérera plus d'alternatives pour ${charge.label}`,
+    });
+  };
+
+  const totalCharges = charges.reduce((sum, c) => sum + c.amount, 0);
+
+  return (
+    <Card className="overflow-hidden shadow-card hover:shadow-elevated transition-shadow">
+      <CardHeader 
+        className="bg-gradient-to-r from-orange-500 to-amber-600 text-white cursor-pointer hover:from-orange-600 hover:to-amber-700 transition-all"
+        onClick={() => setIsExpanded(!isExpanded)}
+      >
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="h-10 w-10 bg-white/20 rounded-lg flex items-center justify-center">
+              <Sparkles className="h-5 w-5" />
+            </div>
+            <div>
+              <CardTitle className="text-xl mb-1">Charges Mensuelles</CardTitle>
+              <p className="text-sm text-white/90">
+                {charges.length} charge{charges.length > 1 ? 's' : ''} · Total : {totalCharges.toFixed(2)} €/mois
+              </p>
+            </div>
+          </div>
+          <Button variant="ghost" size="sm" className="text-white hover:bg-white/20">
+            {isExpanded ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
+          </Button>
+        </div>
+      </CardHeader>
+
+      {isExpanded && (
+        <CardContent className="p-6 space-y-3">
+          {charges.length === 0 ? (
+            <div className="text-center py-8 text-gray-500">
+              <Sparkles className="h-12 w-12 mx-auto mb-3 opacity-30" />
+              <p className="text-sm">Aucune charge ajoutée</p>
+              <p className="text-xs">Commencez par ajouter vos dépenses régulières</p>
+            </div>
+          ) : (
+            charges.map(charge => (
+              <ChargeItem
+                key={charge.id}
+                charge={charge}
+                onUpdate={updateCharge}
+                onDelete={deleteCharge}
+                onLinkTransaction={onLinkTransaction}
+                mappedTotal={mappedTotals?.[charge.id]}
+                onToggleSuggestions={toggleSuggestions}
+                budgetId={budgetId}
+                budgetLocation={budgetLocation}
+                budgetCurrency={budgetCurrency}
+              />
+            ))
+          )}
+
+          {/* Add Form */}
+          {!showAddForm ? (
+            <Button 
+              onClick={(e) => {
+                  e.stopPropagation();
+                  setShowAddForm(true);
+              }} 
+              variant="outline" 
+              className="w-full border-dashed border-orange-300 text-orange-700 hover:bg-orange-50"
+            >
+              <Plus className="mr-2 h-4 w-4" />
+              Ajouter une charge
+            </Button>
+          ) : (
+            <form 
+              onSubmit={addCharge} 
+              onClick={(e) => e.stopPropagation()}
+              className="space-y-3 p-4 border border-orange-200 rounded-lg bg-white"
+            >
+              <div>
+                <Label htmlFor="charge-label">Libellé *</Label>
+                <Input
+                  id="charge-label"
+                  value={newChargeLabel}
+                  onChange={(e) => setNewChargeLabel(e.target.value)}
+                  onBlur={handleLabelBlur}
+                  placeholder="Ex: EDF, Loyer, Assurance..."
+                  required
+                />
+                {detectedCategory && (
+                  <p className="text-xs text-green-600 mt-1">✓ Catégorie détectée: {detectedCategory}</p>
+                )}
+              </div>
+
+              <div>
+                <Label htmlFor="charge-amount">Montant mensuel (€) *</Label>
+                <Input
+                  id="charge-amount"
+                  type="number"
+                  step="0.01"
+                  value={newChargeAmount}
+                  onChange={(e) => setNewChargeAmount(e.target.value)}
+                  placeholder="0.00"
+                  required
+                />
+              </div>
+
+              {/* ✅ CORRIGÉ : Champ Details avec limite 50 caractères */}
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <Label htmlFor="charge-desc" className="flex items-center gap-1">
+                    Détails / Critères <span className="text-xs font-normal text-muted-foreground">(Optionnel)</span>
+                  </Label>
+                  <span className={cn(
+                    "text-xs",
+                    newChargeDescription.length > MAX_DESCRIPTION_LENGTH ? "text-red-500 font-semibold" : "text-muted-foreground"
+                  )}>
+                    {newChargeDescription.length}/{MAX_DESCRIPTION_LENGTH}
+                  </span>
+                </div>
+                <Input
+                  id="charge-desc"
+                  value={newChargeDescription}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    if (value.length <= MAX_DESCRIPTION_LENGTH) {
+                      setNewChargeDescription(value);
+                    }
+                  }}
+                  maxLength={MAX_DESCRIPTION_LENGTH}
+                  placeholder="Ex: 35m2 Paris, Tous risques, 9kVA..."
+                  className="mt-1"
+                />
+                <p className="text-[10px] text-muted-foreground mt-1 flex items-start gap-1">
+                  <Info className="h-3 w-3 mt-0.5 flex-shrink-0" /> 
+                  <span>Limité à 50 caractères pour optimiser l'analyse IA</span>
+                </p>
+              </div>
+
+              <div className="flex gap-2 pt-2">
+                <Button type="submit" className="flex-1">Ajouter</Button>
+                <Button type="button" variant="outline" onClick={() => setShowAddForm(false)}>
+                  Annuler
+                </Button>
+              </div>
+            </form>
+          )}
+        </CardContent>
+      )}
+    </Card>
   );
 }

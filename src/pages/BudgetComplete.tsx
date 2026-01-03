@@ -34,6 +34,7 @@ import MemberManagementSection from '../components/budget/MemberManagementSectio
 import { LayoutDashboard, Users, Receipt, Target, CalendarDays } from "lucide-react";
 import { useTutorial } from '../contexts/TutorialContext';
 import EnhancedSuggestions from '@/components/budget/EnhancedSuggestions';
+import { MapPin, DollarSign } from "lucide-react";
 
 // ✅ Items de navigation SPÉCIFIQUES à la page Budget
 const BUDGET_NAV_ITEMS: NavItem[] = [
@@ -45,6 +46,18 @@ const BUDGET_NAV_ITEMS: NavItem[] = [
 ];
 
 const MONTHS = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
+const LOCATION_CONFIGS = [
+  { code: 'FR', name: 'France', currency: 'EUR', symbol: '€' },
+  { code: 'DE', name: 'Allemagne', currency: 'EUR', symbol: '€' },
+  { code: 'ES', name: 'Espagne', currency: 'EUR', symbol: '€' },
+  { code: 'IT', name: 'Italie', currency: 'EUR', symbol: '€' },
+  { code: 'PT', name: 'Portugal', currency: 'EUR', symbol: '€' },
+  { code: 'BE', name: 'Belgique', currency: 'EUR', symbol: '€' },
+  { code: 'NL', name: 'Pays-Bas', currency: 'EUR', symbol: '€' },
+  { code: 'AT', name: 'Autriche', currency: 'EUR', symbol: '€' },
+  { code: 'CH', name: 'Suisse', currency: 'CHF', symbol: 'CHF' },
+  { code: 'GB', name: 'Royaume-Uni', currency: 'GBP', symbol: '£' },
+];
 
 interface BudgetMember {
   id: string;
@@ -86,6 +99,8 @@ export default function BudgetComplete() {
   const [monthComments, setMonthComments] = useState<MonthComments>({});
   const [projectComments, setProjectComments] = useState<ProjectComments>({});
   const [lockedMonths, setLockedMonths] = useState<LockedMonths>({});
+  const [budgetLocation, setBudgetLocation] = useState<string>('FR');
+  const [budgetCurrency, setBudgetCurrency] = useState<string>('EUR');
 
   const loadedRef = useRef(false);
   const notifiedProjectsRef = useRef<Set<string>>(new Set());
@@ -239,7 +254,9 @@ export default function BudgetComplete() {
       
       if (rawData.lastUpdated) setLastServerUpdate(rawData.lastUpdated);
       else setLastServerUpdate(new Date().toISOString());
-      
+      setBudgetLocation(data.location || 'FR');
+      setBudgetCurrency(data.currency || 'EUR');
+
       const data = convertOldFormatToNew(rawData);
       console.log('🔄 [loadBudget] Converted data:', {
         budgetTitle: data.budgetTitle,
@@ -647,6 +664,20 @@ export default function BudgetComplete() {
                 </button>
               )}
             </div>
+            <div className="flex items-center gap-4 text-sm">
+              <div className="flex items-center gap-1.5 px-3 py-1.5 bg-white rounded-lg border border-gray-200">
+                <MapPin className="h-4 w-4 text-primary" />
+                <span className="font-medium">
+                  {LOCATION_CONFIGS.find(c => c.code === budgetLocation)?.name || budgetLocation}
+                </span>
+              </div>
+              <div className="flex items-center gap-1.5 px-3 py-1.5 bg-white rounded-lg border border-gray-200">
+                <DollarSign className="h-4 w-4 text-success" />
+                <span className="font-medium">
+                  {budgetCurrency} ({LOCATION_CONFIGS.find(c => c.code === budgetLocation)?.symbol || '€'})
+                </span>
+              </div>
+            </div>
           </div>
         </div>
         
@@ -667,14 +698,21 @@ export default function BudgetComplete() {
         </div>
         
         <div id="charges" className="mt-6">
-          <ChargesSection charges={charges} onChargesChange={handleChargesChange} />
+          <ChargesSection 
+            charges={charges} 
+            onChargesChange={handleChargesChange}
+            budgetLocation={budgetLocation}
+            budgetCurrency={budgetCurrency}
+          />
         </div>
         
         <div id="suggestions" className="mt-6">
           <EnhancedSuggestions 
-            budgetId={id!} 
-            charges={charges} 
-            memberCount={householdSize} 
+            budgetId={id!}
+            charges={charges}
+            householdSize={householdSize}
+            location={budgetLocation}
+            currency={budgetCurrency}
           />
         </div>
         
