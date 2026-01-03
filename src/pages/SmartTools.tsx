@@ -21,7 +21,7 @@ import {
   ArrowRight,
   Lightbulb,
   Target,
-  Euro
+  Info
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -41,6 +41,10 @@ export default function SmartTools() {
   const [selectedCategory, setSelectedCategory] = useState('energy');
   const [currentAmount, setCurrentAmount] = useState('');
   const [householdSize, setHouseholdSize] = useState('4');
+  
+  // ✅ NOUVEAU STATE : Description pour le contexte IA
+  const [description, setDescription] = useState('');
+  
   const [showResults, setShowResults] = useState(false);
 
   // Données de marché réelles (simplifiées pour la démo)
@@ -152,20 +156,15 @@ export default function SmartTools() {
   };
 
   const category = marketData[selectedCategory as keyof typeof marketData];
-  const Icon = category.icon;
+  // const Icon = category.icon; // Pas utilisé directement dans le render principal mais gardé au cas où
 
   const analyzeWithAI = () => {
     setShowResults(true);
   };
 
-  const totalPotentialSavings = Object.values(marketData).reduce((acc, cat) => {
-    const avgSavings = cat.suggestions.reduce((sum, s) => sum + s.savings, 0) / cat.suggestions.length;
-    return acc + avgSavings;
-  }, 0) * 12; // Annual
-
   return (
       <div className="min-h-screen bg-gradient-to-br from-primary-50 to-purple-50 flex flex-col">
-        {/* ✅ CHANGÉ : Utilisation du composant Navbar avec items de navigation */}
+      {/* ✅ CHANGÉ : Utilisation du composant Navbar avec items de navigation */}
       <Navbar />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -259,7 +258,7 @@ export default function SmartTools() {
               </div>
 
               {/* Input Section */}
-              <div className="grid md:grid-cols-2 gap-6 mb-8">
+              <div className="grid md:grid-cols-2 gap-6 mb-6">
                 <div>
                   <Label htmlFor="amount" className="text-base font-semibold">
                     Combien payez-vous actuellement ? (€/mois)
@@ -294,6 +293,24 @@ export default function SmartTools() {
                 </div>
               </div>
 
+              {/* ✅ NOUVEL ÉLÉMENT : CHAMP DESCRIPTION */}
+              <div className="mb-8">
+                <Label htmlFor="description" className="text-base font-semibold">
+                    Détails spécifiques (Optionnel)
+                </Label>
+                <Input
+                    id="description"
+                    type="text"
+                    placeholder="Ex: 35m2 Paris, 9kVA, Tous risques, 15000km/an..."
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    className="mt-2 h-14 text-lg"
+                />
+                <p className="text-sm text-gray-500 mt-2 flex items-center gap-1">
+                   <Info className="h-4 w-4" /> Aide l'IA à comparer "ce qui est comparable" (surface, options, consommation...)
+                </p>
+              </div>
+
               <Button 
                 onClick={analyzeWithAI}
                 disabled={!currentAmount}
@@ -316,6 +333,12 @@ export default function SmartTools() {
                       <div>
                         <h3 className="text-xl font-bold text-gray-900">Résultat de l'analyse IA</h3>
                         <p className="text-sm text-gray-600">Basé sur {category.suggestions.length} fournisseurs comparés</p>
+                        {/* ✅ Affichage du feedback visuel des critères */}
+                        {description && (
+                            <p className="text-xs text-green-700 font-medium mt-1">
+                                Critères pris en compte : "{description}"
+                            </p>
+                        )}
                       </div>
                     </div>
                     

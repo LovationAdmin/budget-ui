@@ -15,7 +15,8 @@ import {
   Save,
   X,
   Sparkles,
-  Loader2
+  Loader2,
+  Info
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Charge } from '@/utils/importConverter';
@@ -37,36 +38,34 @@ export default function ChargesSection({
     mappedTotals = {} 
 }: ChargesSectionProps) {
   const { toast } = useToast();
+  
+  // Form States
   const [newChargeLabel, setNewChargeLabel] = useState('');
   const [newChargeAmount, setNewChargeAmount] = useState('');
+  const [newChargeDescription, setNewChargeDescription] = useState(''); // ✅ STATE DESCRIPTION
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
+  
+  // UI States
   const [showAddForm, setShowAddForm] = useState(false);
   const [isExpanded, setIsExpanded] = useState(true);
   const [detectedCategory, setDetectedCategory] = useState<string>('');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
-  
-  // ✅ AUTO-DETECT STATE
   const [isAutoCategorizing, setIsAutoCategorizing] = useState(false);
 
-  // Check if we have charges that need categorization (Empty or OTHER)
+  // Check if we have charges that need categorization
   const uncategorizedCount = charges.filter(c => !c.category || c.category === 'OTHER').length;
 
-  // ✅ BATCH AUTO-CATEGORIZE FUNCTION
+  // --- HANDLERS ---
+
   const handleAutoCategorizeAll = async () => {
     if (uncategorizedCount === 0) return;
     setIsAutoCategorizing(true);
     let updatedCount = 0;
-
-    // Create a copy of charges to update
     const updatedCharges = [...charges];
 
-    const [newChargeDescription, setNewChargeDescription] = useState('');
-    
     try {
-        // Process in parallel for speed
         await Promise.all(updatedCharges.map(async (charge, index) => {
-            // Only process OTHER or empty categories
             if (!charge.category || charge.category === 'OTHER') {
                 try {
                     const res = await budgetAPI.categorize(charge.label);
@@ -85,7 +84,7 @@ export default function ChargesSection({
             toast({ 
                 title: "Catégorisation terminée", 
                 description: `${updatedCount} charge(s) mise(s) à jour avec succès.`,
-                variant: "default" // Using default variant for success to match shadcn
+                variant: "default"
             });
         } else {
             toast({ 
@@ -129,6 +128,7 @@ export default function ChargesSection({
       id: Date.now().toString(),
       label: newChargeLabel.trim(),
       amount: parseFloat(newChargeAmount) || 0,
+      description: newChargeDescription.trim() || undefined, // ✅ SAVE DESCRIPTION
       startDate: startDate || undefined,
       endDate: endDate || undefined,
       category: detectedCategory || undefined, 
@@ -137,8 +137,10 @@ export default function ChargesSection({
     
     onChargesChange([...charges, newCharge]);
     
+    // Reset Form
     setNewChargeLabel('');
     setNewChargeAmount('');
+    setNewChargeDescription('');
     setStartDate('');
     setEndDate('');
     setDetectedCategory('');
@@ -196,7 +198,6 @@ export default function ChargesSection({
           </CardTitle>
           
           <div className="flex items-center gap-4">
-             {/* ✅ BUTTON: Auto Categorize (Visible only if needed) */}
              {uncategorizedCount > 0 && (
                 <Button 
                     variant="outline" 
@@ -298,9 +299,6 @@ export default function ChargesSection({
                 placeholder="Ex: EDF, Loyer, Assurance..."
                 required
               />
-              {isAnalyzing && (
-                <p className="text-xs text-muted-foreground mt-1">🔄 Analyse de la catégorie...</p>
-              )}
               {detectedCategory && (
                 <p className="text-xs text-green-600 mt-1">✓ Catégorie détectée: {getCategoryLabel(detectedCategory)}</p>
               )}
@@ -317,6 +315,23 @@ export default function ChargesSection({
                 placeholder="0.00"
                 required
               />
+            </div>
+
+            {/* ✅ NOUVEAU CHAMP : DÉTAILS OPTIONNELS */}
+            <div>
+                <Label htmlFor="charge-desc" className="flex items-center gap-1">
+                    Détails / Critères <span className="text-xs font-normal text-muted-foreground">(Optionnel)</span>
+                </Label>
+                <Input
+                    id="charge-desc"
+                    value={newChargeDescription}
+                    onChange={(e) => setNewChargeDescription(e.target.value)}
+                    placeholder="Ex: 35m2 Paris, Tous risques, 9kVA..."
+                    className="mt-1"
+                />
+                <p className="text-[10px] text-muted-foreground mt-1 flex items-center gap-1">
+                    <Info className="h-3 w-3" /> Aide l'IA à comparer ce qui est comparable.
+                </p>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -340,6 +355,7 @@ export default function ChargesSection({
                   setShowAddForm(false);
                   setNewChargeLabel('');
                   setNewChargeAmount('');
+                  setNewChargeDescription('');
                   setStartDate('');
                   setEndDate('');
                   setDetectedCategory('');
@@ -357,7 +373,7 @@ export default function ChargesSection({
 }
 
 // ============================================================================
-// ChargeItem - VERSION MOBILE-OPTIMIZED AVEC MODE ÉDITION VERTICAL
+// Internal ChargeItem Component (With Edit Mode)
 // ============================================================================
 
 interface ChargeItemProps {
@@ -373,6 +389,7 @@ function ChargeItem({ charge, onUpdate, onDelete, onLinkTransaction, mappedTotal
   const [isEditing, setIsEditing] = useState(false);
   const [editLabel, setEditLabel] = useState(charge.label);
   const [editAmount, setEditAmount] = useState(charge.amount.toString());
+  const [editDescription, setEditDescription] = useState(charge.description || ''); // ✅ EDIT STATE
   const [editStartDate, setEditStartDate] = useState(charge.startDate);
   const [editEndDate, setEditEndDate] = useState(charge.endDate);
 
@@ -380,6 +397,7 @@ function ChargeItem({ charge, onUpdate, onDelete, onLinkTransaction, mappedTotal
     onUpdate(charge.id, {
       label: editLabel,
       amount: parseFloat(editAmount) || 0,
+      description: editDescription, // ✅ SAVE DESCRIPTION
       startDate: editStartDate,
       endDate: editEndDate
     });
@@ -389,6 +407,7 @@ function ChargeItem({ charge, onUpdate, onDelete, onLinkTransaction, mappedTotal
   const handleCancel = () => {
     setEditLabel(charge.label);
     setEditAmount(charge.amount.toString());
+    setEditDescription(charge.description || '');
     setEditStartDate(charge.startDate);
     setEditEndDate(charge.endDate);
     setIsEditing(false);
@@ -399,122 +418,66 @@ function ChargeItem({ charge, onUpdate, onDelete, onLinkTransaction, mappedTotal
   const hasRealityCheck = mappedTotal !== undefined && mappedTotal > 0;
   const differsFromBudget = hasRealityCheck && Math.abs(mappedTotal - charge.amount) > 0.5;
 
-  // ✅ MODE ÉDITION - LAYOUT VERTICAL MOBILE-FRIENDLY
+  // ✅ MODE ÉDITION
   if (isEditing) {
     return (
       <div className="p-4 bg-white rounded-lg border-2 border-orange-300 shadow-lg space-y-3">
-        {/* Header mode édition */}
         <div className="flex items-center justify-between pb-2 border-b border-orange-100">
           <h4 className="font-medium text-sm text-orange-900">✏️ Mode édition</h4>
           <div className="flex gap-1">
-            <Button 
-              size="sm" 
-              onClick={handleSave} 
-              className="h-8 px-3 bg-orange-600 hover:bg-orange-700 text-white"
-            >
-              <Save className="h-3.5 w-3.5 mr-1" />
-              Sauver
+            <Button size="sm" onClick={handleSave} className="h-8 px-3 bg-orange-600 hover:bg-orange-700 text-white">
+              <Save className="h-3.5 w-3.5 mr-1" /> Sauver
             </Button>
-            <Button 
-              size="sm" 
-              variant="ghost" 
-              onClick={handleCancel} 
-              className="h-8 px-3"
-            >
-              <X className="h-3.5 w-3.5 mr-1" />
-              Annuler
+            <Button size="sm" variant="ghost" onClick={handleCancel} className="h-8 px-3">
+              <X className="h-3.5 w-3.5 mr-1" /> Annuler
             </Button>
           </div>
         </div>
 
-        {/* Champs d'édition - VERTICAL sur mobile */}
         <div className="space-y-3">
-          {/* Libellé */}
           <div className="space-y-1.5">
-            <Label htmlFor={`edit-label-${charge.id}`} className="text-xs font-medium">
-              Libellé
-            </Label>
+            <Label className="text-xs font-medium">Libellé</Label>
+            <Input value={editLabel} onChange={(e) => setEditLabel(e.target.value)} className="w-full" />
+          </div>
+
+          <div className="space-y-1.5">
+            <Label className="text-xs font-medium">Montant mensuel (€)</Label>
+            <Input type="number" step="0.01" value={editAmount} onChange={(e) => setEditAmount(e.target.value)} className="w-full" />
+          </div>
+
+          {/* ✅ NOUVEAU CHAMP ÉDITION : DETAILS */}
+          <div className="space-y-1.5">
+            <Label className="text-xs font-medium">Détails / Critères (IA)</Label>
             <Input 
-              id={`edit-label-${charge.id}`}
-              value={editLabel} 
-              onChange={(e) => setEditLabel(e.target.value)} 
-              className="w-full"
-              placeholder="Nom de la charge"
+                value={editDescription} 
+                onChange={(e) => setEditDescription(e.target.value)} 
+                className="w-full text-xs" 
+                placeholder="Ex: 50m2, option base..." 
             />
           </div>
 
-          {/* Montant */}
-          <div className="space-y-1.5">
-            <Label htmlFor={`edit-amount-${charge.id}`} className="text-xs font-medium">
-              Montant mensuel (€)
-            </Label>
-            <Input 
-              id={`edit-amount-${charge.id}`}
-              type="number" 
-              step="0.01" 
-              value={editAmount} 
-              onChange={(e) => setEditAmount(e.target.value)} 
-              className="w-full"
-              placeholder="0.00"
-            />
-          </div>
-
-          {/* Dates - 2 colonnes sur desktop, 1 sur mobile */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="space-y-1.5">
-              <Label htmlFor={`edit-start-${charge.id}`} className="text-xs font-medium text-muted-foreground">
-                Date début
-              </Label>
-              <Input 
-                id={`edit-start-${charge.id}`}
-                type="date" 
-                value={editStartDate || ''} 
-                onChange={(e) => setEditStartDate(e.target.value)} 
-                className="w-full"
-              />
+              <Label className="text-xs font-medium text-muted-foreground">Date début</Label>
+              <Input type="date" value={editStartDate || ''} onChange={(e) => setEditStartDate(e.target.value)} className="w-full" />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor={`edit-end-${charge.id}`} className="text-xs font-medium text-muted-foreground">
-                Date fin
-              </Label>
-              <Input 
-                id={`edit-end-${charge.id}`}
-                type="date" 
-                value={editEndDate || ''} 
-                onChange={(e) => setEditEndDate(e.target.value)} 
-                className="w-full"
-              />
+              <Label className="text-xs font-medium text-muted-foreground">Date fin</Label>
+              <Input type="date" value={editEndDate || ''} onChange={(e) => setEditEndDate(e.target.value)} className="w-full" />
             </div>
           </div>
-
-          {/* Bouton effacer dates si présentes */}
-          {(editStartDate || editEndDate) && (
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              className="w-full text-xs text-muted-foreground hover:text-destructive"
-              onClick={() => {
-                setEditStartDate(undefined);
-                setEditEndDate(undefined);
-              }}
-            >
-              <X className="h-3 w-3 mr-1" />
-              Effacer les dates
-            </Button>
-          )}
         </div>
       </div>
     );
   }
 
-  // ✅ MODE AFFICHAGE - Layout adaptatif
+  // ✅ MODE AFFICHAGE
   return (
     <div className={cn(
       "p-3 bg-white rounded-lg border border-transparent",
       "hover:bg-orange-50/50 hover:border-orange-200 transition-colors group",
       "flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-2"
     )}>
-      {/* Bloc 1 : Informations */}
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 flex-wrap">
           <span className="font-medium text-sm truncate">{charge.label}</span>
@@ -530,6 +493,13 @@ function ChargeItem({ charge, onUpdate, onDelete, onLinkTransaction, mappedTotal
           )}
         </div>
         
+        {/* ✅ AFFICHAGE DISCRET DE LA DESCRIPTION SI PRÉSENTE */}
+        {charge.description && (
+            <p className="text-[11px] text-muted-foreground mt-0.5 italic truncate flex items-center gap-1">
+                <Info className="h-3 w-3 inline" /> {charge.description}
+            </p>
+        )}
+        
         {hasDates && (
           <div className="flex items-center gap-1 mt-1 text-xs text-muted-foreground">
             <Clock className="h-3 w-3 flex-shrink-0" />
@@ -543,18 +513,15 @@ function ChargeItem({ charge, onUpdate, onDelete, onLinkTransaction, mappedTotal
         )}
       </div>
 
-      {/* Bloc 2 : Montant + Actions */}
       <div className="flex items-center justify-between sm:justify-end gap-2 sm:gap-1">
         <span className="font-bold text-orange-900 text-sm sm:mr-2">
           {charge.amount.toFixed(2)}€
         </span>
 
-        {/* Actions - Toujours visibles sur mobile, hover sur desktop */}
         <div className={cn(
           "flex gap-0.5",
           "opacity-100 sm:opacity-0 sm:group-hover:opacity-100 sm:transition-opacity"
         )}>
-          {/* Toggle Suggestions */}
           <Button
             variant="ghost"
             size="icon"
@@ -568,7 +535,6 @@ function ChargeItem({ charge, onUpdate, onDelete, onLinkTransaction, mappedTotal
             {charge.ignoreSuggestions ? <LightbulbOff className="h-4 w-4 sm:h-3.5 sm:w-3.5" /> : <Lightbulb className="h-4 w-4 sm:h-3.5 sm:w-3.5" />}
           </Button>
 
-          {/* Link Transaction */}
           {onLinkTransaction && (
             <Button
               variant="ghost"
@@ -584,7 +550,6 @@ function ChargeItem({ charge, onUpdate, onDelete, onLinkTransaction, mappedTotal
             </Button>
           )}
 
-          {/* Edit Button */}
           <Button 
             variant="ghost" 
             size="icon"
@@ -595,7 +560,6 @@ function ChargeItem({ charge, onUpdate, onDelete, onLinkTransaction, mappedTotal
             ✏️
           </Button>
 
-          {/* Delete Button */}
           <Button 
             variant="ghost" 
             size="icon"
