@@ -1,4 +1,6 @@
 // src/pages/Beta2Page.tsx - VERSION OPTIMISÉE COMPLÈTE
+// ✅ CORRIGÉ : householdSize + location + currency ajoutés partout
+
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api, { budgetAPI } from '../services/api';
@@ -31,7 +33,7 @@ import MemberManagementSection from '../components/budget/MemberManagementSectio
 import { RealityCheck } from '../components/budget/RealityCheck'; 
 import { EnableBankingManager } from '../components/budget/EnableBankingManager';
 import { TransactionMapper, MappedTransaction, BridgeTransaction } from '../components/budget/TransactionMapper';
-import { LayoutDashboard, Users, Receipt, Target, CalendarDays, FlaskConical } from "lucide-react";
+import { LayoutDashboard, Users, Receipt, Target, CalendarDays, FlaskConical, MapPin, DollarSign } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { useTutorial } from '../contexts/TutorialContext';
 import { DEMO_TRANSACTIONS, DEMO_BANK_BALANCE, DEMO_MODE_LIMITS } from '@/constants/demoData';
@@ -50,6 +52,19 @@ const BUDGET_NAV_ITEMS: NavItem[] = [
 
 const MONTHS = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
 
+const LOCATION_CONFIGS = [
+  { code: 'FR', name: 'France', currency: 'EUR', symbol: '€' },
+  { code: 'DE', name: 'Allemagne', currency: 'EUR', symbol: '€' },
+  { code: 'ES', name: 'Espagne', currency: 'EUR', symbol: '€' },
+  { code: 'IT', name: 'Italie', currency: 'EUR', symbol: '€' },
+  { code: 'PT', name: 'Portugal', currency: 'EUR', symbol: '€' },
+  { code: 'BE', name: 'Belgique', currency: 'EUR', symbol: '€' },
+  { code: 'NL', name: 'Pays-Bas', currency: 'EUR', symbol: '€' },
+  { code: 'AT', name: 'Autriche', currency: 'EUR', symbol: '€' },
+  { code: 'CH', name: 'Suisse', currency: 'CHF', symbol: 'CHF' },
+  { code: 'GB', name: 'Royaume-Uni', currency: 'GBP', symbol: '£' },
+];
+
 interface ExtendedBudgetData extends RawBudgetData {
   chargeMappings?: MappedTransaction[];
 }
@@ -65,6 +80,8 @@ interface BudgetData {
   name: string;
   is_owner: boolean;
   members: BudgetMember[];
+  location?: string; // ✅ AJOUTÉ
+  currency?: string; // ✅ AJOUTÉ
 }
 
 export default function Beta2Page() {
@@ -92,6 +109,10 @@ export default function Beta2Page() {
   const [isDemoMode, setIsDemoMode] = useState(false);
   const [demoTransactions, setDemoTransactions] = useState<BridgeTransaction[]>([]);
   const [demoBankBalance, setDemoBankBalance] = useState(0);
+
+  // ✅ AJOUTÉ : États pour location et currency
+  const [budgetLocation, setBudgetLocation] = useState<string>('FR');
+  const [budgetCurrency, setBudgetCurrency] = useState<string>('EUR');
 
   const globalDataRef = useRef<any>(null);
 
@@ -259,6 +280,11 @@ export default function Beta2Page() {
         budgetAPI.getData(id)
       ]);
       setBudget(budgetResponse.data);
+      
+      // ✅ Charger location et currency depuis les métadonnées du budget
+      setBudgetLocation(budgetResponse.data.location || 'FR');
+      setBudgetCurrency(budgetResponse.data.currency || 'EUR');
+      
       const raw = dataResponse.data as ExtendedBudgetData;
       setChargeMappings(raw.chargeMappings || []);
       const data = convertOldFormatToNew(raw);
@@ -385,7 +411,6 @@ export default function Beta2Page() {
     if (!id) return;
     if (!silent) setSaving(true);
 
-    // 1. Capture the CURRENT state of the UI (what the user sees right now)
     const currentViewData = { 
       budgetTitle, 
       currentYear, 
@@ -400,28 +425,20 @@ export default function Beta2Page() {
       lockedMonths 
     };
 
-    // 2. Convert this "view state" into the "storage format" (YearlyData map)
     const formattedCurrent = convertNewFormatToOld(currentViewData as any);
-
-    // 3. Merge this into the Global Data Ref (to preserve other years)
-    // We clone the ref to avoid mutating it directly before we are sure
     const finalPayload = JSON.parse(JSON.stringify(globalDataRef.current || {}));
 
-    // Ensure basic fields are present
     finalPayload.budgetTitle = budgetTitle;
     finalPayload.people = people;
     finalPayload.charges = charges;
     finalPayload.projects = projects;
     finalPayload.lastUpdated = new Date().toISOString();
     finalPayload.updatedBy = user?.name;
-    finalPayload.version = '2.3'; // Increment version to force update if needed
+    finalPayload.version = '2.3';
 
-    // Initialize containers if missing
     if (!finalPayload.yearlyData) finalPayload.yearlyData = {};
     if (!finalPayload.oneTimeIncomes) finalPayload.oneTimeIncomes = {};
 
-    // 4. CRITICAL: Explicitly save the CURRENT YEAR data into the global payload
-    // We take the data we just formatted and put it into the [currentYear] slot
     const sourceYearlyData = formattedCurrent.yearlyData || {};
     const sourceOneTime = formattedCurrent.oneTimeIncomes || {};
 
@@ -433,10 +450,8 @@ export default function Beta2Page() {
     }
 
     try {
-      // 5. Send to Backend
       await budgetAPI.updateData(id, { data: finalPayload });
       
-      // 6. Update local refs to match what we just saved (sync source of truth)
       setLastServerUpdate(finalPayload.lastUpdated);
       globalDataRef.current = finalPayload;
 
@@ -585,9 +600,24 @@ export default function Beta2Page() {
           >
             ← Retour au Dashboard
           </button>
-          <div className="flex items-center gap-2 bg-indigo-50 border border-indigo-200 rounded-lg px-4 py-2">
-            <FlaskConical className="h-4 w-4 text-indigo-600" />
-            <span className="text-sm font-medium text-indigo-900">Mode Beta 2 actif</span>
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2 bg-indigo-50 border border-indigo-200 rounded-lg px-4 py-2">
+              <FlaskConical className="h-4 w-4 text-indigo-600" />
+              <span className="text-sm font-medium text-indigo-900">Mode Beta 2 actif</span>
+            </div>
+            {/* ✅ Affichage localisation et devise */}
+            <div className="flex items-center gap-2 text-sm">
+              <div className="flex items-center gap-1.5 px-3 py-1.5 bg-white rounded-lg border border-gray-200">
+                <MapPin className="h-4 w-4 text-primary" />
+                <span className="font-medium">
+                  {LOCATION_CONFIGS.find(c => c.code === budgetLocation)?.name || budgetLocation}
+                </span>
+              </div>
+              <div className="flex items-center gap-1.5 px-3 py-1.5 bg-white rounded-lg border border-gray-200">
+                <DollarSign className="h-4 w-4 text-success" />
+                <span className="font-medium">{budgetCurrency}</span>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -634,24 +664,31 @@ export default function Beta2Page() {
 
         <ActionsBar onSave={() => handleSave(false)} saving={saving} />
 
+        {/* ✅ Propagation currency */}
         <div id="people">
-          <PeopleSection people={people} onPeopleChange={setPeople} />
+          <PeopleSection people={people} onPeopleChange={setPeople} currency={budgetCurrency} />
         </div>
 
+        {/* ✅ Propagation location + currency */}
         <div id="charges" className="mt-6">
           <ChargesSection 
             charges={charges} 
             onChargesChange={setCharges} 
             onLinkTransaction={handleOpenMapper} 
-            mappedTotals={mappedTotalsByChargeId} 
+            mappedTotals={mappedTotalsByChargeId}
+            budgetLocation={budgetLocation}
+            budgetCurrency={budgetCurrency}
           />
         </div>
         
+        {/* ✅ CORRIGÉ : householdSize + location + currency */}
         <div id="suggestions" className="mt-6">
           <EnhancedSuggestions 
             budgetId={id!} 
             charges={charges} 
-            memberCount={householdSize} 
+            householdSize={householdSize}
+            location={budgetLocation}
+            currency={budgetCurrency}
           />
         </div>
           
@@ -682,16 +719,19 @@ export default function Beta2Page() {
           </div>
         </div>
 
+        {/* ✅ Propagation currency */}
         <div id="projects" className="mt-8">
           <ProjectsSection 
             projects={projects} 
             onProjectsChange={setProjects} 
             yearlyData={yearlyData} 
             currentYear={currentYear} 
-            projectCarryOvers={projectCarryOvers} 
+            projectCarryOvers={projectCarryOvers}
+            currency={budgetCurrency}
           />
         </div>
 
+        {/* ✅ Propagation currency */}
         <div id="calendar" className="mt-8">
           <MonthlyTable 
             currentYear={currentYear} 
@@ -711,10 +751,12 @@ export default function Beta2Page() {
             onMonthCommentsChange={setMonthComments} 
             onProjectCommentsChange={setProjectComments} 
             onLockedMonthsChange={setLockedMonths} 
-            projectCarryOvers={projectCarryOvers} 
+            projectCarryOvers={projectCarryOvers}
+            currency={budgetCurrency}
           />
         </div>
 
+        {/* ✅ Propagation currency */}
         <div id="overview" className="mt-8">
           <StatsSection 
             currentYear={currentYear} 
@@ -722,7 +764,8 @@ export default function Beta2Page() {
             charges={charges} 
             projects={projects} 
             yearlyData={yearlyData} 
-            oneTimeIncomes={oneTimeIncomes} 
+            oneTimeIncomes={oneTimeIncomes}
+            currency={budgetCurrency}
           />
         </div>
       </div>
