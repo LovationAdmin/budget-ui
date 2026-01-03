@@ -1,5 +1,6 @@
 // src/pages/BudgetComplete.tsx
-// ✅ VERSION CORRIGÉE - Garde BudgetNavbar avec ses propres items de navigation
+// ✅ VERSION FINALE CORRIGÉE - Localisation + Devise intégrées partout
+// ✅ FIX: Ordre d'initialisation budgetLocation/budgetCurrency corrigé
 
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
@@ -31,10 +32,9 @@ import MonthlyTable from '../components/budget/MonthlyTable';
 import StatsSection from '../components/budget/StatsSection';
 import ActionsBar from '../components/budget/ActionsBar';
 import MemberManagementSection from '../components/budget/MemberManagementSection';
-import { LayoutDashboard, Users, Receipt, Target, CalendarDays } from "lucide-react";
+import { LayoutDashboard, Users, Receipt, Target, CalendarDays, MapPin, DollarSign } from "lucide-react";
 import { useTutorial } from '../contexts/TutorialContext';
 import EnhancedSuggestions from '@/components/budget/EnhancedSuggestions';
-import { MapPin, DollarSign } from "lucide-react";
 
 // ✅ Items de navigation SPÉCIFIQUES à la page Budget
 const BUDGET_NAV_ITEMS: NavItem[] = [
@@ -46,6 +46,7 @@ const BUDGET_NAV_ITEMS: NavItem[] = [
 ];
 
 const MONTHS = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
+
 const LOCATION_CONFIGS = [
   { code: 'FR', name: 'France', currency: 'EUR', symbol: '€' },
   { code: 'DE', name: 'Allemagne', currency: 'EUR', symbol: '€' },
@@ -254,8 +255,10 @@ export default function BudgetComplete() {
       
       if (rawData.lastUpdated) setLastServerUpdate(rawData.lastUpdated);
       else setLastServerUpdate(new Date().toISOString());
-      setBudgetLocation(data.location || 'FR');
-      setBudgetCurrency(data.currency || 'EUR');
+      
+      // ✅ FIX: Charger location/currency depuis budgetRes (métadonnées du budget)
+      setBudgetLocation(budgetRes.data.location || 'FR');
+      setBudgetCurrency(budgetRes.data.currency || 'EUR');
 
       const data = convertOldFormatToNew(rawData);
       console.log('🔄 [loadBudget] Converted data:', {
@@ -664,6 +667,7 @@ export default function BudgetComplete() {
                 </button>
               )}
             </div>
+            {/* ✅ Affichage localisation et devise */}
             <div className="flex items-center gap-4 text-sm">
               <div className="flex items-center gap-1.5 px-3 py-1.5 bg-white rounded-lg border border-gray-200">
                 <MapPin className="h-4 w-4 text-primary" />
@@ -693,10 +697,16 @@ export default function BudgetComplete() {
 
         <ActionsBar onSave={() => handleSave(false)} saving={saving} />
 
+        {/* ✅ Propagation currency à PeopleSection */}
         <div id="people">
-          <PeopleSection people={people} onPeopleChange={handlePeopleChange} />
+          <PeopleSection 
+            people={people} 
+            onPeopleChange={handlePeopleChange} 
+            currency={budgetCurrency} 
+          />
         </div>
         
+        {/* ✅ Propagation location/currency à ChargesSection */}
         <div id="charges" className="mt-6">
           <ChargesSection 
             charges={charges} 
@@ -706,6 +716,7 @@ export default function BudgetComplete() {
           />
         </div>
         
+        {/* ✅ Propagation location/currency à EnhancedSuggestions */}
         <div id="suggestions" className="mt-6">
           <EnhancedSuggestions 
             budgetId={id!}
@@ -716,16 +727,19 @@ export default function BudgetComplete() {
           />
         </div>
         
+        {/* ✅ Propagation currency à ProjectsSection */}
         <div id="projects" className="mt-6">
           <ProjectsSection 
             projects={projects} 
             onProjectsChange={handleProjectsChange} 
             yearlyData={yearlyData} 
             currentYear={currentYear} 
-            projectCarryOvers={projectCarryOvers} 
+            projectCarryOvers={projectCarryOvers}
+            currency={budgetCurrency}
           />
         </div>
 
+        {/* ✅ Propagation currency à MonthlyTable */}
         <div id="calendar" className="mt-6">
           <MonthlyTable 
             currentYear={currentYear} 
@@ -745,10 +759,12 @@ export default function BudgetComplete() {
             onProjectCommentsChange={handleProjectCommentsChange} 
             onLockedMonthsChange={handleLockedMonthsChange} 
             onYearChange={handleYearChange} 
-            projectCarryOvers={projectCarryOvers} 
+            projectCarryOvers={projectCarryOvers}
+            currency={budgetCurrency}
           />
         </div>
 
+        {/* ✅ Propagation currency à StatsSection */}
         <div className="mt-6">
           <StatsSection 
             people={people} 
@@ -756,7 +772,8 @@ export default function BudgetComplete() {
             projects={projects} 
             yearlyData={yearlyData} 
             oneTimeIncomes={oneTimeIncomes} 
-            currentYear={currentYear} 
+            currentYear={currentYear}
+            currency={budgetCurrency}
           />
         </div>
       </div>

@@ -1,38 +1,18 @@
 // src/pages/Signup.tsx
-// ✅ VERSION MISE À JOUR - Ajout localisation (country + postal_code)
-// ✅ ZÉRO RÉGRESSION - Tous les éléments existants conservés à 100%
+// ✅ VERSION CORRIGÉE - Localisation SUPPRIMÉE (maintenant au niveau budget)
 
-import { useState, FormEvent, useEffect, ChangeEvent } from 'react';
+import { useState, FormEvent, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Wallet, AlertCircle, Loader2, Mail, ShieldCheck, MapPin } from 'lucide-react';
+import { Wallet, AlertCircle, Loader2, Mail, ShieldCheck } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Footer } from '@/components/Footer';
 
-// ============================================================================
-// 🆕 SUPPORTED COUNTRIES (same as Profile.tsx)
-// ============================================================================
-
-const SUPPORTED_COUNTRIES = [
-  { code: 'FR', name: '🇫🇷 France' },
-  { code: 'BE', name: '🇧🇪 Belgique' },
-  { code: 'DE', name: '🇩🇪 Allemagne' },
-  { code: 'ES', name: '🇪🇸 Espagne' },
-  { code: 'IT', name: '🇮🇹 Italie' },
-  { code: 'PT', name: '🇵🇹 Portugal' },
-  { code: 'NL', name: '🇳🇱 Pays-Bas' },
-  { code: 'LU', name: '🇱🇺 Luxembourg' },
-  { code: 'AT', name: '🇦🇹 Autriche' },
-  { code: 'IE', name: '🇮🇪 Irlande' },
-];
-
 export default function Signup() {
-  // ✅ EXISTING STATE - PRESERVED 100%
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -42,27 +22,20 @@ export default function Signup() {
   const [hasPendingInvite, setHasPendingInvite] = useState(false);
   const [successMode, setSuccessMode] = useState(false);
   
-  // 🆕 NEW STATE - Location
-  const [country, setCountry] = useState('FR'); // Default to France
-  const [postalCode, setPostalCode] = useState('');
-  
   const { signup } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  // ✅ EXISTING EFFECT - PRESERVED 100%
   useEffect(() => {
     if (localStorage.getItem('pendingInvitation')) {
-        setHasPendingInvite(true);
+      setHasPendingInvite(true);
     }
   }, []);
 
-  // ✅ EXISTING HANDLER - Updated to include location
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError('');
 
-    // ✅ EXISTING VALIDATION - PRESERVED 100%
     if (password !== confirmPassword) {
       setError('Les mots de passe ne correspondent pas');
       return;
@@ -75,11 +48,10 @@ export default function Signup() {
 
     setLoading(true);
 
-    // 🆕 UPDATED - Pass country and postal_code to signup
-    const result = await signup(name, email, password, country, postalCode);
+    // ✅ CORRIGÉ : Plus de country/postal_code
+    const result = await signup(name, email, password);
 
     if (result.success) {
-      // ✅ EXISTING LOGIC - PRESERVED 100%
       toast({
         title: "Compte créé avec succès ! 🛡️",
         description: "Vos données sont chiffrées et sécurisées.",
@@ -101,37 +73,34 @@ export default function Signup() {
     setLoading(false);
   };
 
-  // ✅ SUCCESS MODE - PRESERVED 100%
   if (successMode) {
     return (
-        <div className="min-h-screen flex flex-col">
-            <div className="flex-1 flex items-center justify-center gradient-surface px-4">
-                <div className="max-w-md w-full bg-white rounded-xl shadow-lg p-8 text-center animate-scale-in">
-                    <div className="w-16 h-16 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <Mail className="h-8 w-8" />
-                    </div>
-                    <h2 className="text-2xl font-bold text-gray-900 mb-2">Vérifiez vos emails</h2>
-                    <p className="text-gray-600 mb-6">
-                        Un lien de confirmation a été envoyé à <strong>{email}</strong>.<br/>
-                        Veuillez cliquer dessus pour activer votre compte.
-                    </p>
-                    <Button onClick={() => navigate('/login')} variant="outline" className="w-full">
-                        Retour à la connexion
-                    </Button>
-                </div>
+      <div className="min-h-screen flex flex-col">
+        <div className="flex-1 flex items-center justify-center gradient-surface px-4">
+          <div className="max-w-md w-full bg-white rounded-xl shadow-lg p-8 text-center animate-scale-in">
+            <div className="w-16 h-16 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Mail className="h-8 w-8" />
             </div>
-            <Footer />
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">Vérifiez vos emails</h2>
+            <p className="text-gray-600 mb-6">
+              Un lien de confirmation a été envoyé à <strong>{email}</strong>.<br/>
+              Veuillez cliquer dessus pour activer votre compte.
+            </p>
+            <Button onClick={() => navigate('/login')} variant="outline" className="w-full">
+              Retour à la connexion
+            </Button>
+          </div>
         </div>
+        <Footer />
+      </div>
     );
   }
 
-  // ✅ MAIN FORM - All existing elements preserved, location added
   return (
     <div className="min-h-screen flex flex-col">
       <div className="flex-1 flex items-center justify-center gradient-surface px-4 py-12">
         <div className="w-full max-w-md">
           
-          {/* ✅ EXISTING HEADER - PRESERVED 100% */}
           <div className="text-center mb-8 animate-slide-up">
             <div className="inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-[hsl(35_90%_65%)] mb-4 shadow-glow">
               <Wallet className="h-8 w-8 text-primary-foreground" />
@@ -144,28 +113,22 @@ export default function Signup() {
             </p>
           </div>
 
-          {/* ✅ EXISTING SECURITY BADGE - PRESERVED 100% */}
           <div className="mb-6 flex items-center justify-center gap-2 text-xs text-green-700 bg-green-50 py-2 px-4 rounded-full border border-green-100 w-fit mx-auto animate-fade-in">
             <ShieldCheck className="h-3 w-3" />
             <span>Données chiffrées & Privées (Zero-Knowledge)</span>
           </div>
 
-          {/* ✅ EXISTING PENDING INVITE ALERT - PRESERVED 100% */}
           {hasPendingInvite && (
-              <Alert className="mb-6 border-primary/50 bg-primary/10 animate-fade-in">
-                  <Mail className="h-4 w-4 text-primary" />
-                  <AlertDescription className="text-primary font-medium">
-                      Vous avez une invitation en attente !
-                  </AlertDescription>
-              </Alert>
+            <Alert className="mb-6 border-primary/50 bg-primary/10 animate-fade-in">
+              <Mail className="h-4 w-4 text-primary" />
+              <AlertDescription className="text-primary font-medium">
+                Vous avez une invitation en attente !
+              </AlertDescription>
+            </Alert>
           )}
 
           <div className="glass-card-elevated p-8 animate-scale-in">
             <form onSubmit={handleSubmit} className="space-y-6">
-              
-              {/* ============================================================ */}
-              {/* ✅ EXISTING FIELDS - PRESERVED 100% */}
-              {/* ============================================================ */}
               
               <div className="space-y-2">
                 <Label htmlFor="name">Nom complet</Label>
@@ -219,58 +182,6 @@ export default function Signup() {
                 />
               </div>
 
-              {/* ============================================================ */}
-              {/* 🆕 NEW SECTION - LOCATION */}
-              {/* ============================================================ */}
-
-              <div className="pt-4 border-t border-gray-200">
-                <div className="flex items-center gap-2 mb-4">
-                  <MapPin className="h-4 w-4 text-primary" />
-                  <h3 className="text-sm font-semibold text-gray-900">Localisation</h3>
-                </div>
-                
-                <div className="space-y-4">
-                  <div>
-                    <Label htmlFor="country">Pays</Label>
-                    <Select value={country} onValueChange={setCountry}>
-                      <SelectTrigger className="w-full h-11 mt-2">
-                        <SelectValue placeholder="Sélectionnez votre pays" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {SUPPORTED_COUNTRIES.map((c) => (
-                          <SelectItem key={c.code} value={c.code}>
-                            {c.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <p className="text-xs text-muted-foreground mt-2">
-                      Pour des suggestions de marché adaptées à votre région
-                    </p>
-                  </div>
-
-                  <div>
-                    <Label htmlFor="postalCode">Code postal (optionnel)</Label>
-                    <Input
-                      id="postalCode"
-                      type="text"
-                      value={postalCode}
-                      onChange={(e: ChangeEvent<HTMLInputElement>) => setPostalCode(e.target.value)}
-                      placeholder="75001"
-                      maxLength={10}
-                      className="h-11 mt-2"
-                    />
-                    <p className="text-xs text-muted-foreground mt-2">
-                      Pour des suggestions encore plus précises
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              {/* ============================================================ */}
-              {/* ✅ EXISTING ERROR & SUBMIT - PRESERVED 100% */}
-              {/* ============================================================ */}
-
               {error && (
                 <Alert variant="destructive">
                   <AlertCircle className="h-4 w-4" />
@@ -295,7 +206,6 @@ export default function Signup() {
               </Button>
             </form>
 
-            {/* ✅ EXISTING FOOTER LINK - PRESERVED 100% */}
             <div className="mt-6 text-center">
               <p className="text-sm text-muted-foreground">
                 Déjà un compte ?{' '}

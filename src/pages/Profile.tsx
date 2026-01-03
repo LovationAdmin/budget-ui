@@ -1,16 +1,15 @@
 // src/pages/Profile.tsx
-// ✅ VERSION CORRIGÉE - Utilise le composant Navbar avec menu fonctionnel
+// ✅ VERSION CORRIGÉE - Section localisation SUPPRIMÉE (maintenant au niveau budget)
 
 import { useState, FormEvent, ChangeEvent } from 'react';
 import { userAPI, budgetAPI } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
-import Navbar from '../components/Navbar'; // ✅ CHANGÉ : Import du composant Navbar
+import Navbar from '../components/Navbar';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, AlertTriangle, Trash2, HelpCircle, Download, MapPin } from 'lucide-react';
+import { ArrowLeft, AlertTriangle, Trash2, HelpCircle, Download } from 'lucide-react';
 import { AvatarPicker } from '../components/ui/avatar-picker';
 import { useTutorial } from '../contexts/TutorialContext';
 import {
@@ -24,27 +23,6 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
-// ============================================================================
-// SUPPORTED COUNTRIES
-// ============================================================================
-
-const SUPPORTED_COUNTRIES = [
-  { code: 'FR', name: '🇫🇷 France' },
-  { code: 'BE', name: '🇧🇪 Belgique' },
-  { code: 'DE', name: '🇩🇪 Allemagne' },
-  { code: 'ES', name: '🇪🇸 Espagne' },
-  { code: 'IT', name: '🇮🇹 Italie' },
-  { code: 'PT', name: '🇵🇹 Portugal' },
-  { code: 'NL', name: '🇳🇱 Pays-Bas' },
-  { code: 'LU', name: '🇱🇺 Luxembourg' },
-  { code: 'AT', name: '🇦🇹 Autriche' },
-  { code: 'IE', name: '🇮🇪 Irlande' },
-];
-
-// ============================================================================
-// MAIN COMPONENT
-// ============================================================================
-
 export default function Profile() {
   const { user, logout, updateUser } = useAuth();
   const navigate = useNavigate();
@@ -54,10 +32,6 @@ export default function Profile() {
   // Profile State
   const [name, setName] = useState(user?.name || '');
   const [avatar, setAvatar] = useState(user?.avatar || '');
-  
-  // Location State
-  const [country, setCountry] = useState(user?.country || 'FR');
-  const [postalCode, setPostalCode] = useState(user?.postal_code || '');
   
   // Password State
   const [currentPassword, setCurrentPassword] = useState('');
@@ -70,7 +44,6 @@ export default function Profile() {
   
   // Loading States
   const [updating, setUpdating] = useState(false);
-  const [updatingLocation, setUpdatingLocation] = useState(false);
   const [changingPassword, setChangingPassword] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [exporting, setExporting] = useState(false);
@@ -104,39 +77,7 @@ export default function Profile() {
   };
 
   // ============================================================================
-  // 2. UPDATE LOCATION
-  // ============================================================================
-
-  const handleUpdateLocation = async (e: FormEvent) => {
-    e.preventDefault();
-    setUpdatingLocation(true);
-
-    try {
-      await userAPI.updateLocation({ 
-        country, 
-        postal_code: postalCode 
-      });
-      
-      updateUser({ country, postal_code: postalCode });
-      
-      toast({ 
-        title: "Localisation mise à jour", 
-        description: "Vos suggestions de marché seront adaptées à votre pays.", 
-        variant: "default" 
-      });
-    } catch (err: any) {
-      toast({ 
-        title: "Erreur", 
-        description: err.response?.data?.error || 'Erreur lors de la mise à jour', 
-        variant: "destructive" 
-      });
-    } finally {
-      setUpdatingLocation(false);
-    }
-  };
-
-  // ============================================================================
-  // 3. CHANGE PASSWORD
+  // 2. CHANGE PASSWORD
   // ============================================================================
 
   const handleChangePassword = async (e: FormEvent) => {
@@ -187,7 +128,7 @@ export default function Profile() {
   };
 
   // ============================================================================
-  // 4. DELETE ACCOUNT
+  // 3. DELETE ACCOUNT
   // ============================================================================
 
   const handleDeleteAccount = async () => {
@@ -222,7 +163,7 @@ export default function Profile() {
   };
 
   // ============================================================================
-  // 5. GDPR EXPORT
+  // 4. GDPR EXPORT
   // ============================================================================
 
   const handleGDPRExport = async () => {
@@ -264,7 +205,6 @@ export default function Profile() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary-50 to-purple-50 flex flex-col">
-      {/* ✅ CHANGÉ : Utilisation du composant Navbar avec items de navigation */}
       <Navbar />
             
       <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -327,61 +267,7 @@ export default function Profile() {
         </div>
 
         {/* ============================================================================ */}
-        {/* SECTION 2: LOCATION */}
-        {/* ============================================================================ */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-6 flex items-center gap-2">
-            <MapPin className="h-5 w-5" />
-            Localisation
-          </h2>
-          <form onSubmit={handleUpdateLocation}>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Pays
-                </label>
-                <Select value={country} onValueChange={setCountry}>
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Sélectionnez votre pays" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {SUPPORTED_COUNTRIES.map((c) => (
-                      <SelectItem key={c.code} value={c.code}>
-                        {c.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <p className="text-xs text-muted-foreground mt-2">
-                  Vos suggestions de marché seront adaptées à votre localisation
-                </p>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Code postal (optionnel)
-                </label>
-                <Input
-                  type="text"
-                  value={postalCode}
-                  onChange={(e: ChangeEvent<HTMLInputElement>) => setPostalCode(e.target.value)}
-                  placeholder="75001"
-                  maxLength={10}
-                />
-                <p className="text-xs text-muted-foreground mt-2">
-                  Pour des suggestions encore plus précises (future fonctionnalité)
-                </p>
-              </div>
-
-              <Button type="submit" variant="gradient" disabled={updatingLocation}>
-                {updatingLocation ? 'Mise à jour...' : 'Mettre à jour la localisation'}
-              </Button>
-            </div>
-          </form>
-        </div>
-
-        {/* ============================================================================ */}
-        {/* SECTION 3: CHANGE PASSWORD */}
+        {/* SECTION 2: CHANGE PASSWORD */}
         {/* ============================================================================ */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
           <h2 className="text-xl font-semibold text-gray-900 mb-6">
@@ -435,7 +321,7 @@ export default function Profile() {
         </div>
 
         {/* ============================================================================ */}
-        {/* SECTION 4: GDPR EXPORT */}
+        {/* SECTION 3: GDPR EXPORT */}
         {/* ============================================================================ */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
           <h2 className="text-xl font-semibold text-gray-900 mb-4">
@@ -460,7 +346,7 @@ export default function Profile() {
         </div>
 
         {/* ============================================================================ */}
-        {/* SECTION 5: TUTORIAL */}
+        {/* SECTION 4: TUTORIAL */}
         {/* ============================================================================ */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
           <h2 className="text-xl font-semibold text-gray-900 mb-4">
@@ -480,7 +366,7 @@ export default function Profile() {
         </div>
 
         {/* ============================================================================ */}
-        {/* SECTION 6: DANGER ZONE */}
+        {/* SECTION 5: DANGER ZONE */}
         {/* ============================================================================ */}
         <div className="bg-red-50 rounded-xl border border-red-200 p-6">
           <div className="flex items-center gap-3 mb-4">
@@ -541,4 +427,4 @@ export default function Profile() {
       </AlertDialog>
     </div>
   );
-} 
+}
