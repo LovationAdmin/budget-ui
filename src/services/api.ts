@@ -1,6 +1,6 @@
 // src/services/api.ts
-// ✅ VERSION FINALE CORRIGÉE - Ajout location + currency dans BudgetCreateData
-// ✅ ZÉRO RÉGRESSION - Tous les endpoints et types existants conservés à 100%
+// ✅ VERSION FINALE CORRIGÉE - Support complet Location/Currency + SmartTools
+// ✅ ZÉRO RÉGRESSION
 
 import axios, { InternalAxiosRequestConfig, AxiosResponse } from 'axios';
 
@@ -248,11 +248,16 @@ export const budgetAPI = {
   ): Promise<AxiosResponse<BulkAnalyzeResponse>> => 
     api.post(`/budgets/${budgetId}/suggestions/bulk-analyze`, data),
 
+  // ✅ MISE À JOUR : Support complet country/currency pour SmartTools
   analyzeSingleCharge: (data: {
     category: string;
     merchant_name?: string;
     current_amount: number;
     household_size?: number;
+    description?: string;
+    budget_id?: string; // Optionnel (pour utilisateurs connectés)
+    country?: string;   // ✅ Optionnel (pour SmartTools)
+    currency?: string;  // ✅ Optionnel (pour SmartTools)
   }): Promise<AxiosResponse<MarketSuggestion>> =>
     api.post('/suggestions/analyze', data),
 
