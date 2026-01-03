@@ -1,6 +1,6 @@
 // src/pages/SmartTools.tsx
 // 🤖 Smart Tools IA - Version Publique avec Sélecteur de Pays
-// ✅ AJOUT : Sélecteur de pays pour adapter l'analyse au marché
+// ✅ VERSION FINALE : Responsive mobile + Description 50 caractères max
 
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -16,6 +16,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Badge } from '@/components/ui/badge';
 import {
   Select,
   SelectContent,
@@ -30,7 +31,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { budgetAPI, MarketSuggestion } from '@/services/api';
+import { budgetAPI, MarketSuggestion, Competitor } from '@/services/api';
 import { useToast } from '@/hooks/use-toast';
 
 // ✅ CONFIGURATION DES PAYS DISPONIBLES
