@@ -82,7 +82,6 @@ const BudgetListSkeleton = memo(function BudgetListSkeleton() {
             </div>
             <Skeleton className="h-10 w-10 rounded-full" />
           </div>
-          
           <div className="flex items-center justify-between pt-4 border-t border-border/50">
             <div className="flex -space-x-2">
               <Skeleton className="h-8 w-8 rounded-full" />
@@ -104,14 +103,12 @@ interface BudgetCardProps {
   onOpen: (id: string) => void;
   onOpenBeta: (id: string) => void;
   onDelete: (budget: Budget) => void;
-  onEdit: (budget: Budget) => void; // ✅ AJOUT : Callback d'édition
+  onEdit: (budget: Budget) => void;
 }
 
 const BudgetCard = memo(function BudgetCard({ budget, onOpen, onOpenBeta, onDelete, onEdit }: BudgetCardProps) {
-  const handleOpen = useCallback(() => {
-    onOpen(budget.id);
-  }, [budget.id, onOpen]);
-
+  const handleOpen = useCallback(() => onOpen(budget.id), [budget.id, onOpen]);
+  
   const handleOpenBeta = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
     onOpenBeta(budget.id);
@@ -127,14 +124,12 @@ const BudgetCard = memo(function BudgetCard({ budget, onOpen, onOpenBeta, onDele
     onEdit(budget);
   }, [budget, onEdit]);
 
-  const members = budget.members
-    .filter(m => m.user)
-    .map(m => ({
+  const members = budget.members.filter(m => m.user).map(m => ({
       name: m.user!.name,
       image: m.user!.avatar,
-    }));
+  }));
 
-  const locationInfo = LOCATION_CONFIGS.find(c => c.code === budget.location);
+  const locationInfo = LOCATION_CONFIGS.find(c => c.code === budget.location) || LOCATION_CONFIGS[0];
 
   return (
     <div 
@@ -147,16 +142,13 @@ const BudgetCard = memo(function BudgetCard({ budget, onOpen, onOpenBeta, onDele
             {budget.name}
           </h3>
           
-          {/* Badge Localisation & Devise */}
-          {locationInfo && (
-            <div className="flex items-center gap-2 mb-2 text-xs text-muted-foreground bg-secondary/30 w-fit px-2 py-0.5 rounded-full border border-secondary/50">
+          <div className="flex items-center gap-2 mb-2 text-xs text-muted-foreground bg-secondary/30 w-fit px-2 py-0.5 rounded-full border border-secondary/50">
                <span className="flex items-center gap-1">
                   <MapPin className="h-3 w-3" /> {locationInfo.name}
                </span>
                <span className="opacity-30">|</span>
                <span className="font-medium">{locationInfo.currency}</span>
-            </div>
-          )}
+          </div>
 
           <p className="text-sm text-muted-foreground">
             Créé le {new Date(budget.created_at).toLocaleDateString('fr-FR')}
@@ -176,16 +168,11 @@ const BudgetCard = memo(function BudgetCard({ budget, onOpen, onOpenBeta, onDele
         )}
         
         <div className="flex items-center gap-1">
-          <Button 
-            variant="ghost" 
-            size="sm"
-            className="gap-1 px-2"
-          >
+          <Button variant="ghost" size="sm" className="gap-1 px-2">
             <span className="hidden sm:inline">Ouvrir</span>
             <ArrowRight className="h-4 w-4" />
           </Button>
           
-          {/* Bouton Beta */}
           <Button
             variant="ghost"
             size="sm"
@@ -198,39 +185,17 @@ const BudgetCard = memo(function BudgetCard({ budget, onOpen, onOpenBeta, onDele
           
           {budget.is_owner && (
             <>
-                {/* ✅ AJOUT : Bouton Éditer */}
-                <Button
-                variant="ghost"
-                size="icon"
-                onClick={handleEdit}
-                className="text-muted-foreground hover:text-primary h-8 w-8"
-                title="Modifier le budget"
-                >
-                <Pencil className="h-4 w-4" />
+                <Button variant="ghost" size="icon" onClick={handleEdit} className="text-muted-foreground hover:text-primary h-8 w-8" title="Modifier">
+                   <Pencil className="h-4 w-4" />
                 </Button>
-
-                <Button
-                variant="ghost"
-                size="icon"
-                onClick={handleDelete}
-                className="text-muted-foreground hover:text-destructive h-8 w-8"
-                title="Supprimer"
-                >
-                <Trash2 className="h-4 w-4" />
+                <Button variant="ghost" size="icon" onClick={handleDelete} className="text-muted-foreground hover:text-destructive h-8 w-8" title="Supprimer">
+                   <Trash2 className="h-4 w-4" />
                 </Button>
             </>
           )}
         </div>
       </div>
     </div>
-  );
-}, (prevProps, nextProps) => {
-  return (
-    prevProps.budget.id === nextProps.budget.id &&
-    prevProps.budget.name === nextProps.budget.name &&
-    prevProps.budget.members.length === nextProps.budget.members.length &&
-    prevProps.budget.location === nextProps.budget.location &&
-    prevProps.budget.currency === nextProps.budget.currency
   );
 });
 
@@ -252,7 +217,7 @@ export default function Dashboard() {
   const [newBudgetCurrency, setNewBudgetCurrency] = useState('EUR');
   const [creating, setCreating] = useState(false);
   
-  // ✅ Edit Modal States
+  // Edit Modal States
   const [budgetToEdit, setBudgetToEdit] = useState<Budget | null>(null);
   const [editName, setEditName] = useState('');
   const [editLocation, setEditLocation] = useState('');
@@ -269,43 +234,26 @@ export default function Dashboard() {
       setBudgets(Array.isArray(response.data) ? response.data : []);
     } catch (error) {
       console.error('Error loading budgets:', error);
-      toast({
-        title: "Erreur",
-        description: "Impossible de charger les budgets",
-        variant: "destructive"
-      });
-      setBudgets([]);
     } finally {
       setLoading(false);
     }
-  }, [toast]);
+  }, []);
 
-  useEffect(() => {
-    loadBudgets();
-  }, [loadBudgets]);
+  useEffect(() => { loadBudgets(); }, [loadBudgets]);
 
-  const handleOpenBudget = useCallback((id: string) => {
-    navigate(`/budget/${id}/complete`);
-  }, [navigate]);
-
-  const handleOpenBeta = useCallback((id: string) => {
-    navigate(`/beta2/${id}`);
-  }, [navigate]);
+  const handleOpenBudget = (id: string) => navigate(`/budget/${id}/complete`);
+  const handleOpenBeta = (id: string) => navigate(`/beta2/${id}`);
 
   // --- Handlers CREATION ---
-
   const handleCreateLocationChange = (locationCode: string) => {
     setNewBudgetLocation(locationCode);
     const config = LOCATION_CONFIGS.find(c => c.code === locationCode);
-    if (config) {
-        setNewBudgetCurrency(config.currency);
-    }
+    if (config) setNewBudgetCurrency(config.currency);
   };
 
-  const handleCreateBudget = useCallback(async (e: React.FormEvent) => {
+  const handleCreateBudget = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newBudgetName.trim()) return;
-
     setCreating(true);
     try {
       await budgetAPI.create({ 
@@ -314,29 +262,20 @@ export default function Dashboard() {
         location: newBudgetLocation,
         currency: newBudgetCurrency
       });
-      toast({
-        title: "Succès",
-        description: "Budget créé avec succès !",
-        variant: "default"
-      });
+      toast({ title: "Succès", description: "Budget créé avec succès !", variant: "default" });
       setShowCreateModal(false);
       setNewBudgetName('');
       setNewBudgetLocation('FR');
       setNewBudgetCurrency('EUR');
       loadBudgets();
     } catch (error: any) {
-      toast({
-        title: "Erreur",
-        description: error.response?.data?.error || "Impossible de créer le budget",
-        variant: "destructive"
-      });
+      toast({ title: "Erreur", description: error.response?.data?.error || "Impossible de créer le budget", variant: "destructive" });
     } finally {
       setCreating(false);
     }
-  }, [newBudgetName, newBudgetLocation, newBudgetCurrency, loadBudgets, toast]);
+  };
 
-  // --- Handlers EDITION (✅ NOUVEAU) ---
-
+  // --- Handlers EDITION ---
   const openEditModal = useCallback((budget: Budget) => {
       setBudgetToEdit(budget);
       setEditName(budget.name);
@@ -344,97 +283,52 @@ export default function Dashboard() {
       setEditCurrency(budget.currency || 'EUR');
   }, []);
 
-  const closeEditModal = useCallback(() => {
+  const closeEditModal = () => {
       setBudgetToEdit(null);
       setEditName('');
-      setEditLocation('');
-      setEditCurrency('');
-  }, []);
+  };
 
   const handleEditLocationChange = (locationCode: string) => {
     setEditLocation(locationCode);
     const config = LOCATION_CONFIGS.find(c => c.code === locationCode);
-    if (config) {
-        setEditCurrency(config.currency);
-    }
+    if (config) setEditCurrency(config.currency);
   };
 
-  const handleUpdateBudget = useCallback(async (e: React.FormEvent) => {
+  const handleUpdateBudget = async (e: React.FormEvent) => {
       e.preventDefault();
       if (!budgetToEdit || !editName.trim()) return;
-
       setUpdating(true);
       try {
-          // On suppose que l'API a une méthode update (sinon utiliser updateData ou adapter l'appel)
-          // Si tu utilises updateData pour le contenu JSON, assure-toi d'avoir une route pour les métadonnées (nom, location)
-          // Ici j'assume une route PATCH /budgets/:id
           await budgetAPI.update(budgetToEdit.id, {
               name: editName.trim(),
               location: editLocation,
               currency: editCurrency
           });
-
-          toast({
-              title: "Budget mis à jour",
-              description: "Les modifications ont été enregistrées.",
-          });
-          
+          toast({ title: "Budget mis à jour", description: "Les modifications ont été enregistrées." });
           closeEditModal();
           loadBudgets();
       } catch (error: any) {
-          toast({
-              title: "Erreur",
-              description: "Impossible de mettre à jour le budget",
-              variant: "destructive"
-          });
+          toast({ title: "Erreur", description: "Impossible de mettre à jour le budget", variant: "destructive" });
       } finally {
           setUpdating(false);
       }
-  }, [budgetToEdit, editName, editLocation, editCurrency, loadBudgets, toast, closeEditModal]);
-
+  };
 
   // --- Handlers SUPPRESSION ---
-
-  const confirmDelete = useCallback((budget: Budget) => {
-    setBudgetToDelete(budget);
-  }, []);
-
-  const handleDelete = useCallback(async () => {
+  const handleDelete = async () => {
     if (!budgetToDelete) return;
-
     setDeleting(true);
     try {
       await budgetAPI.delete(budgetToDelete.id);
-      toast({
-        title: "Succès",
-        description: "Budget supprimé",
-        variant: "default"
-      });
+      toast({ title: "Succès", description: "Budget supprimé", variant: "default" });
       setBudgetToDelete(null);
       loadBudgets();
     } catch (error) {
-      toast({
-        title: "Erreur",
-        description: "Impossible de supprimer le budget",
-        variant: "destructive"
-      });
+      toast({ title: "Erreur", description: "Impossible de supprimer le budget", variant: "destructive" });
     } finally {
       setDeleting(false);
     }
-  }, [budgetToDelete, loadBudgets, toast]);
-
-  const handleShowCreateModal = useCallback(() => {
-    setShowCreateModal(true);
-  }, []);
-
-  const handleCloseCreateModal = useCallback(() => {
-    setShowCreateModal(false);
-    setNewBudgetName('');
-  }, []);
-
-  const handleCancelDelete = useCallback(() => {
-    setBudgetToDelete(null);
-  }, []);
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary-50 to-purple-50 flex flex-col">
@@ -453,11 +347,7 @@ export default function Dashboard() {
                   : 'Créez votre premier budget pour commencer'}
               </p>
             </div>
-            <Button 
-              variant="default"
-              onClick={handleShowCreateModal}
-              className="gap-2 shadow-lg bg-primary hover:bg-primary/90"
-            >
+            <Button variant="default" onClick={() => setShowCreateModal(true)} className="gap-2 shadow-lg bg-primary hover:bg-primary/90">
               <Plus className="h-4 w-4" />
               Nouveau Budget
             </Button>
@@ -472,7 +362,7 @@ export default function Dashboard() {
             title="Aucun budget pour le moment"
             description="Créez votre premier budget pour commencer à gérer vos finances."
             actionLabel="Créer un budget"
-            onAction={handleShowCreateModal}
+            onAction={() => setShowCreateModal(true)}
           />
         ) : (
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
@@ -482,8 +372,8 @@ export default function Dashboard() {
                 budget={budget}
                 onOpen={handleOpenBudget}
                 onOpenBeta={handleOpenBeta}
-                onDelete={confirmDelete}
-                onEdit={openEditModal} // ✅ Pass edit handler
+                onDelete={() => setBudgetToDelete(budget)}
+                onEdit={openEditModal}
               />
             ))}
           </div>
@@ -492,174 +382,50 @@ export default function Dashboard() {
 
       <Footer />
 
-      {/* ========================================================= */}
-      {/* MODAL CRÉATION */}
-      {/* ========================================================= */}
-      <Dialog open={showCreateModal} onOpenChange={handleCloseCreateModal}>
+      {/* CREATE MODAL */}
+      <Dialog open={showCreateModal} onOpenChange={setShowCreateModal}>
         <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Créer un nouveau budget</DialogTitle>
-            <DialogDescription>
-              Configurez les détails de votre budget familial.
-            </DialogDescription>
-          </DialogHeader>
+          <DialogHeader><DialogTitle>Nouveau budget</DialogTitle><DialogDescription>Configurez votre budget.</DialogDescription></DialogHeader>
           <form onSubmit={handleCreateBudget}>
             <div className="space-y-4 py-4">
-              <div className="space-y-2">
-                <Label htmlFor="budget-name">Nom du budget</Label>
-                <Input
-                  id="budget-name"
-                  placeholder="Ex: Budget Famille 2025"
-                  value={newBudgetName}
-                  onChange={(e) => setNewBudgetName(e.target.value)}
-                  autoFocus
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="budget-location">Localisation (pour les estimations IA)</Label>
+              <div className="space-y-2"><Label>Nom</Label><Input value={newBudgetName} onChange={(e) => setNewBudgetName(e.target.value)} autoFocus /></div>
+              <div className="space-y-2"><Label>Localisation</Label>
                 <Select value={newBudgetLocation} onValueChange={handleCreateLocationChange}>
-                    <SelectTrigger>
-                        <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                        {LOCATION_CONFIGS.map((config) => (
-                            <SelectItem key={config.code} value={config.code}>
-                                {config.name} ({config.currency})
-                            </SelectItem>
-                        ))}
-                    </SelectContent>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>{LOCATION_CONFIGS.map((c) => (<SelectItem key={c.code} value={c.code}>{c.name} ({c.currency})</SelectItem>))}</SelectContent>
                 </Select>
               </div>
-              
-              <div className="flex items-center gap-2 p-3 bg-muted/50 rounded-lg text-sm text-muted-foreground border border-border/50">
-                  <DollarSign className="h-4 w-4" />
-                  <span>Devise détectée :</span>
-                  <span className="font-semibold text-foreground">{newBudgetCurrency}</span>
-              </div>
-
+              <div className="flex items-center gap-2 p-3 bg-muted/50 rounded-lg text-sm border"><DollarSign className="h-4 w-4" /><span>Devise : <strong>{newBudgetCurrency}</strong></span></div>
             </div>
-            <DialogFooter>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={handleCloseCreateModal}
-                disabled={creating}
-              >
-                Annuler
-              </Button>
-              <Button type="submit" disabled={creating || !newBudgetName.trim()}>
-                {creating ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Création...
-                  </>
-                ) : (
-                  'Créer'
-                )}
-              </Button>
-            </DialogFooter>
+            <DialogFooter><Button variant="outline" onClick={() => setShowCreateModal(false)}>Annuler</Button><Button type="submit" disabled={creating}>{creating ? 'Création...' : 'Créer'}</Button></DialogFooter>
           </form>
         </DialogContent>
       </Dialog>
 
-      {/* ========================================================= */}
-      {/* ✅ MODAL ÉDITION (NOUVEAU) */}
-      {/* ========================================================= */}
+      {/* EDIT MODAL */}
       <Dialog open={!!budgetToEdit} onOpenChange={(open) => !open && closeEditModal()}>
         <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Modifier le budget</DialogTitle>
-            <DialogDescription>
-              Modifiez le nom ou la localisation de ce budget.
-            </DialogDescription>
-          </DialogHeader>
+          <DialogHeader><DialogTitle>Modifier le budget</DialogTitle></DialogHeader>
           <form onSubmit={handleUpdateBudget}>
             <div className="space-y-4 py-4">
-              <div className="space-y-2">
-                <Label htmlFor="edit-budget-name">Nom du budget</Label>
-                <Input
-                  id="edit-budget-name"
-                  value={editName}
-                  onChange={(e) => setEditName(e.target.value)}
-                  autoFocus
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="edit-budget-location">Localisation</Label>
+              <div className="space-y-2"><Label>Nom</Label><Input value={editName} onChange={(e) => setEditName(e.target.value)} /></div>
+              <div className="space-y-2"><Label>Localisation</Label>
                 <Select value={editLocation} onValueChange={handleEditLocationChange}>
-                    <SelectTrigger>
-                        <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                        {LOCATION_CONFIGS.map((config) => (
-                            <SelectItem key={config.code} value={config.code}>
-                                {config.name} ({config.currency})
-                            </SelectItem>
-                        ))}
-                    </SelectContent>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>{LOCATION_CONFIGS.map((c) => (<SelectItem key={c.code} value={c.code}>{c.name} ({c.currency})</SelectItem>))}</SelectContent>
                 </Select>
               </div>
-              
-              <div className="flex items-center gap-2 p-3 bg-blue-50 text-blue-800 rounded-lg text-sm border border-blue-100">
-                  <DollarSign className="h-4 w-4" />
-                  <span>Nouvelle devise :</span>
-                  <span className="font-bold">{editCurrency}</span>
-              </div>
-              <p className="text-xs text-muted-foreground">Note: Changer la devise ne convertit pas les montants existants.</p>
-
+              <div className="flex items-center gap-2 p-3 bg-blue-50 text-blue-800 rounded-lg text-sm border border-blue-100"><DollarSign className="h-4 w-4" /><span>Devise : <strong>{editCurrency}</strong></span></div>
             </div>
-            <DialogFooter>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={closeEditModal}
-                disabled={updating}
-              >
-                Annuler
-              </Button>
-              <Button type="submit" disabled={updating || !editName.trim()}>
-                {updating ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Mise à jour...
-                  </>
-                ) : (
-                  'Enregistrer'
-                )}
-              </Button>
-            </DialogFooter>
+            <DialogFooter><Button variant="outline" onClick={closeEditModal}>Annuler</Button><Button type="submit" disabled={updating}>{updating ? 'Mise à jour...' : 'Enregistrer'}</Button></DialogFooter>
           </form>
         </DialogContent>
       </Dialog>
 
-      {/* Delete Confirmation Dialog */}
-      <AlertDialog open={!!budgetToDelete} onOpenChange={handleCancelDelete}>
+      <AlertDialog open={!!budgetToDelete} onOpenChange={() => setBudgetToDelete(null)}>
         <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Supprimer ce budget ?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Cette action est irréversible. Toutes les données du budget "{budgetToDelete?.name}" seront définitivement supprimées.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={deleting}>Annuler</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDelete}
-              disabled={deleting}
-              className="bg-destructive hover:bg-destructive/90"
-            >
-              {deleting ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Suppression...
-                </>
-              ) : (
-                'Supprimer'
-              )}
-            </AlertDialogAction>
-          </AlertDialogFooter>
+          <AlertDialogHeader><AlertDialogTitle>Supprimer ce budget ?</AlertDialogTitle><AlertDialogDescription>Action irréversible.</AlertDialogDescription></AlertDialogHeader>
+          <AlertDialogFooter><AlertDialogCancel>Annuler</AlertDialogCancel><AlertDialogAction onClick={handleDelete} className="bg-destructive">Supprimer</AlertDialogAction></AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
     </div>
