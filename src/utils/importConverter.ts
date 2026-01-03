@@ -14,7 +14,8 @@ export interface Charge {
   startDate?: string;
   endDate?: string;
   category?: string;
-  ignoreSuggestions?: boolean; // NEW: Allows disabling suggestions for this charge
+  ignoreSuggestions?: boolean;
+  description?: string;
 }
 
 export interface Project {

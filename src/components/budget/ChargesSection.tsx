@@ -21,6 +21,7 @@ import { cn } from "@/lib/utils";
 import type { Charge } from '@/utils/importConverter';
 import { budgetAPI } from '@/services/api';
 import { useToast } from "@/hooks/use-toast";
+import { Textarea } from "@/components/ui/textarea";
 
 interface ChargesSectionProps {
   charges: Charge[];
@@ -60,6 +61,8 @@ export default function ChargesSection({
     // Create a copy of charges to update
     const updatedCharges = [...charges];
 
+    const [newChargeDescription, setNewChargeDescription] = useState('');
+    
     try {
         // Process in parallel for speed
         await Promise.all(updatedCharges.map(async (charge, index) => {
