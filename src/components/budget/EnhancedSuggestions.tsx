@@ -13,7 +13,6 @@ import {
   RefreshCw,
   Users,
   Info,
-  ExternalLink,
   Phone,
   Mail,
   Globe
@@ -96,12 +95,8 @@ export default function EnhancedSuggestions({
   const [isExpanded, setIsExpanded] = useState(false);
   const [displayHouseholdSize, setDisplayHouseholdSize] = useState(householdSize);
 
-  // Symbol de devise
   const currencySymbol = currency === 'CHF' ? 'CHF' : '€';
-
-  // Ref to track the last data we actually analyzed to prevent loops
   const lastAnalyzedSignature = useRef<string>("");
-
   const { onSuggestionsReady, isConnected } = useNotifications();
 
   // Subscribe to WebSocket suggestions
@@ -125,14 +120,10 @@ export default function EnhancedSuggestions({
   // Loop Protection Logic
   useEffect(() => {
     if (!isConnected) return;
-
-    if (chargesSignature === lastAnalyzedSignature.current) {
-        return;
-    }
+    if (chargesSignature === lastAnalyzedSignature.current) return;
 
     const timer = setTimeout(() => {
       const relevantCharges = charges.filter(c => c.category && isRelevantCategory(c.category) && !c.ignoreSuggestions);
-      
       lastAnalyzedSignature.current = chargesSignature;
 
       if (relevantCharges.length > 0) {
@@ -146,7 +137,6 @@ export default function EnhancedSuggestions({
 
   const processResults = (data: any) => {
     const rawSuggestions = data.suggestions || [];
-    
     const filteredSuggestions = rawSuggestions.filter((s: any) => {
       const hasPositiveSavings = s.suggestion.competitors.some((c: any) => c.potential_savings > 0);
       return hasPositiveSavings;
@@ -159,10 +149,7 @@ export default function EnhancedSuggestions({
     });
 
     setSuggestions(filteredSuggestions);
-    setCacheStats({
-      hits: data.cache_hits || 0,
-      aiCalls: data.ai_calls_made || 0
-    });
+    setCacheStats({ hits: data.cache_hits || 0, aiCalls: data.ai_calls_made || 0 });
     
     const actualTotalSavings = filteredSuggestions.reduce((sum: number, s: any) => {
       const bestSaving = s.suggestion.competitors[0]?.potential_savings || 0;
@@ -174,7 +161,6 @@ export default function EnhancedSuggestions({
 
   const loadSuggestions = async () => {
     if (charges.length === 0) return;
-
     setLoading(true);
     setError(null);
     
@@ -197,7 +183,6 @@ export default function EnhancedSuggestions({
       }
 
       console.log(`📊 [EnhancedSuggestions] Analyzing ${relevantCharges.length} charges...`);
-
       await budgetAPI.bulkAnalyzeSuggestions(budgetId, {
         charges: relevantCharges,
         household_size: householdSize
@@ -212,20 +197,18 @@ export default function EnhancedSuggestions({
 
     } catch (err: any) {
       console.error('❌ [EnhancedSuggestions] Error:', err);
-      if (err.code !== 'ERR_CANCELED') {
-          setError(err.response?.data?.error || 'Erreur lors de l\'analyse');
-      }
+      if (err.code !== 'ERR_CANCELED') setError(err.response?.data?.error || 'Erreur lors de l\'analyse');
       setLoading(false);
     }
   };
 
   if (loading && suggestions.length === 0) {
     return (
-      <Card className="border-green-200 bg-green-50/30 animate-pulse">
+      <Card className="border-emerald-200 bg-emerald-50/30 animate-pulse">
         <CardContent className="pt-6">
           <div className="flex items-center justify-center py-6">
-            <Loader2 className="h-6 w-6 animate-spin text-green-600" />
-            <span className="ml-3 text-sm font-medium text-green-700">
+            <Loader2 className="h-6 w-6 animate-spin text-emerald-600" />
+            <span className="ml-3 text-sm font-medium text-emerald-700">
               Recherche d'économies pour {householdSize} personne{householdSize > 1 ? 's' : ''}...
             </span>
           </div>
@@ -254,15 +237,13 @@ export default function EnhancedSuggestions({
     const hasRelevant = charges.some(c => c.category && isRelevantCategory(c.category) && !c.ignoreSuggestions);
     if (hasRelevant) {
       return (
-        <Card className="border-green-200 bg-green-50/30">
+        <Card className="border-emerald-200 bg-emerald-50/30">
           <CardContent className="pt-4 pb-4">
-            <div className="flex items-center gap-3 text-green-700">
+            <div className="flex items-center gap-3 text-emerald-700">
               <CheckCircle2 className="h-5 w-5" />
               <div>
                 <p className="font-medium text-sm">🎉 Excellent !</p>
-                <p className="text-xs text-green-600">
-                  Vos charges semblent déjà bien optimisées.
-                </p>
+                <p className="text-xs text-emerald-600">Vos charges sont déjà bien optimisées.</p>
               </div>
             </div>
           </CardContent>
@@ -277,23 +258,23 @@ export default function EnhancedSuggestions({
   return (
     <div className="space-y-4">
       <Card 
-        className="border-green-200 bg-gradient-to-br from-green-50 to-emerald-100/30 transition-all duration-300 shadow-sm hover:shadow-md cursor-pointer"
+        className="border-emerald-200 bg-gradient-to-br from-emerald-50 to-teal-50/30 transition-all duration-300 shadow-sm hover:shadow-md cursor-pointer"
         onClick={() => setIsExpanded(!isExpanded)}
       >
         <CardHeader className="pb-3 pt-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3 flex-1">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-green-100 text-green-600 shadow-sm">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-100 text-emerald-600 shadow-sm">
                 <Sparkles className="h-5 w-5" />
               </div>
               <div className="flex-1">
                 <div className="flex items-center gap-2">
-                  <CardTitle className="text-green-900 text-lg">Opportunités d'Économies</CardTitle>
-                  <Badge variant="outline" className="bg-green-100 text-green-800 border-green-300 text-xs px-2 py-0.5">
+                  <CardTitle className="text-emerald-900 text-lg">Opportunités d'Économies</CardTitle>
+                  <Badge variant="outline" className="bg-emerald-100 text-emerald-800 border-emerald-300 text-xs px-2 py-0.5">
                     {suggestions.length}
                   </Badge>
                 </div>
-                <CardDescription className="text-green-700 mt-0.5 text-xs sm:text-sm">
+                <CardDescription className="text-emerald-700 mt-0.5 text-xs sm:text-sm">
                   {isExpanded ? (
                     <span className="flex items-center gap-1">
                       <Users className="h-3 w-3" />
@@ -311,19 +292,19 @@ export default function EnhancedSuggestions({
             <div className="flex items-center gap-1">
               <Button 
                 variant="ghost" 
-                size="icon-sm"
+                size="icon" // changed to icon
                 onClick={(e) => { 
                     e.stopPropagation(); 
                     lastAnalyzedSignature.current = ""; 
                     loadSuggestions(); 
                 }}
                 disabled={loading}
-                className="text-green-700 hover:bg-green-100 hover:text-green-900"
+                className="text-emerald-700 hover:bg-emerald-100 hover:text-emerald-900 h-8 w-8"
                 title="Forcer la réanalyse"
               >
                 <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
               </Button>
-              <div className="text-green-800">
+              <div className="text-emerald-800">
                  {isExpanded ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
               </div>
             </div>
@@ -334,9 +315,9 @@ export default function EnhancedSuggestions({
            <CardContent className="pt-0 pb-4 animate-accordion-down">
                 {(cacheStats.hits > 0 || cacheStats.aiCalls > 0) && (
                     <div className="flex gap-2 text-[10px] text-muted-foreground mb-3 px-1">
-                        <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-green-500"></span> {cacheStats.hits} en cache</span>
+                        <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> {cacheStats.hits} en cache</span>
                         {cacheStats.aiCalls > 0 && (
-                            <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-blue-500"></span> {cacheStats.aiCalls} nouvelles analyses</span>
+                            <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-blue-500"></span> {cacheStats.aiCalls} nouvelles</span>
                         )}
                     </div>
                 )}
@@ -359,7 +340,7 @@ export default function EnhancedSuggestions({
 }
 
 // ============================================================================
-// SUGGESTION CARD - MODIFIED TO BE COLLAPSIBLE
+// SUGGESTION CARD
 // ============================================================================
 
 function SuggestionCard({ 
@@ -382,17 +363,18 @@ function SuggestionCard({
   const isIndividual = isIndividualCategory(suggestion.category);
 
   return (
-    <div className="border border-orange-200 rounded-xl bg-white overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-200">
+    <div className="border border-emerald-100 rounded-xl bg-white overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-200">
       <div 
         className={cn(
             "p-3 cursor-pointer transition-colors flex items-center justify-between",
-            isOpen ? "bg-orange-50/50" : "hover:bg-orange-50/30"
+            isOpen ? "bg-emerald-50/50" : "hover:bg-emerald-50/30"
         )}
-        onClick={() => setIsOpen(!isOpen)}
+        // ✅ CORRECTION CRITIQUE : stopPropagation empêche la fermeture du parent
+        onClick={(e) => { e.stopPropagation(); setIsOpen(!isOpen); }}
       >
         <div className="flex-1 min-w-0 pr-3">
             <div className="flex items-center gap-2 mb-1">
-              <TrendingDown className="h-4 w-4 text-orange-600 flex-shrink-0" />
+              <TrendingDown className="h-4 w-4 text-emerald-600 flex-shrink-0" />
               <h4 className="font-semibold text-sm text-gray-900 truncate">{charge_label}</h4>
             </div>
             <div className="flex items-center gap-2 text-xs text-muted-foreground flex-wrap">
@@ -406,7 +388,7 @@ function SuggestionCard({
         </div>
           
         <div className="flex items-center gap-3 flex-shrink-0">
-            <span className="text-sm font-bold text-green-700 bg-green-100 border border-green-200 px-2 py-1 rounded-lg">
+            <span className="text-sm font-bold text-emerald-700 bg-emerald-100 border border-emerald-200 px-2 py-1 rounded-lg whitespace-nowrap">
                 -{bestSavings.toFixed(0)}{currencySymbol}/an
             </span>
             <div className="text-gray-400">
@@ -416,7 +398,11 @@ function SuggestionCard({
       </div>
 
       {isOpen && (
-        <div className="p-3 pt-0 border-t border-orange-100 bg-orange-50/10">
+        <div 
+            className="p-3 pt-0 border-t border-emerald-100 bg-emerald-50/10"
+            // ✅ Empêcher les clics à l'intérieur de fermer le parent
+            onClick={(e) => e.stopPropagation()} 
+        >
             {isIndividual && householdSize > 1 && (
                 <div className="flex items-start gap-2 p-2 mb-3 bg-blue-50/50 rounded-lg border border-blue-100 text-[10px] text-blue-700">
                     <Info className="h-3 w-3 flex-shrink-0 mt-0.5" />
@@ -443,11 +429,11 @@ function CompetitorCard({ competitor, rank, currencySymbol }: { competitor: Comp
     <div className={cn(
         "p-3 rounded-lg border transition-all relative overflow-hidden",
         isBest 
-            ? "border-green-300 bg-white shadow-sm ring-1 ring-green-100" 
+            ? "border-emerald-300 bg-white shadow-sm ring-1 ring-emerald-100" 
             : "border-gray-200 bg-white/50 opacity-90 hover:opacity-100"
     )}>
       {isBest && (
-          <div className="absolute top-0 right-0 bg-green-500 text-white text-[9px] font-bold px-2 py-0.5 rounded-bl-lg">
+          <div className="absolute top-0 right-0 bg-emerald-500 text-white text-[9px] font-bold px-2 py-0.5 rounded-bl-lg">
               MEILLEURE OFFRE
           </div>
       )}
@@ -467,7 +453,7 @@ function CompetitorCard({ competitor, rank, currencySymbol }: { competitor: Comp
          <div className="h-6 w-px bg-gray-200"></div>
          <div className="flex flex-col">
             <span className="text-[10px] text-muted-foreground uppercase tracking-wider">Économie</span>
-            <span className="font-bold text-green-600 text-sm">-{competitor.potential_savings.toFixed(0)}{currencySymbol}<span className="text-[10px] font-normal text-green-600/70">/an</span></span>
+            <span className="font-bold text-emerald-600 text-sm">-{competitor.potential_savings.toFixed(0)}{currencySymbol}<span className="text-[10px] font-normal text-emerald-600/70">/an</span></span>
          </div>
       </div>
 
@@ -475,7 +461,7 @@ function CompetitorCard({ competitor, rank, currencySymbol }: { competitor: Comp
         <div className="mb-3 space-y-1">
             {competitor.pros.slice(0, 2).map((pro, i) => (
                 <div key={i} className="flex items-start gap-1.5 text-[11px] text-gray-600">
-                    <CheckCircle2 className="h-3 w-3 text-green-500 flex-shrink-0 mt-0.5" />
+                    <CheckCircle2 className="h-3 w-3 text-emerald-500 flex-shrink-0 mt-0.5" />
                     <span>{pro}</span>
                 </div>
             ))}
@@ -487,8 +473,8 @@ function CompetitorCard({ competitor, rank, currencySymbol }: { competitor: Comp
           <Button 
             size="sm" 
             variant={isBest ? "default" : "outline"}
-            className={cn("flex-1 h-7 text-xs", isBest ? "bg-green-600 hover:bg-green-700" : "")}
-            onClick={() => window.open(websiteUrl, '_blank')}
+            className={cn("flex-1 h-7 text-xs", isBest ? "bg-emerald-600 hover:bg-emerald-700 text-white border-0" : "")}
+            onClick={(e) => { e.stopPropagation(); window.open(websiteUrl, '_blank'); }}
           >
             <Globe className="h-3 w-3 mr-1.5" />
             Voir l'offre
@@ -501,8 +487,8 @@ function CompetitorCard({ competitor, rank, currencySymbol }: { competitor: Comp
                     <Button 
                         variant="ghost" 
                         size="icon-sm" 
-                        className="h-7 w-7 text-gray-500 hover:text-green-700 hover:bg-green-50"
-                        onClick={() => window.open(`tel:${competitor.phone_number}`)}
+                        className="h-7 w-7 text-gray-500 hover:text-emerald-700 hover:bg-emerald-50"
+                        onClick={(e) => { e.stopPropagation(); window.open(`tel:${competitor.phone_number}`); }}
                         title="Appeler"
                     >
                         <Phone className="h-3.5 w-3.5" />
@@ -513,7 +499,7 @@ function CompetitorCard({ competitor, rank, currencySymbol }: { competitor: Comp
                         variant="ghost" 
                         size="icon-sm" 
                         className="h-7 w-7 text-gray-500 hover:text-blue-700 hover:bg-blue-50"
-                        onClick={() => window.open(`mailto:${competitor.contact_email}`)}
+                        onClick={(e) => { e.stopPropagation(); window.open(`mailto:${competitor.contact_email}`); }}
                         title="Envoyer un email"
                     >
                         <Mail className="h-3.5 w-3.5" />
