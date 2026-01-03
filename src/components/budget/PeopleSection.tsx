@@ -31,15 +31,19 @@ import type { Person } from '@/utils/importConverter';
 interface PeopleSectionProps {
   people: Person[];
   onPeopleChange: (people: Person[]) => void;
+  currency?: string; // ✅ AJOUTÉ
 }
 
-export default function PeopleSection({ people, onPeopleChange }: PeopleSectionProps) {
+export default function PeopleSection({ people, onPeopleChange, currency = 'EUR' }: PeopleSectionProps) {
   const [newPersonName, setNewPersonName] = useState('');
   const [newPersonSalary, setNewPersonSalary] = useState('');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [showAddForm, setShowAddForm] = useState(false);
   const [isExpanded, setIsExpanded] = useState(true);
+
+  // ✅ Symbole de devise
+  const currencySymbol = currency === 'CHF' ? 'CHF' : '€';
 
   const addPerson = (e: React.FormEvent) => {
     e.preventDefault();
@@ -100,7 +104,7 @@ export default function PeopleSection({ people, onPeopleChange }: PeopleSectionP
           <div className="flex items-center gap-4">
             <div className="text-right">
                 <p className="text-2xl font-bold text-emerald-900">
-                  {totalSalary.toLocaleString('fr-FR')} €
+                  {totalSalary.toLocaleString('fr-FR')} {currencySymbol}
                 </p>
                 <p className="text-xs text-emerald-700">Total mensuel</p>
             </div>
@@ -125,6 +129,7 @@ export default function PeopleSection({ people, onPeopleChange }: PeopleSectionP
                 person={person}
                 onUpdate={updatePerson}
                 onDelete={removePerson}
+                currencySymbol={currencySymbol}
               />
             ))}
           </div>
@@ -162,7 +167,7 @@ export default function PeopleSection({ people, onPeopleChange }: PeopleSectionP
                     />
                 </div>
                 <div className="w-full sm:w-32 space-y-1.5">
-                    <Label htmlFor="person-salary" className="text-xs">Salaire (€)</Label>
+                    <Label htmlFor="person-salary" className="text-xs">Salaire ({currencySymbol})</Label>
                     <Input
                     id="person-salary"
                     type="number"
@@ -225,9 +230,10 @@ interface PersonItemProps {
   person: Person;
   onUpdate: (id: string, updates: Partial<Person>) => void;
   onDelete: (id: string) => void;
+  currencySymbol: string; // ✅ AJOUTÉ
 }
 
-function PersonItem({ person, onUpdate, onDelete }: PersonItemProps) {
+function PersonItem({ person, onUpdate, onDelete, currencySymbol }: PersonItemProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editName, setEditName] = useState(person.name);
   const [editSalary, setEditSalary] = useState(person.salary.toString());
@@ -304,7 +310,7 @@ function PersonItem({ person, onUpdate, onDelete }: PersonItemProps) {
           {/* Salaire */}
           <div className="space-y-1.5">
             <Label htmlFor={`edit-salary-${person.id}`} className="text-xs font-medium">
-              Salaire mensuel (€)
+              Salaire mensuel ({currencySymbol})
             </Label>
             <Input 
               id={`edit-salary-${person.id}`}
@@ -386,7 +392,7 @@ function PersonItem({ person, onUpdate, onDelete }: PersonItemProps) {
       {/* Right Info: Amount + Actions */}
       <div className="flex items-center gap-2">
         <span className="font-bold text-emerald-700 text-sm whitespace-nowrap">
-          {person.salary.toLocaleString()} €
+          {person.salary.toLocaleString()} {currencySymbol}
         </span>
 
         {/* Actions - Toujours visibles sur mobile, hover sur desktop */}

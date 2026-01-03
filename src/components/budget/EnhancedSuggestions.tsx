@@ -26,7 +26,9 @@ import { Globe, Phone, Mail } from 'lucide-react';
 interface EnhancedSuggestionsProps {
   budgetId: string;
   charges: Charge[];
-  memberCount: number;
+  householdSize: number; // ✅ RENOMMÉ depuis memberCount
+  location?: string; // ✅ AJOUTÉ
+  currency?: string; // ✅ AJOUTÉ
 }
 
 // ============================================================================
@@ -75,14 +77,23 @@ function getCategoryLabel(cat: string): string {
 // MAIN COMPONENT
 // ============================================================================
 
-export default function EnhancedSuggestions({ budgetId, charges, memberCount }: EnhancedSuggestionsProps) {
+export default function EnhancedSuggestions({ 
+  budgetId, 
+  charges, 
+  householdSize, 
+  location = 'FR', 
+  currency = 'EUR' 
+}: EnhancedSuggestionsProps) {
   const [suggestions, setSuggestions] = useState<ChargeSuggestion[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [cacheStats, setCacheStats] = useState({ hits: 0, aiCalls: 0 });
   const [totalSavings, setTotalSavings] = useState(0);
   const [isExpanded, setIsExpanded] = useState(false);
-  const [householdSize, setHouseholdSize] = useState(1);
+  const [displayHouseholdSize, setDisplayHouseholdSize] = useState(householdSize);
+
+  // ✅ Symbole de devise
+  const currencySymbol = currency === 'CHF' ? 'CHF' : '€';
 
   // Ref to track the last data we actually analyzed to prevent loops
   const lastAnalyzedSignature = useRef<string>("");
@@ -127,7 +138,7 @@ export default function EnhancedSuggestions({ budgetId, charges, memberCount }: 
     }, 2000); 
 
     return () => clearTimeout(timer);
-  }, [budgetId, chargesSignature, memberCount, isConnected]);
+  }, [budgetId, chargesSignature, householdSize, isConnected]);
 
   const processResults = (data: any) => {
     const rawSuggestions = data.suggestions || [];
@@ -154,7 +165,7 @@ export default function EnhancedSuggestions({ budgetId, charges, memberCount }: 
       return sum + bestSaving;
     }, 0);
     setTotalSavings(actualTotalSavings);
-    setHouseholdSize(data.household_size || memberCount);
+    setDisplayHouseholdSize(data.household_size || householdSize);
   };
 
   const loadSuggestions = async () => {
@@ -184,7 +195,7 @@ export default function EnhancedSuggestions({ budgetId, charges, memberCount }: 
 
       await budgetAPI.bulkAnalyzeSuggestions(budgetId, {
         charges: relevantCharges,
-        household_size: memberCount
+        household_size: householdSize
       });
 
       setTimeout(() => {
@@ -210,7 +221,7 @@ export default function EnhancedSuggestions({ budgetId, charges, memberCount }: 
           <div className="flex items-center justify-center py-8">
             <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
             <span className="ml-3 text-muted-foreground">
-              Recherche d'économies pour {memberCount} personne{memberCount > 1 ? 's' : ''}...
+              Recherche d'économies pour {householdSize} personne{householdSize > 1 ? 's' : ''}...
             </span>
           </div>
         </CardContent>
@@ -279,10 +290,10 @@ export default function EnhancedSuggestions({ budgetId, charges, memberCount }: 
                   {isExpanded ? (
                     <span className="flex items-center gap-1">
                       <Users className="h-3 w-3" />
-                      Basé sur votre foyer de {householdSize} personne{householdSize > 1 ? 's' : ''}
+                      Basé sur votre foyer de {displayHouseholdSize} personne{displayHouseholdSize > 1 ? 's' : ''}
                     </span>
                   ) : (
-                    `Économie totale possible : ${totalSavings.toFixed(0)}€/an`
+                    `Économie totale possible : ${totalSavings.toFixed(0)}${currencySymbol}/an`
                   )}
                 </CardDescription>
               </div>
@@ -323,7 +334,7 @@ export default function EnhancedSuggestions({ budgetId, charges, memberCount }: 
 
           <div className="space-y-2">
             {suggestions.map((item) => (
-              <SuggestionCard key={item.charge_id} chargeSuggestion={item} householdSize={householdSize} />
+              <SuggestionCard key={item.charge_id} chargeSuggestion={item} householdSize={displayHouseholdSize} currencySymbol={currencySymbol} />
             ))}
           </div>
         </>
@@ -336,11 +347,18 @@ export default function EnhancedSuggestions({ budgetId, charges, memberCount }: 
 // SUGGESTION CARD - MODIFIED TO BE COLLAPSIBLE
 // ============================================================================
 
-function SuggestionCard({ chargeSuggestion, householdSize }: { chargeSuggestion: ChargeSuggestion; householdSize: number }) {
+function SuggestionCard({ 
+  chargeSuggestion, 
+  householdSize, 
+  currencySymbol 
+}: { 
+  chargeSuggestion: ChargeSuggestion; 
+  householdSize: number;
+  currencySymbol: string; // ✅ AJOUTÉ
+}) {
   const { charge_label, suggestion } = chargeSuggestion;
   const competitors = suggestion.competitors.slice(0, 3);
   
-  // ✅ NEW STATE: Collapsed by default
   const [isOpen, setIsOpen] = useState(false);
   
   if (competitors.length === 0) return null;
@@ -372,7 +390,7 @@ function SuggestionCard({ chargeSuggestion, householdSize }: { chargeSuggestion:
           
           <div className="flex items-center gap-2">
             <Badge className="bg-green-100 text-green-800 border-green-300">
-                Jusqu'à -{bestSavings.toFixed(0)}€/an
+                Jusqu'à -{bestSavings.toFixed(0)}{currencySymbol}/an
             </Badge>
             <div className="text-muted-foreground">
                 {isOpen ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
@@ -381,7 +399,6 @@ function SuggestionCard({ chargeSuggestion, householdSize }: { chargeSuggestion:
         </div>
       </CardHeader>
 
-      {/* ✅ COLLAPSIBLE CONTENT */}
       {isOpen && (
         <CardContent className="space-y-4 pt-0">
             {isIndividual && householdSize > 1 && (
@@ -392,7 +409,7 @@ function SuggestionCard({ chargeSuggestion, householdSize }: { chargeSuggestion:
             )}
 
             {competitors.map((competitor, index) => (
-            <CompetitorCard key={index} competitor={competitor} rank={index + 1} />
+            <CompetitorCard key={index} competitor={competitor} rank={index + 1} currencySymbol={currencySymbol} />
             ))}
         </CardContent>
       )}
@@ -400,7 +417,7 @@ function SuggestionCard({ chargeSuggestion, householdSize }: { chargeSuggestion:
   );
 }
 
-function CompetitorCard({ competitor, rank }: { competitor: Competitor; rank: number }) {
+function CompetitorCard({ competitor, rank, currencySymbol }: { competitor: Competitor; rank: number; currencySymbol: string }) {
   const getRankBadge = () => {
     if (rank === 1) return <Badge className="bg-green-600 text-white border-0">🏆 Meilleure offre</Badge>;
     if (rank === 2) return <Badge variant="outline" className="border-orange-400 text-orange-700 bg-orange-50">🥈 Alternative #2</Badge>;
@@ -419,7 +436,7 @@ function CompetitorCard({ competitor, rank }: { competitor: Competitor; rank: nu
     <div className={`p-4 rounded-lg transition-all ${getCardStyle()}`}>
       <div className="flex items-center justify-between mb-3">
         {getRankBadge()}
-        <span className="text-lg font-bold text-green-700">-{competitor.potential_savings.toFixed(0)}€/an</span>
+        <span className="text-lg font-bold text-green-700">-{competitor.potential_savings.toFixed(0)}{currencySymbol}/an</span>
       </div>
 
       <h4 className="font-semibold text-gray-900 mb-2">{competitor.name}</h4>
@@ -427,7 +444,7 @@ function CompetitorCard({ competitor, rank }: { competitor: Competitor; rank: nu
 
       <div className="flex items-center gap-2 mb-4">
         <span className="text-sm text-muted-foreground">Prix:</span>
-        <span className="font-semibold text-primary">{competitor.typical_price.toFixed(2)}€/mois</span>
+        <span className="font-semibold text-primary">{competitor.typical_price.toFixed(2)}{currencySymbol}/mois</span>
       </div>
 
       {(competitor.pros?.length > 0 || competitor.cons?.length > 0) && (

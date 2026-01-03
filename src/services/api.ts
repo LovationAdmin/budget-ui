@@ -1,5 +1,5 @@
 // src/services/api.ts
-// ✅ VERSION MISE À JOUR - Ajout support country + postal_code dans signup
+// ✅ VERSION FINALE CORRIGÉE - Ajout location + currency dans BudgetCreateData
 // ✅ ZÉRO RÉGRESSION - Tous les endpoints et types existants conservés à 100%
 
 import axios, { InternalAxiosRequestConfig, AxiosResponse } from 'axios';
@@ -138,8 +138,8 @@ interface AuthData {
   name?: string; 
   email: string; 
   password: string;
-  country?: string;        // ✅ NEW
-  postal_code?: string;    // ✅ NEW
+  country?: string;        // ✅ Already present
+  postal_code?: string;    // ✅ Already present
 }
 
 interface ProfileUpdateData { 
@@ -152,9 +152,12 @@ interface PasswordChangeData {
   new_password: string; 
 }
 
+// ✅ CORRIGÉ : Ajout location et currency
 interface BudgetCreateData { 
   name: string;
   year?: number;
+  location?: string;  // ✅ AJOUTÉ
+  currency?: string;  // ✅ AJOUTÉ
 }
 
 interface BudgetUpdateData { 

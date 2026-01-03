@@ -12,7 +12,8 @@ interface ProjectsSectionProps {
   onProjectsChange: (projects: Project[]) => void;
   yearlyData?: YearlyData; 
   currentYear?: number;
-  projectCarryOvers?: Record<string, number>; // <--- NEW PROP: Historique des années passées
+  projectCarryOvers?: Record<string, number>;
+  currency?: string; // ✅ AJOUTÉ
 }
 
 const MONTHS = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
@@ -22,12 +23,16 @@ export default function ProjectsSection({
     onProjectsChange, 
     yearlyData = {}, 
     currentYear = new Date().getFullYear(),
-    projectCarryOvers = {} // Valeur par défaut vide
+    projectCarryOvers = {},
+    currency = 'EUR' // ✅ AJOUTÉ avec valeur par défaut
 }: ProjectsSectionProps) {
   
   const [newProjectLabel, setNewProjectLabel] = useState('');
   const [newProjectTarget, setNewProjectTarget] = useState('');
   const [showAddForm, setShowAddForm] = useState(false);
+
+  // ✅ Symbole de devise
+  const currencySymbol = currency === 'CHF' ? 'CHF' : '€';
 
   const today = new Date();
   const currentMonthIndex = today.getMonth();
@@ -162,7 +167,7 @@ export default function ProjectsSection({
                     />
                 </div>
                 <div className="w-full sm:w-32 space-y-1.5">
-                    <Label htmlFor="project-target" className="text-xs">Objectif (€)</Label>
+                    <Label htmlFor="project-target" className="text-xs">Objectif ({currencySymbol})</Label>
                     <Input
                         id="project-target"
                         type="number"
@@ -253,7 +258,7 @@ export default function ProjectsSection({
                                     placeholder="Definir..."
                                     className="h-6 w-24 text-sm font-semibold bg-transparent border-b border-dashed border-muted-foreground/30 p-0 focus-visible:ring-0 focus-visible:border-solid rounded-none"
                                 />
-                                <span className="text-xs text-muted-foreground">€</span>
+                                <span className="text-xs text-muted-foreground">{currencySymbol}</span>
                             </div>
                         </div>
 
@@ -263,7 +268,7 @@ export default function ProjectsSection({
                                 "text-sm font-bold",
                                 isGoalReached ? "text-success" : "text-foreground"
                             )}>
-                                {totalRealized.toLocaleString()} €
+                                {totalRealized.toLocaleString()} {currencySymbol}
                             </p>
                         </div>
                     </div>
@@ -281,7 +286,7 @@ export default function ProjectsSection({
                                     </span>
                                 ) : (
                                     <span className="text-muted-foreground/70">
-                                        Reste: <span className="font-medium text-foreground">{(target - totalRealized).toLocaleString()} €</span>
+                                        Reste: <span className="font-medium text-foreground">{(target - totalRealized).toLocaleString()} {currencySymbol}</span>
                                     </span>
                                 )}
                             </div>
@@ -292,7 +297,7 @@ export default function ProjectsSection({
                                 <div 
                                     className="absolute top-0 left-0 h-full bg-primary/20 transition-all duration-300"
                                     style={{ width: `${Math.min((totalPlanned / target) * 100, 100)}%` }}
-                                    title={`Planifié: ${totalPlanned.toLocaleString()} €`}
+                                    title={`Planifié: ${totalPlanned.toLocaleString()} ${currencySymbol}`}
                                 />
                                 {/* 2. REALIZED BAR (Dark Success) */}
                                 <div 
@@ -301,7 +306,7 @@ export default function ProjectsSection({
                                         isGoalReached ? "bg-success" : "bg-success"
                                     )}
                                     style={{ width: `${progress}%` }}
-                                    title={`En caisse: ${totalRealized.toLocaleString()} €`}
+                                    title={`En caisse: ${totalRealized.toLocaleString()} ${currencySymbol}`}
                                 />
                             </div>
                         </div>

@@ -13,7 +13,8 @@ interface StatsSectionProps {
   projects: Project[];
   yearlyData: YearlyData;
   oneTimeIncomes: OneTimeIncomes;
-  currentYear?: number; 
+  currentYear?: number;
+  currency?: string; // ✅ AJOUTÉ
 }
 
 const SHORT_MONTHS = [ 'Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin', 'Juil', 'Août', 'Sep', 'Oct', 'Nov', 'Déc' ];
@@ -69,7 +70,11 @@ export default function StatsSection({
   yearlyData,
   oneTimeIncomes,
   currentYear = new Date().getFullYear(),
+  currency = 'EUR' // ✅ AJOUTÉ avec valeur par défaut
 }: StatsSectionProps) {
+  
+  // ✅ Symbole de devise
+  const currencySymbol = currency === 'CHF' ? 'CHF' : '€';
   
   // 1. Calculate data for every month individually
   const chartData = FULL_MONTHS_KEYS.map((monthKey, index) => {
@@ -130,7 +135,7 @@ export default function StatsSection({
         {/* REVENUS */}
         <StatCard
           title="Revenus annuels"
-          value={`${totalYearlyIncome.toLocaleString('fr-FR')} €`}
+          value={`${totalYearlyIncome.toLocaleString('fr-FR')} ${currencySymbol}`}
           subtitle="Salaires + Ponctuels"
           icon={Wallet}
           variant="default"
@@ -140,7 +145,7 @@ export default function StatsSection({
         {/* CHARGES */}
         <StatCard
           title="Charges annuelles"
-          value={`${totalYearlyCharges.toLocaleString('fr-FR')} €`}
+          value={`${totalYearlyCharges.toLocaleString('fr-FR')} ${currencySymbol}`}
           subtitle={`${chargesRate.toFixed(0)}% des revenus`}
           icon={TrendingDown}
           variant="danger"
@@ -150,7 +155,7 @@ export default function StatsSection({
         {/* PROJETS */}
         <StatCard
           title="Total Alloué Projets"
-          value={`${totalProjectAllocations.toLocaleString('fr-FR')} €`}
+          value={`${totalProjectAllocations.toLocaleString('fr-FR')} ${currencySymbol}`}
           subtitle={`${projectRate.toFixed(0)}% des revenus`}
           icon={PiggyBank}
           variant="accent"
@@ -160,7 +165,7 @@ export default function StatsSection({
         {/* EPARGNE */}
         <StatCard
           title="Total Épargne Générale"
-          value={`${totalGeneralSavings.toLocaleString('fr-FR')} €`}
+          value={`${totalGeneralSavings.toLocaleString('fr-FR')} ${currencySymbol}`}
           subtitle={`${generalRate.toFixed(0)}% des revenus`}
           icon={Scale} 
           variant={totalGeneralSavings >= 0 ? "success" : "warning"}
@@ -199,7 +204,7 @@ export default function StatsSection({
                       fontSize: '12px',
                       padding: '8px 12px'
                     }}
-                    formatter={(value: number) => [`${value.toLocaleString('fr-FR')} €`, '']}
+                    formatter={(value: number) => [`${value.toLocaleString('fr-FR')} ${currencySymbol}`, '']}
                   />
                   <Legend iconType="circle" wrapperStyle={{ fontSize: '11px', paddingTop: '5px' }} />
                   <Bar dataKey="charges" name="Charges" stackId="a" fill="hsl(var(--destructive))" radius={[0, 0, 2, 2]} />
@@ -241,7 +246,7 @@ export default function StatsSection({
                       fontSize: '12px',
                       padding: '8px 12px'
                     }}
-                    formatter={(value: number) => [`${value.toLocaleString('fr-FR')} €`, '']}
+                    formatter={(value: number) => [`${value.toLocaleString('fr-FR')} ${currencySymbol}`, '']}
                   />
                   <Legend iconType="circle" wrapperStyle={{ fontSize: '11px', paddingTop: '5px' }} />
                   <Bar dataKey="revenus" name="Revenus" fill="hsl(var(--success))" radius={[2, 2, 0, 0]} barSize={15} />

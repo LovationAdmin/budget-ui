@@ -1,5 +1,6 @@
 // src/components/budget/MonthlyTable.tsx
 // VERSION SIMPLE - DROPDOWN COMPACT ET INTUITIF
+// ✅ CORRIGÉ : Ajout prop currency
 
 import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -129,6 +130,7 @@ interface MonthlyTableProps {
   onYearChange: (year: number) => void;
   projectCarryOvers?: Record<string, number>;
   customChargeTotalCalculator?: (monthIndex: number) => number;
+  currency?: string; // ✅ AJOUTÉ
 }
 
 const MONTHS = [
@@ -184,11 +186,15 @@ export default function MonthlyTable({
   onLockedMonthsChange,
   onYearChange,
   projectCarryOvers = {},
-  customChargeTotalCalculator
+  customChargeTotalCalculator,
+  currency = 'EUR' // ✅ AJOUTÉ avec valeur par défaut
 }: MonthlyTableProps) {
   const [selectedMonth, setSelectedMonth] = useState<string | null>(null);
   const [commentDialogOpen, setCommentDialogOpen] = useState(false);
   const [tempComment, setTempComment] = useState('');
+  
+  // ✅ Symbole de devise
+  const currencySymbol = currency === 'CHF' ? 'CHF' : '€';
   
   // ✅ DEFAULT: Tout désélectionné par défaut
   const [visibleProjectIds, setVisibleProjectIds] = useState<string[]>([]);
@@ -499,7 +505,7 @@ export default function MonthlyTable({
                             </div>
                         </div>
                       </td>
-                      {showIncome && <td className="px-2 py-2 text-center bg-success/5 font-medium text-success border-r border-dashed border-border/50">+{baseIncome.toLocaleString()} €</td>}
+                      {showIncome && <td className="px-2 py-2 text-center bg-success/5 font-medium text-success border-r border-dashed border-border/50">+{baseIncome.toLocaleString()} {currencySymbol}</td>}
                       {showOneTime && (
                         <td className="px-2 py-2 bg-success/5 border-r border-dashed border-border/50">
                             <DebouncedInput 
@@ -512,8 +518,8 @@ export default function MonthlyTable({
                             />
                         </td>
                       )}
-                      {showCharges && <td className="px-2 py-2 text-center bg-destructive/5 font-medium text-destructive border-r border-dashed border-border/50">-{chargesTotal.toLocaleString()} €</td>}
-                      <td className="px-2 py-2 text-center font-bold text-primary bg-primary/10 border-r-2 border-primary/20 text-sm">{availableToSave.toLocaleString()} €</td>
+                      {showCharges && <td className="px-2 py-2 text-center bg-destructive/5 font-medium text-destructive border-r border-dashed border-border/50">-{chargesTotal.toLocaleString()} {currencySymbol}</td>}
+                      <td className="px-2 py-2 text-center font-bold text-primary bg-primary/10 border-r-2 border-primary/20 text-sm">{availableToSave.toLocaleString()} {currencySymbol}</td>
                       {visibleProjects.map((project) => {
                         const allocation = yearlyData[month]?.[project.id] || 0;
                         const expense = yearlyExpenses[month]?.[project.id] || 0;
@@ -542,7 +548,7 @@ export default function MonthlyTable({
                               </div>
                               <div className="flex items-center justify-between px-0.5">
                                 <div className="text-[10px] text-muted-foreground flex items-center gap-0.5 bg-muted/30 px-1 py-0 rounded" title="Total Cumulé">
-                                  <span>∑</span><span className={cumulative >= 0 ? "text-success font-medium" : "text-destructive font-medium"}>{cumulative.toLocaleString()} €</span>
+                                  <span>∑</span><span className={cumulative >= 0 ? "text-success font-medium" : "text-destructive font-medium"}>{cumulative.toLocaleString()} {currencySymbol}</span>
                                 </div>
                                 <Popover>
                                   <PopoverTrigger asChild><Button variant="ghost" size="icon" className={cn("h-4 w-4 rounded-full p-0", comment ? "text-primary" : "text-muted-foreground/30")}>{comment ? <MessageCircle className="h-3 w-3" /> : <MessageSquarePlus className="h-3 w-3" />}</Button></PopoverTrigger>
@@ -566,7 +572,7 @@ export default function MonthlyTable({
                       <td className="px-1 py-2 bg-primary/5">
                         <div className="flex flex-col gap-1">
                             <div className="flex items-center gap-1">
-                                <Input type="text" value={`${genSavingsAllocation.toLocaleString()} €`} disabled className="text-center h-10 sm:h-7 text-sm sm:text-xs px-3 sm:px-1 font-bold bg-primary/10 border-primary/20 text-primary cursor-default shadow-none" />
+                                <Input type="text" value={`${genSavingsAllocation.toLocaleString()} ${currencySymbol}`} disabled className="text-center h-10 sm:h-7 text-sm sm:text-xs px-3 sm:px-1 font-bold bg-primary/10 border-primary/20 text-primary cursor-default shadow-none" />
                                 <DebouncedInput 
                                     type="number" 
                                     value={genSavingsExpense || ''} 
@@ -577,7 +583,7 @@ export default function MonthlyTable({
                                 />
                             </div>
                             <div className="flex items-center justify-between px-0.5">
-                                <div className="text-[10px] text-muted-foreground flex items-center gap-0.5 bg-muted/30 px-1 py-0 rounded"><span>∑</span><span className={genSavingsCumulative >= 0 ? "text-success font-medium" : "text-destructive font-medium"}>{genSavingsCumulative.toLocaleString()} €</span></div>
+                                <div className="text-[10px] text-muted-foreground flex items-center gap-0.5 bg-muted/30 px-1 py-0 rounded"><span>∑</span><span className={genSavingsCumulative >= 0 ? "text-success font-medium" : "text-destructive font-medium"}>{genSavingsCumulative.toLocaleString()} {currencySymbol}</span></div>
                                 <Popover>
                                     <PopoverTrigger asChild><Button variant="ghost" size="icon" className={cn("h-4 w-4 rounded-full p-0", genSavingsComment ? "text-primary" : "text-muted-foreground/30")}>{genSavingsComment ? <MessageCircle className="h-3 w-3" /> : <MessageSquarePlus className="h-3 w-3" />}</Button></PopoverTrigger>
                                     <PopoverContent className="w-64 p-3">
