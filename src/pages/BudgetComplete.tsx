@@ -1,3 +1,6 @@
+// src/pages/BudgetComplete.tsx
+// ✅ VERSION CORRIGÉE - Garde BudgetNavbar avec ses propres items de navigation
+
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { budgetAPI } from '../services/api';
@@ -32,6 +35,7 @@ import { LayoutDashboard, Users, Receipt, Target, CalendarDays } from "lucide-re
 import { useTutorial } from '../contexts/TutorialContext';
 import EnhancedSuggestions from '@/components/budget/EnhancedSuggestions';
 
+// ✅ Items de navigation SPÉCIFIQUES à la page Budget
 const BUDGET_NAV_ITEMS: NavItem[] = [
   { id: "overview", label: "Vue d'ensemble", icon: LayoutDashboard },
   { id: "members", label: "Membres", icon: Users },
@@ -110,7 +114,7 @@ export default function BudgetComplete() {
       }
     });
     return carryOvers;
-  }, [currentYear, projects]);
+  }, [currentYear]);
 
   // ============================================================================
   // HOUSEHOLD SIZE
@@ -401,7 +405,6 @@ export default function BudgetComplete() {
     if (!silent) setSaving(true);
 
     try {
-      // 1. Construire le payload depuis l'état UI actuel
       const currentViewData = { 
         budgetTitle, 
         currentYear, 
@@ -416,15 +419,12 @@ export default function BudgetComplete() {
         lockedMonths 
       };
 
-      // 2. Convertir au format de stockage
       const formattedCurrent = convertNewFormatToOld(currentViewData as any);
 
-      // 3. Clone le global data ref (si existe)
       const finalPayload = globalDataRef.current 
         ? JSON.parse(JSON.stringify(globalDataRef.current))
         : {};
 
-      // 4. Mettre à jour les champs de base
       finalPayload.budgetTitle = budgetTitle;
       finalPayload.people = people;
       finalPayload.charges = charges;
@@ -433,11 +433,9 @@ export default function BudgetComplete() {
       finalPayload.updatedBy = user?.name;
       finalPayload.version = '2.3';
 
-      // 5. Initialiser les conteneurs
       if (!finalPayload.yearlyData) finalPayload.yearlyData = {};
       if (!finalPayload.oneTimeIncomes) finalPayload.oneTimeIncomes = {};
 
-      // 6. ✅ CRITIQUE : NETTOYER les clés LEGACY avant de sauvegarder
       const legacyMonthKeys = [
         'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
         'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'
@@ -449,7 +447,6 @@ export default function BudgetComplete() {
         delete finalPayload.projectComments?.[monthKey];
       });
 
-      // 7. Sauvegarder UNIQUEMENT l'année courante
       const sourceYearlyData = formattedCurrent.yearlyData || {};
       const sourceOneTime = formattedCurrent.oneTimeIncomes || {};
 
@@ -468,10 +465,8 @@ export default function BudgetComplete() {
         monthsInCurrentYear: finalPayload.yearlyData[currentYear]?.months?.length || 0,
       });
 
-      // 8. Envoyer au serveur
       await budgetAPI.updateData(id, { data: finalPayload });
       
-      // 9. Synchroniser le ref local
       setLastServerUpdate(finalPayload.lastUpdated);
       globalDataRef.current = finalPayload;
 
@@ -499,51 +494,51 @@ export default function BudgetComplete() {
   }, [id, budgetTitle, currentYear, people, charges, projects, yearlyData, yearlyExpenses, oneTimeIncomes, monthComments, projectComments, lockedMonths, user?.name, toast]);
 
   // ============================================================================
-  // ✅ OPTION A: DATA CHANGE HANDLERS AVEC markAsModified()
+  // DATA CHANGE HANDLERS
   // ============================================================================
   const handlePeopleChange = useCallback((newPeople: Person[]) => {
     setPeople(newPeople);
-    markAsModified(); // ✅ Déclenche auto-save
+    markAsModified();
   }, [markAsModified]);
 
   const handleChargesChange = useCallback((newCharges: Charge[]) => {
     setCharges(newCharges);
-    markAsModified(); // ✅ Déclenche auto-save
+    markAsModified();
   }, [markAsModified]);
 
   const handleProjectsChange = useCallback((newProjects: Project[]) => {
     setProjects(newProjects);
-    markAsModified(); // ✅ Déclenche auto-save
+    markAsModified();
   }, [markAsModified]);
 
   const handleYearlyDataChange = useCallback((newData: YearlyData) => {
     setYearlyData(newData);
-    markAsModified(); // ✅ Déclenche auto-save
+    markAsModified();
   }, [markAsModified]);
 
   const handleYearlyExpensesChange = useCallback((newData: YearlyData) => {
     setYearlyExpenses(newData);
-    markAsModified(); // ✅ Déclenche auto-save
+    markAsModified();
   }, [markAsModified]);
 
   const handleOneTimeIncomesChange = useCallback((newData: OneTimeIncomes) => {
     setOneTimeIncomes(newData);
-    markAsModified(); // ✅ Déclenche auto-save
+    markAsModified();
   }, [markAsModified]);
 
   const handleMonthCommentsChange = useCallback((newData: MonthComments) => {
     setMonthComments(newData);
-    markAsModified(); // ✅ Déclenche auto-save
+    markAsModified();
   }, [markAsModified]);
 
   const handleProjectCommentsChange = useCallback((newData: ProjectComments) => {
     setProjectComments(newData);
-    markAsModified(); // ✅ Déclenche auto-save
+    markAsModified();
   }, [markAsModified]);
 
   const handleLockedMonthsChange = useCallback((newData: LockedMonths) => {
     setLockedMonths(newData);
-    markAsModified(); // ✅ Déclenche auto-save
+    markAsModified();
   }, [markAsModified]);
 
   // ============================================================================
@@ -584,19 +579,26 @@ export default function BudgetComplete() {
   // ============================================================================
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-primary-50 to-purple-50 flex flex-col">
-        {/* ✅ CHANGÉ : Utilisation du composant Navbar avec items de navigation */}
-      <Navbar />
+      <div className="min-h-screen bg-gradient-to-br from-primary-50 to-purple-50 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+      </div>
     );
   }
 
   return (
-      <div className="min-h-screen bg-gradient-to-br from-primary-50 to-purple-50 flex flex-col">
-        {/* ✅ CHANGÉ : Utilisation du composant Navbar avec items de navigation */}
-      <Navbar />
+    <div className="min-h-screen bg-gradient-to-br from-primary-50 to-purple-50">
+      {/* ✅ GARDE BudgetNavbar avec ses propres items */}
+      <BudgetNavbar 
+        budgetTitle={budget?.name} 
+        userName={user?.name}
+        userAvatar={user?.avatar}
+        items={BUDGET_NAV_ITEMS}
+        onSectionChange={handleSectionChange}
+        currentSection="overview"
+      />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* ✅ Auto-save Indicators */}
+        {/* Auto-save Indicators */}
         {hasUnsavedChanges && !isSaving && !saving && (
           <div className="mb-4 flex items-center gap-2 px-4 py-2 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg">
             <svg className="w-4 h-4 text-orange-600 dark:text-orange-400" fill="currentColor" viewBox="0 0 20 20">

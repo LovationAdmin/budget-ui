@@ -1,7 +1,10 @@
+// src/pages/Profile.tsx
+// ✅ VERSION CORRIGÉE - Utilise le composant Navbar avec menu fonctionnel
+
 import { useState, FormEvent, ChangeEvent } from 'react';
 import { userAPI, budgetAPI } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
-import { BudgetNavbar } from '../components/budget/BudgetNavbar';
+import Navbar from '../components/Navbar'; // ✅ CHANGÉ : Import du composant Navbar
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -260,8 +263,8 @@ export default function Profile() {
   // ============================================================================
 
   return (
-      <div className="min-h-screen bg-gradient-to-br from-primary-50 to-purple-50 flex flex-col">
-        {/* ✅ CHANGÉ : Utilisation du composant Navbar avec items de navigation */}
+    <div className="min-h-screen bg-gradient-to-br from-primary-50 to-purple-50 flex flex-col">
+      {/* ✅ CHANGÉ : Utilisation du composant Navbar avec items de navigation */}
       <Navbar />
             
       <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -538,4 +541,4 @@ export default function Profile() {
       </AlertDialog>
     </div>
   );
-}
+} 
