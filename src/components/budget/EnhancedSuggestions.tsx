@@ -13,11 +13,15 @@ import {
   RefreshCw,
   Users,
   Info,
+  ExternalLink,
+  Phone,
+  Mail,
+  Globe
 } from "lucide-react";
 import { budgetAPI, ChargeSuggestion, Competitor } from '@/services/api';
 import { Charge } from '@/utils/importConverter';
 import { useNotifications } from '@/contexts/NotificationContext';
-import { Globe, Phone, Mail } from 'lucide-react';
+import { cn } from "@/lib/utils";
 
 // ============================================================================
 // TYPES
@@ -26,9 +30,9 @@ import { Globe, Phone, Mail } from 'lucide-react';
 interface EnhancedSuggestionsProps {
   budgetId: string;
   charges: Charge[];
-  householdSize: number; // ✅ RENOMMÉ depuis memberCount
-  location?: string; // ✅ AJOUTÉ
-  currency?: string; // ✅ AJOUTÉ
+  householdSize: number;
+  location?: string;
+  currency?: string;
 }
 
 // ============================================================================
@@ -92,7 +96,7 @@ export default function EnhancedSuggestions({
   const [isExpanded, setIsExpanded] = useState(false);
   const [displayHouseholdSize, setDisplayHouseholdSize] = useState(householdSize);
 
-  // ✅ Symbole de devise
+  // Symbol de devise
   const currencySymbol = currency === 'CHF' ? 'CHF' : '€';
 
   // Ref to track the last data we actually analyzed to prevent loops
@@ -182,7 +186,8 @@ export default function EnhancedSuggestions({
           category: c.category!,
           label: c.label,
           amount: c.amount,
-          merchant_name: c.label 
+          merchant_name: c.label,
+          description: c.description
         }));
 
       if (relevantCharges.length === 0) {
@@ -216,11 +221,11 @@ export default function EnhancedSuggestions({
 
   if (loading && suggestions.length === 0) {
     return (
-      <Card className="border-blue-200 bg-blue-50/30">
+      <Card className="border-green-200 bg-green-50/30 animate-pulse">
         <CardContent className="pt-6">
-          <div className="flex items-center justify-center py-8">
-            <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
-            <span className="ml-3 text-muted-foreground">
+          <div className="flex items-center justify-center py-6">
+            <Loader2 className="h-6 w-6 animate-spin text-green-600" />
+            <span className="ml-3 text-sm font-medium text-green-700">
               Recherche d'économies pour {householdSize} personne{householdSize > 1 ? 's' : ''}...
             </span>
           </div>
@@ -234,10 +239,10 @@ export default function EnhancedSuggestions({
       <Card className="border-red-200 bg-red-50/30">
         <CardContent className="pt-6">
           <div className="flex items-center gap-3 text-red-700">
-            <XCircle className="h-6 w-6" />
+            <XCircle className="h-5 w-5" />
             <div>
-              <p className="font-medium">Erreur</p>
-              <p className="text-sm">{error}</p>
+              <p className="font-medium text-sm">Erreur d'analyse</p>
+              <p className="text-xs">{error}</p>
             </div>
           </div>
         </CardContent>
@@ -250,13 +255,13 @@ export default function EnhancedSuggestions({
     if (hasRelevant) {
       return (
         <Card className="border-green-200 bg-green-50/30">
-          <CardContent className="pt-6">
+          <CardContent className="pt-4 pb-4">
             <div className="flex items-center gap-3 text-green-700">
-              <CheckCircle2 className="h-6 w-6" />
+              <CheckCircle2 className="h-5 w-5" />
               <div>
-                <p className="font-medium">🎉 Vous avez déjà d'excellentes offres !</p>
-                <p className="text-sm text-green-600">
-                  Vos charges sont bien optimisées pour votre foyer.
+                <p className="font-medium text-sm">🎉 Excellent !</p>
+                <p className="text-xs text-green-600">
+                  Vos charges semblent déjà bien optimisées.
                 </p>
               </div>
             </div>
@@ -272,73 +277,83 @@ export default function EnhancedSuggestions({
   return (
     <div className="space-y-4">
       <Card 
-        className="border-green-200 bg-green-50/50 cursor-pointer hover:bg-green-50 transition-colors"
+        className="border-green-200 bg-gradient-to-br from-green-50 to-emerald-100/30 transition-all duration-300 shadow-sm hover:shadow-md cursor-pointer"
         onClick={() => setIsExpanded(!isExpanded)}
       >
-        <CardHeader className="pb-3">
+        <CardHeader className="pb-3 pt-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3 flex-1">
-              <Sparkles className="h-6 w-6 text-green-600" />
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-green-100 text-green-600 shadow-sm">
+                <Sparkles className="h-5 w-5" />
+              </div>
               <div className="flex-1">
                 <div className="flex items-center gap-2">
-                  <CardTitle className="text-green-900">💡 Opportunités d'Économies</CardTitle>
-                  <Badge variant="outline" className="bg-green-100 text-green-800 border-green-300">
+                  <CardTitle className="text-green-900 text-lg">Opportunités d'Économies</CardTitle>
+                  <Badge variant="outline" className="bg-green-100 text-green-800 border-green-300 text-xs px-2 py-0.5">
                     {suggestions.length}
                   </Badge>
                 </div>
-                <CardDescription className="text-green-700 mt-1">
+                <CardDescription className="text-green-700 mt-0.5 text-xs sm:text-sm">
                   {isExpanded ? (
                     <span className="flex items-center gap-1">
                       <Users className="h-3 w-3" />
-                      Basé sur votre foyer de {displayHouseholdSize} personne{displayHouseholdSize > 1 ? 's' : ''}
+                      Foyer : {displayHouseholdSize} pers.
                     </span>
                   ) : (
-                    `Économie totale possible : ${totalSavings.toFixed(0)}${currencySymbol}/an`
+                    <span className="font-medium">
+                        Potentiel : {totalSavings.toFixed(0)}{currencySymbol}/an
+                    </span>
                   )}
                 </CardDescription>
               </div>
             </div>
             
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1">
               <Button 
                 variant="ghost" 
-                size="sm"
+                size="icon-sm"
                 onClick={(e) => { 
                     e.stopPropagation(); 
                     lastAnalyzedSignature.current = ""; 
                     loadSuggestions(); 
                 }}
                 disabled={loading}
+                className="text-green-700 hover:bg-green-100 hover:text-green-900"
                 title="Forcer la réanalyse"
               >
                 <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
               </Button>
-              <Button variant="ghost" size="sm">
-                {isExpanded ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
-              </Button>
+              <div className="text-green-800">
+                 {isExpanded ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
+              </div>
             </div>
           </div>
         </CardHeader>
+
+        {isExpanded && (
+           <CardContent className="pt-0 pb-4 animate-accordion-down">
+                {(cacheStats.hits > 0 || cacheStats.aiCalls > 0) && (
+                    <div className="flex gap-2 text-[10px] text-muted-foreground mb-3 px-1">
+                        <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-green-500"></span> {cacheStats.hits} en cache</span>
+                        {cacheStats.aiCalls > 0 && (
+                            <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-blue-500"></span> {cacheStats.aiCalls} nouvelles analyses</span>
+                        )}
+                    </div>
+                )}
+                
+                <div className="space-y-3">
+                    {suggestions.map((item) => (
+                    <SuggestionCard 
+                        key={item.charge_id} 
+                        chargeSuggestion={item} 
+                        householdSize={displayHouseholdSize} 
+                        currencySymbol={currencySymbol} 
+                    />
+                    ))}
+                </div>
+           </CardContent>
+        )}
       </Card>
-
-      {isExpanded && (
-        <>
-          {(cacheStats.hits > 0 || cacheStats.aiCalls > 0) && (
-            <div className="flex gap-2 text-xs px-1">
-              <Badge variant="secondary" className="text-xs">⚡ {cacheStats.hits} en cache</Badge>
-              {cacheStats.aiCalls > 0 && (
-                <Badge variant="outline" className="text-xs">🤖 {cacheStats.aiCalls} nouvelle{cacheStats.aiCalls > 1 ? 's' : ''} analyse{cacheStats.aiCalls > 1 ? 's' : ''}</Badge>
-              )}
-            </div>
-          )}
-
-          <div className="space-y-2">
-            {suggestions.map((item) => (
-              <SuggestionCard key={item.charge_id} chargeSuggestion={item} householdSize={displayHouseholdSize} currencySymbol={currencySymbol} />
-            ))}
-          </div>
-        </>
-      )}
     </div>
   );
 }
@@ -354,7 +369,7 @@ function SuggestionCard({
 }: { 
   chargeSuggestion: ChargeSuggestion; 
   householdSize: number;
-  currencySymbol: string; // ✅ AJOUTÉ
+  currencySymbol: string;
 }) {
   const { charge_label, suggestion } = chargeSuggestion;
   const competitors = suggestion.competitors.slice(0, 3);
@@ -367,154 +382,144 @@ function SuggestionCard({
   const isIndividual = isIndividualCategory(suggestion.category);
 
   return (
-    <Card className="border-orange-200 hover:border-orange-300 transition-colors">
-      <CardHeader 
-        className="pb-3 cursor-pointer hover:bg-orange-50/30 transition-colors"
+    <div className="border border-orange-200 rounded-xl bg-white overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-200">
+      <div 
+        className={cn(
+            "p-3 cursor-pointer transition-colors flex items-center justify-between",
+            isOpen ? "bg-orange-50/50" : "hover:bg-orange-50/30"
+        )}
         onClick={() => setIsOpen(!isOpen)}
       >
-        <div className="flex items-start justify-between">
-          <div className="flex-1">
+        <div className="flex-1 min-w-0 pr-3">
             <div className="flex items-center gap-2 mb-1">
-              <TrendingDown className="h-5 w-5 text-orange-600" />
-              <CardTitle className="text-lg">{charge_label}</CardTitle>
+              <TrendingDown className="h-4 w-4 text-orange-600 flex-shrink-0" />
+              <h4 className="font-semibold text-sm text-gray-900 truncate">{charge_label}</h4>
             </div>
-            <CardDescription className="flex items-center gap-2 flex-wrap">
-              <span>{getCategoryLabel(suggestion.category)}</span>
+            <div className="flex items-center gap-2 text-xs text-muted-foreground flex-wrap">
+              <span className="bg-gray-100 px-1.5 py-0.5 rounded text-gray-600 border border-gray-200">{getCategoryLabel(suggestion.category)}</span>
               {isIndividual && householdSize > 1 && (
-                <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-200">
-                  <Users className="h-3 w-3 mr-1" />Prix/personne
-                </Badge>
+                <span className="flex items-center gap-1 bg-blue-50 text-blue-700 px-1.5 py-0.5 rounded border border-blue-100">
+                  <Users className="h-3 w-3" /> Prix/pers.
+                </span>
               )}
-            </CardDescription>
-          </div>
-          
-          <div className="flex items-center gap-2">
-            <Badge className="bg-green-100 text-green-800 border-green-300">
-                Jusqu'à -{bestSavings.toFixed(0)}{currencySymbol}/an
-            </Badge>
-            <div className="text-muted-foreground">
-                {isOpen ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
             </div>
-          </div>
         </div>
-      </CardHeader>
+          
+        <div className="flex items-center gap-3 flex-shrink-0">
+            <span className="text-sm font-bold text-green-700 bg-green-100 border border-green-200 px-2 py-1 rounded-lg">
+                -{bestSavings.toFixed(0)}{currencySymbol}/an
+            </span>
+            <div className="text-gray-400">
+                {isOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+            </div>
+        </div>
+      </div>
 
       {isOpen && (
-        <CardContent className="space-y-4 pt-0">
+        <div className="p-3 pt-0 border-t border-orange-100 bg-orange-50/10">
             {isIndividual && householdSize > 1 && (
-            <div className="flex items-start gap-2 p-3 bg-blue-50 rounded-lg border border-blue-200 text-xs text-blue-700">
-                <Info className="h-4 w-4 flex-shrink-0 mt-0.5" />
-                <span>Prix analysé par personne. L'économie affichée est pour l'ensemble du foyer ({householdSize} personnes).</span>
-            </div>
+                <div className="flex items-start gap-2 p-2 mb-3 bg-blue-50/50 rounded-lg border border-blue-100 text-[10px] text-blue-700">
+                    <Info className="h-3 w-3 flex-shrink-0 mt-0.5" />
+                    <span>Prix analysé par personne. L'économie affichée est pour l'ensemble du foyer ({householdSize} personnes).</span>
+                </div>
             )}
 
-            {competitors.map((competitor, index) => (
-            <CompetitorCard key={index} competitor={competitor} rank={index + 1} currencySymbol={currencySymbol} />
-            ))}
-        </CardContent>
+            <div className="space-y-3 mt-3">
+                {competitors.map((competitor, index) => (
+                    <CompetitorCard key={index} competitor={competitor} rank={index + 1} currencySymbol={currencySymbol} />
+                ))}
+            </div>
+        </div>
       )}
-    </Card>
+    </div>
   );
 }
 
 function CompetitorCard({ competitor, rank, currencySymbol }: { competitor: Competitor; rank: number; currencySymbol: string }) {
-  const getRankBadge = () => {
-    if (rank === 1) return <Badge className="bg-green-600 text-white border-0">🏆 Meilleure offre</Badge>;
-    if (rank === 2) return <Badge variant="outline" className="border-orange-400 text-orange-700 bg-orange-50">🥈 Alternative #2</Badge>;
-    return <Badge variant="outline" className="border-gray-400 text-gray-700 bg-gray-50">🥉 Alternative #3</Badge>;
-  };
-
-  const getCardStyle = () => {
-    if (rank === 1) return "border-2 border-green-300 bg-green-50/50";
-    if (rank === 2) return "border-2 border-orange-200 bg-orange-50/30";
-    return "border border-gray-300 bg-gray-50/50";
-  };
-
+  const isBest = rank === 1;
   const websiteUrl = competitor.affiliate_link || competitor.website_url;
 
   return (
-    <div className={`p-4 rounded-lg transition-all ${getCardStyle()}`}>
-      <div className="flex items-center justify-between mb-3">
-        {getRankBadge()}
-        <span className="text-lg font-bold text-green-700">-{competitor.potential_savings.toFixed(0)}{currencySymbol}/an</span>
+    <div className={cn(
+        "p-3 rounded-lg border transition-all relative overflow-hidden",
+        isBest 
+            ? "border-green-300 bg-white shadow-sm ring-1 ring-green-100" 
+            : "border-gray-200 bg-white/50 opacity-90 hover:opacity-100"
+    )}>
+      {isBest && (
+          <div className="absolute top-0 right-0 bg-green-500 text-white text-[9px] font-bold px-2 py-0.5 rounded-bl-lg">
+              MEILLEURE OFFRE
+          </div>
+      )}
+
+      <div className="flex justify-between items-start mb-2 pr-16">
+         <div>
+            <h5 className="font-bold text-sm text-gray-900">{competitor.name}</h5>
+            <p className="text-xs text-gray-500 line-clamp-1">{competitor.best_offer}</p>
+         </div>
       </div>
 
-      <h4 className="font-semibold text-gray-900 mb-2">{competitor.name}</h4>
-      <p className="text-sm text-gray-600 mb-3">{competitor.best_offer}</p>
-
-      <div className="flex items-center gap-2 mb-4">
-        <span className="text-sm text-muted-foreground">Prix:</span>
-        <span className="font-semibold text-primary">{competitor.typical_price.toFixed(2)}{currencySymbol}/mois</span>
+      <div className="flex items-center gap-4 mb-3">
+         <div className="flex flex-col">
+            <span className="text-[10px] text-muted-foreground uppercase tracking-wider">Prix</span>
+            <span className="font-semibold text-gray-900 text-sm">{competitor.typical_price.toFixed(2)}{currencySymbol}<span className="text-[10px] font-normal text-gray-500">/mois</span></span>
+         </div>
+         <div className="h-6 w-px bg-gray-200"></div>
+         <div className="flex flex-col">
+            <span className="text-[10px] text-muted-foreground uppercase tracking-wider">Économie</span>
+            <span className="font-bold text-green-600 text-sm">-{competitor.potential_savings.toFixed(0)}{currencySymbol}<span className="text-[10px] font-normal text-green-600/70">/an</span></span>
+         </div>
       </div>
 
-      {(competitor.pros?.length > 0 || competitor.cons?.length > 0) && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
-          {competitor.pros?.length > 0 && (
-            <div>
-              <p className="text-xs font-semibold text-green-700 flex items-center gap-1 mb-1">
-                <CheckCircle2 className="h-3 w-3" />Avantages
-              </p>
-              <ul className="space-y-0.5">
-                {competitor.pros.map((pro, i) => (
-                  <li key={i} className="text-xs text-gray-600">• {pro}</li>
-                ))}
-              </ul>
-            </div>
-          )}
-          {competitor.cons?.length > 0 && (
-            <div>
-              <p className="text-xs font-semibold text-red-700 flex items-center gap-1 mb-1">
-                <XCircle className="h-3 w-3" />Inconvénients
-              </p>
-              <ul className="space-y-0.5">
-                {competitor.cons.map((con, i) => (
-                  <li key={i} className="text-xs text-gray-600">• {con}</li>
-                ))}
-              </ul>
-            </div>
-          )}
+      {(competitor.pros?.length > 0) && (
+        <div className="mb-3 space-y-1">
+            {competitor.pros.slice(0, 2).map((pro, i) => (
+                <div key={i} className="flex items-start gap-1.5 text-[11px] text-gray-600">
+                    <CheckCircle2 className="h-3 w-3 text-green-500 flex-shrink-0 mt-0.5" />
+                    <span>{pro}</span>
+                </div>
+            ))}
         </div>
       )}
 
-      <div className="flex flex-col sm:flex-row gap-2 pt-3 border-t border-gray-200">
+      <div className="flex items-center gap-2 pt-2 border-t border-gray-100">
         {websiteUrl && (
           <Button 
             size="sm" 
-            className="w-full sm:flex-1 h-10 sm:h-8 text-sm sm:text-xs"
+            variant={isBest ? "default" : "outline"}
+            className={cn("flex-1 h-7 text-xs", isBest ? "bg-green-600 hover:bg-green-700" : "")}
             onClick={() => window.open(websiteUrl, '_blank')}
           >
-            <Globe className="h-4 w-4 sm:h-3 sm:w-3 mr-2" />
-            Voir le site
+            <Globe className="h-3 w-3 mr-1.5" />
+            Voir l'offre
           </Button>
         )}
         
         {(competitor.phone_number || competitor.contact_email) && (
-          <div className="flex gap-2">
-            {competitor.phone_number && (
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="flex-1 sm:flex-initial h-10 sm:h-8 text-sm sm:text-xs"
-                onClick={() => window.open(`tel:${competitor.phone_number}`)}
-              >
-                <Phone className="h-4 w-4 sm:h-3 sm:w-3 mr-1" />
-                <span className="hidden sm:inline">{competitor.phone_number}</span>
-                <span className="sm:hidden">Appeler</span>
-              </Button>
-            )}
-            
-            {competitor.contact_email && (
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="flex-1 sm:flex-initial h-10 sm:h-8 text-sm sm:text-xs"
-                onClick={() => window.open(`mailto:${competitor.contact_email}`)}
-              >
-                <Mail className="h-4 w-4 sm:h-3 sm:w-3 mr-1" />
-                Email
-              </Button>
-            )}
-          </div>
+            <>
+                {competitor.phone_number && (
+                    <Button 
+                        variant="ghost" 
+                        size="icon-sm" 
+                        className="h-7 w-7 text-gray-500 hover:text-green-700 hover:bg-green-50"
+                        onClick={() => window.open(`tel:${competitor.phone_number}`)}
+                        title="Appeler"
+                    >
+                        <Phone className="h-3.5 w-3.5" />
+                    </Button>
+                )}
+                {competitor.contact_email && (
+                    <Button 
+                        variant="ghost" 
+                        size="icon-sm" 
+                        className="h-7 w-7 text-gray-500 hover:text-blue-700 hover:bg-blue-50"
+                        onClick={() => window.open(`mailto:${competitor.contact_email}`)}
+                        title="Envoyer un email"
+                    >
+                        <Mail className="h-3.5 w-3.5" />
+                    </Button>
+                )}
+            </>
         )}
       </div>
     </div>
