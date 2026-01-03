@@ -23,21 +23,27 @@ import type { Charge } from '@/utils/importConverter';
 import { budgetAPI } from '@/services/api';
 import { useToast } from "@/hooks/use-toast";
 
-// ✅ AJOUT : Constante pour la limite
+// ✅ Constante pour la limite de caractères
 const MAX_DESCRIPTION_LENGTH = 50;
 
+// ✅ AJOUT : Déclaration des props manquantes pour TypeScript
 interface ChargesSectionProps {
   charges: Charge[];
   onChargesChange: (charges: Charge[]) => void;
   onLinkTransaction?: (charge: Charge) => void; 
-  mappedTotals?: Record<string, number>; 
+  mappedTotals?: Record<string, number>;
+  budgetLocation?: string; // <--- Ajouté
+  budgetCurrency?: string; // <--- Ajouté
 }
 
 export default function ChargesSection({ 
     charges, 
     onChargesChange, 
     onLinkTransaction,
-    mappedTotals = {} 
+    mappedTotals = {},
+    // ✅ AJOUT : Récupération des props avec valeurs par défaut
+    budgetLocation = 'FR',
+    budgetCurrency = 'EUR'
 }: ChargesSectionProps) {
   const { toast } = useToast();
   
@@ -222,7 +228,7 @@ export default function ChargesSection({
 
             <div className="text-right">
                 <p className="text-2xl font-bold text-orange-900">
-                {totalCharges.toFixed(0)}€
+                {totalCharges.toFixed(0)} {budgetCurrency === 'EUR' ? '€' : budgetCurrency}
                 </p>
                 <p className="text-xs text-muted-foreground">Total mensuel</p>
             </div>
@@ -268,6 +274,7 @@ export default function ChargesSection({
                 onLinkTransaction={onLinkTransaction}
                 mappedTotal={mappedTotals[charge.id]}
                 getCategoryLabel={getCategoryLabel}
+                currency={budgetCurrency}
               />
             ))}
           </div>
@@ -307,7 +314,7 @@ export default function ChargesSection({
             </div>
 
             <div>
-              <Label htmlFor="charge-amount">Montant mensuel (€) *</Label>
+              <Label htmlFor="charge-amount">Montant mensuel ({budgetCurrency}) *</Label>
               <Input
                 id="charge-amount"
                 type="number"
@@ -319,7 +326,7 @@ export default function ChargesSection({
               />
             </div>
 
-            {/* ✅ MODIFICATION ICI : DÉTAILS AVEC COMPTEUR ET LIMITE */}
+            {/* Détails avec compteur */}
             <div>
                 <div className="flex items-center justify-between mb-1">
                     <Label htmlFor="charge-desc" className="flex items-center gap-1">
@@ -396,9 +403,18 @@ interface ChargeItemProps {
   onLinkTransaction?: (charge: Charge) => void;
   mappedTotal?: number;
   getCategoryLabel: (category?: string) => string;
+  currency?: string; // ✅ AJOUT
 }
 
-function ChargeItem({ charge, onUpdate, onDelete, onLinkTransaction, mappedTotal, getCategoryLabel }: ChargeItemProps) {
+function ChargeItem({ 
+    charge, 
+    onUpdate, 
+    onDelete, 
+    onLinkTransaction, 
+    mappedTotal, 
+    getCategoryLabel,
+    currency = 'EUR' // Valeur par défaut
+}: ChargeItemProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editLabel, setEditLabel] = useState(charge.label);
   const [editAmount, setEditAmount] = useState(charge.amount.toString());
@@ -454,11 +470,10 @@ function ChargeItem({ charge, onUpdate, onDelete, onLinkTransaction, mappedTotal
           </div>
 
           <div className="space-y-1.5">
-            <Label className="text-xs font-medium">Montant mensuel (€)</Label>
+            <Label className="text-xs font-medium">Montant mensuel ({currency})</Label>
             <Input type="number" step="0.01" value={editAmount} onChange={(e) => setEditAmount(e.target.value)} className="w-full" />
           </div>
 
-          {/* ✅ MODIFICATION ICI : ÉDITION AVEC COMPTEUR ET LIMITE */}
           <div className="space-y-1.5">
             <div className="flex items-center justify-between">
                 <Label className="text-xs font-medium">Détails / Critères (IA)</Label>
@@ -499,7 +514,7 @@ function ChargeItem({ charge, onUpdate, onDelete, onLinkTransaction, mappedTotal
     );
   }
 
-  // ✅ MODE AFFICHAGE (DESIGN ORIGINAL CONSERVÉ)
+  // ✅ MODE AFFICHAGE
   return (
     <div className={cn(
       "p-3 bg-white rounded-lg border border-transparent",
@@ -521,7 +536,6 @@ function ChargeItem({ charge, onUpdate, onDelete, onLinkTransaction, mappedTotal
           )}
         </div>
         
-        {/* ✅ AFFICHAGE DISCRET DE LA DESCRIPTION */}
         {charge.description && (
             <p className="text-[11px] text-muted-foreground mt-0.5 italic truncate flex items-center gap-1">
                 <Info className="h-3 w-3 inline" /> {charge.description}
@@ -536,14 +550,14 @@ function ChargeItem({ charge, onUpdate, onDelete, onLinkTransaction, mappedTotal
         )}
         {hasRealityCheck && differsFromBudget && (
           <div className="mt-1 text-xs text-indigo-600 font-medium">
-            Réel: {mappedTotal.toFixed(2)}€
+            Réel: {mappedTotal.toFixed(2)}{currency === 'EUR' ? '€' : currency}
           </div>
         )}
       </div>
 
       <div className="flex items-center justify-between sm:justify-end gap-2 sm:gap-1">
         <span className="font-bold text-orange-900 text-sm sm:mr-2">
-          {charge.amount.toFixed(2)}€
+          {charge.amount.toFixed(2)} {currency === 'EUR' ? '€' : currency}
         </span>
 
         <div className={cn(
