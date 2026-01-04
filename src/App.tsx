@@ -1,12 +1,14 @@
 // src/App.tsx
-// ✅ VERSION CORRIGÉE - Ajout route /blog/:slug pour BlogArticle
-// ✅ AUCUNE RÉGRESSION - Toutes les routes existantes conservées
+// ✅ VERSION CORRIGÉE & COMPLÈTE
+// - Sépare la Landing Page (Public) du Dashboard (Privé)
+// - Redirige automatiquement les utilisateurs connectés
 
 import { Routes, Route, Navigate } from 'react-router-dom';
+import { useAuth } from './contexts/AuthContext'; // ✅ Import nécessaire pour vérifier le user
 import PrivateRoute from './components/PrivateRoute';
 import { Toaster } from "@/components/ui/toaster";
 
-// Pages existantes (CONSERVÉES)
+// Pages existantes
 import Login from './pages/Login'; 
 import Signup from './pages/Signup';
 import ForgotPassword from './pages/ForgotPassword';
@@ -29,12 +31,22 @@ import Help from './pages/Help';
 // Pages Marketing
 import SmartTools from './pages/SmartTools';
 import Blog from './pages/Blog';
-import BlogArticle from './pages/BlogArticle'; // ✅ AJOUTÉ
+import BlogArticle from './pages/BlogArticle';
+import LandingPage from './pages/LandingPage'; // ✅ Nouvelle Landing Page
 
 export default function App() {
+  const { user } = useAuth(); // Récupération de l'état utilisateur
+
   return (
     <>
       <Routes>
+        {/* ============================================ */}
+        {/* ROOT ROUTE: LANDING vs DASHBOARD */}
+        {/* ============================================ */}
+        <Route path="/" element={
+          user ? <Navigate to="/dashboard" replace /> : <LandingPage />
+        } />
+
         {/* ============================================ */}
         {/* PUBLIC ROUTES */}
         {/* ============================================ */}
@@ -58,14 +70,14 @@ export default function App() {
         <Route path="/smart-tools" element={<SmartTools />} />
         <Route path="/outils-ia" element={<SmartTools />} />
         <Route path="/blog" element={<Blog />} />
-        
-        {/* ✅ CORRIGÉ : Route pour les articles de blog individuels */}
         <Route path="/blog/:slug" element={<BlogArticle />} />
 
         {/* ============================================ */}
         {/* PROTECTED ROUTES */}
         {/* ============================================ */}
-        <Route path="/" element={
+        
+        {/* ✅ Dashboard est maintenant sur une route explicite */}
+        <Route path="/dashboard" element={
           <PrivateRoute>
             <Dashboard />
           </PrivateRoute>
