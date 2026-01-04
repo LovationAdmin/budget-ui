@@ -1,12 +1,12 @@
 // src/components/Navbar.tsx
-// ✅ VERSION CORRIGÉE - Menu burger fonctionnel avec navigation complète
+// ✅ VERSION CORRIGÉE - Compatible avec la nouvelle structure de routing
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { BudgetNavbar, NavItem } from "./budget/BudgetNavbar";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate, useLocation } from "react-router-dom";
 import { 
-  Home,
+  LayoutDashboard, // Changé Home -> LayoutDashboard pour mieux différencier
   Newspaper,
   Sparkles,
   HelpCircle,
@@ -17,13 +17,13 @@ import {
 } from "lucide-react";
 
 // ============================================================================
-// 🎯 NAVIGATION ITEMS - Toutes les pages principales de Budget Famille
+// 🎯 NAVIGATION ITEMS
 // ============================================================================
-const NAVIGATION_ITEMS: NavItem[] = [
+const ALL_NAV_ITEMS: NavItem[] = [
   {
     id: 'dashboard',
     label: 'Tableau de bord',
-    icon: Home,
+    icon: LayoutDashboard,
   },
   {
     id: 'features',
@@ -73,14 +73,22 @@ export default function Navbar() {
   const location = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
 
+  // ✅ FILTRAGE DYNAMIQUE : On ne montre "Tableau de bord" que si connecté
+  const activeItems = useMemo(() => {
+    return ALL_NAV_ITEMS.filter(item => {
+      if (item.id === 'dashboard' && !user) return false;
+      return true;
+    });
+  }, [user]);
+
   // ============================================================================
   // 🎯 Déterminer la section courante depuis l'URL
   // ============================================================================
   const getCurrentSection = () => {
     const path = location.pathname;
     
-    // Mapping des routes vers les sections
-    if (path === '/' || path.startsWith('/budget/')) return 'dashboard';
+    // ✅ MAPPING MIS À JOUR
+    if (path === '/dashboard' || path.startsWith('/budget/')) return 'dashboard';
     if (path === '/features') return 'features';
     if (path === '/smart-tools' || path === '/outils-ia') return 'smart-tools';
     if (path === '/blog') return 'blog';
@@ -90,7 +98,7 @@ export default function Navbar() {
     if (path === '/privacy') return 'privacy';
     if (path === '/terms') return 'terms';
     
-    return undefined; // Pas de section active
+    return undefined;
   };
 
   // ============================================================================
@@ -99,7 +107,7 @@ export default function Navbar() {
   const handleSectionChange = (section: string) => {
     // Mapping des sections vers les routes
     const routeMap: Record<string, string> = {
-      'dashboard': '/',
+      'dashboard': '/dashboard', // ✅ CORRIGÉ : Pointe vers /dashboard, pas /
       'features': '/features',
       'smart-tools': '/smart-tools',
       'blog': '/blog',
@@ -113,16 +121,17 @@ export default function Navbar() {
     const route = routeMap[section];
     if (route) {
       navigate(route);
-      setMenuOpen(false); // Fermer le menu après navigation
+      setMenuOpen(false);
     }
   };
 
   return (
     <BudgetNavbar 
       budgetTitle="Budget Famille"
-      userName={user?.name || 'Utilisateur'}
+      // ✅ Si pas connecté, on affiche "Invité" au lieu de "Utilisateur"
+      userName={user?.name || 'Invité'} 
       userAvatar={user?.avatar}
-      items={NAVIGATION_ITEMS}
+      items={activeItems} // ✅ Utilisation de la liste filtrée
       currentSection={getCurrentSection()}
       menuOpen={menuOpen}
       onMenuClick={() => setMenuOpen(!menuOpen)}
