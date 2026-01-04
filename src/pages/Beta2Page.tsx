@@ -1,5 +1,5 @@
-// src/pages/Beta2Page.tsx - VERSION OPTIMISÉE COMPLÈTE
-// ✅ CORRIGÉ : householdSize + location + currency ajoutés partout
+// src/pages/Beta2Page.tsx - SAVE DISABLED VERSION
+// ✅ CORRIGÉ : Sauvegarde désactivée pour éviter l'écrasement des données réelles
 
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
@@ -80,8 +80,8 @@ interface BudgetData {
   name: string;
   is_owner: boolean;
   members: BudgetMember[];
-  location?: string; // ✅ AJOUTÉ
-  currency?: string; // ✅ AJOUTÉ
+  location?: string;
+  currency?: string;
 }
 
 export default function Beta2Page() {
@@ -94,7 +94,7 @@ export default function Beta2Page() {
 
   const [budget, setBudget] = useState<BudgetData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
+  const [saving, setSaving] = useState(false); // Kept for UI compatibility, but effectively unused
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [lastServerUpdate, setLastServerUpdate] = useState<string>("");
 
@@ -110,7 +110,6 @@ export default function Beta2Page() {
   const [demoTransactions, setDemoTransactions] = useState<BridgeTransaction[]>([]);
   const [demoBankBalance, setDemoBankBalance] = useState(0);
 
-  // ✅ AJOUTÉ : États pour location et currency
   const [budgetLocation, setBudgetLocation] = useState<string>('FR');
   const [budgetCurrency, setBudgetCurrency] = useState<string>('EUR');
 
@@ -131,9 +130,7 @@ export default function Beta2Page() {
   const loadedRef = useRef(false);
   const notifiedProjectsRef = useRef<Set<string>>(new Set());
 
-  // ============================================================================
-  // 🚀 OPTIMISATION : useMemo pour projectCarryOvers
-  // ============================================================================
+  // ... (Calculations: projectCarryOvers, mappedTotalsByChargeId, householdSize, totalGlobalRealized - UNCHANGED)
   const projectCarryOvers = useMemo(() => {
     const carryOvers: Record<string, number> = {};
     projects.forEach(proj => {
@@ -148,9 +145,6 @@ export default function Beta2Page() {
     return carryOvers;
   }, [projects, yearlyData, yearlyExpenses]);
 
-  // ============================================================================
-  // 🚀 OPTIMISATION : useMemo pour mappedTotalsByChargeId
-  // ============================================================================
   const mappedTotalsByChargeId = useMemo(() => {
     const totals: Record<string, number> = {};
     charges.forEach(ch => {
@@ -160,16 +154,10 @@ export default function Beta2Page() {
     return totals;
   }, [charges, chargeMappings]);
 
-  // ============================================================================
-  // 🚀 OPTIMISATION : useMemo pour householdSize
-  // ============================================================================
   const householdSize = useMemo(() => {
     return people.length > 0 ? people.length : 1;
   }, [people]);
 
-  // ============================================================================
-  // 🚀 OPTIMISATION : useMemo pour totalGlobalRealized
-  // ============================================================================
   const totalGlobalRealized = useMemo(() => {
     const today = new Date();
     const currentMonthIndex = today.getMonth();
@@ -192,9 +180,7 @@ export default function Beta2Page() {
     return total;
   }, [currentYear, projects, projectCarryOvers, yearlyData, yearlyExpenses]);
 
-  // ============================================================================
-  // 🚀 OPTIMISATION : WebSocket Connection
-  // ============================================================================
+  // ... (WebSocket, Demo Mode, Load Budget Effect - UNCHANGED)
   useEffect(() => {
     if (budget) {
       connectToBudget(budget.id, budget.name);
@@ -202,9 +188,6 @@ export default function Beta2Page() {
     return () => disconnectFromBudget();
   }, [budget, connectToBudget, disconnectFromBudget]);
 
-  // ============================================================================
-  // Demo Mode Persistence
-  // ============================================================================
   const getDemoStorageKey = useCallback(() => `demo-mode-${id}`, [id]);
   const getDemoTimestampKey = useCallback(() => `demo-timestamp-${id}`, [id]);
 
@@ -225,9 +208,6 @@ export default function Beta2Page() {
     }
   }, [id, getDemoStorageKey, getDemoTimestampKey]);
 
-  // ============================================================================
-  // 🚀 OPTIMISATION : useCallback pour enableDemoMode
-  // ============================================================================
   const enableDemoMode = useCallback(() => {
     if (!id) return;
     setDemoTransactions(DEMO_TRANSACTIONS);
@@ -243,9 +223,6 @@ export default function Beta2Page() {
     });
   }, [id, getDemoStorageKey, getDemoTimestampKey, toast]);
 
-  // ============================================================================
-  // 🚀 OPTIMISATION : useCallback pour disableDemoMode
-  // ============================================================================
   const disableDemoMode = useCallback(() => {
     if (!id) return;
     setIsDemoMode(false);
@@ -261,16 +238,11 @@ export default function Beta2Page() {
     });
   }, [id, getDemoStorageKey, getDemoTimestampKey, toast]);
 
-  // ============================================================================
-  // Load Budget Effect
-  // ============================================================================
   useEffect(() => { 
     loadBudgetData(); 
   }, [id]);
 
-  // ============================================================================
-  // 🚀 OPTIMISATION : useCallback pour loadBudgetData
-  // ============================================================================
+  // ... (Load Data, Refresh Bank, Hydrate State, Handle Year Change - UNCHANGED)
   const loadBudgetData = useCallback(async () => {
     if (!id || loadedRef.current) return;
     setLoading(true);
@@ -281,7 +253,6 @@ export default function Beta2Page() {
       ]);
       setBudget(budgetResponse.data);
       
-      // ✅ Charger location et currency depuis les métadonnées du budget
       setBudgetLocation(budgetResponse.data.location || 'FR');
       setBudgetCurrency(budgetResponse.data.currency || 'EUR');
       
@@ -323,9 +294,6 @@ export default function Beta2Page() {
     }
   }, [id, hasSeenTutorial, startTutorial, navigate, toast]);
 
-  // ============================================================================
-  // 🚀 OPTIMISATION : useCallback pour refreshBankData
-  // ============================================================================
   const refreshBankData = useCallback(async () => {
     if (!id || isDemoMode) return;
     try {
@@ -339,9 +307,6 @@ export default function Beta2Page() {
     }
   }, [id, isDemoMode]);
 
-  // ============================================================================
-  // 🚀 OPTIMISATION : useCallback pour hydrateStateFromGlobal
-  // ============================================================================
   const hydrateStateFromGlobal = useCallback((year: number, rawData: any) => {
     if (rawData.yearlyData && rawData.yearlyData[year]) {
       const yearData = rawData.yearlyData[year];
@@ -373,9 +338,6 @@ export default function Beta2Page() {
     }
   }, []);
 
-  // ============================================================================
-  // 🚀 OPTIMISATION : useCallback pour handleYearChange
-  // ============================================================================
   const handleYearChange = useCallback((newYear: number) => {
     if (globalDataRef.current) {
       const tempCurrentState = { 
@@ -404,81 +366,22 @@ export default function Beta2Page() {
   }, [budgetTitle, currentYear, people, charges, projects, yearlyData, yearlyExpenses, oneTimeIncomes, monthComments, projectComments, lockedMonths, hydrateStateFromGlobal]);
 
   // ============================================================================
-  // 🚀 OPTIMISATION : useCallback pour handleSave
+  // ⛔️ DISABLED SAVE HANDLER
   // ============================================================================
 
   const handleSave = useCallback(async (silent = false) => {
-    if (!id) return;
-    if (!silent) setSaving(true);
-
-    const currentViewData = { 
-      budgetTitle, 
-      currentYear, 
-      people, 
-      charges, 
-      projects, 
-      yearlyData, 
-      yearlyExpenses, 
-      oneTimeIncomes, 
-      monthComments, 
-      projectComments, 
-      lockedMonths 
-    };
-
-    const formattedCurrent = convertNewFormatToOld(currentViewData as any);
-    const finalPayload = JSON.parse(JSON.stringify(globalDataRef.current || {}));
-
-    finalPayload.budgetTitle = budgetTitle;
-    finalPayload.people = people;
-    finalPayload.charges = charges;
-    finalPayload.projects = projects;
-    finalPayload.lastUpdated = new Date().toISOString();
-    finalPayload.updatedBy = user?.name;
-    finalPayload.version = '2.3';
-
-    if (!finalPayload.yearlyData) finalPayload.yearlyData = {};
-    if (!finalPayload.oneTimeIncomes) finalPayload.oneTimeIncomes = {};
-
-    const sourceYearlyData = formattedCurrent.yearlyData || {};
-    const sourceOneTime = formattedCurrent.oneTimeIncomes || {};
-
-    if (sourceYearlyData[currentYear]) {
-        finalPayload.yearlyData[currentYear] = sourceYearlyData[currentYear];
+    if (!silent) {
+      toast({ 
+        title: "Mode Lecture Seule", 
+        description: "La sauvegarde est désactivée en mode Beta/Test pour protéger vos données réelles.", 
+        variant: "default",
+        duration: 3000
+      });
     }
-    if (sourceOneTime[currentYear]) {
-        finalPayload.oneTimeIncomes[currentYear] = sourceOneTime[currentYear];
-    }
+    // API CALL REMOVED
+  }, [toast]);
 
-    try {
-      await budgetAPI.updateData(id, { data: finalPayload });
-      
-      setLastServerUpdate(finalPayload.lastUpdated);
-      globalDataRef.current = finalPayload;
-
-      if (!silent) {
-        toast({ 
-          title: "Succès", 
-          description: "Budget sauvegardé !", 
-          variant: "default" 
-        });
-      }
-    } catch (error) {
-      console.error('Error saving:', error);
-      if (!silent) {
-        toast({ 
-          title: "Erreur", 
-          description: "Échec de la sauvegarde.", 
-          variant: "destructive" 
-        });
-      }
-    } finally { 
-      if (!silent) setSaving(false); 
-    }
-  }, [id, budgetTitle, currentYear, people, charges, projects, yearlyData, yearlyExpenses, oneTimeIncomes, monthComments, projectComments, lockedMonths, user?.name, toast]);
-
-  // ============================================================================
-  // 🚀 OPTIMISATION : useCallback pour refreshMembersOnly
-  // ============================================================================
+  // ... (Refresh Members Only, Mapper Handlers, Bank Manager Handlers - UNCHANGED)
   const refreshMembersOnly = useCallback(async () => { 
     if (!id) return;
     try {
@@ -494,30 +397,21 @@ export default function Beta2Page() {
     }
   }, [id]);
 
-  // ============================================================================
-  // 🚀 OPTIMISATION : useCallback pour handleOpenMapper
-  // ============================================================================
   const handleOpenMapper = useCallback((charge: Charge) => {
     setChargeToMap(charge);
     setShowMapper(true);
   }, []);
 
-  // ============================================================================
-  // 🚀 OPTIMISATION : useCallback pour handleSaveMappings
-  // ============================================================================
   const handleSaveMappings = useCallback((newLinks: MappedTransaction[]) => {
     const others = chargeMappings.filter(m => m.chargeId !== chargeToMap?.id);
     const updated = [...others, ...newLinks];
     setChargeMappings(updated);
     toast({ 
-      title: "Mappings mis à jour", 
+      title: "Mappings mis à jour (Local)", 
       description: `${newLinks.length} transaction(s) liée(s).` 
     });
   }, [chargeMappings, chargeToMap?.id, toast]);
 
-  // ============================================================================
-  // 🚀 OPTIMISATION : useCallback pour handleOpenBankManager
-  // ============================================================================
   const handleOpenBankManager = useCallback(() => {
     if (isDemoMode) {
       toast({ 
@@ -530,9 +424,6 @@ export default function Beta2Page() {
     setShowBankManager(true);
   }, [isDemoMode, toast]);
 
-  // ============================================================================
-  // 🚀 OPTIMISATION : useCallback pour handleSectionChange
-  // ============================================================================
   const handleSectionChange = useCallback((section: string) => {
     if (section === 'settings' || section === 'notifications') return;
     const element = document.getElementById(section);
@@ -543,9 +434,6 @@ export default function Beta2Page() {
     }
   }, []);
 
-  // ============================================================================
-  // 🚀 OPTIMISATION : useCallback pour autres handlers
-  // ============================================================================
   const handleShowInviteModal = useCallback(() => {
     setShowInviteModal(true);
   }, []);
@@ -567,7 +455,7 @@ export default function Beta2Page() {
   }, [navigate]);
 
   // ============================================================================
-  // Loading State
+  // RENDER
   // ============================================================================
   if (loading) {
     return (
@@ -580,7 +468,7 @@ export default function Beta2Page() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-purple-50">
       <div className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white text-center text-xs py-1.5 font-medium shadow-lg">
-        ✨ Beta 2 : Enable Banking (2500+ banques européennes) - Test de l'API PSD2
+        ✨ Beta 2 : Mode Test - Modifications non sauvegardées
       </div>
 
       <BudgetNavbar 
@@ -662,7 +550,8 @@ export default function Beta2Page() {
           </div>
         )}
 
-        <ActionsBar onSave={() => handleSave(false)} saving={saving} />
+        {/* Note: saving={false} forces the button to look active/clickable, but the handler shows a toast */}
+        <ActionsBar onSave={() => handleSave(false)} saving={false} />
 
         {/* ✅ Propagation currency */}
         <div id="people">
