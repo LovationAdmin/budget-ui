@@ -2,7 +2,7 @@
   "name": "Budget Famille",
   "short_name": "Budget Famille",
   "description": "Application de gestion de budget familial collaborative avec synchronisation en temps réel",
-  "start_url": "/",
+  "start_url": "/dashboard",
   "scope": "/",
   "display": "standalone",
   "background_color": "#ffffff",
@@ -51,7 +51,7 @@
       "name": "Nouveau Budget",
       "short_name": "Créer",
       "description": "Créer un nouveau budget familial",
-      "url": "/?action=create",
+      "url": "/dashboard?action=create",
       "icons": [
         {
           "src": "/icons/shortcut-create.png",
@@ -64,7 +64,7 @@
       "name": "Mes Budgets",
       "short_name": "Budgets",
       "description": "Voir tous mes budgets",
-      "url": "/",
+      "url": "/dashboard",
       "icons": [
         {
           "src": "/icons/shortcut-list.png",

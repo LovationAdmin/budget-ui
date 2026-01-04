@@ -7,8 +7,11 @@ Allow: /login
 Allow: /signup
 Allow: /privacy
 Allow: /premium
+Allow: /smart-tools
+Allow: /blog
 
 # Bloquer les pages privées
+Disallow: /dashboard
 Disallow: /api/
 Disallow: /budget/
 Disallow: /beta2/
