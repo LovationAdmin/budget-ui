@@ -65,7 +65,7 @@ export default function LandingPage() {
           <div className="max-w-4xl mx-auto">
             <div className="inline-flex items-center gap-2 bg-gradient-to-r from-primary to-purple-600 text-white px-6 py-2 rounded-full text-sm font-medium mb-8 animate-fade-in">
               <Rocket className="h-4 w-4" />
-              Nouveau : Support Enable Banking (PSD2)
+              A venir : Support Enable Banking (PSD2)
             </div>
             
             <h1 className="text-5xl md:text-6xl font-display font-bold text-gray-900 mb-6 tracking-tight">

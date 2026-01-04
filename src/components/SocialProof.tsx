@@ -1,34 +1,35 @@
-import { Star, Quote, Users, PiggyBank, ShieldCheck } from 'lucide-react';
+import { Star, Quote, ShieldCheck, Zap, Globe, Heart } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
+// Factual capabilities instead of user counts
 const STATS = [
-  { label: "Familles actives", value: "2,000+", icon: Users },
-  { label: "Économies générées", value: "1.5M€", icon: PiggyBank },
-  { label: "Taux de satisfaction", value: "4.9/5", icon: Star },
-  { label: "Sécurité", value: "100%", icon: ShieldCheck },
+  { label: "Banques compatibles", value: "2,500+", icon: Globe },
+  { label: "Pays supportés", value: "31", icon: Zap }, // SEPA zone
+  { label: "Chiffrement", value: "AES-256", icon: ShieldCheck },
+  { label: "Satisfaction Beta", value: "4.9/5", icon: Heart },
 ];
 
 const TESTIMONIALS = [
   {
     name: "Sophie & Thomas",
-    role: "Parents de 2 enfants",
-    content: "Enfin une application qui met tout le monde d'accord ! Grâce au système de projets, nous avons réussi à financer nos vacances au ski sans toucher au découvert.",
+    role: "Testeurs Beta",
+    content: "Enfin une application qui met tout le monde d'accord ! Le système de projets nous aide vraiment à visualiser nos objectifs communs.",
     rating: 5,
     initials: "ST",
     color: "bg-blue-100 text-blue-600"
   },
   {
     name: "Marc D.",
-    role: "Utilisateur Premium",
-    content: "La connexion bancaire automatique a changé ma vie. Je ne perds plus de temps à saisir mes tickets, et le 'Reality Check' m'a fait réaliser combien je dépensais en abonnements inutiles.",
+    role: "Utilisateur Early Access",
+    content: "La connexion bancaire automatique est un vrai gain de temps. Je ne perds plus de temps à saisir mes tickets manuellement.",
     rating: 5,
     initials: "MD",
     color: "bg-purple-100 text-purple-600"
   },
   {
     name: "Julie L.",
-    role: "En couple",
-    content: "On se disputait souvent pour l'argent. Avec Budget Famille, tout est transparent. Chacun voit ce qu'il reste pour le mois. C'est simple, joli et sécurisé.",
+    role: "Nouvelle utilisatrice",
+    content: "On se disputait souvent pour l'argent. Avec la vue transparente du budget, chacun sait exactement ce qu'il reste pour le mois.",
     rating: 5,
     initials: "JL",
     color: "bg-green-100 text-green-600"
@@ -40,7 +41,7 @@ export function SocialProof() {
     <section className="py-20 bg-gradient-to-b from-white to-primary/5">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
-        {/* STATS BANNER */}
+        {/* STATS BANNER - Focus on Tech Capabilities */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-20 border-b border-gray-100 pb-12">
           {STATS.map((stat, idx) => {
             const Icon = stat.icon;
@@ -59,10 +60,10 @@ export function SocialProof() {
         {/* HEADER */}
         <div className="text-center mb-16">
           <h2 className="text-3xl font-bold font-display text-gray-900 mb-4">
-            Ils gèrent leur budget avec le sourire
+            Conçu pour simplifier votre quotidien
           </h2>
           <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-            Rejoignez une communauté qui a décidé de reprendre le contrôle de ses finances.
+            Découvrez pourquoi les premières familles à nous rejoindre adorent l'expérience.
           </p>
         </div>
 
@@ -81,7 +82,7 @@ export function SocialProof() {
                 ))}
               </div>
 
-              <p className="text-gray-600 mb-6 leading-relaxed relative z-10">
+              <p className="text-gray-600 mb-6 leading-relaxed relative z-10 italic">
                 "{t.content}"
               </p>
 
@@ -102,7 +103,7 @@ export function SocialProof() {
         <div className="mt-16 text-center">
           <div className="inline-flex items-center gap-2 bg-green-50 text-green-700 px-4 py-2 rounded-full text-sm font-medium border border-green-100">
             <ShieldCheck className="h-4 w-4" />
-            Données chiffrées & Anonymes
+            Technologie 100% Sécurisée & Privée
           </div>
         </div>
 
