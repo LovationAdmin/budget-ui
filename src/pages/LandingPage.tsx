@@ -1,18 +1,17 @@
-// src/pages/LandingPage.tsx
 import { useNavigate } from 'react-router-dom';
-import Navbar from '@/components/Navbar'; [cite_start]// [cite: 93]
-import { Footer } from '@/components/Footer'; [cite_start]// [cite: 67]
+import Navbar from '@/components/Navbar';
+import { Footer } from '@/components/Footer';
 import { Button } from '@/components/ui/button';
 import { 
   Rocket, Shield, Users, ArrowRight, CheckCircle2, 
   TrendingUp, Calendar, Target, Brain, CreditCard
 } from 'lucide-react';
-import SmartToolsWidget from '@/components/SmartToolsWidget'; // Requires the file above
+import SmartToolsWidget from '@/components/SmartToolsWidget';
+import { SocialProof } from '@/components/SocialProof'; // Added SocialProof integration
 
 export default function LandingPage() {
   const navigate = useNavigate();
 
-  // Features data defined LOCALLY to avoid import errors
   const features = [
     {
       icon: Users,
@@ -34,7 +33,6 @@ export default function LandingPage() {
     }
   ];
 
-  // Blog data defined LOCALLY to avoid import errors
   const latestArticles = [
     {
       title: "5 Étapes pour Gérer son Budget en 2025",
@@ -170,7 +168,10 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* ==================== 4. BLOG TEASER ==================== */}
+        {/* ==================== 4. SOCIAL PROOF ==================== */}
+        <SocialProof />
+
+        {/* ==================== 5. BLOG TEASER ==================== */}
         <section className="py-20 bg-gray-50">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex justify-between items-end mb-10">
@@ -208,7 +209,7 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* ==================== 5. CTA FINAL ==================== */}
+        {/* ==================== 6. CTA FINAL ==================== */}
         <section className="py-24 bg-primary text-white">
           <div className="max-w-4xl mx-auto px-4 text-center">
             <h2 className="text-4xl font-display font-bold mb-6">

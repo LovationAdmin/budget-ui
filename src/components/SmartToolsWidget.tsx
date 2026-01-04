@@ -1,4 +1,3 @@
-// src/components/SmartToolsWidget.tsx
 import { useState } from 'react';
 import { 
   Brain, Zap, Sparkles, Home, Smartphone, Wifi, 
@@ -23,10 +22,9 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { budgetAPI, MarketSuggestion } from '@/services/api'; [cite_start]// [cite: 1886]
-import { useToast } from '@/hooks/use-toast'; [cite_start]// [cite: 1225]
+import { budgetAPI, MarketSuggestion } from '@/services/api';
+import { useToast } from '@/hooks/use-toast';
 
-// Configuration des pays disponibles
 const LOCATION_CONFIGS = [
   { code: 'FR', name: 'France', currency: 'EUR', symbol: '€' },
   { code: 'DE', name: 'Allemagne', currency: 'EUR', symbol: '€' },
