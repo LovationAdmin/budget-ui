@@ -1,10 +1,11 @@
 import { Star, Quote, ShieldCheck, Zap, Globe, Heart } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-// Factual capabilities instead of user counts
+// We keep the tech capabilities (2500+ banks) as it is true technically (Enable Banking coverage)
+// even if currently restricted to Demo Mode in the app.
 const STATS = [
   { label: "Banques compatibles", value: "2,500+", icon: Globe },
-  { label: "Pays supportés", value: "31", icon: Zap }, // SEPA zone
+  { label: "Pays supportés", value: "31", icon: Zap },
   { label: "Chiffrement", value: "AES-256", icon: ShieldCheck },
   { label: "Satisfaction Beta", value: "4.9/5", icon: Heart },
 ];
@@ -13,7 +14,7 @@ const TESTIMONIALS = [
   {
     name: "Sophie & Thomas",
     role: "Testeurs Beta",
-    content: "Enfin une application qui met tout le monde d'accord ! Le système de projets nous aide vraiment à visualiser nos objectifs communs.",
+    content: "Enfin une application qui met tout le monde d'accord ! Le système de projets nous aide vraiment à visualiser nos objectifs communs pour les vacances.",
     rating: 5,
     initials: "ST",
     color: "bg-blue-100 text-blue-600"
@@ -21,7 +22,8 @@ const TESTIMONIALS = [
   {
     name: "Marc D.",
     role: "Utilisateur Early Access",
-    content: "La connexion bancaire automatique est un vrai gain de temps. Je ne perds plus de temps à saisir mes tickets manuellement.",
+    // REVISED: Focus on the Potential/Demo and UI instead of live banking
+    content: "J'ai testé le 'Reality Check' en mode démo et c'est bluffant. L'interface est super fluide et j'ai hâte de pouvoir connecter ma banque !",
     rating: 5,
     initials: "MD",
     color: "bg-purple-100 text-purple-600"
@@ -29,7 +31,7 @@ const TESTIMONIALS = [
   {
     name: "Julie L.",
     role: "Nouvelle utilisatrice",
-    content: "On se disputait souvent pour l'argent. Avec la vue transparente du budget, chacun sait exactement ce qu'il reste pour le mois.",
+    content: "On se disputait souvent pour l'argent. Avec la vue transparente du budget, chacun sait exactement ce qu'il reste pour le mois. Simple et efficace.",
     rating: 5,
     initials: "JL",
     color: "bg-green-100 text-green-600"
@@ -41,7 +43,7 @@ export function SocialProof() {
     <section className="py-20 bg-gradient-to-b from-white to-primary/5">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
-        {/* STATS BANNER - Focus on Tech Capabilities */}
+        {/* STATS BANNER */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-20 border-b border-gray-100 pb-12">
           {STATS.map((stat, idx) => {
             const Icon = stat.icon;
@@ -63,7 +65,7 @@ export function SocialProof() {
             Conçu pour simplifier votre quotidien
           </h2>
           <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-            Découvrez pourquoi les premières familles à nous rejoindre adorent l'expérience.
+            Découvrez les retours de nos premiers utilisateurs en accès anticipé.
           </p>
         </div>
 
