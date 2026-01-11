@@ -1,28 +1,44 @@
 # Budget Famille - robots.txt
 # https://budgetfamille.com/robots.txt
+# Dernière mise à jour: 2025-01-11
 
+# Autoriser tous les crawlers
 User-agent: *
+
+# Pages publiques autorisées
 Allow: /
 Allow: /login
 Allow: /signup
-Allow: /privacy
+Allow: /features
+Allow: /help
+Allow: /about
 Allow: /premium
 Allow: /smart-tools
 Allow: /blog
+Allow: /privacy
+Allow: /terms
+Allow: /forgot-password
 
-# Bloquer les pages privées
+# Pages privées bloquées (après connexion)
 Disallow: /dashboard
-Disallow: /api/
 Disallow: /budget/
-Disallow: /beta2/
 Disallow: /profile
+Disallow: /beta2/
 Disallow: /invitation/
 Disallow: /verify-email
 
-# Bloquer les ressources inutiles
+# Ressources techniques bloquées
+Disallow: /api/
 Disallow: /*.json$
 Disallow: /src/
 Disallow: /node_modules/
+Disallow: /_next/
+
+# Anciennes URLs PHP (redirection 301 configurée)
+Disallow: /index.php
 
 # Sitemap
 Sitemap: https://budgetfamille.com/sitemap.xml
+
+# Crawl-delay pour ne pas surcharger le serveur (optionnel)
+# Crawl-delay: 1

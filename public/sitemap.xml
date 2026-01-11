@@ -1,88 +1,95 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:xhtml="http://www.w3.org/1999/xhtml">
   
+  <!-- Page d'accueil - Priorité maximale -->
   <url>
     <loc>https://budgetfamille.com/</loc>
-    <lastmod>2025-01-04</lastmod>
+    <lastmod>2025-01-11</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
   
+  <!-- Pages Marketing principales -->
   <url>
     <loc>https://budgetfamille.com/smart-tools</loc>
-    <lastmod>2025-01-04</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.9</priority>
-  </url>
-
-  <url>
-    <loc>https://budgetfamille.com/blog</loc>
-    <lastmod>2025-01-04</lastmod>
+    <lastmod>2025-01-11</lastmod>
     <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-  </url>
-
-  <url>
-    <loc>https://budgetfamille.com/login</loc>
-    <lastmod>2025-01-01</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  
-  <url>
-    <loc>https://budgetfamille.com/signup</loc>
-    <lastmod>2025-01-01</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  
-  <url>
-    <loc>https://budgetfamille.com/forgot-password</loc>
-    <lastmod>2025-01-01</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  
-  <url>
-    <loc>https://budgetfamille.com/privacy</loc>
-    <lastmod>2025-01-01</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.5</priority>
-  </url>
-  
-  <url>
-    <loc>https://budgetfamille.com/terms</loc>
-    <lastmod>2025-01-01</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.5</priority>
+    <priority>0.9</priority>
   </url>
   
   <url>
     <loc>https://budgetfamille.com/premium</loc>
-    <lastmod>2025-01-01</lastmod>
+    <lastmod>2025-01-11</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
   
   <url>
     <loc>https://budgetfamille.com/features</loc>
-    <lastmod>2025-01-01</lastmod>
+    <lastmod>2025-01-11</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  
+  <!-- Blog et contenu -->
+  <url>
+    <loc>https://budgetfamille.com/blog</loc>
+    <lastmod>2025-01-11</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  
+  <!-- Pages d'authentification -->
+  <url>
+    <loc>https://budgetfamille.com/login</loc>
+    <lastmod>2025-01-11</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
+  </url>
+  
+  <url>
+    <loc>https://budgetfamille.com/signup</loc>
+    <lastmod>2025-01-11</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  
+  <url>
+    <loc>https://budgetfamille.com/forgot-password</loc>
+    <lastmod>2025-01-11</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  
+  <!-- Pages d'information -->
+  <url>
+    <loc>https://budgetfamille.com/help</loc>
+    <lastmod>2025-01-11</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
   </url>
   
   <url>
     <loc>https://budgetfamille.com/about</loc>
-    <lastmod>2025-01-01</lastmod>
+    <lastmod>2025-01-11</lastmod>
     <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
+    <priority>0.6</priority>
+  </url>
+  
+  <!-- Pages légales -->
+  <url>
+    <loc>https://budgetfamille.com/privacy</loc>
+    <lastmod>2025-01-11</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.4</priority>
   </url>
   
   <url>
-    <loc>https://budgetfamille.com/help</loc>
-    <lastmod>2025-01-01</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
+    <loc>https://budgetfamille.com/terms</loc>
+    <lastmod>2025-01-11</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.4</priority>
   </url>
 
 </urlset>
