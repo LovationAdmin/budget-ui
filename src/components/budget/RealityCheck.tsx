@@ -1,6 +1,6 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Wallet, AlertTriangle, CheckCircle2, Link as LinkIcon, Info } from "lucide-react";
+import { Wallet, AlertTriangle, CheckCircle2, Link as LinkIcon, Info, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface RealityCheckProps {
@@ -87,7 +87,7 @@ export function RealityCheck({
                       </Button>
                   </div>
               ) : (
-                  <div>
+                  <div className="flex flex-col items-end">
                       <div className="flex items-center justify-center sm:justify-end gap-2 mb-1">
                           <span className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
                               Réalité (Banque)
@@ -110,6 +110,17 @@ export function RealityCheck({
                               </span>
                           )}
                       </div>
+                      
+                      {/* ✅ ADDED: Edit Button when connected */}
+                      <Button 
+                          onClick={onConnectBank}
+                          variant="ghost"
+                          size="sm"
+                          className="mt-2 h-7 text-xs text-muted-foreground hover:text-primary px-2"
+                      >
+                          <Settings className="h-3 w-3 mr-1" />
+                          Gérer les comptes
+                      </Button>
                   </div>
               )}
           </div>
@@ -122,8 +133,10 @@ export function RealityCheck({
           <p className="text-xs text-amber-800 flex items-center gap-2">
             <Info className="h-4 w-4 flex-shrink-0" />
             <span>
-              <strong>Mode démo actif :</strong> Ces données sont fictives pour vous permettre de tester Reality Check. 
-              Passez Premium pour connecter vos vraies données bancaires et obtenir une comparaison réelle.
+              <strong>Mode démo actif :</strong> Données fictives. 
+              <button onClick={onConnectBank} className="underline font-semibold ml-1 hover:text-amber-900">
+                Connecter une vraie banque
+              </button>
             </span>
           </p>
         </div>
