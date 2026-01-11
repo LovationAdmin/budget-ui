@@ -1,14 +1,12 @@
 // src/App.tsx
-// ✅ VERSION CORRIGÉE & COMPLÈTE
-// - Sépare la Landing Page (Public) du Dashboard (Privé)
-// - Redirige automatiquement les utilisateurs connectés
+// ✅ VERSION SIMPLIFIÉE - Beta2Page supprimé (Reality Check intégré dans BudgetComplete)
 
 import { Routes, Route, Navigate } from 'react-router-dom';
-import { useAuth } from './contexts/AuthContext'; // ✅ Import nécessaire pour vérifier le user
+import { useAuth } from './contexts/AuthContext';
 import PrivateRoute from './components/PrivateRoute';
 import { Toaster } from "@/components/ui/toaster";
 
-// Pages existantes
+// Pages
 import Login from './pages/Login'; 
 import Signup from './pages/Signup';
 import ForgotPassword from './pages/ForgotPassword';
@@ -20,7 +18,6 @@ import NotFound from './pages/NotFound';
 import AcceptInvitation from './pages/AcceptInvitation';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import VerifyEmail from './pages/VerifyEmail';
-import Beta2Page from './pages/Beta2Page';
 import EnableBankingCallbackPage from './pages/EnableBankingCallbackPage';
 import PremiumPage from './pages/PremiumPage';
 import Terms from './pages/Terms';
@@ -32,10 +29,10 @@ import Help from './pages/Help';
 import SmartTools from './pages/SmartTools';
 import Blog from './pages/Blog';
 import BlogArticle from './pages/BlogArticle';
-import LandingPage from './pages/LandingPage'; // ✅ Nouvelle Landing Page
+import LandingPage from './pages/LandingPage';
 
 export default function App() {
-  const { user } = useAuth(); // Récupération de l'état utilisateur
+  const { user } = useAuth();
 
   return (
     <>
@@ -76,14 +73,13 @@ export default function App() {
         {/* PROTECTED ROUTES */}
         {/* ============================================ */}
         
-        {/* ✅ Dashboard est maintenant sur une route explicite */}
         <Route path="/dashboard" element={
           <PrivateRoute>
             <Dashboard />
           </PrivateRoute>
         } />
         
-        {/* Budget Routes */}
+        {/* Budget Route - Reality Check intégré */}
         <Route path="/budget/:id/complete" element={
           <PrivateRoute>
             <BudgetComplete />
@@ -97,18 +93,20 @@ export default function App() {
         } />
         
         {/* ============================================ */}
-        {/* BETA ROUTES (Enable Banking) */}
+        {/* BANKING CALLBACK (public - pour Enable Banking OAuth) */}
         {/* ============================================ */}
-        {/* Enable Banking Callback (public route) */}
         <Route path="/beta2/callback" element={<EnableBankingCallbackPage />} />
         
-        {/* Beta 2 - Enable Banking (protected route) */}
+        {/* ============================================ */}
+        {/* LEGACY REDIRECTS - Redirige les anciennes URLs Beta2 vers BudgetComplete */}
+        {/* ============================================ */}
         <Route path="/beta2/:id" element={
           <PrivateRoute>
-            <Beta2Page />
+            {/* Redirect to the new unified route */}
+            <RedirectToBudgetComplete />
           </PrivateRoute>
         } />
-        
+
         {/* ============================================ */}
         {/* ERROR ROUTES */}
         {/* ============================================ */}
@@ -116,8 +114,13 @@ export default function App() {
         <Route path="*" element={<Navigate to="/404" replace />} />
       </Routes>
 
-      {/* Toast notifications (Required for all notifications) */}
       <Toaster />
     </>
   );
+}
+
+// Component to handle legacy /beta2/:id redirects
+function RedirectToBudgetComplete() {
+  const { id } = require('react-router-dom').useParams();
+  return <Navigate to={`/budget/${id}/complete`} replace />;
 }

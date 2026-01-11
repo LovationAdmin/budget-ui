@@ -1,7 +1,10 @@
+// src/pages/Dashboard.tsx
+// ✅ VERSION SIMPLIFIÉE - Beta2 supprimé (Reality Check intégré dans BudgetComplete)
+
 import { EmptyState } from '@/components/budget/EmptyState';
 import { useState, useEffect, useCallback, memo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { PiggyBank, Plus, ArrowRight, Trash2, Loader2, FlaskConical, MapPin, DollarSign, Pencil } from "lucide-react";
+import { PiggyBank, Plus, ArrowRight, Trash2, MapPin, DollarSign, Pencil } from "lucide-react";
 import { budgetAPI } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
@@ -101,19 +104,13 @@ const BudgetListSkeleton = memo(function BudgetListSkeleton() {
 interface BudgetCardProps {
   budget: Budget;
   onOpen: (id: string) => void;
-  onOpenBeta: (id: string) => void;
   onDelete: (budget: Budget) => void;
   onEdit: (budget: Budget) => void;
 }
 
-const BudgetCard = memo(function BudgetCard({ budget, onOpen, onOpenBeta, onDelete, onEdit }: BudgetCardProps) {
+const BudgetCard = memo(function BudgetCard({ budget, onOpen, onDelete, onEdit }: BudgetCardProps) {
   const handleOpen = useCallback(() => onOpen(budget.id), [budget.id, onOpen]);
   
-  const handleOpenBeta = useCallback((e: React.MouseEvent) => {
-    e.stopPropagation();
-    onOpenBeta(budget.id);
-  }, [budget.id, onOpenBeta]);
-
   const handleDelete = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
     onDelete(budget);
@@ -168,27 +165,29 @@ const BudgetCard = memo(function BudgetCard({ budget, onOpen, onOpenBeta, onDele
         )}
         
         <div className="flex items-center gap-1">
-          <Button variant="ghost" size="sm" className="gap-1 px-2">
+          <Button variant="ghost" size="sm" className="gap-1 px-2 min-h-[44px]">
             <span className="hidden sm:inline">Ouvrir</span>
             <ArrowRight className="h-4 w-4" />
           </Button>
           
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleOpenBeta}
-            className="gap-1 px-2 text-purple-600 hover:text-purple-700 hover:bg-purple-50"
-            title="Tester Reality Check (Beta 2)"
-          >
-            <FlaskConical className="h-4 w-4" />
-          </Button>
-          
           {budget.is_owner && (
             <>
-                <Button variant="ghost" size="icon" onClick={handleEdit} className="text-muted-foreground hover:text-primary h-8 w-8" title="Modifier">
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  onClick={handleEdit} 
+                  className="text-muted-foreground hover:text-primary h-10 w-10" 
+                  title="Modifier"
+                >
                    <Pencil className="h-4 w-4" />
                 </Button>
-                <Button variant="ghost" size="icon" onClick={handleDelete} className="text-muted-foreground hover:text-destructive h-8 w-8" title="Supprimer">
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  onClick={handleDelete} 
+                  className="text-muted-foreground hover:text-destructive h-10 w-10" 
+                  title="Supprimer"
+                >
                    <Trash2 className="h-4 w-4" />
                 </Button>
             </>
@@ -228,6 +227,9 @@ export default function Dashboard() {
   const [budgetToDelete, setBudgetToDelete] = useState<Budget | null>(null);
   const [deleting, setDeleting] = useState(false);
 
+  // ============================================================================
+  // LOAD BUDGETS
+  // ============================================================================
   const loadBudgets = useCallback(async () => {
     try {
       const response = await budgetAPI.list();
@@ -241,10 +243,14 @@ export default function Dashboard() {
 
   useEffect(() => { loadBudgets(); }, [loadBudgets]);
 
+  // ============================================================================
+  // NAVIGATION - Plus de handleOpenBeta, Reality Check est dans BudgetComplete
+  // ============================================================================
   const handleOpenBudget = (id: string) => navigate(`/budget/${id}/complete`);
-  const handleOpenBeta = (id: string) => navigate(`/beta2/${id}`);
 
-  // --- Handlers CREATION ---
+  // ============================================================================
+  // HANDLERS CREATION
+  // ============================================================================
   const handleCreateLocationChange = (locationCode: string) => {
     setNewBudgetLocation(locationCode);
     const config = LOCATION_CONFIGS.find(c => c.code === locationCode);
@@ -275,7 +281,9 @@ export default function Dashboard() {
     }
   };
 
-  // --- Handlers EDITION ---
+  // ============================================================================
+  // HANDLERS EDITION
+  // ============================================================================
   const openEditModal = useCallback((budget: Budget) => {
       setBudgetToEdit(budget);
       setEditName(budget.name);
@@ -314,7 +322,9 @@ export default function Dashboard() {
       }
   };
 
-  // --- Handlers SUPPRESSION ---
+  // ============================================================================
+  // HANDLERS SUPPRESSION
+  // ============================================================================
   const handleDelete = async () => {
     if (!budgetToDelete) return;
     setDeleting(true);
@@ -330,11 +340,15 @@ export default function Dashboard() {
     }
   };
 
+  // ============================================================================
+  // RENDER
+  // ============================================================================
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary-50 to-purple-50 flex flex-col">
       <Navbar />
       
       <main className="flex-1 mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+        {/* Header */}
         <div className="mb-8 animate-slide-up">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
@@ -347,13 +361,18 @@ export default function Dashboard() {
                   : 'Créez votre premier budget pour commencer'}
               </p>
             </div>
-            <Button variant="default" onClick={() => setShowCreateModal(true)} className="gap-2 shadow-lg bg-primary hover:bg-primary/90">
+            <Button 
+              variant="default" 
+              onClick={() => setShowCreateModal(true)} 
+              className="gap-2 shadow-lg bg-primary hover:bg-primary/90 min-h-[44px]"
+            >
               <Plus className="h-4 w-4" />
               Nouveau Budget
             </Button>
           </div>
         </div>
 
+        {/* Budget List */}
         {loading ? (
           <BudgetListSkeleton />
         ) : budgets.length === 0 ? (
@@ -371,7 +390,6 @@ export default function Dashboard() {
                 key={budget.id}
                 budget={budget}
                 onOpen={handleOpenBudget}
-                onOpenBeta={handleOpenBeta}
                 onDelete={() => setBudgetToDelete(budget)}
                 onEdit={openEditModal}
               />
@@ -382,50 +400,157 @@ export default function Dashboard() {
 
       <Footer />
 
+      {/* ================================================================== */}
       {/* CREATE MODAL */}
+      {/* ================================================================== */}
       <Dialog open={showCreateModal} onOpenChange={setShowCreateModal}>
         <DialogContent className="sm:max-w-md">
-          <DialogHeader><DialogTitle>Nouveau budget</DialogTitle><DialogDescription>Configurez votre budget.</DialogDescription></DialogHeader>
+          <DialogHeader>
+            <DialogTitle>Nouveau budget</DialogTitle>
+            <DialogDescription>Configurez votre budget familial.</DialogDescription>
+          </DialogHeader>
           <form onSubmit={handleCreateBudget}>
             <div className="space-y-4 py-4">
-              <div className="space-y-2"><Label>Nom</Label><Input value={newBudgetName} onChange={(e) => setNewBudgetName(e.target.value)} autoFocus /></div>
-              <div className="space-y-2"><Label>Localisation</Label>
+              <div className="space-y-2">
+                <Label htmlFor="budget-name">Nom du budget</Label>
+                <Input 
+                  id="budget-name"
+                  value={newBudgetName} 
+                  onChange={(e) => setNewBudgetName(e.target.value)} 
+                  placeholder="Ex: Budget Famille 2025"
+                  autoFocus 
+                  className="min-h-[44px]"
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label>Localisation</Label>
                 <Select value={newBudgetLocation} onValueChange={handleCreateLocationChange}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>{LOCATION_CONFIGS.map((c) => (<SelectItem key={c.code} value={c.code}>{c.name} ({c.currency})</SelectItem>))}</SelectContent>
+                  <SelectTrigger className="min-h-[44px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {LOCATION_CONFIGS.map((c) => (
+                      <SelectItem key={c.code} value={c.code}>
+                        {c.name} ({c.currency})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
                 </Select>
               </div>
-              <div className="flex items-center gap-2 p-3 bg-muted/50 rounded-lg text-sm border"><DollarSign className="h-4 w-4" /><span>Devise : <strong>{newBudgetCurrency}</strong></span></div>
+              
+              <div className="flex items-center gap-2 p-3 bg-muted/50 rounded-lg text-sm border">
+                <DollarSign className="h-4 w-4 text-muted-foreground" />
+                <span>Devise : <strong>{newBudgetCurrency}</strong></span>
+              </div>
             </div>
-            <DialogFooter><Button variant="outline" onClick={() => setShowCreateModal(false)}>Annuler</Button><Button type="submit" disabled={creating}>{creating ? 'Création...' : 'Créer'}</Button></DialogFooter>
+            
+            <DialogFooter className="gap-2 sm:gap-0">
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={() => setShowCreateModal(false)}
+                className="min-h-[44px]"
+              >
+                Annuler
+              </Button>
+              <Button 
+                type="submit" 
+                disabled={creating || !newBudgetName.trim()}
+                className="min-h-[44px]"
+              >
+                {creating ? 'Création...' : 'Créer le budget'}
+              </Button>
+            </DialogFooter>
           </form>
         </DialogContent>
       </Dialog>
 
+      {/* ================================================================== */}
       {/* EDIT MODAL */}
+      {/* ================================================================== */}
       <Dialog open={!!budgetToEdit} onOpenChange={(open) => !open && closeEditModal()}>
         <DialogContent className="sm:max-w-md">
-          <DialogHeader><DialogTitle>Modifier le budget</DialogTitle></DialogHeader>
+          <DialogHeader>
+            <DialogTitle>Modifier le budget</DialogTitle>
+            <DialogDescription>Mettez à jour les informations de votre budget.</DialogDescription>
+          </DialogHeader>
           <form onSubmit={handleUpdateBudget}>
             <div className="space-y-4 py-4">
-              <div className="space-y-2"><Label>Nom</Label><Input value={editName} onChange={(e) => setEditName(e.target.value)} /></div>
-              <div className="space-y-2"><Label>Localisation</Label>
+              <div className="space-y-2">
+                <Label htmlFor="edit-name">Nom du budget</Label>
+                <Input 
+                  id="edit-name"
+                  value={editName} 
+                  onChange={(e) => setEditName(e.target.value)} 
+                  className="min-h-[44px]"
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label>Localisation</Label>
                 <Select value={editLocation} onValueChange={handleEditLocationChange}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>{LOCATION_CONFIGS.map((c) => (<SelectItem key={c.code} value={c.code}>{c.name} ({c.currency})</SelectItem>))}</SelectContent>
+                  <SelectTrigger className="min-h-[44px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {LOCATION_CONFIGS.map((c) => (
+                      <SelectItem key={c.code} value={c.code}>
+                        {c.name} ({c.currency})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
                 </Select>
               </div>
-              <div className="flex items-center gap-2 p-3 bg-blue-50 text-blue-800 rounded-lg text-sm border border-blue-100"><DollarSign className="h-4 w-4" /><span>Devise : <strong>{editCurrency}</strong></span></div>
+              
+              <div className="flex items-center gap-2 p-3 bg-blue-50 text-blue-800 rounded-lg text-sm border border-blue-100">
+                <DollarSign className="h-4 w-4" />
+                <span>Devise : <strong>{editCurrency}</strong></span>
+              </div>
             </div>
-            <DialogFooter><Button variant="outline" onClick={closeEditModal}>Annuler</Button><Button type="submit" disabled={updating}>{updating ? 'Mise à jour...' : 'Enregistrer'}</Button></DialogFooter>
+            
+            <DialogFooter className="gap-2 sm:gap-0">
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={closeEditModal}
+                className="min-h-[44px]"
+              >
+                Annuler
+              </Button>
+              <Button 
+                type="submit" 
+                disabled={updating || !editName.trim()}
+                className="min-h-[44px]"
+              >
+                {updating ? 'Mise à jour...' : 'Enregistrer'}
+              </Button>
+            </DialogFooter>
           </form>
         </DialogContent>
       </Dialog>
 
+      {/* ================================================================== */}
+      {/* DELETE CONFIRMATION */}
+      {/* ================================================================== */}
       <AlertDialog open={!!budgetToDelete} onOpenChange={() => setBudgetToDelete(null)}>
         <AlertDialogContent>
-          <AlertDialogHeader><AlertDialogTitle>Supprimer ce budget ?</AlertDialogTitle><AlertDialogDescription>Action irréversible.</AlertDialogDescription></AlertDialogHeader>
-          <AlertDialogFooter><AlertDialogCancel>Annuler</AlertDialogCancel><AlertDialogAction onClick={handleDelete} className="bg-destructive">Supprimer</AlertDialogAction></AlertDialogFooter>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Supprimer ce budget ?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Cette action est irréversible. Toutes les données du budget "{budgetToDelete?.name}" seront définitivement supprimées.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="min-h-[44px]">Annuler</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleDelete} 
+              className="bg-destructive hover:bg-destructive/90 min-h-[44px]"
+              disabled={deleting}
+            >
+              {deleting ? 'Suppression...' : 'Supprimer'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
     </div>

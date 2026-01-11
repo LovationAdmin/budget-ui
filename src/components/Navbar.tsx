@@ -1,28 +1,65 @@
 // src/components/Navbar.tsx
-// ✅ VERSION CORRIGÉE - Compatible avec la nouvelle structure de routing
+// ✅ VERSION AMÉLIORÉE - Navigation différente selon authentification
 
 import { useState, useMemo } from 'react';
 import { BudgetNavbar, NavItem } from "./budget/BudgetNavbar";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate, useLocation } from "react-router-dom";
 import { 
-  LayoutDashboard, // Changé Home -> LayoutDashboard pour mieux différencier
+  LayoutDashboard,
   Newspaper,
   Sparkles,
   HelpCircle,
   Shield,
   FileText,
   Crown,
-  Info
+  Info,
+  Home
 } from "lucide-react";
 
 // ============================================================================
-// 🎯 NAVIGATION ITEMS
+// 🎯 NAVIGATION ITEMS - PUBLICS (visibles par tous)
 // ============================================================================
-const ALL_NAV_ITEMS: NavItem[] = [
+const PUBLIC_NAV_ITEMS: NavItem[] = [
+  {
+    id: 'home',
+    label: 'Accueil',
+    icon: Home,
+  },
+  {
+    id: 'features',
+    label: 'Fonctionnalités',
+    icon: Sparkles,
+  },
+  {
+    id: 'smart-tools',
+    label: 'Outils IA',
+    icon: Sparkles,
+  },
+  {
+    id: 'premium',
+    label: 'Premium',
+    icon: Crown,
+  },
+  {
+    id: 'blog',
+    label: 'Blog',
+    icon: Newspaper,
+  },
+  {
+    id: 'help',
+    label: 'Aide',
+    icon: HelpCircle,
+  },
+];
+
+// ============================================================================
+// 🎯 NAVIGATION ITEMS - AUTHENTIFIÉS (visibles si connecté)
+// ============================================================================
+const AUTHENTICATED_NAV_ITEMS: NavItem[] = [
   {
     id: 'dashboard',
-    label: 'Tableau de bord',
+    label: 'Mes Budgets',
     icon: LayoutDashboard,
   },
   {
@@ -36,6 +73,11 @@ const ALL_NAV_ITEMS: NavItem[] = [
     icon: Sparkles,
   },
   {
+    id: 'premium',
+    label: 'Premium',
+    icon: Crown,
+  },
+  {
     id: 'blog',
     label: 'Blog',
     icon: Newspaper,
@@ -45,15 +87,16 @@ const ALL_NAV_ITEMS: NavItem[] = [
     label: 'Aide',
     icon: HelpCircle,
   },
+];
+
+// ============================================================================
+// 🎯 ITEMS FOOTER (pour pages légales - moins prioritaires)
+// ============================================================================
+const FOOTER_NAV_ITEMS: NavItem[] = [
   {
     id: 'about',
     label: 'À propos',
     icon: Info,
-  },
-  {
-    id: 'premium',
-    label: 'Premium',
-    icon: Crown,
   },
   {
     id: 'privacy',
@@ -73,12 +116,14 @@ export default function Navbar() {
   const location = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
 
-  // ✅ FILTRAGE DYNAMIQUE : On ne montre "Tableau de bord" que si connecté
+  // ✅ SÉLECTION DYNAMIQUE des items selon l'authentification
   const activeItems = useMemo(() => {
-    return ALL_NAV_ITEMS.filter(item => {
-      if (item.id === 'dashboard' && !user) return false;
-      return true;
-    });
+    // Utilisateur connecté : montrer "Mes Budgets" en premier
+    if (user) {
+      return AUTHENTICATED_NAV_ITEMS;
+    }
+    // Utilisateur non connecté : montrer "Accueil" en premier
+    return PUBLIC_NAV_ITEMS;
   }, [user]);
 
   // ============================================================================
@@ -87,11 +132,11 @@ export default function Navbar() {
   const getCurrentSection = () => {
     const path = location.pathname;
     
-    // ✅ MAPPING MIS À JOUR
+    if (path === '/') return user ? 'dashboard' : 'home';
     if (path === '/dashboard' || path.startsWith('/budget/')) return 'dashboard';
     if (path === '/features') return 'features';
     if (path === '/smart-tools' || path === '/outils-ia') return 'smart-tools';
-    if (path === '/blog') return 'blog';
+    if (path === '/blog' || path.startsWith('/blog/')) return 'blog';
     if (path === '/help') return 'help';
     if (path === '/about') return 'about';
     if (path === '/premium') return 'premium';
@@ -105,9 +150,9 @@ export default function Navbar() {
   // 🎯 Gestion de la navigation
   // ============================================================================
   const handleSectionChange = (section: string) => {
-    // Mapping des sections vers les routes
     const routeMap: Record<string, string> = {
-      'dashboard': '/dashboard', // ✅ CORRIGÉ : Pointe vers /dashboard, pas /
+      'home': '/',
+      'dashboard': '/dashboard',
       'features': '/features',
       'smart-tools': '/smart-tools',
       'blog': '/blog',
@@ -128,10 +173,9 @@ export default function Navbar() {
   return (
     <BudgetNavbar 
       budgetTitle="Budget Famille"
-      // ✅ Si pas connecté, on affiche "Invité" au lieu de "Utilisateur"
-      userName={user?.name || 'Invité'} 
+      userName={user?.name}
       userAvatar={user?.avatar}
-      items={activeItems} // ✅ Utilisation de la liste filtrée
+      items={activeItems}
       currentSection={getCurrentSection()}
       menuOpen={menuOpen}
       onMenuClick={() => setMenuOpen(!menuOpen)}

@@ -1,10 +1,11 @@
 // src/pages/BudgetComplete.tsx
-// ✅ VERSION FINALE CORRIGÉE - Localisation + Devise intégrées partout
-// ✅ FIX: Ordre d'initialisation budgetLocation/budgetCurrency corrigé
+// ✅ VERSION AVEC REALITY CHECK INTÉGRÉ
+// Fusion de BudgetComplete + Beta2Page - Plus besoin de Beta2Page séparé
+// Features: Reality Check, Demo Mode, Bank Connection, Transaction Mapping
 
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { budgetAPI } from '../services/api';
+import api, { budgetAPI } from '../services/api';
 import { 
   convertOldFormatToNew, 
   convertNewFormatToOld,
@@ -32,17 +33,33 @@ import MonthlyTable from '../components/budget/MonthlyTable';
 import StatsSection from '../components/budget/StatsSection';
 import ActionsBar from '../components/budget/ActionsBar';
 import MemberManagementSection from '../components/budget/MemberManagementSection';
-import { LayoutDashboard, Users, Receipt, Target, CalendarDays, MapPin, DollarSign } from "lucide-react";
-import { useTutorial } from '../contexts/TutorialContext';
 import EnhancedSuggestions from '@/components/budget/EnhancedSuggestions';
 
-// ✅ Items de navigation SPÉCIFIQUES à la page Budget
+// ✅ Reality Check Components
+import { RealityCheck } from '../components/budget/RealityCheck'; 
+import { EnableBankingManager } from '../components/budget/EnableBankingManager';
+import { TransactionMapper, MappedTransaction, BridgeTransaction } from '../components/budget/TransactionMapper';
+import { DemoModePrompt } from '@/components/budget/DemoModePrompt';
+import { DemoBanner } from '@/components/budget/DemoBanner';
+import { DEMO_TRANSACTIONS, DEMO_BANK_BALANCE, DEMO_MODE_LIMITS } from '@/constants/demoData';
+
+import { 
+  LayoutDashboard, Users, Receipt, Target, CalendarDays, 
+  MapPin, DollarSign, FlaskConical, Building2 
+} from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { useTutorial } from '../contexts/TutorialContext';
+
+// ============================================================================
+// NAV ITEMS - Ajout de "Reality Check"
+// ============================================================================
 const BUDGET_NAV_ITEMS: NavItem[] = [
   { id: "overview", label: "Vue d'ensemble", icon: LayoutDashboard },
   { id: "members", label: "Membres", icon: Users },
   { id: "charges", label: "Charges", icon: Receipt },
   { id: "projects", label: "Projets", icon: Target },
   { id: "calendar", label: "Tableau Mensuel", icon: CalendarDays },
+  { id: "reality", label: "Reality Check", icon: FlaskConical },
 ];
 
 const MONTHS = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
@@ -71,6 +88,8 @@ interface BudgetData {
   name: string;
   is_owner: boolean;
   members: BudgetMember[];
+  location?: string;
+  currency?: string;
 }
 
 export default function BudgetComplete() {
@@ -81,6 +100,9 @@ export default function BudgetComplete() {
   const { hasSeenTutorial, startTutorial } = useTutorial();
   const { connectToBudget, disconnectFromBudget } = useNotifications();
 
+  // ============================================================================
+  // CORE STATES
+  // ============================================================================
   const [budget, setBudget] = useState<BudgetData | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -102,6 +124,22 @@ export default function BudgetComplete() {
   const [lockedMonths, setLockedMonths] = useState<LockedMonths>({});
   const [budgetLocation, setBudgetLocation] = useState<string>('FR');
   const [budgetCurrency, setBudgetCurrency] = useState<string>('EUR');
+
+  // ============================================================================
+  // REALITY CHECK STATES (from Beta2Page)
+  // ============================================================================
+  const [showBankManager, setShowBankManager] = useState(false);
+  const [realBankBalance, setRealBankBalance] = useState(0);
+  const [hasActiveConnection, setHasActiveConnection] = useState(false);
+  
+  const [showMapper, setShowMapper] = useState(false);
+  const [chargeToMap, setChargeToMap] = useState<Charge | null>(null);
+  const [chargeMappings, setChargeMappings] = useState<MappedTransaction[]>([]);
+
+  // Demo Mode
+  const [isDemoMode, setIsDemoMode] = useState(false);
+  const [demoTransactions, setDemoTransactions] = useState<BridgeTransaction[]>([]);
+  const [demoBankBalance, setDemoBankBalance] = useState(0);
 
   const loadedRef = useRef(false);
   const notifiedProjectsRef = useRef<Set<string>>(new Set());
@@ -133,11 +171,48 @@ export default function BudgetComplete() {
   }, [currentYear]);
 
   // ============================================================================
+  // MAPPED TOTALS BY CHARGE (for Reality Check)
+  // ============================================================================
+  const mappedTotalsByChargeId = useMemo(() => {
+    const totals: Record<string, number> = {};
+    charges.forEach(ch => {
+      const mapped = chargeMappings.filter(m => m.chargeId === ch.id);
+      totals[ch.id] = mapped.reduce((sum, m) => sum + Math.abs(m.amount), 0);
+    });
+    return totals;
+  }, [charges, chargeMappings]);
+
+  // ============================================================================
   // HOUSEHOLD SIZE
   // ============================================================================
   const householdSize = useMemo(() => {
     return people.length > 0 ? people.length : 1;
   }, [people]);
+
+  // ============================================================================
+  // TOTAL GLOBAL REALIZED (for Reality Check comparison)
+  // ============================================================================
+  const totalGlobalRealized = useMemo(() => {
+    const today = new Date();
+    const currentMonthIndex = today.getMonth();
+    const currentRealYear = today.getFullYear();
+    let total = 0;
+    
+    if (currentYear <= currentRealYear) {
+      projects.forEach(proj => {
+        total += (projectCarryOvers[proj.id] || 0);
+        MONTHS.forEach((month, idx) => {
+          if (currentYear < currentRealYear || idx <= currentMonthIndex) {
+            const allocation = yearlyData[month]?.[proj.id] || 0;
+            const expense = yearlyExpenses[month]?.[proj.id] || 0;
+            total += (allocation - expense);
+          }
+        });
+      });
+    }
+    
+    return total;
+  }, [currentYear, projects, projectCarryOvers, yearlyData, yearlyExpenses]);
 
   // ============================================================================
   // AUTO-SAVE IMPLEMENTATION
@@ -210,6 +285,75 @@ export default function BudgetComplete() {
   }, [budget, connectToBudget, disconnectFromBudget]);
 
   // ============================================================================
+  // DEMO MODE MANAGEMENT
+  // ============================================================================
+  const getDemoStorageKey = useCallback(() => `demo-mode-${id}`, [id]);
+  const getDemoTimestampKey = useCallback(() => `demo-timestamp-${id}`, [id]);
+
+  useEffect(() => {
+    if (!id) return;
+    const demoEnabled = localStorage.getItem(getDemoStorageKey()) === 'true';
+    const demoTimestamp = localStorage.getItem(getDemoTimestampKey());
+    if (demoEnabled && demoTimestamp) {
+      const daysSinceActivation = (Date.now() - parseInt(demoTimestamp)) / (1000 * 60 * 60 * 24);
+      if (daysSinceActivation < DEMO_MODE_LIMITS.EXPIRE_AFTER_DAYS) {
+        setDemoTransactions(DEMO_TRANSACTIONS);
+        setDemoBankBalance(DEMO_BANK_BALANCE);
+        setIsDemoMode(true);
+        setHasActiveConnection(true);
+      } else {
+        disableDemoMode();
+      }
+    }
+  }, [id, getDemoStorageKey, getDemoTimestampKey]);
+
+  const enableDemoMode = useCallback(() => {
+    if (!id) return;
+    setDemoTransactions(DEMO_TRANSACTIONS);
+    setDemoBankBalance(DEMO_BANK_BALANCE);
+    setIsDemoMode(true);
+    setHasActiveConnection(true);
+    localStorage.setItem(getDemoStorageKey(), 'true');
+    localStorage.setItem(getDemoTimestampKey(), Date.now().toString());
+    toast({ 
+      title: "🎬 Mode Démo Activé", 
+      description: "Données fictives chargées. Testez Reality Check !",
+      duration: 4000
+    });
+  }, [id, getDemoStorageKey, getDemoTimestampKey, toast]);
+
+  const disableDemoMode = useCallback(() => {
+    if (!id) return;
+    setIsDemoMode(false);
+    setDemoTransactions([]);
+    setDemoBankBalance(0);
+    setHasActiveConnection(false);
+    localStorage.removeItem(getDemoStorageKey());
+    localStorage.removeItem(getDemoTimestampKey());
+    toast({ 
+      title: "Mode Démo Désactivé", 
+      description: "Retour aux données réelles.",
+      duration: 3000
+    });
+  }, [id, getDemoStorageKey, getDemoTimestampKey, toast]);
+
+  // ============================================================================
+  // REFRESH BANK DATA (Reality Check)
+  // ============================================================================
+  const refreshBankData = useCallback(async () => {
+    if (!id || isDemoMode) return;
+    try {
+      const response = await api.get(`/banking/budgets/${id}/reality-check`);
+      const { total_real_cash } = response.data;
+      setRealBankBalance(total_real_cash || 0);
+      setHasActiveConnection(total_real_cash > 0);
+    } catch (error) {
+      console.error('[Reality Check] Error fetching bank data:', error);
+      setHasActiveConnection(false);
+    }
+  }, [id, isDemoMode]);
+
+  // ============================================================================
   // TUTORIAL
   // ============================================================================
   useEffect(() => {
@@ -224,7 +368,6 @@ export default function BudgetComplete() {
   // ============================================================================
   // LOAD BUDGET
   // ============================================================================
-
   const loadBudget = useCallback(async () => {
     if (!id) return;
     
@@ -256,7 +399,7 @@ export default function BudgetComplete() {
       if (rawData.lastUpdated) setLastServerUpdate(rawData.lastUpdated);
       else setLastServerUpdate(new Date().toISOString());
       
-      // ✅ FIX: Charger location/currency depuis budgetRes (métadonnées du budget)
+      // Charger location/currency depuis budgetRes (métadonnées du budget)
       setBudgetLocation(budgetRes.data.location || 'FR');
       setBudgetCurrency(budgetRes.data.currency || 'EUR');
 
@@ -284,6 +427,9 @@ export default function BudgetComplete() {
       console.log('✅ [loadBudget] All states updated');
       
       loadedRef.current = true;
+
+      // Fetch Reality Check data après chargement
+      setTimeout(() => refreshBankData(), 500);
     } catch (error) {
       console.error('❌ [loadBudget] ERROR:', error);
       toast({ 
@@ -295,7 +441,7 @@ export default function BudgetComplete() {
       setLoading(false);
       console.log('🏁 [loadBudget] COMPLETE');
     }
-  }, [id, toast]);
+  }, [id, toast, refreshBankData]);
 
   useEffect(() => { 
     if (id) loadBudget(); 
@@ -419,7 +565,6 @@ export default function BudgetComplete() {
   // ============================================================================
   // SAVE HANDLER
   // ============================================================================
-
   const handleSave = useCallback(async (silent = false) => {
     if (!id) return;
     if (!silent) setSaving(true);
@@ -562,6 +707,43 @@ export default function BudgetComplete() {
   }, [markAsModified]);
 
   // ============================================================================
+  // TRANSACTION MAPPER HANDLERS
+  // ============================================================================
+  const handleOpenMapper = useCallback((charge: Charge) => {
+    setChargeToMap(charge);
+    const existing = chargeMappings.filter(m => m.chargeId === charge.id);
+    setShowMapper(true);
+  }, [chargeMappings]);
+
+  const handleCloseMapper = useCallback(() => {
+    setShowMapper(false);
+    setChargeToMap(null);
+  }, []);
+
+  const handleSaveMappings = useCallback((newMappings: MappedTransaction[]) => {
+    if (!chargeToMap) return;
+    const otherMappings = chargeMappings.filter(m => m.chargeId !== chargeToMap.id);
+    setChargeMappings([...otherMappings, ...newMappings]);
+    handleCloseMapper();
+    toast({ 
+      title: "Mappings sauvegardés", 
+      description: `${newMappings.length} transaction(s) liée(s) à "${chargeToMap.label}".` 
+    });
+  }, [chargeToMap, chargeMappings, handleCloseMapper, toast]);
+
+  // ============================================================================
+  // BANK MANAGER HANDLERS
+  // ============================================================================
+  const handleOpenBankManager = useCallback(() => {
+    setShowBankManager(true);
+  }, []);
+
+  const handleCloseBankManager = useCallback(() => {
+    setShowBankManager(false);
+    refreshBankData();
+  }, [refreshBankData]);
+
+  // ============================================================================
   // NAVIGATION
   // ============================================================================
   const handleSectionChange = useCallback((section: string) => {
@@ -583,7 +765,7 @@ export default function BudgetComplete() {
   }, []);
 
   const handleNavigateBack = useCallback(() => {
-    navigate('/');
+    navigate('/dashboard');
   }, [navigate]);
 
   const handleInvited = useCallback(() => {
@@ -607,7 +789,6 @@ export default function BudgetComplete() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary-50 to-purple-50">
-      {/* ✅ GARDE BudgetNavbar avec ses propres items */}
       <BudgetNavbar 
         budgetTitle={budget?.name} 
         userName={user?.name}
@@ -644,7 +825,7 @@ export default function BudgetComplete() {
 
         <button 
           onClick={handleNavigateBack} 
-          className="text-primary-600 hover:text-primary-700 mb-4 flex items-center gap-2 font-medium"
+          className="text-primary-600 hover:text-primary-700 mb-4 flex items-center gap-2 font-medium min-h-[44px]"
         >
           ← Retour aux budgets
         </button>
@@ -656,19 +837,19 @@ export default function BudgetComplete() {
             currentYear={currentYear} 
             onYearChange={handleYearChange} 
           />
-          <div className="p-4 bg-gray-50 border-t border-gray-200 flex justify-between items-center">
+          <div className="p-4 bg-gray-50 border-t border-gray-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div className="flex items-center gap-3">
               {budget?.is_owner && (
                 <button 
                   onClick={handleShowInviteModal} 
-                  className="bg-white hover:bg-gray-50 border border-gray-300 text-gray-700 px-4 py-2 rounded-lg font-medium transition"
+                  className="bg-white hover:bg-gray-50 border border-gray-300 text-gray-700 px-4 py-2 rounded-lg font-medium transition min-h-[44px]"
                 >
                   👤 Inviter
                 </button>
               )}
             </div>
-            {/* ✅ Affichage localisation et devise */}
-            <div className="flex items-center gap-4 text-sm">
+            {/* Affichage localisation, devise et status connexion */}
+            <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-sm">
               <div className="flex items-center gap-1.5 px-3 py-1.5 bg-white rounded-lg border border-gray-200">
                 <MapPin className="h-4 w-4 text-primary" />
                 <span className="font-medium">
@@ -680,6 +861,18 @@ export default function BudgetComplete() {
                 <span className="font-medium">
                   {budgetCurrency} ({LOCATION_CONFIGS.find(c => c.code === budgetLocation)?.symbol || '€'})
                 </span>
+              </div>
+              {/* Bank connection status */}
+              <div className="flex items-center gap-1.5 px-3 py-1.5 bg-white rounded-lg border border-gray-200">
+                <Building2 className="h-4 w-4 text-indigo-500" />
+                {hasActiveConnection || isDemoMode ? (
+                  <span className="flex items-center gap-2 text-green-600 font-medium">
+                    <span className="h-2 w-2 bg-green-500 rounded-full animate-pulse"></span>
+                    {isDemoMode ? 'Mode Démo' : 'Banque connectée'}
+                  </span>
+                ) : (
+                  <span className="text-gray-500">Non connecté</span>
+                )}
               </div>
             </div>
           </div>
@@ -697,7 +890,6 @@ export default function BudgetComplete() {
 
         <ActionsBar onSave={() => handleSave(false)} saving={saving} />
 
-        {/* ✅ Propagation currency à PeopleSection */}
         <div id="people">
           <PeopleSection 
             people={people} 
@@ -706,17 +898,17 @@ export default function BudgetComplete() {
           />
         </div>
         
-        {/* ✅ Propagation location/currency à ChargesSection */}
         <div id="charges" className="mt-6">
           <ChargesSection 
             charges={charges} 
             onChargesChange={handleChargesChange}
+            onLinkTransaction={handleOpenMapper}
+            mappedTotals={mappedTotalsByChargeId}
             budgetLocation={budgetLocation}
             budgetCurrency={budgetCurrency}
           />
         </div>
         
-        {/* ✅ Propagation location/currency à EnhancedSuggestions */}
         <div id="suggestions" className="mt-6">
           <EnhancedSuggestions 
             budgetId={id!}
@@ -727,7 +919,6 @@ export default function BudgetComplete() {
           />
         </div>
         
-        {/* ✅ Propagation currency à ProjectsSection */}
         <div id="projects" className="mt-6">
           <ProjectsSection 
             projects={projects} 
@@ -739,7 +930,6 @@ export default function BudgetComplete() {
           />
         </div>
 
-        {/* ✅ Propagation currency à MonthlyTable */}
         <div id="calendar" className="mt-6">
           <MonthlyTable 
             currentYear={currentYear} 
@@ -764,7 +954,41 @@ export default function BudgetComplete() {
           />
         </div>
 
-        {/* ✅ Propagation currency à StatsSection */}
+        {/* ============================================================================ */}
+        {/* REALITY CHECK SECTION */}
+        {/* ============================================================================ */}
+        <div id="reality" className="mt-6">
+          {isDemoMode && <DemoBanner onDisable={disableDemoMode} />}
+          
+          <div className="bg-gradient-to-r from-indigo-500 to-purple-600 rounded-t-xl p-4 text-white mt-4">
+            <div className="flex items-center gap-3">
+              <FlaskConical className="h-6 w-6" /> 
+              <div>
+                <h2 className="text-xl font-display font-semibold">Reality Check</h2>
+                <p className="text-sm text-indigo-100 mt-0.5">
+                  Comparaison budget théorique vs comptes bancaires réels
+                </p>
+              </div>
+            </div>
+          </div>
+          
+          <div className="bg-white rounded-b-xl shadow-lg p-6 border-t-4 border-indigo-500">
+            {!hasActiveConnection && !isDemoMode && (
+              <DemoModePrompt onEnableDemoMode={enableDemoMode} />
+            )}
+            
+            {(hasActiveConnection || isDemoMode) && (
+              <RealityCheck 
+                totalRealized={totalGlobalRealized}
+                bankBalance={isDemoMode ? demoBankBalance : realBankBalance}
+                isBankConnected={hasActiveConnection}
+                onConnectBank={handleOpenBankManager}
+                isDemoMode={isDemoMode}
+              />
+            )}
+          </div>
+        </div>
+
         <div className="mt-6">
           <StatsSection 
             people={people} 
@@ -778,11 +1002,38 @@ export default function BudgetComplete() {
         </div>
       </div>
 
+      {/* MODALS */}
       {showInviteModal && id && (
         <InviteModal 
           budgetId={id} 
           onClose={handleCloseInviteModal} 
           onInvited={handleInvited} 
+        />
+      )}
+
+      {/* Bank Manager Dialog */}
+      <Dialog open={showBankManager} onOpenChange={handleCloseBankManager}>
+        <DialogContent className="sm:max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Gestion des Connexions Bancaires</DialogTitle>
+            <DialogDescription>
+              Connectez vos comptes via Enable Banking (2500+ banques européennes).
+            </DialogDescription>
+          </DialogHeader>
+          <EnableBankingManager budgetId={id!} onUpdate={refreshBankData} />
+        </DialogContent>
+      </Dialog>
+
+      {/* Transaction Mapper Dialog */}
+      {chargeToMap && (
+        <TransactionMapper 
+          isOpen={showMapper} 
+          onClose={handleCloseMapper} 
+          charge={chargeToMap} 
+          currentMappings={chargeMappings} 
+          onSave={handleSaveMappings} 
+          budgetId={id!} 
+          demoTransactions={isDemoMode ? demoTransactions : undefined} 
         />
       )}
     </div>
