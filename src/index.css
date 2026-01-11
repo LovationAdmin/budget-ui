@@ -4,6 +4,12 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ============================================================================
+   MOBILE FIXES - Import des styles responsives
+   ============================================================================ */
+@import './styles/mobile-fixes.css';
+@import './styles/public-pages-mobile.css';
+
 @layer base {
   :root {
     /* Background & Surface */
