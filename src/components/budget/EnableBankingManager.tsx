@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Switch } from "@/components/ui/switch"; // ✅ Added for toggling accounts
+import { Switch } from "@/components/ui/switch"; // ✅ Added Switch import
 import { useToast } from "@/hooks/use-toast";
 import { 
   Building2, 
@@ -178,7 +178,6 @@ export function EnableBankingManager({ budgetId, onUpdate }: EnableBankingManage
         ];
 
         if (!allowedOrigins.includes(event.origin)) {
-          // console.warn('⚠️  Message from unauthorized origin:', event.origin);
           return;
         }
 
@@ -243,10 +242,6 @@ export function EnableBankingManager({ budgetId, onUpdate }: EnableBankingManage
         if (authWindow?.closed) {
           clearInterval(checkWindow);
           window.removeEventListener('message', handleMessage);
-          
-          if (connecting) {
-            // Optionnel : ne pas spammer si c'est juste une fermeture
-          }
           
           setConnecting(false);
           setSelectedBank("");
@@ -397,12 +392,12 @@ export function EnableBankingManager({ budgetId, onUpdate }: EnableBankingManage
               <CardHeader className="pb-3 bg-gray-50/50 border-b">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center">
-                      <Building2 className="h-6 w-6 text-primary" />
+                    <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                      <Building2 className="h-5 w-5 text-primary" />
                     </div>
                     <div>
-                      <CardTitle className="text-lg">{conn.institution_name}</CardTitle>
-                      <CardDescription className="flex items-center gap-2 mt-1">
+                      <CardTitle className="text-base">{conn.institution_name}</CardTitle>
+                      <CardDescription className="flex items-center gap-2 text-xs">
                         <Clock className="h-3 w-3" />
                         Connecté le {new Date(conn.created_at).toLocaleDateString('fr-FR')}
                       </CardDescription>
@@ -415,16 +410,16 @@ export function EnableBankingManager({ budgetId, onUpdate }: EnableBankingManage
                       size="sm"
                       onClick={() => handleRefresh(conn.id)}
                       disabled={refreshing === conn.id}
-                      className="gap-2"
+                      className="h-8 text-xs gap-1"
                     >
                       {refreshing === conn.id ? (
                         <>
-                          <Loader2 className="h-4 w-4 animate-spin" />
+                          <Loader2 className="h-3 w-3 animate-spin" />
                           Mise à jour...
                         </>
                       ) : (
                         <>
-                          <RefreshCw className="h-4 w-4" />
+                          <RefreshCw className="h-3 w-3" />
                           Actualiser
                         </>
                       )}
@@ -434,7 +429,7 @@ export function EnableBankingManager({ budgetId, onUpdate }: EnableBankingManage
                       variant="ghost"
                       size="sm"
                       onClick={() => handleDelete(conn.id)}
-                      className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                      className="h-8 w-8 p-0 text-destructive hover:bg-destructive/10"
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
@@ -607,5 +602,3 @@ export function EnableBankingManager({ budgetId, onUpdate }: EnableBankingManage
     </div>
   );
 }
-
-export default EnableBankingManager;
