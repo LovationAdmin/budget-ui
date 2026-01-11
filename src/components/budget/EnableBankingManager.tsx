@@ -1,16 +1,16 @@
 import { useState, useEffect } from 'react';
 import api from '@/services/api';
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch"; // ✅ Added for toggling accounts
 import { useToast } from "@/hooks/use-toast";
 import { 
   Building2, 
   Loader2, 
   RefreshCw, 
   Trash2, 
-  Check, 
   Search,
   TrendingUp,
   Clock,
@@ -178,7 +178,7 @@ export function EnableBankingManager({ budgetId, onUpdate }: EnableBankingManage
         ];
 
         if (!allowedOrigins.includes(event.origin)) {
-          console.warn('⚠️  Message from unauthorized origin:', event.origin);
+          // console.warn('⚠️  Message from unauthorized origin:', event.origin);
           return;
         }
 
@@ -245,11 +245,7 @@ export function EnableBankingManager({ budgetId, onUpdate }: EnableBankingManage
           window.removeEventListener('message', handleMessage);
           
           if (connecting) {
-            toast({
-              title: "Connexion annulée",
-              description: "La fenêtre d'autorisation a été fermée.",
-              variant: "default"
-            });
+            // Optionnel : ne pas spammer si c'est juste une fermeture
           }
           
           setConnecting(false);
@@ -329,6 +325,25 @@ export function EnableBankingManager({ budgetId, onUpdate }: EnableBankingManage
   };
 
   // ============================================================================
+  // ✅ NEW: TOGGLE SAVINGS STATUS (EDIT ACCOUNT)
+  // ============================================================================
+  const togglePoolStatus = async (accountId: string, currentStatus: boolean) => {
+    // Optimistic UI Update
+    setConnections(prev => prev.map(c => ({
+      ...c,
+      accounts: c.accounts?.map(a => a.id === accountId ? { ...a, is_savings_pool: !currentStatus } : a)
+    })));
+
+    try {
+        await api.put(`/banking/accounts/${accountId}`, { is_savings_pool: !currentStatus });
+        onUpdate(); // Update Reality Check totals immediately
+    } catch (error) {
+        toast({ title: "Erreur", description: "Impossible de modifier le compte", variant: "destructive" });
+        loadConnections(); // Revert on error
+    }
+  };
+
+  // ============================================================================
   // FILTRAGE DES BANQUES
   // ============================================================================
 
@@ -378,8 +393,8 @@ export function EnableBankingManager({ budgetId, onUpdate }: EnableBankingManage
       {connections.length > 0 ? (
         <div className="grid gap-4">
           {connections.map((conn) => (
-            <Card key={conn.id} className="hover:shadow-md transition-shadow">
-              <CardHeader className="pb-3">
+            <Card key={conn.id} className="hover:shadow-md transition-shadow overflow-hidden">
+              <CardHeader className="pb-3 bg-gray-50/50 border-b">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center">
@@ -395,11 +410,6 @@ export function EnableBankingManager({ budgetId, onUpdate }: EnableBankingManage
                   </div>
                   
                   <div className="flex items-center gap-2">
-                    <Badge variant="secondary" className="gap-1">
-                      <TrendingUp className="h-3 w-3" />
-                      {conn.account_count} compte{conn.account_count > 1 ? 's' : ''}
-                    </Badge>
-                    
                     <Button
                       variant="outline"
                       size="sm"
@@ -431,6 +441,48 @@ export function EnableBankingManager({ budgetId, onUpdate }: EnableBankingManage
                   </div>
                 </div>
               </CardHeader>
+
+              {/* ✅ ADDED: ACCOUNT LIST + TOGGLES */}
+              <CardContent className="p-0">
+                <div className="divide-y">
+                    {conn.accounts && conn.accounts.length > 0 ? (
+                        conn.accounts.map(account => (
+                            <div key={account.id} className="p-4 flex items-center justify-between hover:bg-gray-50 transition-colors">
+                                <div className="flex-1">
+                                    <div className="flex items-center gap-2">
+                                        <span className="font-medium text-sm">{account.name}</span>
+                                        <span className="text-xs text-muted-foreground">• {account.mask}</span>
+                                    </div>
+                                    <div className="flex items-center gap-2 mt-1">
+                                        <span className="font-bold text-gray-900">
+                                            {account.balance.toLocaleString('fr-FR', { style: 'currency', currency: account.currency })}
+                                        </span>
+                                        <Badge variant={account.is_savings_pool ? "default" : "secondary"} className="text-[10px] h-5">
+                                            {account.is_savings_pool ? "Épargne" : "Courant"}
+                                        </Badge>
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-3">
+                                    <div className="text-right hidden sm:block">
+                                        <span className="text-xs font-medium block">Compte Épargne ?</span>
+                                        <span className="text-[10px] text-muted-foreground block">
+                                            {account.is_savings_pool ? "Inclus dans Reality Check" : "Ignoré"}
+                                        </span>
+                                    </div>
+                                    <Switch 
+                                        checked={account.is_savings_pool}
+                                        onCheckedChange={() => togglePoolStatus(account.id, account.is_savings_pool)}
+                                    />
+                                </div>
+                            </div>
+                        ))
+                    ) : (
+                        <div className="p-4 text-center text-sm text-muted-foreground">
+                            Aucun compte trouvé. Essayez d'actualiser.
+                        </div>
+                    )}
+                </div>
+              </CardContent>
             </Card>
           ))}
         </div>
