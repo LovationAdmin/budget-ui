@@ -30,7 +30,7 @@ import ActionsBar from '../components/budget/ActionsBar';
 import MemberManagementSection from '../components/budget/MemberManagementSection';
 import EnhancedSuggestions from '@/components/budget/EnhancedSuggestions';
 import { RealityCheck } from '../components/budget/RealityCheck'; 
-import { EnableBankingManager } from '../components/budget/EnableBankingManager';
+import { EnableBankingManager } from '../components/budget/EnableBankingManager'; // ✅ Correct Import
 import { TransactionMapper, MappedTransaction, BridgeTransaction } from '../components/budget/TransactionMapper';
 import { DemoModePrompt } from '@/components/budget/DemoModePrompt';
 import { DemoBanner } from '@/components/budget/DemoBanner';
@@ -937,7 +937,7 @@ export default function BudgetComplete() {
               Connectez vos comptes via Enable Banking (2500+ banques européennes).
             </DialogDescription>
           </DialogHeader>
-          <BankConnectionManager budgetId={id!} onUpdate={refreshBankData} />
+          <EnableBankingManager budgetId={id!} onUpdate={refreshBankData} />
         </DialogContent>
       </Dialog>
 
