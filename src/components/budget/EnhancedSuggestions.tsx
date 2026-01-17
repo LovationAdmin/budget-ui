@@ -1,3 +1,4 @@
+// src/components/budget/EnhancedSuggestions.tsx
 import React, { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -26,9 +27,9 @@ import { Globe, Phone, Mail } from 'lucide-react';
 interface EnhancedSuggestionsProps {
   budgetId: string;
   charges: Charge[];
-  householdSize: number; // ✅ RENOMMÉ depuis memberCount
-  location?: string; // ✅ AJOUTÉ
-  currency?: string; // ✅ AJOUTÉ
+  householdSize: number;
+  location?: string;
+  currency?: string;
 }
 
 // ============================================================================
@@ -118,27 +119,35 @@ export default function EnhancedSuggestions({
     ignore: c.ignoreSuggestions || false 
   })));
 
+  // ✅ COMPLETE SIGNATURE: Includes location and currency
+  const fullContextSignature = `${chargesSignature}|${location}|${currency}`;
+
   // Loop Protection Logic
   useEffect(() => {
     if (!isConnected) return;
 
-    if (chargesSignature === lastAnalyzedSignature.current) {
+    if (fullContextSignature === lastAnalyzedSignature.current) {
         return;
     }
 
     const timer = setTimeout(() => {
       const relevantCharges = charges.filter(c => c.category && isRelevantCategory(c.category) && !c.ignoreSuggestions);
       
-      lastAnalyzedSignature.current = chargesSignature;
+      lastAnalyzedSignature.current = fullContextSignature;
 
       if (relevantCharges.length > 0) {
-        console.log('🚀 [EnhancedSuggestions] Data changed (debounced), starting analysis...');
+        console.log(`🚀 [EnhancedSuggestions] Context changed (${location}/${currency}), starting analysis...`);
+        
+        // ✅ Clear previous suggestions to show loading state when country changes
+        setSuggestions([]); 
+        
         loadSuggestions();
       }
     }, 2000); 
 
     return () => clearTimeout(timer);
-  }, [budgetId, chargesSignature, householdSize, isConnected]);
+    // ✅ ADDED: location and currency to dependency array
+  }, [budgetId, fullContextSignature, householdSize, isConnected, location, currency]);
 
   const processResults = (data: any) => {
     const rawSuggestions = data.suggestions || [];
@@ -221,7 +230,7 @@ export default function EnhancedSuggestions({
           <div className="flex items-center justify-center py-8">
             <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
             <span className="ml-3 text-muted-foreground">
-              Recherche d'économies pour {householdSize} personne{householdSize > 1 ? 's' : ''}...
+              Recherche d'économies pour {householdSize} personne{householdSize > 1 ? 's' : ''} en {location}...
             </span>
           </div>
         </CardContent>
