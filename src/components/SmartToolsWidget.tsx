@@ -33,6 +33,8 @@ const LOCATION_CONFIGS = [
   { code: 'BE', name: 'Belgique', currency: 'EUR', symbol: '€' },
   { code: 'CH', name: 'Suisse', currency: 'CHF', symbol: 'CHF' },
   { code: 'GB', name: 'Royaume-Uni', currency: 'GBP', symbol: '£' },
+  { code: 'US', name: 'États-Unis', currency: 'USD', symbol: '$' },
+  { code: 'CA', name: 'Canada', currency: 'CAD', symbol: '$' },
 ];
 
 export default function SmartToolsWidget() {
