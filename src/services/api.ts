@@ -259,7 +259,17 @@ export const budgetAPI = {
     country?: string;   // ✅ Optionnel (pour SmartTools)
     currency?: string;  // ✅ Optionnel (pour SmartTools)
   }): Promise<AxiosResponse<MarketSuggestion>> =>
-    api.post('/suggestions/analyze', data),
+    api.post('/suggestions/analyze', {
+        // We must map 'current_amount' (frontend) to 'amount' (backend expectation)
+        amount: data.current_amount,
+        category: data.category,
+        merchant_name: data.merchant_name,
+        household_size: data.household_size,
+        description: data.description,
+        budget_id: data.budget_id,
+        country: data.country,
+        currency: data.currency
+    }),
 
   getCategorySuggestions: (category: string): Promise<AxiosResponse<MarketSuggestion>> =>
     api.get(`/suggestions/category/${category}`),
