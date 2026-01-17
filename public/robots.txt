@@ -1,44 +1,66 @@
 # Budget Famille - robots.txt
-# https://budgetfamille.com/robots.txt
-# Dernière mise à jour: 2025-01-11
+# https://budgetfamille.com
 
-# Autoriser tous les crawlers
+# Autoriser tous les robots sur les pages publiques
 User-agent: *
 
-# Pages publiques autorisées
+# Pages publiques accessibles
 Allow: /
-Allow: /login
-Allow: /signup
 Allow: /features
+Allow: /smart-tools
+Allow: /outils-ia
+Allow: /premium
+Allow: /blog
+Allow: /blog/
 Allow: /help
 Allow: /about
-Allow: /premium
-Allow: /smart-tools
-Allow: /blog
+Allow: /login
+Allow: /signup
+Allow: /forgot-password
 Allow: /privacy
 Allow: /terms
-Allow: /forgot-password
 
-# Pages privées bloquées (après connexion)
+# Pages protégées à bloquer (données utilisateurs)
 Disallow: /dashboard
 Disallow: /budget/
 Disallow: /profile
-Disallow: /beta2/
-Disallow: /invitation/
 Disallow: /verify-email
+Disallow: /reset-password
+Disallow: /invitation/
+Disallow: /beta2/
 
-# Ressources techniques bloquées
+# Bloquer les URLs avec paramètres sensibles
+Disallow: /*?token=
+Disallow: /*?code=
+Disallow: /*?state=
+
+# API non indexable
 Disallow: /api/
-Disallow: /*.json$
-Disallow: /src/
-Disallow: /node_modules/
-Disallow: /_next/
 
-# Anciennes URLs PHP (redirection 301 configurée)
-Disallow: /index.php
+# Assets et fichiers techniques
+Allow: /assets/
+Allow: /sitemap.xml
+Allow: /site.webmanifest
+Allow: /favicon.ico
+
+# Googlebot spécifique
+User-agent: Googlebot
+Allow: /
+Disallow: /dashboard
+Disallow: /budget/
+Disallow: /profile
+Disallow: /api/
+
+# Bingbot
+User-agent: Bingbot
+Allow: /
+Disallow: /dashboard
+Disallow: /budget/
+Disallow: /profile
+Disallow: /api/
 
 # Sitemap
 Sitemap: https://budgetfamille.com/sitemap.xml
 
-# Crawl-delay pour ne pas surcharger le serveur (optionnel)
-# Crawl-delay: 1
+# Crawl-delay pour ne pas surcharger le serveur
+Crawl-delay: 1
