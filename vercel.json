@@ -3,7 +3,7 @@
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
   "trailingSlash": false,
-  "cleanUrls": true,
+  "cleanUrls": false,
   "headers": [
     {
       "source": "/(.*)",
@@ -14,41 +14,13 @@
       ]
     }
   ],
-  "redirects": [
-    {
-      "source": "/index.php/:path*",
-      "destination": "/",
-      "statusCode": 301
-    },
-    {
-      "source": "/budget/:id",
-      "destination": "/budget/:id/complete",
-      "statusCode": 301
-    }
-  ],
   "rewrites": [
     {
-      "source": "/sitemap.xml",
-      "destination": "/sitemap.xml"
+      "source": "/api/(.*)",
+      "destination": "https://budget-api-778i.onrender.com/api/$1"
     },
     {
-      "source": "/robots.txt",
-      "destination": "/robots.txt"
-    },
-    {
-      "source": "/site.webmanifest",
-      "destination": "/site.webmanifest"
-    },
-    {
-      "source": "/favicon.ico",
-      "destination": "/favicon.ico"
-    },
-    {
-      "source": "/assets/:path*",
-      "destination": "/assets/:path*"
-    },
-    {
-      "source": "/:path*",
+      "source": "/[^.]+",
       "destination": "/index.html"
     }
   ]
