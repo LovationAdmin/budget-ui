@@ -1,3 +1,4 @@
+// src/components/budget/PeopleSection.tsx
 import { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -30,6 +31,18 @@ interface PeopleSectionProps {
   currency?: string; 
 }
 
+// ✅ HELPER: Get correct symbol for any currency code
+function getCurrencySymbol(code?: string): string {
+  switch (code) {
+    case 'USD': return '$';
+    case 'CAD': return '$';
+    case 'GBP': return '£';
+    case 'CHF': return 'CHF';
+    case 'EUR': return '€';
+    default: return '€';
+  }
+}
+
 export default function PeopleSection({ people, onPeopleChange, currency = 'EUR' }: PeopleSectionProps) {
   const [newPersonName, setNewPersonName] = useState('');
   const [newPersonSalary, setNewPersonSalary] = useState('');
@@ -39,7 +52,7 @@ export default function PeopleSection({ people, onPeopleChange, currency = 'EUR'
   const [isExpanded, setIsExpanded] = useState(true);
 
   // ✅ Symbole de devise intelligent
-  const currencySymbol = currency === 'EUR' ? '€' : currency;
+  const currencySymbol = getCurrencySymbol(currency);
 
   const addPerson = (e: React.FormEvent) => {
     e.preventDefault();

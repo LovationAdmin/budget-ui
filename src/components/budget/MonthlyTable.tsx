@@ -1,6 +1,6 @@
 // src/components/budget/MonthlyTable.tsx
 // VERSION SIMPLE - DROPDOWN COMPACT ET INTUITIF
-// ✅ CORRIGÉ : Ajout prop currency
+// ✅ CORRIGÉ : Ajout prop currency et utilisation cohérente
 
 import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -167,6 +167,18 @@ const isPersonActive = (person: Person, year: number, monthIndex: number): boole
     return true;
 };
 
+// ✅ HELPER: Get correct symbol for any currency code
+function getCurrencySymbol(code?: string): string {
+  switch (code) {
+    case 'USD': return '$';
+    case 'CAD': return '$';
+    case 'GBP': return '£';
+    case 'CHF': return 'CHF';
+    case 'EUR': return '€';
+    default: return '€'; // Default fallback
+  }
+}
+
 export default function MonthlyTable({
   currentYear,
   people,
@@ -193,8 +205,8 @@ export default function MonthlyTable({
   const [commentDialogOpen, setCommentDialogOpen] = useState(false);
   const [tempComment, setTempComment] = useState('');
   
-  // ✅ Symbole de devise
-  const currencySymbol = currency === 'CHF' ? 'CHF' : '€';
+  // ✅ Symbole de devise dynamique
+  const currencySymbol = getCurrencySymbol(currency);
   
   // ✅ DEFAULT: Tout désélectionné par défaut
   const [visibleProjectIds, setVisibleProjectIds] = useState<string[]>([]);

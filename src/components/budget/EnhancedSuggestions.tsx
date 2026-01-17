@@ -53,6 +53,18 @@ function isIndividualCategory(cat: string): boolean {
   return INDIVIDUAL_CATEGORIES.includes(cat.toUpperCase());
 }
 
+// ✅ HELPER: Get correct symbol for any currency code
+function getCurrencySymbol(code?: string): string {
+  switch (code) {
+    case 'USD': return '$';
+    case 'CAD': return '$';
+    case 'GBP': return '£';
+    case 'CHF': return 'CHF';
+    case 'EUR': return '€';
+    default: return '€'; // Default fallback
+  }
+}
+
 function getCategoryLabel(cat: string): string {
   const labels: Record<string, string> = {
     'ENERGY': '⚡ Énergie',
@@ -93,8 +105,8 @@ export default function EnhancedSuggestions({
   const [isExpanded, setIsExpanded] = useState(false);
   const [displayHouseholdSize, setDisplayHouseholdSize] = useState(householdSize);
 
-  // ✅ Symbole de devise
-  const currencySymbol = currency === 'CHF' ? 'CHF' : '€';
+  // ✅ CORRECTED: Use helper function instead of hardcoded check
+  const currencySymbol = getCurrencySymbol(currency);
 
   // Ref to track the last data we actually analyzed to prevent loops
   const lastAnalyzedSignature = useRef<string>("");
@@ -119,7 +131,7 @@ export default function EnhancedSuggestions({
     ignore: c.ignoreSuggestions || false 
   })));
 
-  // ✅ COMPLETE SIGNATURE: Includes location and currency
+  // COMPLETE SIGNATURE: Includes location and currency
   const fullContextSignature = `${chargesSignature}|${location}|${currency}`;
 
   // Loop Protection Logic
@@ -138,7 +150,7 @@ export default function EnhancedSuggestions({
       if (relevantCharges.length > 0) {
         console.log(`🚀 [EnhancedSuggestions] Context changed (${location}/${currency}), starting analysis...`);
         
-        // ✅ Clear previous suggestions to show loading state when country changes
+        // Clear previous suggestions to show loading state
         setSuggestions([]); 
         
         loadSuggestions();
@@ -146,7 +158,6 @@ export default function EnhancedSuggestions({
     }, 2000); 
 
     return () => clearTimeout(timer);
-    // ✅ ADDED: location and currency to dependency array
   }, [budgetId, fullContextSignature, householdSize, isConnected, location, currency]);
 
   const processResults = (data: any) => {
@@ -363,7 +374,7 @@ function SuggestionCard({
 }: { 
   chargeSuggestion: ChargeSuggestion; 
   householdSize: number;
-  currencySymbol: string; // ✅ AJOUTÉ
+  currencySymbol: string; // ✅
 }) {
   const { charge_label, suggestion } = chargeSuggestion;
   const competitors = suggestion.competitors.slice(0, 3);

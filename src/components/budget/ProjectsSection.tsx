@@ -1,9 +1,10 @@
+// src/components/budget/ProjectsSection.tsx
 import { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Plus, Trash2, Target, CheckCircle2, CalendarClock, X, ArrowUpRight } from "lucide-react";
+import { Plus, Trash2, Target, CheckCircle2, CalendarClock, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Project, YearlyData } from '@/utils/importConverter';
 
@@ -18,6 +19,18 @@ interface ProjectsSectionProps {
 
 const MONTHS = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
 
+// ✅ HELPER: Get correct symbol for any currency code
+function getCurrencySymbol(code?: string): string {
+  switch (code) {
+    case 'USD': return '$';
+    case 'CAD': return '$';
+    case 'GBP': return '£';
+    case 'CHF': return 'CHF';
+    case 'EUR': return '€';
+    default: return '€';
+  }
+}
+
 export default function ProjectsSection({ 
     projects, 
     onProjectsChange, 
@@ -31,8 +44,8 @@ export default function ProjectsSection({
   const [newProjectTarget, setNewProjectTarget] = useState('');
   const [showAddForm, setShowAddForm] = useState(false);
 
-  // ✅ Symbole de devise
-  const currencySymbol = currency === 'CHF' ? 'CHF' : '€';
+  // ✅ Symbole de devise dynamique
+  const currencySymbol = getCurrencySymbol(currency);
 
   const today = new Date();
   const currentMonthIndex = today.getMonth();
@@ -322,7 +335,7 @@ export default function ProjectsSection({
                         {hasTarget && !isGoalReached && (
                              <div className="flex justify-between text-[10px] text-gray-400 font-medium">
                                  <span>
-                                    {isFullyScheduled ? (
+                                     {isFullyScheduled ? (
                                         <span className="text-blue-600 flex items-center gap-1">
                                             <CalendarClock className="h-3 w-3" /> Entièrement planifié
                                         </span>

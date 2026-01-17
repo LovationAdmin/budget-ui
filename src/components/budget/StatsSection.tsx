@@ -1,5 +1,6 @@
 // src/components/budget/StatsSection.tsx
 // VERSION MOBILE-OPTIMIZED (Charts plus lisibles sur petits écrans)
+// ✅ CORRIGÉ : Support complet multi-devises (USD, CAD, GBP, etc.)
 
 import { StatCard } from "./StatCard";
 import { Wallet, TrendingDown, PiggyBank, Scale } from "lucide-react";
@@ -22,7 +23,7 @@ const FULL_MONTHS_KEYS = [ 'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin'
 const GENERAL_SAVINGS_ID = 'epargne';
 
 // ============================================================================
-// HELPER FUNCTIONS (Identical to MonthlyTable logic)
+// HELPER FUNCTIONS
 // ============================================================================
 
 const isChargeActive = (charge: Charge, year: number, monthIndex: number): boolean => {
@@ -59,6 +60,18 @@ const isPersonActive = (person: Person, year: number, monthIndex: number): boole
     return true;
 };
 
+// ✅ HELPER: Get correct symbol for any currency code
+function getCurrencySymbol(code?: string): string {
+  switch (code) {
+    case 'USD': return '$';
+    case 'CAD': return '$';
+    case 'GBP': return '£';
+    case 'CHF': return 'CHF';
+    case 'EUR': return '€';
+    default: return '€';
+  }
+}
+
 // ============================================================================
 // COMPONENT
 // ============================================================================
@@ -73,8 +86,8 @@ export default function StatsSection({
   currency = 'EUR' // ✅ AJOUTÉ avec valeur par défaut
 }: StatsSectionProps) {
   
-  // ✅ Symbole de devise
-  const currencySymbol = currency === 'CHF' ? 'CHF' : '€';
+  // ✅ Symbole de devise dynamique
+  const currencySymbol = getCurrencySymbol(currency);
   
   // 1. Calculate data for every month individually
   const chartData = FULL_MONTHS_KEYS.map((monthKey, index) => {

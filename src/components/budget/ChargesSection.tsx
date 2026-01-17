@@ -1,3 +1,4 @@
+// src/components/budget/ChargesSection.tsx
 import { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -32,8 +33,20 @@ interface ChargesSectionProps {
   onChargesChange: (charges: Charge[]) => void;
   onLinkTransaction?: (charge: Charge) => void; 
   mappedTotals?: Record<string, number>;
-  budgetLocation?: string; // <--- Ajouté
-  budgetCurrency?: string; // <--- Ajouté
+  budgetLocation?: string; 
+  budgetCurrency?: string; 
+}
+
+// ✅ HELPER: Get correct symbol for any currency code
+function getCurrencySymbol(code?: string): string {
+  switch (code) {
+    case 'USD': return '$';
+    case 'CAD': return '$';
+    case 'GBP': return '£';
+    case 'CHF': return 'CHF';
+    case 'EUR': return '€';
+    default: return '€';
+  }
 }
 
 export default function ChargesSection({ 
@@ -60,6 +73,9 @@ export default function ChargesSection({
   const [detectedCategory, setDetectedCategory] = useState<string>('');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isAutoCategorizing, setIsAutoCategorizing] = useState(false);
+  
+  // ✅ Symbole de devise intelligent
+  const currencySymbol = getCurrencySymbol(budgetCurrency);
 
   // Check if we have charges that need categorization
   const uncategorizedCount = charges.filter(c => !c.category || c.category === 'OTHER').length;
@@ -119,7 +135,7 @@ export default function ChargesSection({
           if (res.data.category && res.data.category !== 'OTHER') {
              setDetectedCategory(res.data.category);
           } else {
-              setDetectedCategory('');
+             setDetectedCategory('');
           }
       } catch (err) {
           console.error("AI Categorization failed", err);
@@ -228,7 +244,7 @@ export default function ChargesSection({
 
             <div className="text-right">
                 <p className="text-2xl font-bold text-orange-900">
-                {totalCharges.toFixed(0)} {budgetCurrency === 'EUR' ? '€' : budgetCurrency}
+                {totalCharges.toFixed(0)} {currencySymbol}
                 </p>
                 <p className="text-xs text-muted-foreground">Total mensuel</p>
             </div>
@@ -274,7 +290,8 @@ export default function ChargesSection({
                 onLinkTransaction={onLinkTransaction}
                 mappedTotal={mappedTotals[charge.id]}
                 getCategoryLabel={getCategoryLabel}
-                currency={budgetCurrency}
+                currency={budgetCurrency} // Pass the raw code
+                currencySymbol={currencySymbol} // Pass the symbol
               />
             ))}
           </div>
@@ -314,7 +331,7 @@ export default function ChargesSection({
             </div>
 
             <div>
-              <Label htmlFor="charge-amount">Montant mensuel ({budgetCurrency}) *</Label>
+              <Label htmlFor="charge-amount">Montant mensuel ({currencySymbol}) *</Label>
               <Input
                 id="charge-amount"
                 type="number"
@@ -349,7 +366,7 @@ export default function ChargesSection({
                     maxLength={MAX_DESCRIPTION_LENGTH}
                     placeholder="Ex: 35m2 Paris, Tous risques..."
                 />
-                <p className="text-[10px] text-muted-foreground mt-1 flex items-center gap-1">
+                <p className="text--[10px] text-muted-foreground mt-1 flex items-center gap-1">
                     <Info className="h-3 w-3" /> Aide l'IA à comparer ce qui est comparable.
                 </p>
             </div>
@@ -403,7 +420,8 @@ interface ChargeItemProps {
   onLinkTransaction?: (charge: Charge) => void;
   mappedTotal?: number;
   getCategoryLabel: (category?: string) => string;
-  currency?: string; // ✅ AJOUT
+  currency?: string; 
+  currencySymbol: string; // ✅ ADDED
 }
 
 function ChargeItem({ 
@@ -413,7 +431,8 @@ function ChargeItem({
     onLinkTransaction, 
     mappedTotal, 
     getCategoryLabel,
-    currency = 'EUR' // Valeur par défaut
+    currency = 'EUR',
+    currencySymbol
 }: ChargeItemProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editLabel, setEditLabel] = useState(charge.label);
@@ -470,7 +489,7 @@ function ChargeItem({
           </div>
 
           <div className="space-y-1.5">
-            <Label className="text-xs font-medium">Montant mensuel ({currency})</Label>
+            <Label className="text-xs font-medium">Montant mensuel ({currencySymbol})</Label>
             <Input type="number" step="0.01" value={editAmount} onChange={(e) => setEditAmount(e.target.value)} className="w-full" />
           </div>
 
@@ -550,14 +569,14 @@ function ChargeItem({
         )}
         {hasRealityCheck && differsFromBudget && (
           <div className="mt-1 text-xs text-indigo-600 font-medium">
-            Réel: {mappedTotal.toFixed(2)}{currency === 'EUR' ? '€' : currency}
+            Réel: {mappedTotal.toFixed(2)}{currencySymbol}
           </div>
         )}
       </div>
 
       <div className="flex items-center justify-between sm:justify-end gap-2 sm:gap-1">
         <span className="font-bold text-orange-900 text-sm sm:mr-2">
-          {charge.amount.toFixed(2)} {currency === 'EUR' ? '€' : currency}
+          {charge.amount.toFixed(2)} {currencySymbol}
         </span>
 
         <div className={cn(
