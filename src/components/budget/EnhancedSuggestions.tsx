@@ -61,6 +61,7 @@ function getCurrencySymbol(code?: string): string {
     case 'GBP': return '£';
     case 'CHF': return 'CHF';
     case 'EUR': return '€';
+    case 'XOF': return 'CFA'; 
     default: return '€'; // Default fallback
   }
 }

@@ -66,7 +66,7 @@ const LOCATION_CONFIGS = [
   { code: 'US', name: 'États-Unis', currency: 'USD', symbol: '$' },
   { code: 'CA', name: 'Canada', currency: 'CAD', symbol: '$' },
   { code: 'SN', name: 'Sénégal', currency: 'XOF', symbol: 'CFA' },
-  { code: 'CIV', name: 'Côte d Ivoire', currency: 'XOF', symbol: 'CFA' },
+  { code: 'CI', name: 'Côte d Ivoire', currency: 'XOF', symbol: 'CFA' },
 ];
 
 interface ExtendedBudgetData extends RawBudgetData {
