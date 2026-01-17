@@ -45,6 +45,12 @@ const RELEVANT_CATEGORIES = [
 
 const INDIVIDUAL_CATEGORIES = ['MOBILE', 'INSURANCE_AUTO', 'INSURANCE_HEALTH', 'TRANSPORT', 'LEISURE_SPORT'];
 
+// ✅ High denomination currencies (no decimals)
+const HIGH_DENOMINATION = ['XOF', 'XAF', 'JPY', 'KRW', 'CLP', 'VND', 'HUF'];
+
+// ✅ CONFIG: Minimum Savings Percentage (5%)
+const MIN_SAVINGS_PERCENTAGE = 0.05; 
+
 function isRelevantCategory(cat: string): boolean {
   return RELEVANT_CATEGORIES.includes(cat.toUpperCase());
 }
@@ -61,9 +67,16 @@ function getCurrencySymbol(code?: string): string {
     case 'GBP': return '£';
     case 'CHF': return 'CHF';
     case 'EUR': return '€';
-    case 'XOF': return 'CFA'; 
-    default: return '€'; // Default fallback
+    case 'XOF': return 'CFA';
+    default: return '€';
   }
+}
+
+// ✅ HELPER: Smart Currency Formatting
+function formatCurrency(amount: number, currencyCode: string, symbol: string): string {
+  const isHighDenom = HIGH_DENOMINATION.includes(currencyCode);
+  const digits = isHighDenom ? 0 : 2;
+  return `${amount.toLocaleString('fr-FR', { minimumFractionDigits: digits, maximumFractionDigits: digits })}${symbol}`;
 }
 
 function getCategoryLabel(cat: string): string {
@@ -106,15 +119,10 @@ export default function EnhancedSuggestions({
   const [isExpanded, setIsExpanded] = useState(false);
   const [displayHouseholdSize, setDisplayHouseholdSize] = useState(householdSize);
 
-  // ✅ CORRECTED: Use helper function instead of hardcoded check
   const currencySymbol = getCurrencySymbol(currency);
-
-  // Ref to track the last data we actually analyzed to prevent loops
   const lastAnalyzedSignature = useRef<string>("");
-
   const { onSuggestionsReady, isConnected } = useNotifications();
 
-  // Subscribe to WebSocket suggestions
   useEffect(() => {
     const unsubscribe = onSuggestionsReady((data: any) => {
       console.log('📊 [EnhancedSuggestions] Received suggestions from WebSocket');
@@ -122,9 +130,8 @@ export default function EnhancedSuggestions({
       setLoading(false);
     });
     return unsubscribe;
-  }, [onSuggestionsReady]);
+  }, [onSuggestionsReady, charges]); // Added charges dependency to calculate percentages
 
-  // Create a signature string for dependencies.
   const chargesSignature = JSON.stringify(charges.map(c => ({
     id: c.id,
     amount: c.amount,
@@ -132,10 +139,8 @@ export default function EnhancedSuggestions({
     ignore: c.ignoreSuggestions || false 
   })));
 
-  // COMPLETE SIGNATURE: Includes location and currency
   const fullContextSignature = `${chargesSignature}|${location}|${currency}`;
 
-  // Loop Protection Logic
   useEffect(() => {
     if (!isConnected) return;
 
@@ -150,10 +155,7 @@ export default function EnhancedSuggestions({
 
       if (relevantCharges.length > 0) {
         console.log(`🚀 [EnhancedSuggestions] Context changed (${location}/${currency}), starting analysis...`);
-        
-        // Clear previous suggestions to show loading state
         setSuggestions([]); 
-        
         loadSuggestions();
       }
     }, 2000); 
@@ -164,15 +166,23 @@ export default function EnhancedSuggestions({
   const processResults = (data: any) => {
     const rawSuggestions = data.suggestions || [];
     
+    // ✅ SMART FILTER: Calculate % savings relative to the user's current charge
     const filteredSuggestions = rawSuggestions.filter((s: any) => {
-      const hasPositiveSavings = s.suggestion.competitors.some((c: any) => c.potential_savings > 0);
-      return hasPositiveSavings;
-    });
+      // Find the original charge amount to calculate percentage
+      const originalCharge = charges.find(c => c.id === s.charge_id);
+      const originalAmount = originalCharge ? originalCharge.amount : 0;
 
-    filteredSuggestions.forEach((s: any) => {
+      if (originalAmount <= 0) return false;
+
+      // Filter competitors: Must save at least 5%
       s.suggestion.competitors = s.suggestion.competitors
-        .filter((c: any) => c.potential_savings > 0)
+        .filter((c: any) => {
+             const percentageSavings = c.potential_savings / (originalAmount * 12); // Annualized savings / Annualized cost
+             return percentageSavings >= MIN_SAVINGS_PERCENTAGE;
+        })
         .sort((a: any, b: any) => b.potential_savings - a.potential_savings);
+
+      return s.suggestion.competitors.length > 0;
     });
 
     setSuggestions(filteredSuggestions);
@@ -277,7 +287,7 @@ export default function EnhancedSuggestions({
               <div>
                 <p className="font-medium">🎉 Vous avez déjà d'excellentes offres !</p>
                 <p className="text-sm text-green-600">
-                  Vos charges sont bien optimisées pour votre foyer.
+                  Vos charges sont bien optimisées (ou les économies potentielles sont &lt; 5%).
                 </p>
               </div>
             </div>
@@ -314,7 +324,7 @@ export default function EnhancedSuggestions({
                       Basé sur votre foyer de {displayHouseholdSize} personne{displayHouseholdSize > 1 ? 's' : ''}
                     </span>
                   ) : (
-                    `Économie totale possible : ${totalSavings.toFixed(0)}${currencySymbol}/an`
+                    `Économie totale possible : ${formatCurrency(totalSavings, currency, currencySymbol)}/an`
                   )}
                 </CardDescription>
               </div>
@@ -354,9 +364,22 @@ export default function EnhancedSuggestions({
           )}
 
           <div className="space-y-2">
-            {suggestions.map((item) => (
-              <SuggestionCard key={item.charge_id} chargeSuggestion={item} householdSize={displayHouseholdSize} currencySymbol={currencySymbol} />
-            ))}
+            {suggestions.map((item) => {
+              // Find original charge to calculate percentage again for display
+              const originalCharge = charges.find(c => c.id === item.charge_id);
+              const originalAmount = originalCharge ? originalCharge.amount : 0;
+              
+              return (
+                <SuggestionCard 
+                  key={item.charge_id} 
+                  chargeSuggestion={item} 
+                  householdSize={displayHouseholdSize} 
+                  currency={currency}
+                  currencySymbol={currencySymbol} 
+                  originalAmount={originalAmount}
+                />
+              );
+            })}
           </div>
         </>
       )}
@@ -365,17 +388,21 @@ export default function EnhancedSuggestions({
 }
 
 // ============================================================================
-// SUGGESTION CARD - MODIFIED TO BE COLLAPSIBLE
+// SUGGESTION CARD
 // ============================================================================
 
 function SuggestionCard({ 
   chargeSuggestion, 
   householdSize, 
-  currencySymbol 
+  currency,
+  currencySymbol,
+  originalAmount
 }: { 
   chargeSuggestion: ChargeSuggestion; 
   householdSize: number;
-  currencySymbol: string; // ✅
+  currency: string;
+  currencySymbol: string;
+  originalAmount: number;
 }) {
   const { charge_label, suggestion } = chargeSuggestion;
   const competitors = suggestion.competitors.slice(0, 3);
@@ -385,6 +412,8 @@ function SuggestionCard({
   if (competitors.length === 0) return null;
 
   const bestSavings = competitors[0]?.potential_savings || 0;
+  const savingsPercentage = originalAmount > 0 ? (bestSavings / (originalAmount * 12)) * 100 : 0;
+  
   const isIndividual = isIndividualCategory(suggestion.category);
 
   return (
@@ -409,13 +438,15 @@ function SuggestionCard({
             </CardDescription>
           </div>
           
-          <div className="flex items-center gap-2">
+          <div className="flex flex-col items-end gap-1">
             <Badge className="bg-green-100 text-green-800 border-green-300">
-                Jusqu'à -{bestSavings.toFixed(0)}{currencySymbol}/an
+                Jusqu'à -{formatCurrency(bestSavings, currency, currencySymbol)}/an
             </Badge>
-            <div className="text-muted-foreground">
-                {isOpen ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
-            </div>
+            {savingsPercentage > 0 && (
+                <span className="text-xs font-bold text-green-600">
+                    -{savingsPercentage.toFixed(0)}% d'économie
+                </span>
+            )}
           </div>
         </div>
       </CardHeader>
@@ -430,7 +461,13 @@ function SuggestionCard({
             )}
 
             {competitors.map((competitor, index) => (
-            <CompetitorCard key={index} competitor={competitor} rank={index + 1} currencySymbol={currencySymbol} />
+            <CompetitorCard 
+                key={index} 
+                competitor={competitor} 
+                rank={index + 1} 
+                currency={currency}
+                currencySymbol={currencySymbol} 
+            />
             ))}
         </CardContent>
       )}
@@ -438,7 +475,7 @@ function SuggestionCard({
   );
 }
 
-function CompetitorCard({ competitor, rank, currencySymbol }: { competitor: Competitor; rank: number; currencySymbol: string }) {
+function CompetitorCard({ competitor, rank, currency, currencySymbol }: { competitor: Competitor; rank: number; currency: string; currencySymbol: string }) {
   const getRankBadge = () => {
     if (rank === 1) return <Badge className="bg-green-600 text-white border-0">🏆 Meilleure offre</Badge>;
     if (rank === 2) return <Badge variant="outline" className="border-orange-400 text-orange-700 bg-orange-50">🥈 Alternative #2</Badge>;
@@ -457,7 +494,9 @@ function CompetitorCard({ competitor, rank, currencySymbol }: { competitor: Comp
     <div className={`p-4 rounded-lg transition-all ${getCardStyle()}`}>
       <div className="flex items-center justify-between mb-3">
         {getRankBadge()}
-        <span className="text-lg font-bold text-green-700">-{competitor.potential_savings.toFixed(0)}{currencySymbol}/an</span>
+        <span className="text-lg font-bold text-green-700">
+            -{formatCurrency(competitor.potential_savings, currency, currencySymbol)}/an
+        </span>
       </div>
 
       <h4 className="font-semibold text-gray-900 mb-2">{competitor.name}</h4>
@@ -465,7 +504,9 @@ function CompetitorCard({ competitor, rank, currencySymbol }: { competitor: Comp
 
       <div className="flex items-center gap-2 mb-4">
         <span className="text-sm text-muted-foreground">Prix:</span>
-        <span className="font-semibold text-primary">{competitor.typical_price.toFixed(2)}{currencySymbol}/mois</span>
+        <span className="font-semibold text-primary">
+            {formatCurrency(competitor.typical_price, currency, currencySymbol)}/mois
+        </span>
       </div>
 
       {(competitor.pros?.length > 0 || competitor.cons?.length > 0) && (
