@@ -5,7 +5,7 @@
   <!-- Page d'accueil - Priorité maximale -->
   <url>
     <loc>https://budgetfamille.com/</loc>
-    <lastmod>2026-01-17</lastmod>
+    <lastmod>2025-01-18</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
@@ -13,28 +13,28 @@
   <!-- Pages Marketing principales -->
   <url>
     <loc>https://budgetfamille.com/smart-tools</loc>
-    <lastmod>2026-01-17</lastmod>
+    <lastmod>2025-01-18</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
   
   <url>
     <loc>https://budgetfamille.com/outils-ia</loc>
-    <lastmod>2026-01-17</lastmod>
+    <lastmod>2025-01-18</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
   
   <url>
     <loc>https://budgetfamille.com/premium</loc>
-    <lastmod>2026-01-17</lastmod>
+    <lastmod>2025-01-18</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
   
   <url>
     <loc>https://budgetfamille.com/features</loc>
-    <lastmod>2026-01-17</lastmod>
+    <lastmod>2025-01-18</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
@@ -42,29 +42,94 @@
   <!-- Blog et contenu -->
   <url>
     <loc>https://budgetfamille.com/blog</loc>
-    <lastmod>2026-01-17</lastmod>
+    <lastmod>2025-01-18</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
+  </url>
+  
+  <!-- Articles de Blog - Nouveaux (SEO optimisés) -->
+  <url>
+    <loc>https://budgetfamille.com/blog/economiser-500-euros-abonnements</loc>
+    <lastmod>2025-01-18</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  
+  <url>
+    <loc>https://budgetfamille.com/blog/budget-couple-regles-gerer-argent</loc>
+    <lastmod>2025-01-18</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  
+  <url>
+    <loc>https://budgetfamille.com/blog/budget-etudiant-guide-complet-2025</loc>
+    <lastmod>2025-01-18</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  
+  <url>
+    <loc>https://budgetfamille.com/blog/gerer-budget-familial-senegal-dakar</loc>
+    <lastmod>2025-01-18</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  
+  <url>
+    <loc>https://budgetfamille.com/blog/budget-familial-abidjan-cote-ivoire</loc>
+    <lastmod>2025-01-18</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  
+  <url>
+    <loc>https://budgetfamille.com/blog/budget-familial-maroc-casablanca-rabat</loc>
+    <lastmod>2025-01-18</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  
+  <!-- Articles de Blog - Existants -->
+  <url>
+    <loc>https://budgetfamille.com/blog/5-etapes-gerer-budget-familial-2025</loc>
+    <lastmod>2025-01-02</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  
+  <url>
+    <loc>https://budgetfamille.com/blog/epargne-enfants-construire-capital</loc>
+    <lastmod>2025-01-01</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  
+  <url>
+    <loc>https://budgetfamille.com/blog/connexion-bancaire-psd2-securite</loc>
+    <lastmod>2025-01-01</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
   </url>
   
   <!-- Pages d'authentification -->
   <url>
     <loc>https://budgetfamille.com/login</loc>
-    <lastmod>2026-01-17</lastmod>
+    <lastmod>2025-01-18</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   
   <url>
     <loc>https://budgetfamille.com/signup</loc>
-    <lastmod>2026-01-17</lastmod>
+    <lastmod>2025-01-18</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   
   <url>
     <loc>https://budgetfamille.com/forgot-password</loc>
-    <lastmod>2026-01-17</lastmod>
+    <lastmod>2025-01-18</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
@@ -72,14 +137,14 @@
   <!-- Pages d'information -->
   <url>
     <loc>https://budgetfamille.com/help</loc>
-    <lastmod>2026-01-17</lastmod>
+    <lastmod>2025-01-18</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
   
   <url>
     <loc>https://budgetfamille.com/about</loc>
-    <lastmod>2026-01-17</lastmod>
+    <lastmod>2025-01-18</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
@@ -87,14 +152,14 @@
   <!-- Pages légales -->
   <url>
     <loc>https://budgetfamille.com/privacy</loc>
-    <lastmod>2026-01-17</lastmod>
+    <lastmod>2025-01-18</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.4</priority>
   </url>
   
   <url>
     <loc>https://budgetfamille.com/terms</loc>
-    <lastmod>2026-01-17</lastmod>
+    <lastmod>2025-01-18</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.4</priority>
   </url>
