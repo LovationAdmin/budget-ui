@@ -39,7 +39,8 @@ function getCurrencySymbol(code?: string): string {
     case 'GBP': return '£';
     case 'CHF': return 'CHF';
     case 'EUR': return '€';
-    case 'XOF': return 'CFA'; 
+    case 'XOF': return 'CFA';
+    case 'MAD': return 'DH'; 
     default: return '€';
   }
 }
