@@ -1,7 +1,5 @@
 // src/App.tsx
-// ✅ VERSION SIMPLIFIÉE - Beta2Page supprimé (Reality Check intégré dans BudgetComplete)
-
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate, useParams } from 'react-router-dom';
 import { useAuth } from './contexts/AuthContext';
 import PrivateRoute from './components/PrivateRoute';
 import { Toaster } from "@/components/ui/toaster";
@@ -37,23 +35,16 @@ export default function App() {
   return (
     <>
       <Routes>
-        {/* ============================================ */}
-        {/* ROOT ROUTE: LANDING vs DASHBOARD */}
-        {/* ============================================ */}
+        {/* ROOT ROUTE */}
         <Route path="/" element={
           user ? <Navigate to="/dashboard" replace /> : <LandingPage />
         } />
 
-        {/* ============================================ */}
         {/* PUBLIC ROUTES */}
-        {/* ============================================ */}
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
-        
-        {/* Password Reset Routes */}
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password" element={<ResetPassword />} />
-        
         <Route path="/invitation/accept" element={<AcceptInvitation />} />
         <Route path="/privacy" element={<PrivacyPolicy />} />
         <Route path="/verify-email" element={<VerifyEmail />} />
@@ -62,24 +53,25 @@ export default function App() {
         <Route path="/about" element={<About />} />
         <Route path="/help" element={<Help />} />
         <Route path="/premium" element={<PremiumPage />} />
-
-        {/* Marketing Routes */}
         <Route path="/smart-tools" element={<SmartTools />} />
         <Route path="/outils-ia" element={<SmartTools />} />
         <Route path="/blog" element={<Blog />} />
         <Route path="/blog/:slug" element={<BlogArticle />} />
 
-        {/* ============================================ */}
         {/* PROTECTED ROUTES */}
-        {/* ============================================ */}
-        
         <Route path="/dashboard" element={
           <PrivateRoute>
             <Dashboard />
           </PrivateRoute>
         } />
         
-        {/* Budget Route - Reality Check intégré */}
+        {/* ✅ FIXED: Added specific route for /budget/:id to handle client-side redirects */}
+        <Route path="/budget/:id" element={
+          <PrivateRoute>
+            <RedirectToBudgetComplete />
+          </PrivateRoute>
+        } />
+
         <Route path="/budget/:id/complete" element={
           <PrivateRoute>
             <BudgetComplete />
@@ -92,24 +84,17 @@ export default function App() {
           </PrivateRoute>
         } />
         
-        {/* ============================================ */}
-        {/* BANKING CALLBACK (public - pour Enable Banking OAuth) */}
-        {/* ============================================ */}
+        {/* BANKING CALLBACK */}
         <Route path="/beta2/callback" element={<EnableBankingCallbackPage />} />
         
-        {/* ============================================ */}
-        {/* LEGACY REDIRECTS - Redirige les anciennes URLs Beta2 vers BudgetComplete */}
-        {/* ============================================ */}
+        {/* LEGACY REDIRECTS */}
         <Route path="/beta2/:id" element={
           <PrivateRoute>
-            {/* Redirect to the new unified route */}
             <RedirectToBudgetComplete />
           </PrivateRoute>
         } />
 
-        {/* ============================================ */}
         {/* ERROR ROUTES */}
-        {/* ============================================ */}
         <Route path="/404" element={<NotFound />} />
         <Route path="*" element={<Navigate to="/404" replace />} />
       </Routes>
@@ -119,8 +104,8 @@ export default function App() {
   );
 }
 
-// Component to handle legacy /beta2/:id redirects
+// Helper component to handle redirects
 function RedirectToBudgetComplete() {
-  const { id } = require('react-router-dom').useParams();
+  const { id } = useParams();
   return <Navigate to={`/budget/${id}/complete`} replace />;
 }
