@@ -1119,7 +1119,7 @@ export const blogArticles: BlogArticleContent[] = [
       <h3>Peut-on avoir une vie sociale avec 700€/mois ?</h3>
       <p>
         <strong>Absolument !</strong> La clé : prioriser. Préférez 2-3 vraies bonnes soirées 
-        par mois plutôt que sortir tous les soirs "mollo". Qualité > Quantité.
+        par mois plutôt que sortir tous les soirs "mollo". Qualité &gt; Quantité.
       </p>
 
       <h2>✨ Conclusion : Étudiant et Bien Géré = Possible</h2>
@@ -1707,7 +1707,7 @@ export const blogArticles: BlogArticleContent[] = [
         </li>
         <li><strong>Climatisation raisonnée :</strong>
           <ul>
-            <li>Utilisez ventilateurs quand température < 30°C</li>
+            <li>Utilisez ventilateurs quand température &lt; 30°C</li>
             <li>Clim uniquement la nuit (sommeil)</li>
             <li>Température réglée à 26°C minimum</li>
           </ul>
@@ -1739,7 +1739,7 @@ export const blogArticles: BlogArticleContent[] = [
         <li><strong>Panneaux solaires :</strong>
           <ul>
             <li>Investissement initial : 500 000 - 1 500 000 FCFA</li>
-            <li>ROI en 3-5 ans si facture > 50 000 FCFA/mois</li>
+            <li>ROI en 3-5 ans si facture &gt; 50 000 FCFA/mois</li>
           </ul>
         </li>
       </ol>
@@ -1813,7 +1813,7 @@ export const blogArticles: BlogArticleContent[] = [
         <ul className="space-y-2 text-sm">
           <li>Coût : 50 000 FCFA/mois</li>
           <li>Temps gagné : 15-20h/semaine = 60-80h/mois</li>
-          <li>Si votre salaire horaire > 650 FCFA/h → <strong>rentable</strong></li>
+          <li>Si votre salaire horaire &gt; 650 FCFA/h → <strong>rentable</strong></li>
         </ul>
         <p className="font-semibold mt-4 mb-3">Sans aide ménagère :</p>
         <ul className="space-y-2 text-sm">
@@ -1823,7 +1823,7 @@ export const blogArticles: BlogArticleContent[] = [
       </div>
 
       <p>
-        <strong>Verdict :</strong> Si les deux parents travaillent et gagnent > 200 000 FCFA 
+        <strong>Verdict :</strong> Si les deux parents travaillent et gagnent &gt; 200 000 FCFA 
         chacun, l'aide ménagère est souvent un bon investissement. Sinon, organisez-vous 
         en famille (tâches partagées).
       </p>
@@ -2390,7 +2390,7 @@ export const blogArticles: BlogArticleContent[] = [
         <li><strong>RAMED (gratuit pour familles à faibles revenus) :</strong>
           <ul>
             <li>Soins gratuits dans hôpitaux publics</li>
-            <li>Conditions : revenu < 5664 MAD/personne/an</li>
+            <li>Conditions : revenu &lt; 5664 MAD/personne/an</li>
           </ul>
         </li>
         <li><strong>Mutuelles privées (Saham, Wafa, Atlanta) :</strong>
