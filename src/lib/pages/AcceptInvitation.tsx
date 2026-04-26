@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { invitationAPI } from '../services/api';
-import { useAuth } from '../contexts/AuthContext';
+import { invitationAPI } from '../../services/api';
+import { useAuth } from '../../contexts/AuthContext';
 import { Button } from '@/components/ui/button'; // Optional, for the error view
 
 export default function AcceptInvitation() {

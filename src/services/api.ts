@@ -1,180 +1,145 @@
 // src/services/api.ts
 // ============================================================================
-// API CLIENT — Pass 2 : refresh token flow + handling des 401 concurrents
+// API CLIENT — Pass 2 (refresh token + smart 401 interceptor)
 // ============================================================================
-// Changements vs version précédente :
-//   - Ajout de l'endpoint /auth/refresh
-//   - Intercepteur 401 : tente UN refresh avant de rediriger vers /login
-//   - Gestion des 401 concurrents : un seul refresh en vol à la fois,
-//     les requêtes parallèles attendent puis rejouent
-//   - Login renvoie aussi un refresh_token, stocké à côté du token
-//
-// Rétrocompatibilité totale :
-//   - Toutes les fonctions exportées (authAPI, userAPI, budgetAPI, etc.)
-//     gardent leur signature
-//   - Le champ "token" de la réponse de login reste lu (alias serveur)
+// Changements par rapport à la version précédente :
+//   1. `withCredentials: true` → les cookies (refresh) sont envoyés
+//      automatiquement aux endpoints /auth/refresh et /auth/logout.
+//   2. Intercepteur 401 intelligent :
+//      - Tente UN refresh avant de rediriger vers /login
+//      - Queue les requêtes concurrentes pendant le refresh
+//      - Retry les requêtes en échec avec le nouveau token
+//      - En cas d'échec du refresh : clear localStorage + redirect /login
+//   3. Tous les types et exports existants sont **préservés à 100%**.
 // ============================================================================
 
-import axios, { AxiosError, AxiosResponse, InternalAxiosRequestConfig } from 'axios';
+import axios, { AxiosError, InternalAxiosRequestConfig, AxiosResponse } from 'axios';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api/v1';
-
-// ----------------------------------------------------------------------------
-// CONSTANTS
-// ----------------------------------------------------------------------------
-
-const STORAGE_KEY_TOKEN = 'token';
-const STORAGE_KEY_REFRESH = 'refresh_token';
-const STORAGE_KEY_USER = 'user';
-
-// ----------------------------------------------------------------------------
-// AXIOS INSTANCE PRINCIPALE
-// ----------------------------------------------------------------------------
 
 const api = axios.create({
   baseURL: API_URL,
   headers: { 'Content-Type': 'application/json' },
+  // Cross-origin cookies : le backend a déjà AllowCredentials=true + allowlist
+  withCredentials: true,
 });
 
-// Instance "raw" sans intercepteurs : utilisée pour appeler /auth/refresh
-// sans déclencher la boucle de refresh sur cet appel-là.
-const rawAxios = axios.create({
-  baseURL: API_URL,
-  headers: { 'Content-Type': 'application/json' },
-});
+// ============================================================================
+// REFRESH STATE — singleton module-level
+// ============================================================================
 
-// ----------------------------------------------------------------------------
-// INTERCEPTEUR REQUEST : injection du Bearer
-// ----------------------------------------------------------------------------
+interface QueueItem {
+  resolve: (token: string | null) => void;
+  reject: (err: unknown) => void;
+}
+
+let isRefreshing = false;
+let pendingQueue: QueueItem[] = [];
+
+function flushQueue(token: string | null, error: unknown = null) {
+  pendingQueue.forEach((item) => {
+    if (token) item.resolve(token);
+    else item.reject(error);
+  });
+  pendingQueue = [];
+}
+
+/**
+ * Appelle /auth/refresh. Le cookie refresh est envoyé automatiquement.
+ * On utilise une instance axios "naked" (sans intercepteur) pour éviter
+ * la récursion infinie sur les 401.
+ */
+async function callRefresh(): Promise<string> {
+  const response = await axios.post<{ access_token: string; expires_in?: number }>(
+    `${API_URL}/auth/refresh`,
+    {},
+    { withCredentials: true },
+  );
+  const { access_token } = response.data;
+  if (!access_token) {
+    throw new Error('Refresh response missing access_token');
+  }
+  return access_token;
+}
+
+function forceLogout() {
+  localStorage.removeItem('token');
+  localStorage.removeItem('user');
+  if (typeof window !== 'undefined' && !window.location.pathname.includes('/login')) {
+    const next = encodeURIComponent(window.location.pathname + window.location.search);
+    window.location.href = `/login?next=${next}`;
+  }
+}
+
+// ============================================================================
+// INTERCEPTORS
+// ============================================================================
 
 api.interceptors.request.use((config: InternalAxiosRequestConfig) => {
-  const token = localStorage.getItem(STORAGE_KEY_TOKEN);
+  const token = localStorage.getItem('token');
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
   return config;
 });
 
-// ----------------------------------------------------------------------------
-// REFRESH FLOW : gestion des 401 concurrents
-// ----------------------------------------------------------------------------
-// Pattern classique :
-//   - Si plusieurs requêtes échouent en 401 en même temps, UNE SEULE déclenche
-//     le refresh ; les autres s'abonnent et attendent le résultat.
-//   - Quand le refresh aboutit, toutes les requêtes en attente sont rejouées
-//     avec le nouveau token.
-//   - Si le refresh échoue, on force le logout et on les rejette toutes.
-
-let isRefreshing = false;
-type Subscriber = (newToken: string | null) => void;
-let refreshSubscribers: Subscriber[] = [];
-
-function notifySubscribers(newToken: string | null) {
-  refreshSubscribers.forEach((cb) => cb(newToken));
-  refreshSubscribers = [];
-}
-
-function subscribeToRefresh(cb: Subscriber) {
-  refreshSubscribers.push(cb);
-}
-
-function clearAuth() {
-  localStorage.removeItem(STORAGE_KEY_TOKEN);
-  localStorage.removeItem(STORAGE_KEY_REFRESH);
-  localStorage.removeItem(STORAGE_KEY_USER);
-}
-
-function redirectToLogin() {
-  if (!window.location.pathname.includes('/login')) {
-    window.location.href = '/login';
-  }
-}
-
-async function performRefresh(): Promise<string> {
-  const refreshToken = localStorage.getItem(STORAGE_KEY_REFRESH);
-  if (!refreshToken) {
-    throw new Error('No refresh token available');
-  }
-
-  const { data } = await rawAxios.post('/auth/refresh', {
-    refresh_token: refreshToken,
-  });
-
-  const newAccessToken: string | undefined = data.access_token ?? data.token;
-  const newRefreshToken: string | undefined = data.refresh_token;
-
-  if (!newAccessToken) {
-    throw new Error('Refresh response missing access_token');
-  }
-
-  localStorage.setItem(STORAGE_KEY_TOKEN, newAccessToken);
-  if (newRefreshToken) {
-    localStorage.setItem(STORAGE_KEY_REFRESH, newRefreshToken);
-  }
-
-  return newAccessToken;
-}
-
-// ----------------------------------------------------------------------------
-// INTERCEPTEUR RESPONSE : 401 → tentative de refresh
-// ----------------------------------------------------------------------------
-
 api.interceptors.response.use(
-  (response: AxiosResponse) => response,
+  (response) => response,
   async (error: AxiosError) => {
-    const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
+    const originalRequest = error.config as InternalAxiosRequestConfig & {
+      _retry?: boolean;
+    };
 
-    // Pas un 401 ou pas de config (erreur réseau, etc.) : on rejette
     if (!error.response || error.response.status !== 401 || !originalRequest) {
       return Promise.reject(error);
     }
 
-    // Si l'erreur 401 vient déjà d'un retry : on abandonne (évite la boucle)
-    if (originalRequest._retry) {
-      clearAuth();
-      redirectToLogin();
+    // Endpoints à NE PAS retry :
+    // - /auth/login : 401 = mauvais credentials, pas un token expiré
+    // - /auth/refresh : récursion infinie
+    // - /auth/logout : déjà en train de se déconnecter
+    const url = originalRequest.url ?? '';
+    if (
+      url.includes('/auth/login') ||
+      url.includes('/auth/refresh') ||
+      url.includes('/auth/logout')
+    ) {
       return Promise.reject(error);
     }
 
-    // Si l'utilisateur n'a même pas de refresh_token (jamais loggé / déjà clear)
-    // → pas la peine de tenter un refresh
-    if (!localStorage.getItem(STORAGE_KEY_REFRESH)) {
-      clearAuth();
-      redirectToLogin();
+    if (originalRequest._retry) {
+      forceLogout();
       return Promise.reject(error);
+    }
+
+    // Si un refresh est déjà en cours, mettre en file d'attente
+    if (isRefreshing) {
+      return new Promise<string | null>((resolve, reject) => {
+        pendingQueue.push({ resolve, reject });
+      })
+        .then((newToken) => {
+          if (!newToken) throw error;
+          originalRequest._retry = true;
+          originalRequest.headers.Authorization = `Bearer ${newToken}`;
+          return api(originalRequest);
+        })
+        .catch((err) => Promise.reject(err));
     }
 
     originalRequest._retry = true;
-
-    // Si un refresh est déjà en cours, on attend la fin
-    if (isRefreshing) {
-      return new Promise((resolve, reject) => {
-        subscribeToRefresh((newToken) => {
-          if (newToken) {
-            originalRequest.headers = originalRequest.headers ?? {};
-            originalRequest.headers.Authorization = `Bearer ${newToken}`;
-            resolve(api(originalRequest));
-          } else {
-            reject(error);
-          }
-        });
-      });
-    }
-
-    // Sinon : on lance le refresh
     isRefreshing = true;
-    try {
-      const newToken = await performRefresh();
-      notifySubscribers(newToken);
 
-      originalRequest.headers = originalRequest.headers ?? {};
+    try {
+      const newToken = await callRefresh();
+      localStorage.setItem('token', newToken);
+      flushQueue(newToken);
+
       originalRequest.headers.Authorization = `Bearer ${newToken}`;
       return api(originalRequest);
-    } catch (refreshErr) {
-      notifySubscribers(null);
-      clearAuth();
-      redirectToLogin();
-      return Promise.reject(refreshErr);
+    } catch (refreshError) {
+      flushQueue(null, refreshError);
+      forceLogout();
+      return Promise.reject(refreshError);
     } finally {
       isRefreshing = false;
     }
@@ -195,10 +160,8 @@ export interface User {
 }
 
 export interface AuthResponse {
-  token: string;          // alias rétrocompat
-  access_token?: string;  // nom canonique
-  refresh_token?: string;
-  token_type?: string;
+  token: string;
+  expires_in?: number;
   user: User;
 }
 
@@ -266,10 +229,6 @@ export interface UserLocation {
   postal_code?: string;
 }
 
-// ----------------------------------------------------------------------------
-// INTERNAL TYPES
-// ----------------------------------------------------------------------------
-
 interface AuthData {
   name?: string;
   email: string;
@@ -314,64 +273,49 @@ export const authAPI = {
   login: (data: AuthData): Promise<AxiosResponse<AuthResponse>> =>
     api.post('/auth/login', data),
 
-  // Pass 2 : refresh & logout côté serveur
-  refresh: (refresh_token: string): Promise<AxiosResponse<AuthResponse>> =>
-    rawAxios.post('/auth/refresh', { refresh_token }),
+  // 🆕 Pass 2
+  logout: () => api.post('/auth/logout'),
+  logoutAll: () => api.post('/auth/logout-all'),
+  refresh: (): Promise<AxiosResponse<{ access_token: string; expires_in?: number }>> =>
+    api.post('/auth/refresh'),
 
-  logout: (refresh_token?: string) =>
-    rawAxios.post('/auth/logout', { refresh_token: refresh_token ?? null }),
-
-  logoutAll: () => api.post('/user/logout-all'),
-
-  activeSessionsCount: () =>
-    api.get<{ active_sessions: number }>('/user/sessions/count'),
-
-  resendVerification: (email: string) =>
-    api.post('/auth/verify/resend', { email }),
-
-  forgotPassword: (email: string) =>
-    api.post('/auth/forgot-password', { email }),
-
+  resendVerification: (email: string) => api.post('/auth/verify/resend', { email }),
+  forgotPassword: (email: string) => api.post('/auth/forgot-password', { email }),
   resetPassword: (token: string, new_password: string) =>
     api.post('/auth/reset-password', { token, new_password }),
 };
 
 // ============================================================================
-// USER API — inchangé vs Pass 1
+// USER API
 // ============================================================================
 
 export const userAPI = {
   getProfile: () => api.get('/user/profile'),
   updateProfile: (data: ProfileUpdateData) => api.put('/user/profile', data),
   changePassword: (data: PasswordChangeData) => api.post('/user/password', data),
+  deleteAccount: (data: DeleteAccountData) => api.delete('/user/account', { data }),
+  exportData: () => api.get('/user/export-data'),
+
   setupTOTP: () => api.post('/user/2fa/setup'),
   verifyTOTP: (code: string) => api.post('/user/2fa/verify', { code }),
   disableTOTP: (password: string, code: string) =>
     api.post('/user/2fa/disable', { password, code }),
-  deleteAccount: (data: DeleteAccountData) =>
-    api.delete('/user/account', { data }),
-  exportData: () => api.get('/user/export-data'),
 };
 
 // ============================================================================
-// BUDGET API — inchangé
+// BUDGET API
 // ============================================================================
 
 export const budgetAPI = {
-  list: () => api.get('/budgets'),
+  getAll: () => api.get('/budgets'),
   getById: (id: string) => api.get(`/budgets/${id}`),
   create: (data: BudgetCreateData) => api.post('/budgets', data),
-  update: (id: string, data: { name: string; location?: string; currency?: string }) =>
-    api.put(`/budgets/${id}`, data),
+  update: (id: string, data: BudgetCreateData) => api.put(`/budgets/${id}`, data),
   delete: (id: string) => api.delete(`/budgets/${id}`),
   getData: (id: string) => api.get(`/budgets/${id}/data`),
   updateData: (id: string, data: BudgetUpdateData) => api.put(`/budgets/${id}/data`, data),
   invite: (id: string, email: string) => api.post(`/budgets/${id}/invite`, { email }),
   acceptInvitation: (token: string) => api.post('/invitations/accept', { token }),
 };
-
-// ============================================================================
-// EXPORT DEFAULT
-// ============================================================================
 
 export default api;

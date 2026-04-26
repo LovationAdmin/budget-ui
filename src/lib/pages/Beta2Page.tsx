@@ -3,7 +3,7 @@
 
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import api, { budgetAPI } from '../services/api';
+import api, { budgetAPI } from '../../services/api';
 import { 
   convertOldFormatToNew, 
   convertNewFormatToOld,
@@ -16,26 +16,26 @@ import {
   type MonthComments,
   type ProjectComments,
   type LockedMonths
-} from '../utils/importConverter';
-import { useAuth } from '../contexts/AuthContext';
+} from '../../utils/importConverter';
+import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast'; 
 import { useNotifications } from '@/contexts/NotificationContext';
 import { BudgetNavbar, NavItem } from '@/components/budget/BudgetNavbar';
-import InviteModal from '../components/InviteModal';
-import BudgetHeader from '../components/budget/BudgetHeader';
-import PeopleSection from '../components/budget/PeopleSection';
-import ChargesSection from '../components/budget/ChargesSection';
-import ProjectsSection from '../components/budget/ProjectsSection';
-import MonthlyTable from '../components/budget/MonthlyTable';
-import StatsSection from '../components/budget/StatsSection';
-import ActionsBar from '../components/budget/ActionsBar';
-import MemberManagementSection from '../components/budget/MemberManagementSection';
-import { RealityCheck } from '../components/budget/RealityCheck'; 
-import { EnableBankingManager } from '../components/budget/EnableBankingManager';
-import { TransactionMapper, MappedTransaction, BridgeTransaction } from '../components/budget/TransactionMapper';
+import InviteModal from '../../components/InviteModal';
+import BudgetHeader from '../../components/budget/BudgetHeader';
+import PeopleSection from '../../components/budget/PeopleSection';
+import ChargesSection from '../../components/budget/ChargesSection';
+import ProjectsSection from '../../components/budget/ProjectsSection';
+import MonthlyTable from '../../components/budget/MonthlyTable';
+import StatsSection from '../../components/budget/StatsSection';
+import ActionsBar from '../../components/budget/ActionsBar';
+import MemberManagementSection from '../../components/budget/MemberManagementSection';
+import { RealityCheck } from '../../components/budget/RealityCheck'; 
+import { EnableBankingManager } from '../../components/budget/EnableBankingManager';
+import { TransactionMapper, MappedTransaction, BridgeTransaction } from '../../components/budget/TransactionMapper';
 import { LayoutDashboard, Users, Receipt, Target, CalendarDays, FlaskConical, MapPin, DollarSign } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { useTutorial } from '../contexts/TutorialContext';
+import { useTutorial } from '../../contexts/TutorialContext';
 import { DEMO_TRANSACTIONS, DEMO_BANK_BALANCE, DEMO_MODE_LIMITS } from '@/constants/demoData';
 import { DemoModePrompt } from '@/components/budget/DemoModePrompt';
 import { DemoBanner } from '@/components/budget/DemoBanner';

@@ -1,5 +1,5 @@
 import { useState, FormEvent, ChangeEvent } from 'react';
-import { invitationAPI } from '../services/api';
+import { invitationAPI  } from '../services/api';
 
 interface InviteModalProps {
     budgetId: string;

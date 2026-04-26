@@ -5,12 +5,12 @@ import { EmptyState } from '@/components/budget/EmptyState';
 import { useState, useEffect, useCallback, memo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PiggyBank, Plus, ArrowRight, Trash2, MapPin, DollarSign, Pencil } from "lucide-react";
-import { budgetAPI } from '../services/api';
-import { useAuth } from '../contexts/AuthContext';
+import { budgetAPI } from '../../services/api';
+import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
-import { MemberAvatarGroup } from '../components/budget/MemberAvatar';
-import { Button } from '../components/ui/button';
-import { Skeleton } from '../components/ui/skeleton';
+import { MemberAvatarGroup } from '../../components/budget/MemberAvatar';
+import { Button } from '../../components/ui/button';
+import { Skeleton } from '../../components/ui/skeleton';
 import { Footer } from '@/components/Footer';
 import Navbar from '@/components/Navbar';
 import {

@@ -2,16 +2,16 @@
 // ✅ VERSION CORRIGÉE - Section localisation SUPPRIMÉE (maintenant au niveau budget)
 
 import { useState, FormEvent, ChangeEvent } from 'react';
-import { userAPI, budgetAPI } from '../services/api';
-import { useAuth } from '../contexts/AuthContext';
-import Navbar from '../components/Navbar';
+import { userAPI, budgetAPI } from '../../services/api';
+import { useAuth } from '../../contexts/AuthContext';
+import Navbar from '../../components/Navbar';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, AlertTriangle, Trash2, HelpCircle, Download } from 'lucide-react';
-import { AvatarPicker } from '../components/ui/avatar-picker';
-import { useTutorial } from '../contexts/TutorialContext';
+import { AvatarPicker } from '../../components/ui/avatar-picker';
+import { useTutorial } from '../../contexts/TutorialContext';
 import {
   AlertDialog,
   AlertDialogAction,

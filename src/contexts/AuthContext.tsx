@@ -32,7 +32,7 @@ interface AuthContextType {
     postal_code?: string,
   ) => Promise<{ success: boolean; error?: string }>;
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
-  logout: () => void;
+  logout: () => Promise<void>;
   logoutAll: () => Promise<{ success: boolean; error?: string }>;
   updateUser: (updates: Partial<User>) => void;
 }
@@ -61,20 +61,34 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
   // Bootstrap depuis localStorage au mount
   useEffect(() => {
-    const token = localStorage.getItem(STORAGE_KEY_TOKEN);
-    const userData = localStorage.getItem(STORAGE_KEY_USER);
+    const restoreSession = async () => {
+      const token = localStorage.getItem('token');
+      const userData = localStorage.getItem('user');
 
-    if (token && userData) {
-      try {
-        setUser(JSON.parse(userData) as User);
-      } catch (error) {
-        console.error('Error parsing user data:', error);
-        localStorage.removeItem(STORAGE_KEY_TOKEN);
-        localStorage.removeItem(STORAGE_KEY_REFRESH);
-        localStorage.removeItem(STORAGE_KEY_USER);
+      if (token && userData) {
+        // Cas heureux : tout est encore en localStorage
+        try {
+          setUser(JSON.parse(userData) as User);
+        } catch (error) {
+          console.error('Error parsing user data:', error);
+          localStorage.removeItem('token');
+          localStorage.removeItem('user');
+        }
+      } else if (userData && !token) {
+        // Restauration : user en cache mais access token perdu/expiré.
+        // Si le cookie refresh est encore valide, on récupère un nouveau token.
+        try {
+          const response = await authAPI.refresh();
+          localStorage.setItem('token', response.data.access_token);
+          setUser(JSON.parse(userData) as User);
+        } catch {
+          localStorage.removeItem('user');
+        }
       }
-    }
-    setLoading(false);
+      setLoading(false);
+    };
+
+    restoreSession();
   }, []);
 
   /**
@@ -156,23 +170,18 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
    * - Déclenche en arrière-plan la révocation serveur du refresh token
    *   (fire-and-forget : on ne bloque PAS l'UX si le serveur ne répond pas)
    */
-  const logout = () => {
-    const refreshToken = localStorage.getItem(STORAGE_KEY_REFRESH);
-
-    // 1. Nettoyer local en premier — l'UI réagit tout de suite
-    localStorage.removeItem(STORAGE_KEY_TOKEN);
-    localStorage.removeItem(STORAGE_KEY_REFRESH);
-    localStorage.removeItem(STORAGE_KEY_USER);
-    setUser(null);
-
-    // 2. Révocation serveur en arrière-plan, sans bloquer
-    if (refreshToken) {
-      authAPI.logout(refreshToken).catch((e) => {
-        // Silencieux : si la révocation serveur rate, le token expirera de
-        // toute façon dans 7 jours. Le user est déjà déconnecté côté client.
-        console.warn('Server-side logout failed (token will auto-expire):', e);
-      });
+  const logout = async () => {
+    // 1. Révocation côté serveur (best-effort, ne bloque pas la déco)
+    try {
+      await authAPI.logout();
+    } catch (error) {
+      // Si le serveur est down, on déconnecte quand même côté client
+      console.warn('[Auth] Server logout failed (continuing locally)', error);
     }
+    // 2. Clear local
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    setUser(null);
   };
 
   /**

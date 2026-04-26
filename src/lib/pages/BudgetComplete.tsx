@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import api, { budgetAPI } from '../services/api';
+import api, { budgetAPI } from '../../services/api';
 import { 
   convertOldFormatToNew, 
   convertNewFormatToOld,
@@ -13,25 +13,25 @@ import {
   type MonthComments,
   type ProjectComments,
   type LockedMonths
-} from '../utils/importConverter';
-import { useAuth } from '../contexts/AuthContext';
+} from '../../utils/importConverter';
+import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast'; 
 import { useNotifications } from '@/contexts/NotificationContext';
-import { useAutoSave } from '../hooks/useAutoSave';
+import { useAutoSave } from '../../hooks/useAutoSave';
 import { BudgetNavbar, NavItem } from '@/components/budget/BudgetNavbar';
-import InviteModal from '../components/InviteModal';
-import BudgetHeader from '../components/budget/BudgetHeader';
-import PeopleSection from '../components/budget/PeopleSection';
-import ChargesSection from '../components/budget/ChargesSection';
-import ProjectsSection from '../components/budget/ProjectsSection';
-import MonthlyTable from '../components/budget/MonthlyTable';
-import StatsSection from '../components/budget/StatsSection';
-import ActionsBar from '../components/budget/ActionsBar';
-import MemberManagementSection from '../components/budget/MemberManagementSection';
+import InviteModal from '../../components/InviteModal';
+import BudgetHeader from '../../components/budget/BudgetHeader';
+import PeopleSection from '../../components/budget/PeopleSection';
+import ChargesSection from '../../components/budget/ChargesSection';
+import ProjectsSection from '../../components/budget/ProjectsSection';
+import MonthlyTable from '../../components/budget/MonthlyTable';
+import StatsSection from '../../components/budget/StatsSection';
+import ActionsBar from '../../components/budget/ActionsBar';
+import MemberManagementSection from '../../components/budget/MemberManagementSection';
 import EnhancedSuggestions from '@/components/budget/EnhancedSuggestions';
-import { RealityCheck } from '../components/budget/RealityCheck'; 
-import { EnableBankingManager } from '../components/budget/EnableBankingManager'; // ✅ Correct Import
-import { TransactionMapper, MappedTransaction, BridgeTransaction } from '../components/budget/TransactionMapper';
+import { RealityCheck } from '../../components/budget/RealityCheck'; 
+import { EnableBankingManager } from '../../components/budget/EnableBankingManager'; // ✅ Correct Import
+import { TransactionMapper, MappedTransaction, BridgeTransaction } from '../../components/budget/TransactionMapper';
 import { DemoModePrompt } from '@/components/budget/DemoModePrompt';
 import { DemoBanner } from '@/components/budget/DemoBanner';
 import { DEMO_TRANSACTIONS, DEMO_BANK_BALANCE, DEMO_MODE_LIMITS } from '@/constants/demoData';
@@ -41,7 +41,7 @@ import {
   MapPin, DollarSign, FlaskConical, Building2 
 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { useTutorial } from '../contexts/TutorialContext';
+import { useTutorial } from '../../contexts/TutorialContext';
 
 // ============================================================================
 // NAV ITEMS CONFIGURATION

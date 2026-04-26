@@ -5,29 +5,29 @@ import PrivateRoute from './components/PrivateRoute';
 import { Toaster } from "@/components/ui/toaster";
 
 // Pages
-import Login from './pages/Login'; 
-import Signup from './pages/Signup';
-import ForgotPassword from './pages/ForgotPassword';
-import ResetPassword from './pages/ResetPassword';
-import Dashboard from './pages/Dashboard';
-import BudgetComplete from './pages/BudgetComplete';
-import Profile from './pages/Profile';
-import NotFound from './pages/NotFound';
-import AcceptInvitation from './pages/AcceptInvitation';
-import PrivacyPolicy from './pages/PrivacyPolicy';
-import VerifyEmail from './pages/VerifyEmail';
-import EnableBankingCallbackPage from './pages/EnableBankingCallbackPage';
-import PremiumPage from './pages/PremiumPage';
-import Terms from './pages/Terms';
-import Features from './pages/Features';
-import About from './pages/About';
-import Help from './pages/Help';
+import Login from './lib/pages/Login'; 
+import Signup from './lib/pages/Signup';
+import ForgotPassword from './lib/pages/ForgotPassword';
+import ResetPassword from './lib/pages/ResetPassword';
+import Dashboard from './lib/pages/Dashboard';
+import BudgetComplete from './lib/pages/BudgetComplete';
+import Profile from './lib/pages/Profile';
+import NotFound from './lib/pages/NotFound';
+import AcceptInvitation from './lib/pages/AcceptInvitation';
+import PrivacyPolicy from './lib/pages/PrivacyPolicy';
+import VerifyEmail from './lib/pages/VerifyEmail';
+import EnableBankingCallbackPage from './lib/pages/EnableBankingCallbackPage';
+import PremiumPage from './lib/pages/PremiumPage';
+import Terms from './lib/pages/Terms';
+import Features from './lib/pages/Features';
+import About from './lib/pages/About';
+import Help from './lib/pages/Help';
 
 // Pages Marketing
-import SmartTools from './pages/SmartTools';
-import Blog from './pages/Blog';
-import BlogArticle from './pages/BlogArticle';
-import LandingPage from './pages/LandingPage';
+import SmartTools from './lib/pages/SmartTools';
+import Blog from './lib/pages/Blog';
+import BlogArticle from './lib/pages/BlogArticle';
+import LandingPage from './lib/pages/LandingPage';
 
 export default function App() {
   const { user } = useAuth();

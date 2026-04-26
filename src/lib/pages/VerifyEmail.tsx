@@ -3,7 +3,7 @@
 
 import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import api, { authAPI } from '../services/api';
+import api, { authAPI } from '../../services/api';
 import { Button } from '@/components/ui/button';
 import { CheckCircle, XCircle, Loader2, Mail, AlertCircle } from 'lucide-react';
 import { Alert, AlertDescription } from "@/components/ui/alert";
