@@ -49,13 +49,13 @@ export default function Features() {
   const uniqueFeatures = [
     {
       icon: Shield,
-      title: "Privacy Absolue",
-      subtitle: "Chiffrement End-to-End Zero-Knowledge",
-      description: "Vos données sont chiffrées AES-256 avant même de quitter votre appareil. Même nous ne pouvons pas les lire.",
+      title: "Privacy Forte",
+      subtitle: "Chiffrement AES-256-GCM at-rest",
+      description: "Toutes vos données budgétaires sont stockées chiffrées en base. L'accès est restreint, journalisé, et conforme RGPD.",
       highlights: [
-        "Architecture Zero-Knowledge",
-        "Aucun accès serveur aux données brutes",
-        "Vous seul détenez la clé de chiffrement"
+        "Chiffrement AES-256-GCM at-rest",
+        "Stockage en base toujours chiffré",
+        "Hébergement UE (Frankfurt) — RGPD"
       ],
       color: "bg-emerald-500"
     },
@@ -187,10 +187,10 @@ export default function Features() {
   // DATA - Security Features
   // ============================================================================
   const securityFeatures = [
-    { icon: Lock, title: "Chiffrement AES-256", description: "Vos données sont chiffrées de bout en bout" },
-    { icon: Shield, title: "Zero-Knowledge", description: "Nous ne pouvons pas lire vos données" },
-    { icon: Eye, title: "Aucun tracking", description: "Pas de revente de données" },
-    { icon: Database, title: "RGPD Compliant", description: "Conforme aux réglementations EU" }
+    { icon: Lock, title: "Chiffrement AES-256-GCM", description: "Données budgétaires chiffrées en base" },
+    { icon: Shield, title: "Accès restreint", description: "Accès journalisé, jamais commercial" },
+    { icon: Eye, title: "Aucun tracking", description: "Pas de revente, pas de profiling" },
+    { icon: Database, title: "RGPD compliant", description: "Hébergement UE, droit à l'effacement" }
   ];
 
   // ============================================================================

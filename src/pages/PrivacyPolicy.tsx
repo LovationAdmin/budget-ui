@@ -41,10 +41,10 @@ export default function PrivacyPolicy() {
               <div className="p-2 bg-purple-100 rounded-lg text-purple-600">
                 <EyeOff className="h-6 w-6" />
               </div>
-              <h3 className="text-xl font-semibold">Accès "Zero-Knowledge"</h3>
+              <h3 className="text-xl font-semibold">Accès Restreint et Journalisé</h3>
             </div>
             <p className="text-gray-600 leading-relaxed">
-              Même nos administrateurs ne peuvent pas lire vos données brutes. Pour accéder à votre budget en cas de support technique, nous sommes obligés de réinitialiser votre mot de passe, une action qui vous est immédiatement notifiée.
+              Vos données budgétaires (salaires, charges, projets) sont stockées chiffrées en base avec AES-256-GCM. L'accès aux données déchiffrées par notre équipe technique est strictement limité aux opérations de support, journalisé, et notifié à l'utilisateur. Aucun accès commercial, marketing ou analytique n'est autorisé sur les données de budget.
             </p>
           </div>
         </div>

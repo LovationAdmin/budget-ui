@@ -150,12 +150,12 @@ const HELP_ARTICLES: HelpArticle[] = [
         </p>
 
         <div className="grid gap-4">
-          <FeatureBox icon={Lock} title="Chiffrement de bout en bout" color="green">
-            <p>Toutes vos données sont cryptées avec l'algorithme AES-256 avant d'être stockées. Même en cas d'intrusion sur nos serveurs, vos données resteraient illisibles.</p>
+          <FeatureBox icon={Lock} title="Chiffrement AES-256-GCM at-rest" color="green">
+            <p>Toutes vos données budgétaires sont chiffrées avec l'algorithme AES-256 en mode GCM avant d'être stockées en base de données. En cas d'intrusion sur la base seule, les données restent illisibles sans la clé de chiffrement (stockée séparément, en mémoire serveur).</p>
           </FeatureBox>
 
-          <FeatureBox icon={EyeOff} title="Architecture Zero-Knowledge" color="blue">
-            <p>Nous utilisons une architecture où nous n'avons techniquement pas accès à vos données brutes. Seul vous (et les membres que vous invitez) pouvez les déchiffrer.</p>
+          <FeatureBox icon={EyeOff} title="Accès Restreint aux Données" color="blue">
+            <p>Vos données budgétaires sont stockées chiffrées en base avec AES-256-GCM. Elles ne sont déchiffrées que pour vous être servies. Notre équipe technique n'y a accès que dans le cadre d'opérations de support, qui sont journalisées.</p>
           </FeatureBox>
 
           <FeatureBox icon={Building2} title="Hébergement Européen (RGPD)" color="purple">
