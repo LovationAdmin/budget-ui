@@ -7,6 +7,8 @@ import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Wallet, AlertCircle, Loader2, CheckCircle2, Eye, EyeOff } from 'lucide-react';
 import { Footer } from '@/components/Footer';
+import { PasswordStrengthIndicator } from '@/components/PasswordStrengthIndicator';
+import { validatePassword } from '@/utils/passwordStrength';
 
 export default function ResetPassword() {
   const [searchParams] = useSearchParams();
@@ -35,9 +37,12 @@ export default function ResetPassword() {
     e.preventDefault();
     setError('');
 
-    // Validation
-    if (newPassword.length < 8) {
-      setError('Le mot de passe doit contenir au moins 8 caractères');
+    // Validation unifiée (même logique que le backend)
+    // On ne dispose pas de l'email/nom ici (route publique avec token), donc
+    // on appelle sans contexte — le backend re-vérifiera avec email+nom.
+    const validation = validatePassword(newPassword);
+    if (!validation.isValid) {
+      setError(validation.errors[0] ?? 'Mot de passe invalide');
       return;
     }
 
@@ -128,6 +133,7 @@ export default function ResetPassword() {
                       className="h-11 pr-10"
                       disabled={loading}
                     />
+                    <PasswordStrengthIndicator password={newPassword} />
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}

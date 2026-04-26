@@ -11,6 +11,8 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Wallet, AlertCircle, Loader2, Mail, ShieldCheck } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Footer } from '@/components/Footer';
+import { PasswordStrengthIndicator } from '@/components/PasswordStrengthIndicator';
+import { validatePassword } from '@/utils/passwordStrength';
 
 export default function Signup() {
   const [name, setName] = useState('');
@@ -36,13 +38,15 @@ export default function Signup() {
     e.preventDefault();
     setError('');
 
-    if (password !== confirmPassword) {
+  if (password !== confirmPassword) {
       setError('Les mots de passe ne correspondent pas');
       return;
     }
 
-    if (password.length < 8) {
-      setError('Le mot de passe doit contenir au moins 8 caractères');
+    // Validation unifiée (même logique que le backend)
+    const validation = validatePassword(password, email, name);
+    if (!validation.isValid) {
+      setError(validation.errors[0] ?? 'Mot de passe invalide');
       return;
     }
 
@@ -163,10 +167,19 @@ export default function Signup() {
                   value={password} 
                   onChange={(e) => setPassword(e.target.value)} 
                   placeholder="••••••••" 
-                  minLength={8} 
+                  minLength={10} 
                   required 
                   className="h-11" 
+                  autoComplete="new-password"
+                  aria-describedby="password-strength"
                 />
+                <div id="password-strength">
+                  <PasswordStrengthIndicator
+                    password={password}
+                    email={email}
+                    name={name}
+                  />
+                </div>
               </div>
 
               <div className="space-y-2">
