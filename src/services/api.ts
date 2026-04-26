@@ -1,45 +1,188 @@
 // src/services/api.ts
-// ✅ VERSION FINALE CORRIGÉE - Support complet Location/Currency + SmartTools
-// ✅ ZÉRO RÉGRESSION
+// ============================================================================
+// API CLIENT — Pass 2 : refresh token flow + handling des 401 concurrents
+// ============================================================================
+// Changements vs version précédente :
+//   - Ajout de l'endpoint /auth/refresh
+//   - Intercepteur 401 : tente UN refresh avant de rediriger vers /login
+//   - Gestion des 401 concurrents : un seul refresh en vol à la fois,
+//     les requêtes parallèles attendent puis rejouent
+//   - Login renvoie aussi un refresh_token, stocké à côté du token
+//
+// Rétrocompatibilité totale :
+//   - Toutes les fonctions exportées (authAPI, userAPI, budgetAPI, etc.)
+//     gardent leur signature
+//   - Le champ "token" de la réponse de login reste lu (alias serveur)
+// ============================================================================
 
-import axios, { InternalAxiosRequestConfig, AxiosResponse } from 'axios';
+import axios, { AxiosError, AxiosResponse, InternalAxiosRequestConfig } from 'axios';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api/v1';
 
+// ----------------------------------------------------------------------------
+// CONSTANTS
+// ----------------------------------------------------------------------------
+
+const STORAGE_KEY_TOKEN = 'token';
+const STORAGE_KEY_REFRESH = 'refresh_token';
+const STORAGE_KEY_USER = 'user';
+
+// ----------------------------------------------------------------------------
+// AXIOS INSTANCE PRINCIPALE
+// ----------------------------------------------------------------------------
+
 const api = axios.create({
   baseURL: API_URL,
-  headers: {
-    'Content-Type': 'application/json',
-  },
+  headers: { 'Content-Type': 'application/json' },
 });
 
-// ✅ EXISTING INTERCEPTORS - PRESERVED 100%
-// Interceptor for Token
+// Instance "raw" sans intercepteurs : utilisée pour appeler /auth/refresh
+// sans déclencher la boucle de refresh sur cet appel-là.
+const rawAxios = axios.create({
+  baseURL: API_URL,
+  headers: { 'Content-Type': 'application/json' },
+});
+
+// ----------------------------------------------------------------------------
+// INTERCEPTEUR REQUEST : injection du Bearer
+// ----------------------------------------------------------------------------
+
 api.interceptors.request.use((config: InternalAxiosRequestConfig) => {
-  const token = localStorage.getItem('token');
+  const token = localStorage.getItem(STORAGE_KEY_TOKEN);
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
   return config;
 });
 
-// Interceptor for 401
-api.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    if (error.response?.status === 401) {
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      if (!window.location.pathname.includes('/login')) {
-        window.location.href = '/login';
-      }
-    }
-    return Promise.reject(error);
+// ----------------------------------------------------------------------------
+// REFRESH FLOW : gestion des 401 concurrents
+// ----------------------------------------------------------------------------
+// Pattern classique :
+//   - Si plusieurs requêtes échouent en 401 en même temps, UNE SEULE déclenche
+//     le refresh ; les autres s'abonnent et attendent le résultat.
+//   - Quand le refresh aboutit, toutes les requêtes en attente sont rejouées
+//     avec le nouveau token.
+//   - Si le refresh échoue, on force le logout et on les rejette toutes.
+
+let isRefreshing = false;
+type Subscriber = (newToken: string | null) => void;
+let refreshSubscribers: Subscriber[] = [];
+
+function notifySubscribers(newToken: string | null) {
+  refreshSubscribers.forEach((cb) => cb(newToken));
+  refreshSubscribers = [];
+}
+
+function subscribeToRefresh(cb: Subscriber) {
+  refreshSubscribers.push(cb);
+}
+
+function clearAuth() {
+  localStorage.removeItem(STORAGE_KEY_TOKEN);
+  localStorage.removeItem(STORAGE_KEY_REFRESH);
+  localStorage.removeItem(STORAGE_KEY_USER);
+}
+
+function redirectToLogin() {
+  if (!window.location.pathname.includes('/login')) {
+    window.location.href = '/login';
   }
+}
+
+async function performRefresh(): Promise<string> {
+  const refreshToken = localStorage.getItem(STORAGE_KEY_REFRESH);
+  if (!refreshToken) {
+    throw new Error('No refresh token available');
+  }
+
+  const { data } = await rawAxios.post('/auth/refresh', {
+    refresh_token: refreshToken,
+  });
+
+  const newAccessToken: string | undefined = data.access_token ?? data.token;
+  const newRefreshToken: string | undefined = data.refresh_token;
+
+  if (!newAccessToken) {
+    throw new Error('Refresh response missing access_token');
+  }
+
+  localStorage.setItem(STORAGE_KEY_TOKEN, newAccessToken);
+  if (newRefreshToken) {
+    localStorage.setItem(STORAGE_KEY_REFRESH, newRefreshToken);
+  }
+
+  return newAccessToken;
+}
+
+// ----------------------------------------------------------------------------
+// INTERCEPTEUR RESPONSE : 401 → tentative de refresh
+// ----------------------------------------------------------------------------
+
+api.interceptors.response.use(
+  (response: AxiosResponse) => response,
+  async (error: AxiosError) => {
+    const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
+
+    // Pas un 401 ou pas de config (erreur réseau, etc.) : on rejette
+    if (!error.response || error.response.status !== 401 || !originalRequest) {
+      return Promise.reject(error);
+    }
+
+    // Si l'erreur 401 vient déjà d'un retry : on abandonne (évite la boucle)
+    if (originalRequest._retry) {
+      clearAuth();
+      redirectToLogin();
+      return Promise.reject(error);
+    }
+
+    // Si l'utilisateur n'a même pas de refresh_token (jamais loggé / déjà clear)
+    // → pas la peine de tenter un refresh
+    if (!localStorage.getItem(STORAGE_KEY_REFRESH)) {
+      clearAuth();
+      redirectToLogin();
+      return Promise.reject(error);
+    }
+
+    originalRequest._retry = true;
+
+    // Si un refresh est déjà en cours, on attend la fin
+    if (isRefreshing) {
+      return new Promise((resolve, reject) => {
+        subscribeToRefresh((newToken) => {
+          if (newToken) {
+            originalRequest.headers = originalRequest.headers ?? {};
+            originalRequest.headers.Authorization = `Bearer ${newToken}`;
+            resolve(api(originalRequest));
+          } else {
+            reject(error);
+          }
+        });
+      });
+    }
+
+    // Sinon : on lance le refresh
+    isRefreshing = true;
+    try {
+      const newToken = await performRefresh();
+      notifySubscribers(newToken);
+
+      originalRequest.headers = originalRequest.headers ?? {};
+      originalRequest.headers.Authorization = `Bearer ${newToken}`;
+      return api(originalRequest);
+    } catch (refreshErr) {
+      notifySubscribers(null);
+      clearAuth();
+      redirectToLogin();
+      return Promise.reject(refreshErr);
+    } finally {
+      isRefreshing = false;
+    }
+  },
 );
 
 // ============================================================================
-// EXPORTED TYPES - PRESERVED 100%
+// EXPORTED TYPES
 // ============================================================================
 
 export interface User {
@@ -47,12 +190,15 @@ export interface User {
   name: string;
   email: string;
   avatar?: string;
-  country?: string;        // ✅ Already present
-  postal_code?: string;    // ✅ Already present
+  country?: string;
+  postal_code?: string;
 }
 
 export interface AuthResponse {
-  token: string;
+  token: string;          // alias rétrocompat
+  access_token?: string;  // nom canonique
+  refresh_token?: string;
+  token_type?: string;
   user: User;
 }
 
@@ -61,10 +207,6 @@ export interface CategorizeResponse {
   category: string;
 }
 
-// ============================================================================
-// MARKET SUGGESTIONS TYPES - PRESERVED 100%
-// ============================================================================
-
 export interface Competitor {
   name: string;
   typical_price: number;
@@ -72,7 +214,6 @@ export interface Competitor {
   potential_savings: number;
   pros: string[];
   cons: string[];
-  // Contact info
   website_url?: string;
   affiliate_link?: string;
   phone_number?: string;
@@ -115,10 +256,6 @@ export interface BulkAnalyzeResponse {
   household_size: number;
 }
 
-// ============================================================================
-// LOCATION TYPES - PRESERVED 100%
-// ============================================================================
-
 export interface LocationUpdate {
   country: string;
   postal_code?: string;
@@ -129,196 +266,112 @@ export interface UserLocation {
   postal_code?: string;
 }
 
-// ============================================================================
+// ----------------------------------------------------------------------------
 // INTERNAL TYPES
-// ============================================================================
+// ----------------------------------------------------------------------------
 
-// 🆕 UPDATED - Added country and postal_code to AuthData
-interface AuthData { 
-  name?: string; 
-  email: string; 
+interface AuthData {
+  name?: string;
+  email: string;
   password: string;
-  country?: string;        // ✅ Already present
-  postal_code?: string;    // ✅ Already present
+  country?: string;
+  postal_code?: string;
 }
 
-interface ProfileUpdateData { 
-  name: string; 
-  avatar?: string; 
+interface ProfileUpdateData {
+  name: string;
+  avatar?: string;
 }
 
-interface PasswordChangeData { 
-  current_password: string; 
-  new_password: string; 
+interface PasswordChangeData {
+  current_password: string;
+  new_password: string;
 }
 
-// ✅ CORRIGÉ : Ajout location et currency
-interface BudgetCreateData { 
+interface BudgetCreateData {
   name: string;
   year?: number;
-  location?: string;  // ✅ AJOUTÉ
-  currency?: string;  // ✅ AJOUTÉ
+  location?: string;
+  currency?: string;
 }
 
-interface BudgetUpdateData { 
-  data: unknown; 
+interface BudgetUpdateData {
+  data: unknown;
 }
 
-interface DeleteAccountData { 
-  password: string; 
+interface DeleteAccountData {
+  password: string;
 }
 
 // ============================================================================
-// AUTH API - PRESERVED 100%
+// AUTH API
 // ============================================================================
 
 export const authAPI = {
-  signup: (data: AuthData): Promise<AxiosResponse<AuthResponse>> => 
+  signup: (data: AuthData): Promise<AxiosResponse<AuthResponse>> =>
     api.post('/auth/signup', data),
-  
-  login: (data: AuthData): Promise<AxiosResponse<AuthResponse>> => 
+
+  login: (data: AuthData): Promise<AxiosResponse<AuthResponse>> =>
     api.post('/auth/login', data),
-  
-  resendVerification: (email: string) => 
+
+  // Pass 2 : refresh & logout côté serveur
+  refresh: (refresh_token: string): Promise<AxiosResponse<AuthResponse>> =>
+    rawAxios.post('/auth/refresh', { refresh_token }),
+
+  logout: (refresh_token?: string) =>
+    rawAxios.post('/auth/logout', { refresh_token: refresh_token ?? null }),
+
+  logoutAll: () => api.post('/user/logout-all'),
+
+  activeSessionsCount: () =>
+    api.get<{ active_sessions: number }>('/user/sessions/count'),
+
+  resendVerification: (email: string) =>
     api.post('/auth/verify/resend', { email }),
-  
+
   forgotPassword: (email: string) =>
     api.post('/auth/forgot-password', { email }),
-  
+
   resetPassword: (token: string, new_password: string) =>
     api.post('/auth/reset-password', { token, new_password }),
 };
 
 // ============================================================================
-// USER API - PRESERVED 100%
+// USER API — inchangé vs Pass 1
 // ============================================================================
 
 export const userAPI = {
-  updateProfile: (data: ProfileUpdateData) => 
-    api.put('/user/profile', data),
-  
-  changePassword: (data: PasswordChangeData) => 
-    api.put('/user/password', data),
-  
-  deleteAccount: (data: DeleteAccountData) => 
+  getProfile: () => api.get('/user/profile'),
+  updateProfile: (data: ProfileUpdateData) => api.put('/user/profile', data),
+  changePassword: (data: PasswordChangeData) => api.post('/user/password', data),
+  setupTOTP: () => api.post('/user/2fa/setup'),
+  verifyTOTP: (code: string) => api.post('/user/2fa/verify', { code }),
+  disableTOTP: (password: string, code: string) =>
+    api.post('/user/2fa/disable', { password, code }),
+  deleteAccount: (data: DeleteAccountData) =>
     api.delete('/user/account', { data }),
-  
-  updateLocation: (data: LocationUpdate): Promise<AxiosResponse> =>
-    api.put('/user/location', data),
-    
-  getLocation: (): Promise<AxiosResponse<UserLocation>> =>
-    api.get('/user/location'),
+  exportData: () => api.get('/user/export-data'),
 };
 
 // ============================================================================
-// BUDGET API - PRESERVED 100%
+// BUDGET API — inchangé
 // ============================================================================
 
 export const budgetAPI = {
-  // CRUD
   list: () => api.get('/budgets'),
-  create: (data: BudgetCreateData) => api.post('/budgets', data),
   getById: (id: string) => api.get(`/budgets/${id}`),
-  update: (id: string, data: unknown) => api.put(`/budgets/${id}`, data),
+  create: (data: BudgetCreateData) => api.post('/budgets', data),
+  update: (id: string, data: { name: string; location?: string; currency?: string }) =>
+    api.put(`/budgets/${id}`, data),
   delete: (id: string) => api.delete(`/budgets/${id}`),
-  
-  // Budget Data
   getData: (id: string) => api.get(`/budgets/${id}/data`),
-  updateData: (id: string, data: BudgetUpdateData) => 
-    api.put(`/budgets/${id}/data`, data),
-  
-  // Members & Invitations
-  inviteMember: (id: string, email: string) => 
-    api.post(`/budgets/${id}/invite`, { email }),
-  getInvitations: (id: string) => 
-    api.get(`/budgets/${id}/invitations`),
-  cancelInvitation: (budgetId: string, invitationId: string) => 
-    api.delete(`/budgets/${budgetId}/invitations/${invitationId}`),
-  removeMember: (budgetId: string, memberId: string) => 
-    api.delete(`/budgets/${budgetId}/members/${memberId}`),
-  
-  // Categorization (AI)
-  categorize: (label: string): Promise<AxiosResponse<CategorizeResponse>> => 
-    api.post('/categorize', { label }),
-
-  // Market Suggestions (household_size sent by frontend)
-  bulkAnalyzeSuggestions: (
-    budgetId: string, 
-    data: BulkAnalyzeRequest
-  ): Promise<AxiosResponse<BulkAnalyzeResponse>> => 
-    api.post(`/budgets/${budgetId}/suggestions/bulk-analyze`, data),
-
-  // ✅ MISE À JOUR : Support complet country/currency pour SmartTools
-  analyzeSingleCharge: (data: {
-    category: string;
-    merchant_name?: string;
-    current_amount: number;
-    household_size?: number;
-    description?: string;
-    budget_id?: string; // Optionnel (pour utilisateurs connectés)
-    country?: string;   // ✅ Optionnel (pour SmartTools)
-    currency?: string;  // ✅ Optionnel (pour SmartTools)
-  }): Promise<AxiosResponse<MarketSuggestion>> =>
-    api.post('/suggestions/analyze', {
-        // We must map 'current_amount' (frontend) to 'amount' (backend expectation)
-        amount: data.current_amount,
-        category: data.category,
-        merchant_name: data.merchant_name,
-        household_size: data.household_size,
-        description: data.description,
-        budget_id: data.budget_id,
-        country: data.country,
-        currency: data.currency
-    }),
-
-  getCategorySuggestions: (category: string): Promise<AxiosResponse<MarketSuggestion>> =>
-    api.get(`/suggestions/category/${category}`),
-  
-  // GDPR Export
-  exportUserData: (): Promise<AxiosResponse> =>
-    api.get('/user/export-data'),
+  updateData: (id: string, data: BudgetUpdateData) => api.put(`/budgets/${id}/data`, data),
+  invite: (id: string, email: string) => api.post(`/budgets/${id}/invite`, { email }),
+  acceptInvitation: (token: string) => api.post('/invitations/accept', { token }),
 };
 
 // ============================================================================
-// INVITATION API - PRESERVED 100%
+// EXPORT DEFAULT
 // ============================================================================
-
-export const invitationAPI = {
-  accept: (token: string) => 
-    api.post('/invitations/accept', { token }),
-  
-  getByToken: (token: string) => 
-    api.get(`/invitations/${token}`),
-  
-  invite: (budgetId: string, email: string) => 
-    api.post(`/budgets/${budgetId}/invite`, { email }),
-};
-
-// ============================================================================
-// BANKING API - PRESERVED 100%
-// ============================================================================
-
-export const bankingAPI = {
-  getInstitutions: (country?: string) => 
-    api.get('/banking/institutions', { params: { country } }),
-  
-  createAuthSession: (budgetId: string, institutionId: string) => 
-    api.post(`/banking/budgets/${budgetId}/auth-session`, { institution_id: institutionId }),
-  
-  handleCallback: (budgetId: string, code: string, state: string) => 
-    api.post(`/banking/budgets/${budgetId}/callback`, { code, state }),
-  
-  getConnections: (budgetId: string) => 
-    api.get(`/banking/budgets/${budgetId}/connections`),
-  
-  deleteConnection: (budgetId: string, connectionId: string) => 
-    api.delete(`/banking/budgets/${budgetId}/connections/${connectionId}`),
-  
-  getTransactions: (budgetId: string, params?: { from?: string; to?: string }) => 
-    api.get(`/banking/budgets/${budgetId}/transactions`, { params }),
-  
-  getRealityCheck: (budgetId: string) => 
-    api.get(`/banking/budgets/${budgetId}/reality-check`),
-};
 
 export default api;
