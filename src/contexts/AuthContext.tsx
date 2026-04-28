@@ -18,6 +18,7 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { authAPI, User as APIUser } from '../services/api';
 import { extractRateLimitError } from '@/lib/rateLimitError';
+import { setSentryUser } from '@/lib/sentry';
 
 export interface User extends APIUser {
   created_at?: string;
@@ -71,7 +72,9 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       if (token && userData) {
         // Cas heureux : tout est encore en localStorage
         try {
-          setUser(JSON.parse(userData) as User);
+          const u = JSON.parse(userData) as User;
+          setUser(u);
+          setSentryUser(u.id);
         } catch (error) {
           console.error('Error parsing user data:', error);
           localStorage.removeItem(STORAGE_KEY_TOKEN);
@@ -83,7 +86,9 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         try {
           const response = await authAPI.refresh();
           localStorage.setItem(STORAGE_KEY_TOKEN, response.data.access_token);
-          setUser(JSON.parse(userData) as User);
+          const u = JSON.parse(userData) as User;
+          setUser(u);
+          setSentryUser(u.id);
         } catch {
           localStorage.removeItem(STORAGE_KEY_USER);
         }
@@ -135,6 +140,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       if (accessToken && userData) {
         persistAuth(accessToken, refresh_token, userData);
         setUser(userData as User);
+        setSentryUser(userData.id);
       }
 
       return { success: true };
@@ -160,6 +166,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
       persistAuth(accessToken, refresh_token, userData);
       setUser(userData as User);
+      setSentryUser(userData.id);
 
       return { success: true };
     } catch (err: any) {
@@ -188,6 +195,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     localStorage.removeItem(STORAGE_KEY_REFRESH);
     localStorage.removeItem(STORAGE_KEY_USER);
     setUser(null);
+    setSentryUser(null);
   };
 
   /**
@@ -209,6 +217,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     localStorage.removeItem(STORAGE_KEY_REFRESH);
     localStorage.removeItem(STORAGE_KEY_USER);
     setUser(null);
+    setSentryUser(null);
 
     return { success: true };
   };
