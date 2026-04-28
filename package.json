@@ -10,7 +10,6 @@
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0"
   },
   "dependencies": {
-    "_comment": "Optional self-hosted fonts (P2 #15) — switches off Google Fonts CDN payload",
     "@fontsource/dm-sans": "^5.1.0",
     "@fontsource/plus-jakarta-sans": "^5.1.0",
     "react": "^18.2.0",
