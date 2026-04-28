@@ -50,11 +50,13 @@ export default function Login() {
       const errMsg = result.error || 'Erreur de connexion';
       setError(errMsg);
       // Heuristic: show resend button if message hints at unverified email
-      if (
-        errMsg.toLowerCase().includes('vérifi') ||
-        errMsg.toLowerCase().includes('verif') ||
-        errMsg.toLowerCase().includes('email')
-      ) {
+      const lower = errMsg.toLowerCase();
+      const isVerificationIssue = 
+        lower.includes('vérifi') || 
+        lower.includes('verif') || 
+        lower.includes('not verified') ||
+        lower.includes('non vérifié');
+      if (isVerificationIssue) {
         setShowResend(true);
       }
     }
