@@ -1,20 +1,23 @@
 // src/contexts/AuthContext.tsx
 // ============================================================================
-// AUTH CONTEXT — Pass 2 : refresh token + logout côté serveur
+// AUTH CONTEXT — Pass 2 (refresh) + Pass 3 (rate-limit aware)
 // ============================================================================
-// Changements vs Pass 1 :
-//   - Stockage du refresh_token dans localStorage (à côté du access token)
-//   - Logout appelle /auth/logout pour révoquer le refresh côté serveur
-//   - Nouveau : logoutAll() pour se déconnecter de tous les appareils
+// Changements vs version précédente :
+//   - Bug fix : login() ne retournait rien dans le catch → "Erreur de connexion"
+//     générique pour TOUS les échecs. Maintenant retourne { success, error }
+//     avec le bon message.
+//   - Login + Signup utilisent extractRateLimitError pour formater un message
+//     français clair en cas de 429.
 //
 // Rétrocompatibilité totale :
-//   - Toutes les méthodes existantes (signup, login, logout, updateUser)
-//     gardent la même signature
-//   - L'objet retourné par useAuth() ajoute uniquement de nouvelles méthodes
+//   - Toutes les méthodes existantes gardent leur signature
+//   - Pages consommatrices (Login.tsx, Signup.tsx) lisent `result.error` →
+//     elles reçoivent automatiquement le bon message sans modification
 // ============================================================================
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { authAPI, User as APIUser } from '../services/api';
+import { extractRateLimitError } from '@/lib/rateLimitError';
 
 export interface User extends APIUser {
   created_at?: string;
@@ -62,8 +65,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   // Bootstrap depuis localStorage au mount
   useEffect(() => {
     const restoreSession = async () => {
-      const token = localStorage.getItem('token');
-      const userData = localStorage.getItem('user');
+      const token = localStorage.getItem(STORAGE_KEY_TOKEN);
+      const userData = localStorage.getItem(STORAGE_KEY_USER);
 
       if (token && userData) {
         // Cas heureux : tout est encore en localStorage
@@ -71,18 +74,18 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           setUser(JSON.parse(userData) as User);
         } catch (error) {
           console.error('Error parsing user data:', error);
-          localStorage.removeItem('token');
-          localStorage.removeItem('user');
+          localStorage.removeItem(STORAGE_KEY_TOKEN);
+          localStorage.removeItem(STORAGE_KEY_USER);
         }
       } else if (userData && !token) {
         // Restauration : user en cache mais access token perdu/expiré.
         // Si le cookie refresh est encore valide, on récupère un nouveau token.
         try {
           const response = await authAPI.refresh();
-          localStorage.setItem('token', response.data.access_token);
+          localStorage.setItem(STORAGE_KEY_TOKEN, response.data.access_token);
           setUser(JSON.parse(userData) as User);
         } catch {
-          localStorage.removeItem('user');
+          localStorage.removeItem(STORAGE_KEY_USER);
         }
       }
       setLoading(false);
@@ -125,8 +128,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       });
 
       // Le signup actuel demande une vérification d'email avant login,
-      // donc il ne renvoie PAS de tokens. On reste cohérent.
-      // Si un jour la politique change, ce code gère déjà le cas.
+      // donc il ne renvoie PAS de tokens dans le flow nominal. On reste
+      // cohérent : si un jour des tokens sont renvoyés, on les persiste.
       const { token, access_token, refresh_token, user: userData } = response.data ?? {};
       const accessToken = access_token ?? token;
       if (accessToken && userData) {
@@ -136,10 +139,13 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
       return { success: true };
     } catch (error: any) {
-      return {
-        success: false,
-        error: error.response?.data?.error || "Erreur lors de l'inscription",
-      };
+      // Si rate-limited (429), message FR clair avec compte à rebours
+      const rateLimitMsg = extractRateLimitError(error);
+      const errorMessage =
+        rateLimitMsg ??
+        error.response?.data?.error ??
+        "Erreur lors de l'inscription";
+      return { success: false, error: errorMessage };
     }
   };
 
@@ -156,31 +162,31 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       setUser(userData as User);
 
       return { success: true };
-    } catch (error: any) {
-      return {
-        success: false,
-        error: error.response?.data?.error || 'Identifiants invalides',
-      };
+    } catch (err: any) {
+      console.error('Login failed:', err);
+      // Si rate-limited (429), message FR clair plutôt que "mot de passe incorrect"
+      const rateLimitMsg = extractRateLimitError(err);
+      const errorMessage =
+        rateLimitMsg ??
+        err.response?.data?.error ??
+        'Email ou mot de passe incorrect';
+      return { success: false, error: errorMessage };
     }
   };
 
   /**
-   * Logout : signature synchrone (rétrocompat 100%).
-   * - Nettoie immédiatement localStorage et le state React (UI réactive)
-   * - Déclenche en arrière-plan la révocation serveur du refresh token
-   *   (fire-and-forget : on ne bloque PAS l'UX si le serveur ne répond pas)
+   * Logout : nettoie le state local + révoque le refresh côté serveur.
+   * Best-effort : si le serveur ne répond pas, on déconnecte quand même.
    */
   const logout = async () => {
-    // 1. Révocation côté serveur (best-effort, ne bloque pas la déco)
     try {
       await authAPI.logout();
     } catch (error) {
-      // Si le serveur est down, on déconnecte quand même côté client
       console.warn('[Auth] Server logout failed (continuing locally)', error);
     }
-    // 2. Clear local
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
+    localStorage.removeItem(STORAGE_KEY_TOKEN);
+    localStorage.removeItem(STORAGE_KEY_REFRESH);
+    localStorage.removeItem(STORAGE_KEY_USER);
     setUser(null);
   };
 

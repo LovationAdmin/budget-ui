@@ -9,6 +9,7 @@ import { Wallet, AlertCircle, Loader2, CheckCircle2, Eye, EyeOff } from 'lucide-
 import { Footer } from '@/components/Footer';
 import { PasswordStrengthIndicator } from '@/components/PasswordStrengthIndicator';
 import { validatePassword } from '@/utils/passwordStrength';
+import { extractRateLimitError } from '@/lib/rateLimitError';
 
 export default function ResetPassword() {
   const [searchParams] = useSearchParams();
@@ -62,7 +63,12 @@ export default function ResetPassword() {
         navigate('/login');
       }, 3000);
     } catch (err: any) {
-      const errorMessage = err.response?.data?.error || 'Une erreur est survenue';
+      // Si rate-limited (429), message FR clair avec compte à rebours
+      const rateLimitMsg = extractRateLimitError(err);
+      const errorMessage =
+        rateLimitMsg ??
+        err.response?.data?.error ??
+        'Une erreur est survenue';
       setError(errorMessage);
     } finally {
       setLoading(false);
@@ -129,11 +135,10 @@ export default function ResetPassword() {
                       onChange={(e: ChangeEvent<HTMLInputElement>) => setNewPassword(e.target.value)}
                       placeholder="••••••••"
                       required
-                      minLength={8}
+                      minLength={10}
                       className="h-11 pr-10"
                       disabled={loading}
                     />
-                    <PasswordStrengthIndicator password={newPassword} />
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
@@ -142,9 +147,7 @@ export default function ResetPassword() {
                       {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                     </button>
                   </div>
-                  <p className="text-xs text-muted-foreground">
-                    Minimum 8 caractères
-                  </p>
+                  <PasswordStrengthIndicator password={newPassword} />
                 </div>
 
                 <div className="space-y-2">
@@ -157,7 +160,7 @@ export default function ResetPassword() {
                       onChange={(e: ChangeEvent<HTMLInputElement>) => setConfirmPassword(e.target.value)}
                       placeholder="••••••••"
                       required
-                      minLength={8}
+                      minLength={10}
                       className="h-11 pr-10"
                       disabled={loading}
                     />

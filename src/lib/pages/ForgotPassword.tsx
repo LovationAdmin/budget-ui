@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Wallet, AlertCircle, Loader2, CheckCircle2, ArrowLeft } from 'lucide-react';
 import { Footer } from '@/components/Footer';
+import { extractRateLimitError } from '@/lib/rateLimitError';
 
 export default function ForgotPassword() {
   const [email, setEmail] = useState('');
@@ -25,7 +26,12 @@ export default function ForgotPassword() {
       setSuccess(true);
       setEmail(''); // Clear email field on success
     } catch (err: any) {
-      const errorMessage = err.response?.data?.error || 'Une erreur est survenue';
+      // Si rate-limited (429), message FR clair avec compte à rebours
+      const rateLimitMsg = extractRateLimitError(err);
+      const errorMessage =
+        rateLimitMsg ??
+        err.response?.data?.error ??
+        'Une erreur est survenue';
       setError(errorMessage);
     } finally {
       setLoading(false);

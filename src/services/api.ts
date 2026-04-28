@@ -84,6 +84,13 @@ api.interceptors.response.use(
       _retry?: boolean;
     };
 
+    // 429 : pas de retry automatique, on laisse remonter (le caller affiche le toast)
+    // L'intercepteur global ne fait rien d'autre — c'est aux pages d'utiliser
+    // extractRateLimitError() pour formatter le message.
+    if (error.response?.status === 429) {
+      return Promise.reject(error);
+    }
+
     if (!error.response || error.response.status !== 401 || !originalRequest) {
       return Promise.reject(error);
     }
