@@ -1,16 +1,12 @@
 // src/lib/pages/BudgetComplete.tsx
 // ============================================================================
-// 🎯 BudgetComplete (refactored as Layout)
+// 🎯 BudgetComplete (Layout) — patch v2
 // ============================================================================
-// Fixes P0 #1, P0 #3, P0 #4. This file is now a LAYOUT that:
-//
-//  1. Loads + maintains all budget state (people, charges, projects, etc.)
-//  2. Wraps children in <BudgetProvider> so each tab can consume what it needs
-//  3. Renders <BudgetNavbar> + <Outlet /> (active tab from React Router)
-//  4. Hosts the SaveStatusIndicator (P0 #3)
-//  5. Hosts the OnboardingCoach (P0 #4) — non-blocking checklist
-//
-// The original ~3000 lines of section-rendering moved to budget-tabs/*.
+// Corrections vs v1:
+//   - budgetAPI.getById(id)  (not .get)
+//   - budgetAPI.updateData(id, { data: newData })  (wrap in {data})
+//   - convertNewFormatToOld(stateBag) takes 1 argument (state bag)
+//   - useAutoSave({ onSave, delay, enabled }) — options object signature
 // ============================================================================
 
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
@@ -19,7 +15,6 @@ import api, { budgetAPI } from '../../services/api';
 import {
   convertOldFormatToNew,
   convertNewFormatToOld,
-  type RawBudgetData,
   type Person,
   type Charge,
   type Project,
@@ -63,7 +58,6 @@ import {
   Target,
   CalendarDays,
   FlaskConical,
-  Sparkles as SparklesIcon,
 } from 'lucide-react';
 import {
   Dialog,
@@ -72,7 +66,6 @@ import {
   DialogTitle,
   DialogDescription,
 } from '@/components/ui/dialog';
-import { useTutorial } from '../../contexts/TutorialContext';
 
 import {
   DEMO_TRANSACTIONS,
@@ -88,10 +81,8 @@ const MONTHS = [
 const GENERAL_SAVINGS_ID = 'epargne';
 
 // ============================================================================
-// NAV ITEMS — visible in BudgetNavbar
+// NAV ITEMS
 // ============================================================================
-// 🎯 Fix P1 #7: include all 6 (no more .slice(0,5)).
-// Each item maps to a real route segment.
 const BUDGET_NAV_ITEMS: NavItem[] = [
   { id: 'overview', label: "Vue d'ensemble", icon: LayoutDashboard },
   { id: 'members', label: 'Membres', icon: Users },
@@ -120,16 +111,16 @@ export default function BudgetCompleteLayout() {
   const location = useLocation();
   const { user } = useAuth();
   const { toast } = useToast();
-  const { hasSeenTutorial } = useTutorial();
   const { connectToBudget, disconnectFromBudget } = useNotifications();
 
-  // ===== Save status (replaces orange unsaved-banner) =====
-  const saveStatus = useSaveStatus();
+  // ===== Save state machine for the SaveStatusIndicator =====
+  const saveStateMachine = useSaveStatus();
 
   // ===== Core =====
   const [budget, setBudget] = useState<BudgetData | null>(null);
   const [loading, setLoading] = useState(true);
   const [showInviteModal, setShowInviteModal] = useState(false);
+  const loadedRef = useRef(false);
 
   const globalDataRef = useRef<any>(null);
 
@@ -144,6 +135,8 @@ export default function BudgetCompleteLayout() {
   const [monthComments, setMonthComments] = useState<MonthComments>({});
   const [projectComments, setProjectComments] = useState<ProjectComments>({});
   const [lockedMonths, setLockedMonths] = useState<LockedMonths>({});
+  const [budgetLocation, setBudgetLocation] = useState<string>('FR');
+  const [budgetCurrency, setBudgetCurrency] = useState<string>('EUR');
 
   // ===== Reality Check / banking =====
   const [showBankManager, setShowBankManager] = useState(false);
@@ -161,119 +154,87 @@ export default function BudgetCompleteLayout() {
   // ===== AI tracking (for onboarding) =====
   const [hasRunSuggestions, setHasRunSuggestions] = useState(false);
 
-  const budgetLocation = budget?.location || 'FR';
-  const budgetCurrency = budget?.currency || 'EUR';
-
   // ============================================================================
   // LOAD BUDGET
   // ============================================================================
-  useEffect(() => {
+  const loadBudget = useCallback(async () => {
     if (!id) return;
 
-    const loadBudget = async () => {
-      try {
-        const [budgetRes, dataRes] = await Promise.all([
-          budgetAPI.get(id),
-          budgetAPI.getData(id),
-        ]);
-        setBudget(budgetRes.data);
-        setBudgetTitle(budgetRes.data.name);
+    setLoading(true);
+    try {
+      // ✅ FIX: getById, not get
+      const [budgetRes, dataRes] = await Promise.all([
+        budgetAPI.getById(id),
+        budgetAPI.getData(id),
+      ]);
 
-        const rawData = dataRes.data || {};
-        globalDataRef.current = rawData;
-        hydrateStateFromGlobal(currentYear, rawData);
-      } catch (err) {
-        console.error('[BudgetComplete] load error', err);
-        toast({
-          title: 'Erreur',
-          description: 'Impossible de charger le budget',
-          variant: 'destructive',
-        });
-      } finally {
-        setLoading(false);
+      setBudget(budgetRes.data);
+      setBudgetLocation(budgetRes.data.location || 'FR');
+      setBudgetCurrency(budgetRes.data.currency || 'EUR');
+
+      // Server returns { data: { ... } }; the original code reads `dataRes.data.data`
+      const rawData: any = dataRes.data?.data ?? dataRes.data ?? {};
+      globalDataRef.current = rawData;
+
+      const data = convertOldFormatToNew(rawData);
+
+      setBudgetTitle(data.budgetTitle || budgetRes.data.name || '');
+      setCurrentYear(data.currentYear || new Date().getFullYear());
+      setPeople(data.people || []);
+      setCharges(data.charges || []);
+      setProjects(data.projects || []);
+      setYearlyData(data.yearlyData || {});
+      setYearlyExpenses(data.yearlyExpenses || {});
+      setOneTimeIncomes(data.oneTimeIncomes || {});
+      setMonthComments(data.monthComments || {});
+      setProjectComments(data.projectComments || {});
+      setLockedMonths(data.lockedMonths || {});
+      setChargeMappings(rawData.chargeMappings || []);
+
+      loadedRef.current = true;
+    } catch (err: any) {
+      console.error('[BudgetComplete] load error', err);
+      if (err?.response?.status === 404) {
+        navigate('/404');
       }
-    };
+      toast({
+        title: 'Erreur',
+        description: 'Impossible de charger le budget',
+        variant: 'destructive',
+      });
+    } finally {
+      setLoading(false);
+    }
+  }, [id, navigate, toast]);
 
+  useEffect(() => {
     loadBudget();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [id]);
-
-  const hydrateStateFromGlobal = useCallback(
-    (year: number, rawData: any) => {
-      if (rawData.people) setPeople(rawData.people);
-      if (rawData.charges) setCharges(rawData.charges);
-      if (rawData.projects) setProjects(rawData.projects);
-
-      if (rawData.yearlyData?.[year]) {
-        const yearData = rawData.yearlyData[year];
-        const newYearlyData: YearlyData = {};
-        const newYearlyExpenses: YearlyData = {};
-        const newOneTime: OneTimeIncomes = {};
-        const newMonthComments: MonthComments = {};
-        const newProjectComments: ProjectComments = {};
-
-        MONTHS.forEach((month, idx) => {
-          if (yearData.months?.[idx]) newYearlyData[month] = yearData.months[idx];
-          if (yearData.expenses?.[idx]) newYearlyExpenses[month] = yearData.expenses[idx];
-          if (yearData.monthComments?.[idx])
-            newMonthComments[month] = yearData.monthComments[idx];
-          if (yearData.expenseComments?.[idx])
-            newProjectComments[month] = yearData.expenseComments[idx];
-          if (rawData.oneTimeIncomes?.[year]?.[idx]) {
-            newOneTime[month] = Number(rawData.oneTimeIncomes[year][idx].amount || 0);
-          }
-        });
-
-        setYearlyData(newYearlyData);
-        setYearlyExpenses(newYearlyExpenses);
-        setOneTimeIncomes(newOneTime);
-        setMonthComments(newMonthComments);
-        setProjectComments(newProjectComments);
-      } else {
-        setYearlyData({});
-        setYearlyExpenses({});
-        setOneTimeIncomes({});
-        setMonthComments({});
-        setProjectComments({});
-      }
-
-      if (rawData.lockedMonths?.[year]) {
-        const lm: LockedMonths = {};
-        MONTHS.forEach((month, idx) => {
-          if (rawData.lockedMonths[year][idx]) lm[month] = true;
-        });
-        setLockedMonths(lm);
-      }
-    },
-    []
-  );
+  }, [loadBudget]);
 
   // ============================================================================
-  // PROJECT CARRY-OVERS (sums from past years)
+  // PROJECT CARRY-OVERS
   // ============================================================================
   const projectCarryOvers = useMemo(() => {
     const carryOvers: Record<string, number> = {};
-    if (!globalDataRef.current?.yearlyData) return carryOvers;
-
-    Object.keys(globalDataRef.current.yearlyData).forEach((yearStr) => {
-      const year = parseInt(yearStr);
-      if (year < currentYear) {
-        const yearData = globalDataRef.current.yearlyData[yearStr];
-        if (yearData.months && yearData.expenses) {
-          yearData.months.forEach((monthAllocation: any, idx: number) => {
-            const monthExpense = yearData.expenses[idx] || {};
-            Object.keys(monthAllocation).forEach((projectId) => {
-              const allocated = monthAllocation[projectId] || 0;
-              const spent = monthExpense[projectId] || 0;
-              carryOvers[projectId] = (carryOvers[projectId] || 0) + (allocated - spent);
+    projects.forEach((proj) => {
+      // Sum from previous years stored in globalDataRef
+      const yearlyDataAll = globalDataRef.current?.yearlyData || {};
+      Object.keys(yearlyDataAll).forEach((yearStr) => {
+        const year = parseInt(yearStr, 10);
+        if (year < currentYear) {
+          const yearData = yearlyDataAll[yearStr];
+          if (yearData?.months && yearData?.expenses) {
+            yearData.months.forEach((monthAllocation: any, idx: number) => {
+              const allocated = monthAllocation?.[proj.id] || 0;
+              const spent = yearData.expenses[idx]?.[proj.id] || 0;
+              carryOvers[proj.id] = (carryOvers[proj.id] || 0) + (allocated - spent);
             });
-          });
+          }
         }
-      }
+      });
     });
-
     return carryOvers;
-  }, [currentYear]);
+  }, [projects, currentYear]);
 
   // ============================================================================
   // DERIVED VALUES
@@ -311,7 +272,6 @@ export default function BudgetCompleteLayout() {
     return total;
   }, [currentYear, projects, projectCarryOvers, yearlyData, yearlyExpenses]);
 
-  // Has any monthly data been filled?
   const hasFilledMonthlyData = useMemo(() => {
     return (
       Object.values(yearlyData).some((monthData) =>
@@ -321,146 +281,163 @@ export default function BudgetCompleteLayout() {
   }, [yearlyData, oneTimeIncomes]);
 
   // ============================================================================
-  // MARK MODIFIED — triggers save status pending state
+  // SAVE
   // ============================================================================
-  const markAsModified = useCallback(() => {
-    if (isDemoMode) return;
-    saveStatus.markPending();
-  }, [isDemoMode, saveStatus]);
+  const performSave = useCallback(async () => {
+    if (!id) return;
+    if (isDemoMode) {
+      console.warn('[Save Guard] Skipped: demo mode');
+      return;
+    }
 
-  // Wrappers around setters that also mark pending
+    saveStateMachine.markSaving();
+
+    try {
+      // ✅ FIX: convertNewFormatToOld takes a SINGLE arg (state bag)
+      const newData = convertNewFormatToOld({
+        budgetTitle,
+        currentYear,
+        people,
+        charges,
+        projects,
+        yearlyData,
+        yearlyExpenses,
+        oneTimeIncomes,
+        monthComments,
+        projectComments,
+        lockedMonths,
+        chargeMappings,
+      } as any);
+
+      globalDataRef.current = newData;
+
+      // ✅ FIX: updateData expects { data: ... }
+      await budgetAPI.updateData(id, { data: newData } as any);
+
+      saveStateMachine.markSaved();
+    } catch (err: any) {
+      const message = err?.response?.data?.error || 'Erreur de sauvegarde';
+      saveStateMachine.markError(message);
+    }
+  }, [
+    id,
+    isDemoMode,
+    saveStateMachine,
+    budgetTitle,
+    currentYear,
+    people,
+    charges,
+    projects,
+    yearlyData,
+    yearlyExpenses,
+    oneTimeIncomes,
+    monthComments,
+    projectComments,
+    lockedMonths,
+    chargeMappings,
+  ]);
+
+  // ✅ FIX: useAutoSave uses options object, returns { hasUnsavedChanges, isSaving, markAsModified, saveNow }
+  const { markAsModified } = useAutoSave({
+    onSave: performSave,
+    delay: 2000,
+    enabled: loadedRef.current && !isDemoMode,
+  });
+
+  // Wrapper that triggers BOTH the existing autosave hook AND our state machine
+  const triggerModified = useCallback(() => {
+    if (isDemoMode) return;
+    markAsModified();
+    saveStateMachine.markPending();
+  }, [isDemoMode, markAsModified, saveStateMachine]);
+
+  // Setter wrappers
   const handlePeopleChange = useCallback((newPeople: Person[]) => {
     setPeople(newPeople);
-    markAsModified();
-  }, [markAsModified]);
+    triggerModified();
+  }, [triggerModified]);
 
   const handleChargesChange = useCallback((newCharges: Charge[]) => {
     setCharges(newCharges);
-    markAsModified();
-  }, [markAsModified]);
+    triggerModified();
+  }, [triggerModified]);
 
   const handleProjectsChange = useCallback((newProjects: Project[]) => {
     setProjects(newProjects);
-    markAsModified();
-  }, [markAsModified]);
+    triggerModified();
+  }, [triggerModified]);
 
   const handleYearlyDataChange = useCallback((d: YearlyData) => {
     setYearlyData(d);
-    markAsModified();
-  }, [markAsModified]);
+    triggerModified();
+  }, [triggerModified]);
 
   const handleYearlyExpensesChange = useCallback((d: YearlyData) => {
     setYearlyExpenses(d);
-    markAsModified();
-  }, [markAsModified]);
+    triggerModified();
+  }, [triggerModified]);
 
   const handleOneTimeIncomesChange = useCallback((d: OneTimeIncomes) => {
     setOneTimeIncomes(d);
-    markAsModified();
-  }, [markAsModified]);
+    triggerModified();
+  }, [triggerModified]);
 
   const handleMonthCommentsChange = useCallback((d: MonthComments) => {
     setMonthComments(d);
-    markAsModified();
-  }, [markAsModified]);
+    triggerModified();
+  }, [triggerModified]);
 
   const handleProjectCommentsChange = useCallback((d: ProjectComments) => {
     setProjectComments(d);
-    markAsModified();
-  }, [markAsModified]);
+    triggerModified();
+  }, [triggerModified]);
 
   const handleLockedMonthsChange = useCallback((d: LockedMonths) => {
     setLockedMonths(d);
-    markAsModified();
-  }, [markAsModified]);
+    triggerModified();
+  }, [triggerModified]);
+
+  const handleSetBudgetTitle = useCallback((title: string) => {
+    setBudgetTitle(title);
+    triggerModified();
+  }, [triggerModified]);
 
   // ============================================================================
-  // SAVE
+  // YEAR
   // ============================================================================
-  const performSave = useCallback(
-    async (silent = false) => {
-      if (!id) return;
-      if (isDemoMode) {
-        console.warn('[Save Guard] Skipped: demo mode');
-        return;
-      }
+  const handleYearChange = useCallback((year: number) => {
+    setCurrentYear(year);
+    if (globalDataRef.current?.yearlyData?.[year]) {
+      const yearData = globalDataRef.current.yearlyData[year];
+      const newYearly: YearlyData = {};
+      const newExpenses: YearlyData = {};
+      const newOneTime: OneTimeIncomes = {};
+      const newMc: MonthComments = {};
+      const newPc: ProjectComments = {};
 
-      saveStatus.markSaving();
-
-      try {
-        const newData = convertNewFormatToOld(
-          {
-            people,
-            charges,
-            projects,
-            yearlyData,
-            yearlyExpenses,
-            oneTimeIncomes,
-            monthComments,
-            projectComments,
-            lockedMonths,
-          } as any,
-          currentYear,
-          globalDataRef.current as RawBudgetData | undefined
-        );
-        globalDataRef.current = newData;
-        await budgetAPI.updateData(id, newData);
-        saveStatus.markSaved();
-        if (!silent) {
-          toast({
-            title: 'Enregistré',
-            description: 'Vos modifications sont sauvegardées.',
-          });
+      MONTHS.forEach((month, idx) => {
+        if (yearData.months?.[idx]) newYearly[month] = yearData.months[idx];
+        if (yearData.expenses?.[idx]) newExpenses[month] = yearData.expenses[idx];
+        if (yearData.monthComments?.[idx]) newMc[month] = yearData.monthComments[idx];
+        if (yearData.expenseComments?.[idx]) newPc[month] = yearData.expenseComments[idx];
+        if (globalDataRef.current.oneTimeIncomes?.[year]?.[idx]) {
+          newOneTime[month] = Number(globalDataRef.current.oneTimeIncomes[year][idx].amount || 0);
         }
-      } catch (err: any) {
-        const message = err?.response?.data?.error || 'Erreur de sauvegarde';
-        saveStatus.markError(message);
-        if (!silent) {
-          toast({
-            title: 'Erreur',
-            description: message,
-            variant: 'destructive',
-          });
-        }
-      }
-    },
-    [
-      id,
-      isDemoMode,
-      saveStatus,
-      people,
-      charges,
-      projects,
-      yearlyData,
-      yearlyExpenses,
-      oneTimeIncomes,
-      monthComments,
-      projectComments,
-      lockedMonths,
-      currentYear,
-      toast,
-    ]
-  );
+      });
 
-  // Auto-save (debounced, defined in existing hook)
-  useAutoSave(
-    () => performSave(true),
-    saveStatus.status === 'pending',
-    isDemoMode
-  );
-
-  // ============================================================================
-  // YEAR CHANGE
-  // ============================================================================
-  const handleYearChange = useCallback(
-    (year: number) => {
-      setCurrentYear(year);
-      if (globalDataRef.current) {
-        hydrateStateFromGlobal(year, globalDataRef.current);
-      }
-    },
-    [hydrateStateFromGlobal]
-  );
+      setYearlyData(newYearly);
+      setYearlyExpenses(newExpenses);
+      setOneTimeIncomes(newOneTime);
+      setMonthComments(newMc);
+      setProjectComments(newPc);
+    } else {
+      setYearlyData({});
+      setYearlyExpenses({});
+      setOneTimeIncomes({});
+      setMonthComments({});
+      setProjectComments({});
+    }
+  }, []);
 
   // ============================================================================
   // BANKING
@@ -487,7 +464,7 @@ export default function BudgetCompleteLayout() {
     const enabled = localStorage.getItem(getDemoStorageKey()) === 'true';
     const ts = localStorage.getItem(getDemoTimestampKey());
     if (enabled && ts) {
-      const days = (Date.now() - parseInt(ts)) / (1000 * 60 * 60 * 24);
+      const days = (Date.now() - parseInt(ts, 10)) / (1000 * 60 * 60 * 24);
       if (days < DEMO_MODE_LIMITS.EXPIRE_AFTER_DAYS) {
         setDemoTransactions(DEMO_TRANSACTIONS);
         setDemoBankBalance(DEMO_BANK_BALANCE);
@@ -507,7 +484,8 @@ export default function BudgetCompleteLayout() {
     localStorage.setItem(getDemoTimestampKey(), Date.now().toString());
     toast({
       title: '🎬 Mode Démo Banque activé',
-      description: 'Données bancaires fictives chargées (vos données budgétaires restent inchangées).',
+      description:
+        'Données bancaires fictives chargées (vos données budgétaires restent inchangées).',
     });
   }, [id, getDemoStorageKey, getDemoTimestampKey, toast]);
 
@@ -518,24 +496,24 @@ export default function BudgetCompleteLayout() {
     setDemoBankBalance(0);
     localStorage.removeItem(getDemoStorageKey());
     localStorage.removeItem(getDemoTimestampKey());
-  }, [getDemoStorageKey, getDemoTimestampKey]);
+    loadBudget();
+  }, [getDemoStorageKey, getDemoTimestampKey, loadBudget]);
 
   // ============================================================================
-  // INVITES / MEMBERS
+  // MEMBERS
   // ============================================================================
   const refreshMembersOnly = useCallback(async () => {
     if (!id) return;
     try {
-      const res = await budgetAPI.get(id);
+      // ✅ FIX: getById, not get
+      const res = await budgetAPI.getById(id);
       setBudget(res.data);
     } catch (err) {
       console.error('[BudgetComplete] refresh members error', err);
     }
   }, [id]);
 
-  const handleShowInviteModal = useCallback(() => {
-    setShowInviteModal(true);
-  }, []);
+  const handleShowInviteModal = useCallback(() => setShowInviteModal(true), []);
 
   // ============================================================================
   // TRANSACTION MAPPER
@@ -550,9 +528,7 @@ export default function BudgetCompleteLayout() {
     setChargeToMap(null);
   }, []);
 
-  const handleOpenBankManager = useCallback(() => {
-    setShowBankManager(true);
-  }, []);
+  const handleOpenBankManager = useCallback(() => setShowBankManager(true), []);
 
   const handleCloseBankManager = useCallback(() => {
     setShowBankManager(false);
@@ -560,7 +536,7 @@ export default function BudgetCompleteLayout() {
   }, [isDemoMode, refreshBankData]);
 
   // ============================================================================
-  // WS NOTIFICATIONS — connect on mount, disconnect on unmount
+  // WS
   // ============================================================================
   useEffect(() => {
     if (budget) connectToBudget(budget.id, budget.name);
@@ -568,19 +544,16 @@ export default function BudgetCompleteLayout() {
   }, [budget, connectToBudget, disconnectFromBudget]);
 
   // ============================================================================
-  // NAVIGATION (now route-based)
+  // NAVIGATION
   // ============================================================================
   const handleSectionChange = useCallback(
     (section: string) => {
       const target = NAV_TO_ROUTE[section];
-      if (target && id) {
-        navigate(`/budget/${id}/complete/${target}`);
-      }
+      if (target && id) navigate(`/budget/${id}/complete/${target}`);
     },
     [navigate, id]
   );
 
-  // Derive currentSection from URL
   const currentSection = useMemo(() => {
     const segments = location.pathname.split('/').filter(Boolean);
     const last = segments[segments.length - 1];
@@ -619,7 +592,7 @@ export default function BudgetCompleteLayout() {
     () => ({
       budget,
       budgetTitle,
-      setBudgetTitle,
+      setBudgetTitle: handleSetBudgetTitle,
       budgetLocation,
       budgetCurrency,
       currentYear,
@@ -643,9 +616,9 @@ export default function BudgetCompleteLayout() {
       handleMonthCommentsChange,
       handleProjectCommentsChange,
       handleLockedMonthsChange,
-      saveStatus: saveStatus.status,
-      saveError: saveStatus.errorMessage,
-      lastSavedAt: saveStatus.lastSavedAt,
+      saveStatus: saveStateMachine.status,
+      saveError: saveStateMachine.errorMessage,
+      lastSavedAt: saveStateMachine.lastSavedAt,
       performSave,
       totalGlobalRealized,
       realBankBalance,
@@ -666,6 +639,7 @@ export default function BudgetCompleteLayout() {
     [
       budget,
       budgetTitle,
+      handleSetBudgetTitle,
       budgetLocation,
       budgetCurrency,
       currentYear,
@@ -689,9 +663,9 @@ export default function BudgetCompleteLayout() {
       handleMonthCommentsChange,
       handleProjectCommentsChange,
       handleLockedMonthsChange,
-      saveStatus.status,
-      saveStatus.errorMessage,
-      saveStatus.lastSavedAt,
+      saveStateMachine.status,
+      saveStateMachine.errorMessage,
+      saveStateMachine.lastSavedAt,
       performSave,
       totalGlobalRealized,
       realBankBalance,
@@ -746,15 +720,13 @@ export default function BudgetCompleteLayout() {
           <Outlet />
         </main>
 
-        {/* P0 #3: discreet save indicator */}
         <SaveStatusIndicator
-          status={saveStatus.status}
-          errorMessage={saveStatus.errorMessage}
-          lastSavedAt={saveStatus.lastSavedAt}
-          onRetry={() => performSave(false)}
+          status={saveStateMachine.status}
+          errorMessage={saveStateMachine.errorMessage}
+          lastSavedAt={saveStateMachine.lastSavedAt}
+          onRetry={() => performSave()}
         />
 
-        {/* P0 #4: non-blocking onboarding coach */}
         {!coachDismissed && (
           <OnboardingCoach
             steps={onboardingSteps}
@@ -765,7 +737,6 @@ export default function BudgetCompleteLayout() {
           />
         )}
 
-        {/* MODALS */}
         {showInviteModal && id && (
           <InviteModal
             budgetId={id}
@@ -786,10 +757,7 @@ export default function BudgetCompleteLayout() {
                 Connectez vos comptes via Enable Banking (2500+ banques européennes).
               </DialogDescription>
             </DialogHeader>
-            <EnableBankingManager
-              budgetId={id!}
-              onUpdate={refreshBankData}
-            />
+            <EnableBankingManager budgetId={id!} onUpdate={refreshBankData} />
           </DialogContent>
         </Dialog>
 
@@ -800,9 +768,11 @@ export default function BudgetCompleteLayout() {
             charge={chargeToMap}
             currentMappings={chargeMappings}
             onSave={(newMappings) => {
-              const others = chargeMappings.filter((m) => m.chargeId !== chargeToMap.id);
+              const others = chargeMappings.filter(
+                (m) => m.chargeId !== chargeToMap.id
+              );
               setChargeMappings([...others, ...newMappings]);
-              if (!isDemoMode) markAsModified();
+              if (!isDemoMode) triggerModified();
               handleCloseMapper();
             }}
             budgetId={id!}

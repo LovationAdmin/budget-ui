@@ -1,19 +1,28 @@
 // src/components/budget/EmptyState.tsx
 // ============================================================================
-// 🎯 EmptyState — Standardized empty-state component
+// 🎯 EmptyState — Standardized + backward-compatible
 // ============================================================================
-// Fixes P2 #17. Use this everywhere instead of one-off "No items" messages.
+// Fixes P2 #17. Supports BOTH the new `action` ReactNode prop AND the legacy
+// `actionLabel` + `onAction` pattern used in Dashboard.tsx etc.
 // ============================================================================
 
 import { type LucideIcon } from 'lucide-react';
 import { ReactNode } from 'react';
 import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
 
 export interface EmptyStateProps {
   icon: LucideIcon;
   title: string;
   description?: string;
+
+  // ✅ NEW API — pass any element
   action?: ReactNode;
+
+  // ♻️ LEGACY API — still works (Dashboard.tsx uses this)
+  actionLabel?: string;
+  onAction?: () => void;
+
   variant?: 'default' | 'subtle';
   className?: string;
 }
@@ -23,9 +32,20 @@ export function EmptyState({
   title,
   description,
   action,
+  actionLabel,
+  onAction,
   variant = 'default',
   className,
 }: EmptyStateProps) {
+  // Resolve which action to render — prefer the new `action` prop if given
+  const renderedAction =
+    action ??
+    (actionLabel && onAction ? (
+      <Button onClick={onAction} className="gap-2">
+        {actionLabel}
+      </Button>
+    ) : null);
+
   return (
     <div
       className={cn(
@@ -47,7 +67,7 @@ export function EmptyState({
           {description}
         </p>
       )}
-      {action && <div className="mt-2">{action}</div>}
+      {renderedAction && <div className="mt-2">{renderedAction}</div>}
     </div>
   );
 }

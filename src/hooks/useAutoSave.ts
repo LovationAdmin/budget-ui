@@ -20,7 +20,7 @@ export function useAutoSave({
 }: UseAutoSaveOptions): UseAutoSaveReturn {
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const saveInProgressRef = useRef(false);
 
   // Cleanup timeout on unmount

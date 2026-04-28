@@ -23,7 +23,7 @@ export const useWebSocket = ({
   reconnectInterval = 3000,
 }: UseWebSocketOptions) => {
   const wsRef = useRef<WebSocket | null>(null);
-  const reconnectTimeoutRef = useRef<NodeJS.Timeout>();
+  const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
   const isIntentionalCloseRef = useRef(false);
 
   const connect = useCallback(() => {
