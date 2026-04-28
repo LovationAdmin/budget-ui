@@ -1,13 +1,20 @@
-import { cn } from "@/lib/utils";
-import { LucideIcon } from "lucide-react";
-import { Button } from "@/components/ui/button";
+// src/components/budget/EmptyState.tsx
+// ============================================================================
+// 🎯 EmptyState — Standardized empty-state component
+// ============================================================================
+// Fixes P2 #17. Use this everywhere instead of one-off "No items" messages.
+// ============================================================================
 
-interface EmptyStateProps {
+import { type LucideIcon } from 'lucide-react';
+import { ReactNode } from 'react';
+import { cn } from '@/lib/utils';
+
+export interface EmptyStateProps {
   icon: LucideIcon;
   title: string;
-  description: string;
-  actionLabel?: string;
-  onAction?: () => void;
+  description?: string;
+  action?: ReactNode;
+  variant?: 'default' | 'subtle';
   className?: string;
 }
 
@@ -15,31 +22,32 @@ export function EmptyState({
   icon: Icon,
   title,
   description,
-  actionLabel,
-  onAction,
+  action,
+  variant = 'default',
   className,
 }: EmptyStateProps) {
   return (
     <div
       className={cn(
-        "flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-border/50 bg-muted/30 p-8 text-center",
+        'flex flex-col items-center justify-center text-center px-6',
+        variant === 'default'
+          ? 'py-12 rounded-2xl border-2 border-dashed border-border/60 bg-muted/30'
+          : 'py-8',
         className
       )}
     >
-      <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-muted">
-        <Icon className="h-7 w-7 text-muted-foreground" />
+      <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 text-primary mb-4">
+        <Icon className="h-7 w-7" aria-hidden />
       </div>
-      <h3 className="mb-1 font-display font-semibold text-foreground">
+      <h3 className="font-display font-semibold text-lg text-foreground mb-1">
         {title}
       </h3>
-      <p className="mb-4 max-w-sm text-sm text-muted-foreground">
-        {description}
-      </p>
-      {actionLabel && onAction && (
-        <Button variant="gradient" onClick={onAction} className="gap-2">
-          {actionLabel}
-        </Button>
+      {description && (
+        <p className="text-sm text-muted-foreground max-w-sm mb-4">
+          {description}
+        </p>
       )}
+      {action && <div className="mt-2">{action}</div>}
     </div>
   );
 }

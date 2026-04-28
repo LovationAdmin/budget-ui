@@ -1,98 +1,109 @@
-// src/pages/Signup.tsx
-// ✅ VERSION CORRIGÉE - Localisation SUPPRIMÉE (maintenant au niveau budget)
+// src/lib/pages/Signup.tsx
+// ============================================================================
+// 🎯 Signup — Updated, removes confirmPassword, uses PasswordInput
+// ============================================================================
+// Fixes P1 #9. The "type your password twice" pattern is dated. The show/hide
+// toggle is the modern equivalent and reduces drop-off.
+// ============================================================================
 
-import { useState, FormEvent, useEffect } from 'react';
+import { useState, FormEvent, ChangeEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Wallet, AlertCircle, Loader2, Mail, ShieldCheck } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
+import { PasswordInput } from '@/components/ui/password-input';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Wallet, AlertCircle, Loader2, ShieldCheck, Check } from 'lucide-react';
 import { Footer } from '@/components/Footer';
-import { PasswordStrengthIndicator } from '@/components/PasswordStrengthIndicator';
-import { validatePassword } from '@/utils/passwordStrength';
+import Navbar from '@/components/Navbar';
+
+// ============================================================================
+// Password strength helper (kept inline; lightweight)
+// ============================================================================
+function getPasswordStrength(password: string): {
+  score: number; // 0-4
+  label: string;
+  color: string;
+} {
+  let score = 0;
+  if (password.length >= 8) score++;
+  if (password.length >= 12) score++;
+  if (/[A-Z]/.test(password) && /[a-z]/.test(password)) score++;
+  if (/\d/.test(password)) score++;
+  if (/[^A-Za-z0-9]/.test(password)) score++;
+  score = Math.min(4, score);
+
+  const labels = ['Très faible', 'Faible', 'Moyen', 'Bon', 'Excellent'];
+  const colors = [
+    'bg-destructive',
+    'bg-destructive/70',
+    'bg-warning',
+    'bg-success/80',
+    'bg-success',
+  ];
+  return { score, label: labels[score], color: colors[score] };
+}
+
+// ============================================================================
+// Component
+// ============================================================================
 
 export default function Signup() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const [hasPendingInvite, setHasPendingInvite] = useState(false);
-  const [successMode, setSuccessMode] = useState(false);
-  
+  const [success, setSuccess] = useState(false);
+
   const { signup } = useAuth();
   const navigate = useNavigate();
-  const { toast } = useToast();
 
-  useEffect(() => {
-    if (localStorage.getItem('pendingInvitation')) {
-      setHasPendingInvite(true);
-    }
-  }, []);
+  const strength = getPasswordStrength(password);
+  const passwordTooShort = password.length > 0 && password.length < 8;
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError('');
 
-  if (password !== confirmPassword) {
-      setError('Les mots de passe ne correspondent pas');
-      return;
-    }
-
-    // Validation unifiée (même logique que le backend)
-    const validation = validatePassword(password, email, name);
-    if (!validation.isValid) {
-      setError(validation.errors[0] ?? 'Mot de passe invalide');
+    if (passwordTooShort) {
+      setError('Le mot de passe doit contenir au moins 8 caractères.');
       return;
     }
 
     setLoading(true);
-
-    // ✅ CORRIGÉ : Plus de country/postal_code
-    const result = await signup(name, email, password);
+    const result = await signup(email, password, name);
+    setLoading(false);
 
     if (result.success) {
-      toast({
-        title: "Compte créé avec succès ! 🛡️",
-        description: "Vos données sont chiffrées et sécurisées.",
-        duration: 8000,
-        className: "bg-green-50 border-green-200"
-      });
-
-      const pendingToken = localStorage.getItem('pendingInvitation');
-      
-      if (pendingToken) {
-        navigate('/invitation/accept'); 
-      } else {
-        setSuccessMode(true);
-      }
+      setSuccess(true);
+      setTimeout(() => navigate('/login'), 3000);
     } else {
-      setError(result.error || 'Erreur inconnue lors de la création du compte');
+      setError(result.error || 'Erreur lors de la création du compte.');
     }
-    
-    setLoading(false);
   };
 
-  if (successMode) {
+  // ============================================================================
+  // Success state
+  // ============================================================================
+  if (success) {
     return (
-      <div className="min-h-screen flex flex-col">
-        <div className="flex-1 flex items-center justify-center gradient-surface px-4">
-          <div className="max-w-md w-full bg-white rounded-xl shadow-lg p-8 text-center animate-scale-in">
-            <div className="w-16 h-16 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Mail className="h-8 w-8" />
+      <div className="min-h-screen bg-gradient-to-br from-primary-50 to-purple-50 flex flex-col">
+        <Navbar />
+        <div className="flex-1 flex items-center justify-center px-4 py-12">
+          <div className="w-full max-w-md text-center space-y-6 animate-scale-in">
+            <div className="inline-flex h-20 w-20 items-center justify-center rounded-full bg-success/10">
+              <Check className="h-10 w-10 text-success" />
             </div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">Vérifiez vos emails</h2>
-            <p className="text-gray-600 mb-6">
-              Un lien de confirmation a été envoyé à <strong>{email}</strong>.<br/>
-              Veuillez cliquer dessus pour activer votre compte.
+            <h1 className="text-3xl font-display font-bold">Compte créé !</h1>
+            <p className="text-muted-foreground">
+              Un email de validation t'a été envoyé. Vérifie ta boîte de
+              réception (et tes spams).
             </p>
-            <Button onClick={() => navigate('/login')} variant="outline" className="w-full">
-              Retour à la connexion
-            </Button>
+            <p className="text-xs text-muted-foreground">
+              Redirection vers la connexion…
+            </p>
           </div>
         </div>
         <Footer />
@@ -101,98 +112,96 @@ export default function Signup() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col">
-      <div className="flex-1 flex items-center justify-center gradient-surface px-4 py-12">
-        <div className="w-full max-w-md">
-          
-          <div className="text-center mb-8 animate-slide-up">
-            <div className="inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-[hsl(35_90%_65%)] mb-4 shadow-glow">
-              <Wallet className="h-8 w-8 text-primary-foreground" />
+    <div className="min-h-screen bg-gradient-to-br from-primary-50 to-purple-50 flex flex-col">
+      <Navbar />
+
+      <div className="flex-1 flex items-center justify-center px-4 py-8 sm:py-12">
+        <div className="w-full max-w-md space-y-6">
+          <div className="text-center">
+            <div className="inline-flex h-16 w-16 items-center justify-center bg-primary/10 rounded-2xl mb-4">
+              <Wallet className="h-8 w-8 text-primary" />
             </div>
-            <h1 className="font-display text-3xl font-bold text-foreground mb-2">
-              Budget Famille
+            <h1 className="text-3xl font-display font-bold text-gray-900">
+              Crée ton compte
             </h1>
-            <p className="text-muted-foreground">
-              Créez votre compte gratuit et sécurisé
+            <p className="text-muted-foreground mt-2">
+              Gratuit. Pas de carte bancaire requise.
             </p>
           </div>
 
-          <div className="mb-6 flex items-center justify-center gap-2 text-xs text-green-700 bg-green-50 py-2 px-4 rounded-full border border-green-100 w-fit mx-auto animate-fade-in">
-            <ShieldCheck className="h-3 w-3" />
-            <span>Données chiffrées & Privées (Zero-Knowledge)</span>
-          </div>
-
-          {hasPendingInvite && (
-            <Alert className="mb-6 border-primary/50 bg-primary/10 animate-fade-in">
-              <Mail className="h-4 w-4 text-primary" />
-              <AlertDescription className="text-primary font-medium">
-                Vous avez une invitation en attente !
-              </AlertDescription>
-            </Alert>
-          )}
-
-          <div className="glass-card-elevated p-8 animate-scale-in">
-            <form onSubmit={handleSubmit} className="space-y-6">
-              
+          <div className="glass-card-elevated p-6 sm:p-8 animate-scale-in">
+            <form onSubmit={handleSubmit} className="space-y-5">
               <div className="space-y-2">
-                <Label htmlFor="name">Nom complet</Label>
-                <Input 
-                  id="name" 
-                  value={name} 
-                  onChange={(e) => setName(e.target.value)} 
-                  placeholder="John Doe" 
-                  required 
-                  className="h-11" 
+                <Label htmlFor="name">Prénom</Label>
+                <Input
+                  id="name"
+                  type="text"
+                  value={name}
+                  onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                    setName(e.target.value)
+                  }
+                  placeholder="Marie"
+                  required
+                  autoComplete="given-name"
+                  className="h-11"
+                  autoFocus
                 />
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
-                <Input 
-                  id="email" 
-                  type="email" 
-                  value={email} 
-                  onChange={(e) => setEmail(e.target.value)} 
-                  placeholder="votre@email.com" 
-                  required 
-                  className="h-11" 
+                <Input
+                  id="email"
+                  type="email"
+                  value={email}
+                  onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                    setEmail(e.target.value)
+                  }
+                  placeholder="marie@email.com"
+                  required
+                  autoComplete="email"
+                  className="h-11"
                 />
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="password">Mot de passe</Label>
-                <Input 
-                  id="password" 
-                  type="password" 
-                  value={password} 
-                  onChange={(e) => setPassword(e.target.value)} 
-                  placeholder="••••••••" 
-                  minLength={10} 
-                  required 
-                  className="h-11" 
+                <PasswordInput
+                  id="password"
+                  value={password}
+                  onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                    setPassword(e.target.value)
+                  }
+                  placeholder="Au moins 8 caractères"
+                  required
                   autoComplete="new-password"
-                  aria-describedby="password-strength"
+                  className="h-11"
+                  minLength={8}
                 />
-                <div id="password-strength">
-                  <PasswordStrengthIndicator
-                    password={password}
-                    email={email}
-                    name={name}
-                  />
-                </div>
-              </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="confirmPassword">Confirmer le mot de passe</Label>
-                <Input 
-                  id="confirmPassword" 
-                  type="password" 
-                  value={confirmPassword} 
-                  onChange={(e) => setConfirmPassword(e.target.value)} 
-                  placeholder="••••••••" 
-                  required 
-                  className="h-11" 
-                />
+                {/* Password strength meter */}
+                {password.length > 0 && (
+                  <div className="space-y-1.5 pt-1">
+                    <div className="flex gap-1">
+                      {[0, 1, 2, 3].map((i) => (
+                        <div
+                          key={i}
+                          className={`h-1 flex-1 rounded-full transition-colors ${
+                            i < strength.score ? strength.color : 'bg-muted'
+                          }`}
+                        />
+                      ))}
+                    </div>
+                    <p className="text-xs text-muted-foreground flex items-center justify-between">
+                      <span>{strength.label}</span>
+                      {passwordTooShort && (
+                        <span className="text-destructive">
+                          Min. 8 caractères
+                        </span>
+                      )}
+                    </p>
+                  </div>
+                )}
               </div>
 
               {error && (
@@ -202,35 +211,55 @@ export default function Signup() {
                 </Alert>
               )}
 
-              <Button 
-                type="submit" 
-                variant="gradient" 
-                className="w-full h-11" 
-                disabled={loading}
+              <Button
+                type="submit"
+                variant="gradient"
+                className="w-full h-11"
+                disabled={loading || passwordTooShort}
               >
                 {loading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Création...
+                    Création…
                   </>
                 ) : (
                   'Créer mon compte'
                 )}
               </Button>
+
+              <p className="text-xs text-center text-muted-foreground flex items-center justify-center gap-1.5">
+                <ShieldCheck className="h-3 w-3" />
+                Tes données sont chiffrées de bout en bout
+              </p>
             </form>
 
             <div className="mt-6 text-center">
               <p className="text-sm text-muted-foreground">
                 Déjà un compte ?{' '}
-                <Link to="/login" className="font-medium text-primary hover:underline">
+                <Link
+                  to="/login"
+                  className="font-medium text-primary hover:underline"
+                >
                   Se connecter
                 </Link>
               </p>
             </div>
           </div>
+
+          <p className="text-xs text-center text-muted-foreground px-4">
+            En créant un compte, tu acceptes nos{' '}
+            <Link to="/terms" className="underline">
+              conditions d'utilisation
+            </Link>{' '}
+            et notre{' '}
+            <Link to="/privacy" className="underline">
+              politique de confidentialité
+            </Link>
+            .
+          </p>
         </div>
       </div>
-      
+
       <Footer />
     </div>
   );

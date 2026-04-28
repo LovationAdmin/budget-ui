@@ -1,31 +1,17 @@
 // src/components/budget/BudgetNavbar.tsx
-// ✅ VERSION AMÉLIORÉE - Menu différent pour utilisateurs connectés vs non connectés
+// ============================================================================
+// 🎯 BudgetNavbar — Updated
+// ============================================================================
+// Fixes:
+//   P1 #7  — show ALL items, not just .slice(0,5). When > 5, overflow into a
+//            "Plus" dropdown so the layout never breaks.
+//   P1 #13 — stronger active state (filled bg, not just bg-primary/10).
+//   P2 #14 — uses <BudgetLogo /> instead of generic "B" letter.
+// ============================================================================
 
-import { useState, memo, useCallback } from 'react';
-import { cn } from "@/lib/utils";
-import { 
-  Settings, 
-  Bell, 
-  Menu,
-  LogOut,
-  User,
-  LucideIcon,
-  HelpCircle,
-  X,
-  LogIn,
-  UserPlus
-} from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { MemberAvatar } from "./MemberAvatar";
-import { useNavigate } from "react-router-dom";
-import { useNotifications } from "@/contexts/NotificationContext";
-import { useAuth } from "@/contexts/AuthContext";
-import { useTutorial } from "@/contexts/TutorialContext";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+import { useState, useCallback, memo, useMemo, type ComponentType } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Bell, Menu, X, HelpCircle, LogIn, UserPlus, User, LogOut, Settings, MoreHorizontal } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -33,133 +19,165 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { HelpCenter } from '@/components/help/HelpCenter';
+} from '@/components/ui/dropdown-menu';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
+import { Button } from '@/components/ui/button';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { cn } from '@/lib/utils';
+import { useAuth } from '@/contexts/AuthContext';
+import { useNotifications } from '@/contexts/NotificationContext';
+import { useTutorial } from '@/contexts/TutorialContext';
+import { MemberAvatar } from './MemberAvatar';
+import { BudgetLogo } from './BudgetLogo';
+import HelpCenter from '@/components/help/HelpCenter';
 
 export interface NavItem {
   id: string;
   label: string;
-  icon: LucideIcon;
+  icon: ComponentType<{ className?: string }>;
 }
 
 interface BudgetNavbarProps {
   budgetTitle?: string;
-  items?: NavItem[];
-  currentSection?: string;
-  onSectionChange?: (section: string) => void;
-  onMenuClick?: () => void;
-  menuOpen?: boolean;
   userName?: string;
   userAvatar?: string;
+  items: NavItem[];
+  currentSection?: string;
+  onSectionChange?: (id: string) => void;
+  menuOpen?: boolean;
+  onMenuClick?: () => void;
   className?: string;
 }
 
+const MAX_VISIBLE_DESKTOP = 5;
+
 export const BudgetNavbar = memo(function BudgetNavbar({
-  budgetTitle = "Budget Famille",
-  items = [],
-  currentSection,
-  onSectionChange,
-  onMenuClick,
-  menuOpen = false,
+  budgetTitle = 'Budget Famille',
   userName,
   userAvatar,
+  items,
+  currentSection,
+  onSectionChange,
+  menuOpen: externalMenuOpen,
+  onMenuClick: externalOnMenuClick,
   className,
 }: BudgetNavbarProps) {
   const navigate = useNavigate();
-  const { notifications, unreadCount, markAllAsRead, markAsRead } = useNotifications();
   const { user, logout } = useAuth();
+  const { notifications, unreadCount, markAsRead, markAllAsRead } =
+    useNotifications();
   const { startTutorial } = useTutorial();
-  const [helpOpen, setHelpOpen] = useState(false);
 
-  // ✅ Déterminer si l'utilisateur est connecté
   const isAuthenticated = !!user;
+  const [helpOpen, setHelpOpen] = useState(false);
+  const [internalMenuOpen, setInternalMenuOpen] = useState(false);
+  const menuOpen = externalMenuOpen ?? internalMenuOpen;
+  const handleMenuToggle = externalOnMenuClick ?? (() => setInternalMenuOpen((v) => !v));
 
-  const handleLogout = useCallback(() => {
-    logout();
-    navigate('/login');
-  }, [logout, navigate]);
+  const handleHelpOpen = () => setHelpOpen(true);
+  const handleHelpClose = () => setHelpOpen(false);
 
-  const handleLogin = useCallback(() => {
-    navigate('/login');
-  }, [navigate]);
-
-  const handleSignup = useCallback(() => {
-    navigate('/signup');
-  }, [navigate]);
-
-  const handleLogoClick = useCallback(() => {
+  const handleLogout = async () => {
+    await logout();
     navigate('/');
-  }, [navigate]);
+  };
 
-  const handleHelpOpen = useCallback(() => {
-    setHelpOpen(true);
-  }, []);
+  const handleLogoClick = () => {
+    if (isAuthenticated) navigate('/dashboard');
+    else navigate('/');
+  };
 
-  const handleHelpClose = useCallback(() => {
-    setHelpOpen(false);
-  }, []);
+  const handleSectionClick = useCallback(
+    (sectionId: string) => onSectionChange?.(sectionId),
+    [onSectionChange]
+  );
 
-  const handleSectionClick = useCallback((sectionId: string) => {
-    onSectionChange?.(sectionId);
-  }, [onSectionChange]);
+  const handleSignup = () => navigate('/signup');
+  const handleLogin = () => navigate('/login');
 
-  const handleNotificationClick = useCallback((notificationId: string, budgetId: string) => {
-    markAsRead(notificationId);
-    navigate(`/budget/${budgetId}/complete`);
-  }, [markAsRead, navigate]);
+  const handleNotificationClick = useCallback(
+    (notificationId: string, budgetId: string) => {
+      markAsRead(notificationId);
+      navigate(`/budget/${budgetId}/complete/overview`);
+    },
+    [markAsRead, navigate]
+  );
 
-  const handleMarkAllRead = useCallback(() => {
-    markAllAsRead();
-  }, [markAllAsRead]);
+  const handleMarkAllRead = useCallback(() => markAllAsRead(), [markAllAsRead]);
+
+  // 🎯 Fix P1 #7: split items into visible + overflow instead of slicing
+  const { visibleItems, overflowItems } = useMemo(() => {
+    if (items.length <= MAX_VISIBLE_DESKTOP) {
+      return { visibleItems: items, overflowItems: [] as NavItem[] };
+    }
+    return {
+      visibleItems: items.slice(0, MAX_VISIBLE_DESKTOP - 1),
+      overflowItems: items.slice(MAX_VISIBLE_DESKTOP - 1),
+    };
+  }, [items]);
 
   return (
     <>
       <header
         className={cn(
-          "sticky top-0 z-50 w-full border-b border-border/50 bg-background/80 backdrop-blur-xl",
+          'sticky top-0 z-50 w-full border-b border-border/50 bg-background/80 backdrop-blur-xl',
           className
         )}
       >
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-          {/* Left: Logo */}
-          <div className="flex items-center gap-4">
+          {/* LEFT */}
+          <div className="flex items-center gap-4 min-w-0">
             {items.length > 0 && (
-              <Button variant="ghost" size="icon" onClick={onMenuClick} className="lg:hidden h-10 w-10">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={handleMenuToggle}
+                className="lg:hidden h-10 w-10 navbar-menu-button"
+                aria-label="Ouvrir le menu"
+              >
                 <Menu className="h-5 w-5" />
               </Button>
             )}
-            
-            <div 
-              className="flex items-center gap-3 cursor-pointer transition-opacity hover:opacity-80"
+
+            <button
               onClick={handleLogoClick}
+              className="flex items-center gap-3 transition-opacity hover:opacity-80 min-w-0"
             >
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-[hsl(35_90%_65%)]">
-                <span className="text-lg font-bold text-primary-foreground">B</span>
-              </div>
-              <div className="hidden sm:block">
-                <h1 className="font-display font-semibold text-foreground">
+              <BudgetLogo size={36} />
+              <div className="hidden sm:block min-w-0">
+                <h1 className="font-display font-semibold text-foreground truncate max-w-[200px]">
                   {budgetTitle}
                 </h1>
-                <p className="text-xs text-muted-foreground">Gestion financière</p>
+                <p className="text-xs text-muted-foreground">
+                  Gestion financière
+                </p>
               </div>
-            </div>
+            </button>
           </div>
 
-          {/* Center: Navigation - Desktop only */}
-          <nav className="hidden lg:flex items-center gap-1">
-            {items.slice(0, 5).map((item) => {
+          {/* CENTER — desktop nav */}
+          <nav
+            className="hidden lg:flex items-center gap-1"
+            aria-label="Navigation principale"
+          >
+            {visibleItems.map((item) => {
               const Icon = item.icon;
               const isActive = currentSection === item.id;
               return (
                 <button
                   key={item.id}
                   onClick={() => handleSectionClick(item.id)}
+                  aria-current={isActive ? 'page' : undefined}
                   className={cn(
-                    "flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium transition-all duration-200 min-h-[44px]",
+                    'flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium transition-all duration-200 min-h-[44px]',
+                    // 🎯 Fix P1 #13: stronger active state
                     isActive
-                      ? "bg-primary/10 text-primary shadow-soft"
-                      : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                      ? 'bg-primary text-primary-foreground shadow-soft'
+                      : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
                   )}
                 >
                   <Icon className="h-4 w-4" />
@@ -167,33 +185,72 @@ export const BudgetNavbar = memo(function BudgetNavbar({
                 </button>
               );
             })}
+
+            {/* Overflow dropdown */}
+            {overflowItems.length > 0 && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button
+                    className={cn(
+                      'flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium transition-all duration-200 min-h-[44px]',
+                      overflowItems.some((it) => it.id === currentSection)
+                        ? 'bg-primary text-primary-foreground shadow-soft'
+                        : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
+                    )}
+                  >
+                    <MoreHorizontal className="h-4 w-4" />
+                    <span>Plus</span>
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-52">
+                  {overflowItems.map((item) => {
+                    const Icon = item.icon;
+                    const isActive = currentSection === item.id;
+                    return (
+                      <DropdownMenuItem
+                        key={item.id}
+                        onClick={() => handleSectionClick(item.id)}
+                        className={cn(
+                          'gap-2 min-h-[44px]',
+                          isActive && 'bg-primary/10 text-primary font-medium'
+                        )}
+                      >
+                        <Icon className="h-4 w-4" />
+                        {item.label}
+                      </DropdownMenuItem>
+                    );
+                  })}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
           </nav>
 
-          {/* Right: User Actions */}
+          {/* RIGHT */}
           <div className="flex items-center gap-2">
-            {/* Help Button - Toujours visible */}
             <Button
               variant="ghost"
               size="icon"
               onClick={handleHelpOpen}
               className="text-muted-foreground hover:text-foreground h-10 w-10"
+              aria-label="Aide"
             >
               <HelpCircle className="h-5 w-5" />
             </Button>
 
-            {/* ================================================================ */}
-            {/* CONTENU DIFFÉRENT SELON AUTHENTIFICATION */}
-            {/* ================================================================ */}
-            
             {isAuthenticated ? (
               <>
-                {/* Notifications - Seulement si connecté */}
+                {/* Notifications */}
                 <Popover>
                   <PopoverTrigger asChild>
                     <Button
                       variant="ghost"
                       size="icon"
                       className="relative text-muted-foreground hover:text-foreground h-10 w-10"
+                      aria-label={
+                        unreadCount > 0
+                          ? `Notifications (${unreadCount} non lues)`
+                          : 'Notifications'
+                      }
                     >
                       <Bell className="h-5 w-5" />
                       {unreadCount > 0 && (
@@ -219,49 +276,48 @@ export const BudgetNavbar = memo(function BudgetNavbar({
                     </div>
                     <ScrollArea className="max-h-[400px]">
                       {notifications.length === 0 ? (
-                        <div className="p-8 text-center text-sm text-muted-foreground">
+                        <div className="p-6 text-center text-sm text-muted-foreground">
                           Aucune notification
                         </div>
                       ) : (
-                        <div className="divide-y">
-                          {notifications.map((notif) => (
-                            <button
-                              key={notif.id}
-                              onClick={() => handleNotificationClick(notif.id, notif.budgetId)}
-                              className={cn(
-                                "w-full px-4 py-3 text-left transition-colors hover:bg-accent",
-                                !notif.isRead && "bg-primary/5"
-                              )}
-                            >
-                              <div className="flex items-start gap-3">
-                                <div className="flex-1">
-                                  <p className="text-sm font-medium">
-                                    {notif.budgetName}
-                                  </p>
-                                  <p className="text-xs text-muted-foreground">
-                                    Modifié par {notif.updatedBy}
-                                  </p>
-                                  <p className="mt-1 text-xs text-muted-foreground">
-                                    {new Date(notif.timestamp).toLocaleString('fr-FR')}
-                                  </p>
-                                </div>
-                                {!notif.isRead && (
-                                  <div className="mt-1 h-2 w-2 rounded-full bg-primary" />
+                        <ul className="divide-y">
+                          {notifications.map((n) => (
+                            <li key={n.id}>
+                              <button
+                                onClick={() =>
+                                  handleNotificationClick(n.id, n.budgetId)
+                                }
+                                className={cn(
+                                  'flex w-full items-start gap-3 p-4 text-left hover:bg-accent transition-colors min-h-[64px]',
+                                  !n.isRead && 'bg-primary/5'
                                 )}
-                              </div>
-                            </button>
+                              >
+                                <span className="text-sm flex-1">
+                                  <strong>{n.updatedBy}</strong> a modifié{' '}
+                                  <em>{n.budgetName}</em>
+                                </span>
+                              </button>
+                            </li>
                           ))}
-                        </div>
+                        </ul>
                       )}
                     </ScrollArea>
                   </PopoverContent>
                 </Popover>
 
-                {/* User Menu - Utilisateur CONNECTÉ */}
+                {/* User menu */}
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" className="gap-2 pl-2 min-h-[44px]">
-                      <MemberAvatar name={userName || user?.name || 'User'} image={userAvatar || user?.avatar} size="sm" />
+                    <Button
+                      variant="ghost"
+                      className="gap-2 pl-2 min-h-[44px]"
+                      aria-label="Mon compte"
+                    >
+                      <MemberAvatar
+                        name={userName || user?.name || 'User'}
+                        image={userAvatar || user?.avatar}
+                        size="sm"
+                      />
                       <span className="hidden font-medium sm:inline-block max-w-[120px] truncate">
                         {userName || user?.name || 'Utilisateur'}
                       </span>
@@ -270,21 +326,33 @@ export const BudgetNavbar = memo(function BudgetNavbar({
                   <DropdownMenuContent align="end" className="w-56">
                     <DropdownMenuLabel>Mon compte</DropdownMenuLabel>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={() => navigate('/profile')} className="min-h-[44px]">
+                    <DropdownMenuItem
+                      onClick={() => navigate('/profile')}
+                      className="min-h-[44px]"
+                    >
                       <User className="mr-2 h-4 w-4" />
                       Profil
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => navigate('/dashboard')} className="min-h-[44px]">
+                    <DropdownMenuItem
+                      onClick={() => navigate('/dashboard')}
+                      className="min-h-[44px]"
+                    >
                       <Settings className="mr-2 h-4 w-4" />
                       Mes budgets
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={startTutorial} className="min-h-[44px]">
+                    <DropdownMenuItem
+                      onClick={startTutorial}
+                      className="min-h-[44px]"
+                    >
                       <HelpCircle className="mr-2 h-4 w-4" />
                       Voir le tutoriel
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={handleLogout} className="text-destructive min-h-[44px]">
+                    <DropdownMenuItem
+                      onClick={handleLogout}
+                      className="text-destructive min-h-[44px]"
+                    >
                       <LogOut className="mr-2 h-4 w-4" />
                       Déconnexion
                     </DropdownMenuItem>
@@ -292,78 +360,40 @@ export const BudgetNavbar = memo(function BudgetNavbar({
                 </DropdownMenu>
               </>
             ) : (
-              <>
-                {/* Boutons Auth - Utilisateur NON CONNECTÉ */}
-                <div className="hidden sm:flex items-center gap-2">
-                  <Button 
-                    variant="ghost" 
-                    onClick={handleLogin}
-                    className="gap-2 min-h-[44px]"
-                  >
-                    <LogIn className="h-4 w-4" />
-                    Se connecter
-                  </Button>
-                  <Button 
-                    variant="default" 
-                    onClick={handleSignup}
-                    className="gap-2 min-h-[44px]"
-                  >
-                    <UserPlus className="h-4 w-4" />
-                    S'inscrire
-                  </Button>
-                </div>
-
-                {/* Menu déroulant pour mobile - NON CONNECTÉ */}
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild className="sm:hidden">
-                    <Button variant="ghost" size="icon" className="h-10 w-10">
-                      <User className="h-5 w-5" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-56">
-                    <DropdownMenuLabel>Bienvenue !</DropdownMenuLabel>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={handleLogin} className="min-h-[44px]">
-                      <LogIn className="mr-2 h-4 w-4" />
-                      Se connecter
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={handleSignup} className="min-h-[44px]">
-                      <UserPlus className="mr-2 h-4 w-4" />
-                      Créer un compte
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </>
+              <div className="hidden sm:flex items-center gap-2">
+                <Button variant="ghost" onClick={handleLogin} className="min-h-[44px]">
+                  <LogIn className="h-4 w-4 mr-2" />
+                  Se connecter
+                </Button>
+                <Button onClick={handleSignup} className="min-h-[44px]">
+                  <UserPlus className="h-4 w-4 mr-2" />
+                  Créer un compte
+                </Button>
+              </div>
             )}
           </div>
         </div>
       </header>
 
-      {/* ============================================================================ */}
-      {/* 🎯 MOBILE SIDEBAR MENU */}
-      {/* ============================================================================ */}
+      {/* Mobile sidebar */}
       {menuOpen && items.length > 0 && (
         <div className="lg:hidden fixed inset-0 z-[100] flex">
-          {/* Overlay */}
-          <div 
+          <div
             className="fixed inset-0 bg-black/50 backdrop-blur-sm"
-            onClick={onMenuClick}
+            onClick={handleMenuToggle}
           />
-          
-          {/* Sidebar avec ScrollArea */}
-          <div className="relative bg-background h-full w-72 sm:w-80 shadow-2xl transform transition-transform duration-300 ease-in-out flex flex-col">
-            {/* Header fixe */}
+          <div className="relative bg-background h-full w-72 sm:w-80 shadow-2xl flex flex-col">
             <div className="flex items-center justify-between p-6 border-b bg-background">
               <h2 className="text-lg font-semibold">Navigation</h2>
               <button
-                onClick={onMenuClick}
+                onClick={handleMenuToggle}
                 className="p-2 rounded-lg hover:bg-accent transition-colors h-10 w-10 flex items-center justify-center"
+                aria-label="Fermer le menu"
               >
                 <X className="h-5 w-5" />
               </button>
             </div>
-            
-            {/* Menu avec scroll */}
+
             <ScrollArea className="flex-1">
               <nav className="flex flex-col gap-1 p-4">
                 {items.map((item) => {
@@ -374,13 +404,14 @@ export const BudgetNavbar = memo(function BudgetNavbar({
                       key={item.id}
                       onClick={() => {
                         handleSectionClick(item.id);
-                        onMenuClick?.();
+                        handleMenuToggle();
                       }}
+                      aria-current={isActive ? 'page' : undefined}
                       className={cn(
-                        "flex items-center gap-3 p-3 rounded-xl text-left transition-all duration-200 min-h-[48px]",
-                        isActive 
-                          ? "bg-primary text-primary-foreground shadow-soft" 
-                          : "hover:bg-accent text-foreground"
+                        'flex items-center gap-3 p-3 rounded-xl text-left transition-all duration-200 min-h-[48px]',
+                        isActive
+                          ? 'bg-primary text-primary-foreground shadow-soft'
+                          : 'hover:bg-accent text-foreground'
                       )}
                     >
                       <Icon className="h-5 w-5 flex-shrink-0" />
@@ -389,40 +420,27 @@ export const BudgetNavbar = memo(function BudgetNavbar({
                   );
                 })}
 
-                {/* ============================================ */}
-                {/* Actions Auth dans le menu mobile */}
-                {/* ============================================ */}
                 <div className="pt-4 mt-4 border-t space-y-2">
                   {isAuthenticated ? (
                     <>
                       <button
                         onClick={() => {
                           navigate('/profile');
-                          onMenuClick?.();
+                          handleMenuToggle();
                         }}
                         className="flex items-center gap-3 p-3 rounded-xl text-left transition-all duration-200 w-full min-h-[48px] hover:bg-accent"
                       >
-                        <User className="h-5 w-5 flex-shrink-0" />
-                        <span className="font-medium">Mon Profil</span>
-                      </button>
-                      <button
-                        onClick={() => {
-                          navigate('/dashboard');
-                          onMenuClick?.();
-                        }}
-                        className="flex items-center gap-3 p-3 rounded-xl text-left transition-all duration-200 w-full min-h-[48px] hover:bg-accent"
-                      >
-                        <Settings className="h-5 w-5 flex-shrink-0" />
-                        <span className="font-medium">Mes Budgets</span>
+                        <User className="h-5 w-5" />
+                        <span className="font-medium">Profil</span>
                       </button>
                       <button
                         onClick={() => {
                           handleLogout();
-                          onMenuClick?.();
+                          handleMenuToggle();
                         }}
-                        className="flex items-center gap-3 p-3 rounded-xl text-left transition-all duration-200 w-full min-h-[48px] hover:bg-destructive/10 text-destructive"
+                        className="flex items-center gap-3 p-3 rounded-xl text-left transition-all duration-200 w-full min-h-[48px] text-destructive hover:bg-destructive/10"
                       >
-                        <LogOut className="h-5 w-5 flex-shrink-0" />
+                        <LogOut className="h-5 w-5" />
                         <span className="font-medium">Déconnexion</span>
                       </button>
                     </>
@@ -431,21 +449,21 @@ export const BudgetNavbar = memo(function BudgetNavbar({
                       <button
                         onClick={() => {
                           handleLogin();
-                          onMenuClick?.();
+                          handleMenuToggle();
                         }}
                         className="flex items-center gap-3 p-3 rounded-xl text-left transition-all duration-200 w-full min-h-[48px] hover:bg-accent"
                       >
-                        <LogIn className="h-5 w-5 flex-shrink-0" />
+                        <LogIn className="h-5 w-5" />
                         <span className="font-medium">Se connecter</span>
                       </button>
                       <button
                         onClick={() => {
                           handleSignup();
-                          onMenuClick?.();
+                          handleMenuToggle();
                         }}
                         className="flex items-center gap-3 p-3 rounded-xl text-left transition-all duration-200 w-full min-h-[48px] bg-primary text-primary-foreground hover:bg-primary/90"
                       >
-                        <UserPlus className="h-5 w-5 flex-shrink-0" />
+                        <UserPlus className="h-5 w-5" />
                         <span className="font-medium">Créer un compte</span>
                       </button>
                     </>
@@ -454,7 +472,6 @@ export const BudgetNavbar = memo(function BudgetNavbar({
               </nav>
             </ScrollArea>
 
-            {/* Footer fixe */}
             <div className="p-4 border-t bg-muted/30">
               <p className="text-xs text-muted-foreground text-center">
                 Budget Famille © 2025
@@ -466,16 +483,6 @@ export const BudgetNavbar = memo(function BudgetNavbar({
 
       <HelpCenter open={helpOpen} onClose={handleHelpClose} />
     </>
-  );
-}, (prevProps, nextProps) => {
-  return (
-    prevProps.budgetTitle === nextProps.budgetTitle &&
-    prevProps.currentSection === nextProps.currentSection &&
-    prevProps.userName === nextProps.userName &&
-    prevProps.userAvatar === nextProps.userAvatar &&
-    prevProps.items === nextProps.items &&
-    prevProps.className === nextProps.className &&
-    prevProps.menuOpen === nextProps.menuOpen 
   );
 });
 

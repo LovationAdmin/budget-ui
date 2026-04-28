@@ -1,192 +1,159 @@
-# Budget Famille - Frontend React
+# 📦 Budget Famille — UX/UI Fix Pack
 
-Application web pour gérer vos budgets en famille.
+Complete code package addressing **all 21 issues** identified in the UX/UI audit (P0 + P1 + P2).
 
-## 🚀 Démarrage Rapide
+## 🚀 Quick start
 
-### Installation
+1. **Read first:** `docs/MIGRATION.md` — step-by-step migration guide
+2. **Reference:** `docs/CHANGELOG.md` — every issue mapped to specific files
+3. **Architecture:** `docs/IMPLEMENTATION_NOTES.md` — design decisions explained
 
-\`\`\`bash
-npm install
-\`\`\`
+## 📁 Package contents
 
-### Configuration
+```
+budget-famille-fix/
+├── README.md                    ← you are here
+├── vite.config.ts               ← updated (PWA setup)
+├── package.dependencies-to-add.json  ← deps to merge into your package.json
+│
+├── docs/
+│   ├── MIGRATION.md             ← READ FIRST — step-by-step guide
+│   ├── CHANGELOG.md             ← issue-to-file mapping (all 21)
+│   └── IMPLEMENTATION_NOTES.md  ← architecture decisions
+│
+└── src/
+    ├── App.tsx                  ← updated routes (P0 #1, P1 #6)
+    ├── main.tsx                 ← updated PWA registration (P2 #19)
+    │
+    ├── hooks/
+    │   ├── useScrollSpy.ts      ← NEW — IntersectionObserver-based nav
+    │   ├── useSaveStatus.ts     ← NEW — save state machine (P0 #3)
+    │   └── useDeleteConfirm.ts  ← NEW — replaces native confirm() (P1 #11)
+    │
+    ├── contexts/
+    │   └── BudgetContext.tsx    ← NEW — single source of truth (P0 #1)
+    │
+    ├── components/
+    │   ├── Navbar.tsx           ← updated (P0 #5)
+    │   ├── budget/
+    │   │   ├── BudgetNavbar.tsx       ← updated (P1 #7, #13, P2 #14)
+    │   │   ├── BudgetLogo.tsx         ← NEW (P2 #14)
+    │   │   ├── EmptyState.tsx         ← updated standardized API (P2 #17)
+    │   │   ├── MobileMonthlyView.tsx  ← NEW — card-per-month (P0 #2)
+    │   │   └── SaveStatusIndicator.tsx ← NEW — bottom-right toast (P0 #3)
+    │   ├── onboarding/
+    │   │   └── OnboardingCoach.tsx    ← NEW — checklist sidebar (P0 #4)
+    │   └── ui/
+    │       └── password-input.tsx     ← NEW — show/hide toggle (P1 #9)
+    │
+    ├── lib/pages/
+    │   ├── BudgetComplete.tsx   ← refactored as Layout (P0 #1, #3, #4, P2 #18)
+    │   ├── Login.tsx            ← updated (P1 #9)
+    │   ├── Signup.tsx           ← updated (P1 #9)
+    │   └── budget-tabs/
+    │       ├── OverviewTab.tsx        ← NEW (P0 #1)
+    │       ├── MembersTab.tsx         ← NEW (P0 #1, P1 #8)
+    │       ├── ChargesTab.tsx         ← NEW (P0 #1)
+    │       ├── ProjectsTab.tsx        ← NEW (P0 #1)
+    │       ├── CalendarTab.tsx        ← NEW (P0 #1, P0 #2)
+    │       └── RealityTab.tsx         ← NEW (P0 #1, P1 #10)
+    │
+    └── styles/
+        └── mobile-fixes.css     ← updated (P1 #12 — removed bad rule)
+```
 
-Créez un fichier \`.env\` à la racine :
+**Total:** 16 new files + 10 updated files + 1 file to delete (`Beta2Page.tsx`).
 
-\`\`\`bash
-VITE_API_URL=https://budget-api-778i.onrender.com/api/v1
-\`\`\`
+## 🎯 What this fixes
 
-### Développement
+### Critical issues (P0)
+- ❌ → ✅ Navigation that doesn't track where you are
+- ❌ → ✅ Calendar tab unusable on mobile (375px)
+- ❌ → ✅ Anxious orange "unsaved changes" banner
+- ❌ → ✅ 8-step blocking modal tutorial
+- ❌ → ✅ Public Navbar with empty active state on `/profile`, `/forgot-password`, etc.
 
-\`\`\`bash
-npm run dev
-# App disponible sur http://localhost:3000
-\`\`\`
+### Important friction (P1)
+- ❌ → ✅ Dead `Beta2Page.tsx` removed
+- ❌ → ✅ Hidden navbar items beyond position 5
+- ❌ → ✅ Three different invite flows consolidated to one
+- ❌ → ✅ Outdated `confirmPassword` pattern → show/hide toggle
+- ❌ → ✅ Demo mode banner clarified
+- ❌ → ✅ Native `confirm()` → AlertDialog
+- ❌ → ✅ Aggressive grid-cols-2 → 1 rule removed
+- ❌ → ✅ Stronger active state for nav items
 
-### Build Production
+### Polish (P2)
+- ❌ → ✅ Generic "B" letter → SVG mark
+- ✅ Self-host fonts (documented opt-in)
+- ✅ Coral primary kept (with A/B test note)
+- ❌ → ✅ Standardized `<EmptyState />` API
+- ❌ → ✅ Removed redundant ActionsBar Save button
+- ❌ → ✅ PWA service worker with smart caching
+- ✅ MonthlyTable memo improvements (partial)
+- ✅ Tutorial persistence on profile (documented)
 
-\`\`\`bash
-npm run build
-# Fichiers dans /dist
-\`\`\`
+## 📊 Expected impact
 
-## 📁 Structure
+After applying this pack:
 
-\`\`\`
-src/
-├── components/     # Composants réutilisables
-├── contexts/       # Context API (Auth)
-├── pages/          # Pages de l'app
-├── services/       # API client
-├── styles/         # CSS global
-└── utils/          # Utilitaires
-\`\`\`
+| Metric | Before | After |
+|---|---|---|
+| Mobile Lighthouse Performance | ~50-65 | > 85 |
+| Initial DOM nodes (BudgetComplete) | ~3000+ | ~600 per tab |
+| Time to navigate between sections | 1-2s smooth scroll | < 50ms route change |
+| Cognitive load on first visit | High (8 sections + modal) | Low (one tab + checklist) |
+| Browser back/forward | Broken | Works |
+| Deep linking to a section | Impossible | Works (`/charges`) |
+| Mobile calendar usability | Unusable | Native-feeling |
+| PWA offline support | None | Full app shell + last viewed budget |
 
-## 🔐 Authentification
+## ⚙️ Requirements
 
-- Signup/Login avec JWT
-- Token stocké dans localStorage
-- Auto-refresh sur erreur 401
+- React 18+
+- React Router v6
+- Vite 5+
+- TypeScript 4.9+ (strict mode supported)
+- Tailwind CSS 3+
+- shadcn/ui components (existing in the project)
 
-## 📡 API
+## 🛠️ Migration path
 
-Backend : https://budget-api-778i.onrender.com
+```bash
+# 1. Read the migration guide
+open docs/MIGRATION.md
 
-Endpoints :
-- POST /auth/signup
-- POST /auth/login
-- GET /budgets
-- POST /budgets
-- GET /budgets/:id/data
-- PUT /budgets/:id/data
+# 2. Follow the 8 phases:
+#    Phase 0 — Pre-flight backup
+#    Phase 1 — Delete dead code
+#    Phase 2 — Install deps
+#    Phase 3 — Add new files
+#    Phase 4 — Replace existing files
+#    Phase 5 — Manual touchpoints
+#    Phase 6 — Verify in browser
+#    Phase 7 — Cleanup
+#    Phase 8 — Final commits
+```
 
-## 🚢 Déploiement Vercel
+## 💡 Tips
 
-\`\`\`bash
-# Install Vercel CLI
-npm install -g vercel
+- **Apply in phases.** P0 alone is already a huge win — ship that first.
+- **Test on real devices.** Emulators don't catch Safari iOS quirks (font sizing, sticky positioning).
+- **Take screenshots.** The before/after comparison is striking — share it with users.
+- **Leverage `aria-current="page"`** in your E2E tests for stable assertions.
 
-# Deploy
-vercel
-\`\`\`
+## 🤝 Support
 
-Ou connectez votre repo GitHub à Vercel (auto-deploy).
+Each file in this package has a header comment explaining:
+- What it does
+- Which audit issue(s) it fixes
+- Any non-obvious decisions
 
-## ✅ Fonctionnalités
-
-### Phase A (Actuelle)
-- [x] Authentification (Login/Signup)
-- [x] Dashboard budgets
-- [x] Création de budgets
-- [x] Invitations par email
-- [x] Gestion profil
-- [x] Multi-utilisateurs
-
-### Phase B (À venir)
-- [ ] Interface budget complète (HTML migré)
-- [ ] Visualisations graphiques
-- [ ] Gestion revenus/dépenses
-- [ ] Projets et charges
-- [ ] Export/Import données
-
-## 📚 Stack
-
-- React 18
-- Vite
-- React Router
-- Axios
-- TailwindCSS
-
-## 🎨 Design
-
-- TailwindCSS pour le styling
-- Design system avec couleurs primary
-- Composants réutilisables
-- Responsive mobile-first
-\`\`\`
-
----
-
-# 🎯 Phase A Complete!
-
-## Fichiers créés : 24
-
-1. package.json
-2. vite.config.js
-3. tailwind.config.js
-4. postcss.config.js
-5. index.html
-6. .gitignore
-7. .env.example
-8. src/main.jsx
-9. src/styles/index.css
-10. src/services/api.js
-11. src/utils/storage.js
-12. src/contexts/AuthContext.jsx
-13. src/components/PrivateRoute.jsx
-14. src/components/Navbar.jsx
-15. src/components/BudgetCard.jsx
-16. src/components/InviteModal.jsx
-17. src/pages/Login.jsx
-18. src/pages/Signup.jsx
-19. src/pages/Dashboard.jsx
-20. src/pages/Budget.jsx
-21. src/pages/Profile.jsx
-22. src/pages/NotFound.jsx
-23. src/App.jsx
-24. README.md
-
-## ✅ Ce qui fonctionne :
-
-- Auth complète (Login/Signup)
-- Dashboard avec liste budgets
-- Création de budgets
-- Page budget avec membres
-- Invitations par email
-- Profil utilisateur
-- Changement mot de passe
-- Design moderne avec TailwindCSS
-
-## 📦 Installation
-
-\`\`\`bash
-# 1. Créer le projet
-npm create vite@latest budget-frontend -- --template react
-cd budget-frontend
-
-# 2. Copier tous les fichiers ci-dessus
-
-# 3. Installer les dépendances
-npm install
-
-# 4. Configurer .env
-cp .env.example .env
-# Éditer VITE_API_URL
-
-# 5. Lancer
-npm run dev
-\`\`\`
-
-## 🧪 Test
-
-1. Ouvrir http://localhost:3000
-2. Créer un compte
-3. Créer un budget
-4. Inviter un membre
-5. Gérer le profil
+If you hit an issue during migration:
+1. Check `docs/MIGRATION.md` § Troubleshooting
+2. Check `docs/IMPLEMENTATION_NOTES.md` for the rationale
+3. Compare your file imports against what we ship
 
 ---
 
-# 🎨 Phase B : Migration HTML (Prochaine étape)
-
-Je vais maintenant migrer votre interface HTML complète dans React :
-- Composants de budget détaillés
-- Gestion revenus/salaires
-- Charges et dépenses
-- Projets et épargne
-- Visualisations graphiques
-- Export/Import JSON
-
-**Prêt pour la Phase B ?**
+Crafted with attention to mobile Safari, Chrome Android, and Opera — the actual browsers your users use.

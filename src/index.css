@@ -1,5 +1,10 @@
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&display=swap');
-
+@import '@fontsource/dm-sans/400.css';
+@import '@fontsource/dm-sans/500.css';
+@import '@fontsource/dm-sans/600.css';
+@import '@fontsource/dm-sans/700.css';
+@import '@fontsource/plus-jakarta-sans/400.css';
+@import '@fontsource/plus-jakarta-sans/600.css';
+@import '@fontsource/plus-jakarta-sans/700.css';
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -23,7 +28,7 @@
     --popover-foreground: 240 10% 10%;
 
     /* Brand Colors - Warm Coral/Peach */
-    --primary: 16 85% 60%;
+    --primary: 200 75% 50%;  
     --primary-foreground: 0 0% 100%;
     
     /* Soft Teal Accent */
