@@ -51,6 +51,8 @@ import ChargesTab from './lib/pages/budget-tabs/ChargesTab';
 import ProjectsTab from './lib/pages/budget-tabs/ProjectsTab';
 import CalendarTab from './lib/pages/budget-tabs/CalendarTab';
 import RealityTab from './lib/pages/budget-tabs/RealityTab';
+import AdminStats from './lib/pages/AdminStats';
+import AdminRoute from './components/AdminRoute';
 
 export default function App() {
   const { user } = useAuth();
@@ -63,6 +65,12 @@ export default function App() {
           path="/"
           element={user ? <Navigate to="/dashboard" replace /> : <LandingPage />}
         />
+
+        <Route path="/admin/stats" element={
+          <AdminRoute>
+            <AdminStats />
+          </AdminRoute>
+        } />
 
         {/* PUBLIC */}
         <Route path="/login" element={<Login />} />
