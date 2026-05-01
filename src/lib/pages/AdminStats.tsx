@@ -40,6 +40,7 @@ import { Label } from '@/components/ui/label';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAdminStats, type AdminStatsData } from '@/hooks/useAdminStats';
 import { cn } from '@/lib/utils';
+import { AdminCampaignSender } from '@/components/admin/AdminCampaignSender';
 
 // ============================================================================
 // HELPERS
@@ -236,6 +237,17 @@ export default function AdminStats() {
 
             {/* DATA */}
             {data && <StatsGrid data={data} />}
+
+            {/* CAMPAIGNS — only render once stats are loaded so the layout is stable */}
+            {data && (
+              <div className="mt-6 sm:mt-8 space-y-4">
+                <h2 className="text-lg sm:text-xl font-display font-bold text-foreground">
+                  Outils d'administration
+                </h2>
+                <AdminCampaignSender />
+              </div>
+            )}
+
           </>
         )}
       </main>
