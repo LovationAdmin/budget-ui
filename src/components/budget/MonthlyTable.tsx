@@ -510,7 +510,7 @@ export default function MonthlyTable({
                         <div className="flex flex-col gap-1">
                             <div className="truncate text-sm font-semibold text-foreground" title={month}>{month}</div>
                             <div className="flex items-center gap-1">
-                                <Button variant="ghost" size="icon" onClick={() => toggleMonthLock(month)} className={cn("h-9 w-9 sm:h-5 sm:w-5 rounded-md transition-all", isLocked ? "text-warning bg-warning/10" : "text-muted-foreground/50 hover:text-foreground")}>
+                                <Button variant="ghost" size="icon" onClick={() => toggleMonthLock(month)} title={isLocked ? "Mois verrouillé — cliquez pour modifier" : "Mois ouvert — cliquez pour verrouiller"} className={cn("h-9 w-9 sm:h-5 sm:w-5 rounded-md transition-all", isLocked ? "text-warning bg-warning/10" : "text-muted-foreground/50 hover:text-foreground")}>
                                     {isLocked ? <Lock className="h-4 w-4 sm:h-3 sm:w-3" /> : <Unlock className="h-4 w-4 sm:h-3 sm:w-3" />}
                                 </Button>
                                 <Button variant="ghost" size="icon" onClick={() => openCommentDialog(month)} className={cn("h-9 w-9 sm:h-5 sm:w-5 rounded-md transition-all", hasComment ? "text-primary bg-primary/10" : "text-muted-foreground/50 hover:text-foreground")}>

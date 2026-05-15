@@ -15,6 +15,7 @@ import api, { budgetAPI } from '../../services/api';
 import {
   convertOldFormatToNew,
   convertNewFormatToOld,
+  autoLockPastMonths,
   type Person,
   type Charge,
   type Project,
@@ -188,7 +189,9 @@ export default function BudgetCompleteLayout() {
       setOneTimeIncomes(data.oneTimeIncomes || {});
       setMonthComments(data.monthComments || {});
       setProjectComments(data.projectComments || {});
-      setLockedMonths(data.lockedMonths || {});
+      setLockedMonths(
+        autoLockPastMonths(data.lockedMonths || {}, data.currentYear || new Date().getFullYear())
+      );
       setChargeMappings(rawData.chargeMappings || []);
 
       loadedRef.current = true;
@@ -437,6 +440,7 @@ export default function BudgetCompleteLayout() {
       setMonthComments({});
       setProjectComments({});
     }
+    setLockedMonths((prev) => autoLockPastMonths(prev, year));
   }, []);
 
   // ============================================================================

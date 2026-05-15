@@ -312,6 +312,7 @@ export function convertNewFormatToOld(newData: ConvertedBudgetData): RawBudgetDa
     oneTimeIncomes: {
       [year]: []
     },
+    lockedMonths: newData.lockedMonths || {},
     date: new Date().toISOString()
   };
 
@@ -321,10 +322,10 @@ export function convertNewFormatToOld(newData: ConvertedBudgetData): RawBudgetDa
 
     oldData.yearlyData[year].months.push(allocationData);
     oldData.yearlyData[year].expenses.push(expenseData);
-    
+
     oldData.yearlyData[year].monthComments.push(newData.monthComments?.[month] || '');
     oldData.yearlyData[year].expenseComments.push(newData.projectComments?.[month] || {});
-    
+
     oldData.oneTimeIncomes[year].push({
       amount: newData.oneTimeIncomes?.[month] || 0,
       description: ''
@@ -332,4 +333,31 @@ export function convertNewFormatToOld(newData: ConvertedBudgetData): RawBudgetDa
   });
 
   return oldData;
+}
+
+export const FRENCH_MONTHS = MONTHS;
+
+/**
+ * Returns lockedMonths with past months in `currentYear` auto-locked,
+ * preserving any explicit user choices (true or false) already in the map.
+ *
+ * Months in the current calendar month or the future are left as the user set them.
+ */
+export function autoLockPastMonths(
+  lockedMonths: LockedMonths,
+  currentYear: number,
+  now: Date = new Date()
+): LockedMonths {
+  const todayYear = now.getFullYear();
+  const todayMonthIndex = now.getMonth();
+  if (currentYear > todayYear) return lockedMonths;
+
+  const next: LockedMonths = { ...lockedMonths };
+  MONTHS.forEach((month, idx) => {
+    const isPast = currentYear < todayYear || idx < todayMonthIndex;
+    if (isPast && !Object.prototype.hasOwnProperty.call(next, month)) {
+      next[month] = true;
+    }
+  });
+  return next;
 }
