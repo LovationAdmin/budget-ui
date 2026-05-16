@@ -338,6 +338,21 @@ export function convertNewFormatToOld(newData: ConvertedBudgetData): RawBudgetDa
 export const FRENCH_MONTHS = MONTHS;
 
 /**
+ * Shallow-equal check for two LockedMonths maps. Used by the load and
+ * year-switch handlers to decide whether autoLockPastMonths introduced
+ * changes that need to be persisted.
+ */
+export function lockedMonthsEqual(a: LockedMonths, b: LockedMonths): boolean {
+  const ak = Object.keys(a);
+  const bk = Object.keys(b);
+  if (ak.length !== bk.length) return false;
+  for (const k of ak) {
+    if (a[k] !== b[k]) return false;
+  }
+  return true;
+}
+
+/**
  * Returns lockedMonths with past months in `currentYear` auto-locked,
  * preserving any explicit user choices (true or false) already in the map.
  *

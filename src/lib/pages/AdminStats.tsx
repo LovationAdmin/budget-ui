@@ -43,6 +43,7 @@ import { cn } from '@/lib/utils';
 import { AdminCampaignSender } from '@/components/admin/AdminCampaignSender';
 import { AdminMonthlyRecapSender } from '@/components/admin/AdminMonthlyRecapSender';
 import { AdminUnverifiedReminderSender } from '@/components/admin/AdminUnverifiedReminderSender';
+import { AdminLocksBackfill } from '@/components/admin/AdminLocksBackfill';
 
 // ============================================================================
 // HELPERS
@@ -249,6 +250,7 @@ export default function AdminStats() {
                 <AdminCampaignSender />
                 <AdminUnverifiedReminderSender />
                 <AdminMonthlyRecapSender />
+                <AdminLocksBackfill />
               </div>
             )}
 
