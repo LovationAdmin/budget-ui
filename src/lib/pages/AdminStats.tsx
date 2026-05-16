@@ -42,6 +42,7 @@ import { useAdminStats, type AdminStatsData } from '@/hooks/useAdminStats';
 import { cn } from '@/lib/utils';
 import { AdminCampaignSender } from '@/components/admin/AdminCampaignSender';
 import { AdminMonthlyRecapSender } from '@/components/admin/AdminMonthlyRecapSender';
+import { AdminUnverifiedReminderSender } from '@/components/admin/AdminUnverifiedReminderSender';
 
 // ============================================================================
 // HELPERS
@@ -246,6 +247,7 @@ export default function AdminStats() {
                   Outils d'administration
                 </h2>
                 <AdminCampaignSender />
+                <AdminUnverifiedReminderSender />
                 <AdminMonthlyRecapSender />
               </div>
             )}
