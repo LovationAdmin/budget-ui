@@ -16,6 +16,7 @@ import {
   convertOldFormatToNew,
   convertNewFormatToOld,
   autoLockPastMonths,
+  lockedMonthsEqual,
   type Person,
   type Charge,
   type Project,
@@ -122,6 +123,10 @@ export default function BudgetCompleteLayout() {
   const [loading, setLoading] = useState(true);
   const [showInviteModal, setShowInviteModal] = useState(false);
   const loadedRef = useRef(false);
+  // Flagged whenever autoLockPastMonths mutates the in-memory lock map
+  // during load or year-switch. The effect below uses this to schedule the
+  // autosave once useAutoSave is wired up and lockedMonths has flushed.
+  const pendingAutoLockSaveRef = useRef(false);
 
   const globalDataRef = useRef<any>(null);
 
@@ -189,9 +194,17 @@ export default function BudgetCompleteLayout() {
       setOneTimeIncomes(data.oneTimeIncomes || {});
       setMonthComments(data.monthComments || {});
       setProjectComments(data.projectComments || {});
-      setLockedMonths(
-        autoLockPastMonths(data.lockedMonths || {}, data.currentYear || new Date().getFullYear())
+      const loadedLockedMonths = data.lockedMonths || {};
+      const autoLockedResult = autoLockPastMonths(
+        loadedLockedMonths,
+        data.currentYear || new Date().getFullYear()
       );
+      setLockedMonths(autoLockedResult);
+      if (!lockedMonthsEqual(loadedLockedMonths, autoLockedResult)) {
+        // Defer persistence until after the autosave hook has been wired
+        // up — the effect below catches this flag once lockedMonths flushes.
+        pendingAutoLockSaveRef.current = true;
+      }
       setChargeMappings(rawData.chargeMappings || []);
 
       loadedRef.current = true;
@@ -354,6 +367,17 @@ export default function BudgetCompleteLayout() {
     saveStateMachine.markPending();
   }, [isDemoMode, markAsModified, saveStateMachine]);
 
+  // When autoLockPastMonths mutates lockedMonths on load or year-switch
+  // (e.g. backfilling past-month locks that were never persisted because of
+  // the pre-2026-05-15 save bug), schedule an autosave so the new state
+  // reaches the DB without waiting for an unrelated user edit.
+  useEffect(() => {
+    if (!loadedRef.current || isDemoMode) return;
+    if (!pendingAutoLockSaveRef.current) return;
+    pendingAutoLockSaveRef.current = false;
+    triggerModified();
+  }, [lockedMonths, isDemoMode, triggerModified]);
+
   // Setter wrappers
   const handlePeopleChange = useCallback((newPeople: Person[]) => {
     setPeople(newPeople);
@@ -440,7 +464,13 @@ export default function BudgetCompleteLayout() {
       setMonthComments({});
       setProjectComments({});
     }
-    setLockedMonths((prev) => autoLockPastMonths(prev, year));
+    setLockedMonths((prev) => {
+      const next = autoLockPastMonths(prev, year);
+      if (!lockedMonthsEqual(prev, next)) {
+        pendingAutoLockSaveRef.current = true;
+      }
+      return next;
+    });
   }, []);
 
   // ============================================================================
