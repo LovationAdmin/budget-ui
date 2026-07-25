@@ -149,7 +149,9 @@ interface MonthCardProps {
   chargesTotal: number;
   available: number;
   generalAllocation: number;
+  generalExpense: number;
   generalCumulative: number;
+  projectCumulatives: Record<string, number>;
   isLocked: boolean;
   hasComment: boolean;
   comment: string;
@@ -178,13 +180,16 @@ const MonthCard = memo(function MonthCard(props: MonthCardProps) {
     chargesTotal,
     available,
     generalAllocation,
+    generalExpense,
     generalCumulative,
+    projectCumulatives,
     isLocked,
     hasComment,
     comment,
     projects,
     yearlyData,
     yearlyExpenses,
+    projectComments,
     currencySymbol,
     onUpdateAllocation,
     onUpdateExpense,
@@ -317,6 +322,8 @@ const MonthCard = memo(function MonthCard(props: MonthCardProps) {
                   // Recurring "épargne particulière" is auto-filled from its
                   // monthly amount + date window → read-only here.
                   const isRecurring = isSavingsRecurring(project);
+                  const cumulative = projectCumulatives[project.id] ?? 0;
+                  const note = projectComments[month]?.[project.id];
                   return (
                     <div
                       key={project.id}
@@ -326,6 +333,11 @@ const MonthCard = memo(function MonthCard(props: MonthCardProps) {
                         <span className="text-sm font-medium truncate">
                           {project.label}
                         </span>
+                        {isRecurring && (
+                          <span className="text-[9px] uppercase tracking-wide text-secondary bg-secondary/10 px-1.5 py-0.5 rounded shrink-0">
+                            Auto
+                          </span>
+                        )}
                       </div>
                       <div className="grid grid-cols-2 gap-2">
                         <div>
@@ -368,6 +380,15 @@ const MonthCard = memo(function MonthCard(props: MonthCardProps) {
                           />
                         </div>
                       </div>
+                      <div className="flex items-center justify-between mt-1.5 pt-1.5 border-t border-border/40">
+                        <span className="text-[10px] text-muted-foreground uppercase tracking-wide">En caisse</span>
+                        <span className={cn('text-sm font-mono font-semibold', cumulative >= 0 ? 'text-success' : 'text-destructive')}>
+                          {cumulative.toLocaleString('fr-FR')} {currencySymbol}
+                        </span>
+                      </div>
+                      {note && (
+                        <p className="text-[11px] text-muted-foreground italic mt-1">"{note}"</p>
+                      )}
                     </div>
                   );
                 })}
@@ -384,10 +405,10 @@ const MonthCard = memo(function MonthCard(props: MonthCardProps) {
             <div className="rounded-lg bg-primary/5 border border-primary/20 p-2.5">
               <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <div className="text-[10px] text-muted-foreground uppercase">
-                    Auto
+                  <div className="text-[10px] text-muted-foreground uppercase mb-0.5">
+                    Auto (alloué)
                   </div>
-                  <div className="font-mono font-semibold text-sm">
+                  <div className="font-mono font-semibold text-sm h-9 flex items-center">
                     {generalAllocation.toLocaleString('fr-FR', {
                       minimumFractionDigits: 0,
                       maximumFractionDigits: 0,
@@ -396,17 +417,26 @@ const MonthCard = memo(function MonthCard(props: MonthCardProps) {
                   </div>
                 </div>
                 <div>
-                  <div className="text-[10px] text-muted-foreground uppercase">
-                    Cumul
+                  <div className="text-[10px] text-muted-foreground uppercase mb-0.5">
+                    Dépensé
                   </div>
-                  <div className="font-mono font-semibold text-sm text-primary">
-                    {generalCumulative.toLocaleString('fr-FR', {
-                      minimumFractionDigits: 0,
-                      maximumFractionDigits: 0,
-                    })}{' '}
-                    {currencySymbol}
-                  </div>
+                  <Input
+                    type="number"
+                    inputMode="decimal"
+                    value={generalExpense || ''}
+                    onChange={(e) => onUpdateExpense(GENERAL_SAVINGS_ID, parseFloat(e.target.value) || 0)}
+                    disabled={isLocked}
+                    placeholder="0"
+                    className="h-9 text-sm font-mono"
+                  />
                 </div>
+              </div>
+              <div className="flex items-center justify-between mt-2 pt-2 border-t border-primary/20">
+                <span className="text-[10px] text-muted-foreground uppercase tracking-wide">En caisse (cumul)</span>
+                <span className={cn('text-sm font-mono font-semibold', generalCumulative >= 0 ? 'text-primary' : 'text-destructive')}>
+                  {generalCumulative.toLocaleString('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}{' '}
+                  {currencySymbol}
+                </span>
               </div>
             </div>
           </section>
@@ -509,8 +539,18 @@ export default function MobileMonthlyView({
   const expandAll = () => setExpandedMonths(new Set(MONTHS));
   const collapseAll = () => setExpandedMonths(new Set());
 
-  // Per-month calculations
+  // Per-month calculations (single forward pass so we can accumulate the
+  // running "En caisse" totals for each project and for general savings).
   const monthData = useMemo(() => {
+    const standardProjects = projects.filter((p) => p.id !== GENERAL_SAVINGS_ID);
+
+    // Running cumulatives, seeded with prior-year carry-overs.
+    const projectRunning: Record<string, number> = {};
+    standardProjects.forEach((p) => {
+      projectRunning[p.id] = projectCarryOvers[p.id] || 0;
+    });
+    let generalRunning = projectCarryOvers[GENERAL_SAVINGS_ID] || 0;
+
     return MONTHS.map((month, monthIndex) => {
       const baseIncome = people.reduce(
         (sum, p) => (isPersonActive(p, currentYear, monthIndex) ? sum + p.salary : sum),
@@ -523,32 +563,23 @@ export default function MobileMonthlyView({
       const oneTime = oneTimeIncomes[month] || 0;
       const available = baseIncome + oneTime - chargesTotal;
 
-      const totalAllocatedToProjects = projects
-        .filter((p) => p.id !== GENERAL_SAVINGS_ID)
-        .reduce((sum, project) => sum + (yearlyData[month]?.[project.id] || 0), 0);
-
+      const totalAllocatedToProjects = standardProjects.reduce(
+        (sum, project) => sum + (yearlyData[month]?.[project.id] || 0),
+        0
+      );
       const generalAllocation = available - totalAllocatedToProjects;
 
-      // Cumulative general savings up to this month
-      let generalCumulative = projectCarryOvers[GENERAL_SAVINGS_ID] || 0;
-      for (let i = 0; i <= monthIndex; i++) {
-        const m = MONTHS[i];
-        const inc = people.reduce(
-          (sum, p) => (isPersonActive(p, currentYear, i) ? sum + p.salary : sum),
-          0
-        );
-        const ch = charges.reduce(
-          (sum, c) => (isChargeActive(c, currentYear, i) ? sum + c.amount : sum),
-          0
-        );
-        const ot = oneTimeIncomes[m] || 0;
-        const av = inc + ot - ch;
-        const allocated = projects
-          .filter((p) => p.id !== GENERAL_SAVINGS_ID)
-          .reduce((sum, project) => sum + (yearlyData[m]?.[project.id] || 0), 0);
-        const exp = yearlyExpenses[m]?.[GENERAL_SAVINGS_ID] || 0;
-        generalCumulative += av - allocated - exp;
-      }
+      // Advance per-project cumulatives for this month.
+      const projectCumulatives: Record<string, number> = {};
+      standardProjects.forEach((project) => {
+        const alloc = yearlyData[month]?.[project.id] || 0;
+        const exp = yearlyExpenses[month]?.[project.id] || 0;
+        projectRunning[project.id] += alloc - exp;
+        projectCumulatives[project.id] = projectRunning[project.id];
+      });
+
+      const generalExpense = yearlyExpenses[month]?.[GENERAL_SAVINGS_ID] || 0;
+      generalRunning += generalAllocation - generalExpense;
 
       return {
         month,
@@ -560,7 +591,9 @@ export default function MobileMonthlyView({
         chargesTotal,
         available,
         generalAllocation,
-        generalCumulative,
+        generalExpense,
+        generalCumulative: generalRunning,
+        projectCumulatives,
       };
     });
   }, [
@@ -672,7 +705,9 @@ export default function MobileMonthlyView({
             chargesTotal={m.chargesTotal}
             available={m.available}
             generalAllocation={m.generalAllocation}
+            generalExpense={m.generalExpense}
             generalCumulative={m.generalCumulative}
+            projectCumulatives={m.projectCumulatives}
             isLocked={!!lockedMonths[m.month]}
             hasComment={!!monthComments[m.month]}
             comment={monthComments[m.month] || ''}
