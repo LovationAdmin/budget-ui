@@ -281,8 +281,54 @@ export default function BudgetCompleteLayout() {
       }
       carryOvers[proj.id] = total;
     });
+
+    // General savings ("Épargne Générale") is a derived column, not a project,
+    // so it also needs a cross-year carry-over. For each prior year & month it
+    // equals (income + one-time − charges − project allocations) − its own
+    // recorded expense, mirroring how the calendar computes it live.
+    const activeInMonth = (
+      startDate: string | undefined,
+      endDate: string | undefined,
+      year: number,
+      idx: number
+    ): boolean => {
+      const monthStart = new Date(year, idx, 1);
+      const monthEnd = new Date(year, idx + 1, 0);
+      if (startDate && new Date(startDate) > monthEnd) return false;
+      if (endDate && new Date(endDate) < monthStart) return false;
+      return true;
+    };
+
+    const realProjects = projects.filter((p) => p.id !== GENERAL_SAVINGS_ID);
+    let generalTotal = 0;
+    for (let year = earliestStored; year < currentYear; year++) {
+      const yearData = yearlyDataAll[String(year)];
+      const oneTimeYear = globalDataRef.current?.oneTimeIncomes?.[String(year)];
+      for (let idx = 0; idx < 12; idx++) {
+        const income = people.reduce(
+          (s, p) => (activeInMonth(p.startDate, p.endDate, year, idx) ? s + (p.salary || 0) : s),
+          0
+        );
+        const chargesTotal = charges.reduce(
+          (s, c) => (activeInMonth(c.startDate, c.endDate, year, idx) ? s + (c.amount || 0) : s),
+          0
+        );
+        const oneTime = Array.isArray(oneTimeYear) ? Number(oneTimeYear[idx]?.amount || 0) : 0;
+        const available = income + oneTime - chargesTotal;
+        const projAlloc = realProjects.reduce((s, proj) => {
+          const a = isSavingsRecurring(proj)
+            ? (isSavingsActive(proj, year, idx) ? (proj.monthlyAmount || 0) : 0)
+            : (yearData?.months?.[idx]?.[proj.id] || 0);
+          return s + a;
+        }, 0);
+        const genExpense = yearData?.expenses?.[idx]?.[GENERAL_SAVINGS_ID] || 0;
+        generalTotal += (available - projAlloc) - genExpense;
+      }
+    }
+    carryOvers[GENERAL_SAVINGS_ID] = generalTotal;
+
     return carryOvers;
-  }, [projects, currentYear]);
+  }, [projects, people, charges, currentYear]);
 
   // ============================================================================
   // DERIVED VALUES
