@@ -149,6 +149,7 @@ export default function PeopleSection({ people, onPeopleChange, currency = 'EUR'
                 onUpdate={updatePerson}
                 onDelete={removePerson}
                 currencySymbol={currencySymbol}
+                contributionPct={totalSalary > 0 ? (person.salary / totalSalary) * 100 : 0}
               />
             ))}
           </div>
@@ -266,10 +267,11 @@ interface PersonItemProps {
   person: Person;
   onUpdate: (id: string, updates: Partial<Person>) => void;
   onDelete: (id: string) => void;
-  currencySymbol: string; 
+  currencySymbol: string;
+  contributionPct: number;
 }
 
-function PersonItem({ person, onUpdate, onDelete, currencySymbol }: PersonItemProps) {
+function PersonItem({ person, onUpdate, onDelete, currencySymbol, contributionPct }: PersonItemProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editName, setEditName] = useState(person.name);
   const [editSalary, setEditSalary] = useState(person.salary.toString());
@@ -377,7 +379,15 @@ function PersonItem({ person, onUpdate, onDelete, currencySymbol }: PersonItemPr
              <span className="font-bold text-lg text-emerald-900 tabular-nums tracking-tight">
                 {person.salary.toLocaleString()} {currencySymbol}
              </span>
-             <span className="text-[10px] text-emerald-600/70 font-medium uppercase tracking-wider">Mensuel</span>
+             <div className="flex items-center gap-1.5">
+                <span className="text-[10px] text-emerald-600/70 font-medium uppercase tracking-wider">Mensuel</span>
+                <span
+                    className="text-[10px] font-semibold px-1.5 py-0.5 rounded-md bg-emerald-100 text-emerald-700 tabular-nums"
+                    title="Part de la contribution financière du foyer"
+                >
+                    {contributionPct.toFixed(0)} %
+                </span>
+             </div>
         </div>
 
         {/* Actions (Visibles au hover sur desktop, toujours un peu visibles sur mobile) */}

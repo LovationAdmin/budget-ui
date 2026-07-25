@@ -4,7 +4,7 @@
 import { EmptyState } from '@/components/budget/EmptyState';
 import { useState, useEffect, useCallback, memo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { PiggyBank, Plus, ArrowRight, Trash2, MapPin, DollarSign, Pencil } from "lucide-react";
+import { PiggyBank, Plus, ArrowRight, Trash2, MapPin, DollarSign, Pencil, Sparkles, Check } from "lucide-react";
 import { budgetAPI } from '../../services/api';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
@@ -219,6 +219,7 @@ export default function Dashboard() {
   const [newBudgetName, setNewBudgetName] = useState('');
   const [newBudgetLocation, setNewBudgetLocation] = useState('FR');
   const [newBudgetCurrency, setNewBudgetCurrency] = useState('EUR');
+  const [startWithAI, setStartWithAI] = useState(false);
   const [creating, setCreating] = useState(false);
   
   // Edit Modal States
@@ -267,8 +268,8 @@ export default function Dashboard() {
     if (!newBudgetName.trim()) return;
     setCreating(true);
     try {
-      await budgetAPI.create({ 
-        name: newBudgetName.trim(), 
+      const res = await budgetAPI.create({
+        name: newBudgetName.trim(),
         year: new Date().getFullYear(),
         location: newBudgetLocation,
         currency: newBudgetCurrency
@@ -278,6 +279,14 @@ export default function Dashboard() {
       setNewBudgetName('');
       setNewBudgetLocation('FR');
       setNewBudgetCurrency('EUR');
+      const goAI = startWithAI;
+      setStartWithAI(false);
+      const newId = (res as any)?.data?.id;
+      if (goAI && newId) {
+        // Land directly on the AI advisor for the freshly created budget.
+        navigate(`/budget/${newId}/complete/ai`);
+        return;
+      }
       loadBudgets();
     } catch (error: any) {
       toast({ title: "Erreur", description: error.response?.data?.error || "Impossible de créer le budget", variant: "destructive" });
@@ -448,6 +457,32 @@ export default function Dashboard() {
                 <DollarSign className="h-4 w-4 text-muted-foreground" />
                 <span>Devise : <strong>{newBudgetCurrency}</strong></span>
               </div>
+
+              <button
+                type="button"
+                onClick={() => setStartWithAI((v) => !v)}
+                aria-pressed={startWithAI}
+                className={`w-full flex items-start gap-3 p-3 rounded-lg border text-left transition-colors ${
+                  startWithAI
+                    ? 'border-primary bg-primary/5 ring-1 ring-primary/30'
+                    : 'border-border hover:bg-muted/40'
+                }`}
+              >
+                <Sparkles className={`h-5 w-5 mt-0.5 shrink-0 ${startWithAI ? 'text-primary' : 'text-muted-foreground'}`} />
+                <span className="text-sm">
+                  <span className="font-medium block">Laisser l'IA proposer une répartition</span>
+                  <span className="text-muted-foreground text-xs">
+                    Après création, décrivez votre situation et l'IA propose un budget mensuel juste et soutenable.
+                  </span>
+                </span>
+                <span
+                  className={`ml-auto mt-0.5 h-5 w-5 rounded-full border flex items-center justify-center shrink-0 ${
+                    startWithAI ? 'bg-primary border-primary text-primary-foreground' : 'border-muted-foreground/40'
+                  }`}
+                >
+                  {startWithAI && <Check className="h-3.5 w-3.5" />}
+                </span>
+              </button>
             </div>
             
             <DialogFooter className="gap-2 sm:gap-0">
@@ -464,7 +499,7 @@ export default function Dashboard() {
                 disabled={creating || !newBudgetName.trim()}
                 className="min-h-[44px]"
               >
-                {creating ? 'Création...' : 'Créer le budget'}
+                {creating ? 'Création...' : startWithAI ? 'Créer + IA' : 'Créer le budget'}
               </Button>
             </DialogFooter>
           </form>
