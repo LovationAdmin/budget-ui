@@ -18,6 +18,8 @@ import {
   autoLockPastMonths,
   lockedMonthsEqual,
   syncRecurringSavings,
+  isSavingsRecurring,
+  isSavingsActive,
   type Person,
   type Charge,
   type Project,
@@ -244,22 +246,35 @@ export default function BudgetCompleteLayout() {
   // ============================================================================
   const projectCarryOvers = useMemo(() => {
     const carryOvers: Record<string, number> = {};
+    const yearlyDataAll: Record<string, any> = globalDataRef.current?.yearlyData || {};
+    const storedYears = Object.keys(yearlyDataAll)
+      .map((y) => parseInt(y, 10))
+      .filter((y) => !Number.isNaN(y));
+    const earliestStored = storedYears.length ? Math.min(...storedYears) : currentYear;
+
     projects.forEach((proj) => {
-      // Sum from previous years stored in globalDataRef
-      const yearlyDataAll = globalDataRef.current?.yearlyData || {};
-      Object.keys(yearlyDataAll).forEach((yearStr) => {
-        const year = parseInt(yearStr, 10);
-        if (year < currentYear) {
-          const yearData = yearlyDataAll[yearStr];
-          if (yearData?.months && yearData?.expenses) {
-            yearData.months.forEach((monthAllocation: any, idx: number) => {
-              const allocated = monthAllocation?.[proj.id] || 0;
-              const spent = yearData.expenses[idx]?.[proj.id] || 0;
-              carryOvers[proj.id] = (carryOvers[proj.id] || 0) + (allocated - spent);
-            });
-          }
+      const recurring = isSavingsRecurring(proj);
+      // For a recurring "épargne particulière", prior-year allocations are
+      // derived from its definition (monthlyAmount over active months) so the
+      // running total carries forward across years even for years the user
+      // never opened. Non-recurring projects keep the stored-allocation sum.
+      const startYear =
+        recurring && proj.startDate
+          ? new Date(proj.startDate).getFullYear()
+          : earliestStored;
+
+      let total = 0;
+      for (let year = startYear; year < currentYear; year++) {
+        const yearData = yearlyDataAll[String(year)];
+        for (let idx = 0; idx < 12; idx++) {
+          const allocated = recurring
+            ? (isSavingsActive(proj, year, idx) ? (proj.monthlyAmount || 0) : 0)
+            : (yearData?.months?.[idx]?.[proj.id] || 0);
+          const spent = yearData?.expenses?.[idx]?.[proj.id] || 0;
+          total += allocated - spent;
         }
-      });
+      }
+      carryOvers[proj.id] = total;
     });
     return carryOvers;
   }, [projects, currentYear]);
@@ -475,9 +490,13 @@ export default function BudgetCompleteLayout() {
     } as any, globalDataRef.current);
 
     setCurrentYear(year);
-    // Locks that will apply to the target year, so recurring savings skip
-    // locked (historical) months when we auto-fill below.
-    const nextLocked = autoLockPastMonths(lockedMonths, year);
+
+    // Locks are per-year: load the TARGET year's own locks (not the outgoing
+    // year's), then auto-lock its past months. This is used both to seed the
+    // lock state and to let recurring savings skip locked months.
+    const storedLocks: LockedMonths =
+      (globalDataRef.current?.yearlyData?.[year]?.lockedMonths as LockedMonths) || {};
+    const nextLocked = autoLockPastMonths(storedLocks, year);
 
     if (globalDataRef.current?.yearlyData?.[year]) {
       const yearData = globalDataRef.current.yearlyData[year];
@@ -509,13 +528,11 @@ export default function BudgetCompleteLayout() {
       setMonthComments({});
       setProjectComments({});
     }
-    setLockedMonths((prev) => {
-      const next = autoLockPastMonths(prev, year);
-      if (!lockedMonthsEqual(prev, next)) {
-        pendingAutoLockSaveRef.current = true;
-      }
-      return next;
-    });
+
+    if (!lockedMonthsEqual(storedLocks, nextLocked)) {
+      pendingAutoLockSaveRef.current = true;
+    }
+    setLockedMonths(nextLocked);
 
     // Persist the flushed multi-year payload so the outgoing year's edits reach
     // the server even if the user leaves without touching the new year.

@@ -51,7 +51,7 @@ interface BudgetNavbarProps {
   className?: string;
 }
 
-const MAX_VISIBLE_DESKTOP = 5;
+const MAX_VISIBLE_DESKTOP = 7;
 
 export const BudgetNavbar = memo(function BudgetNavbar({
   budgetTitle = 'Budget Famille',

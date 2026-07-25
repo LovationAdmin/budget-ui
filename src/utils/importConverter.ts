@@ -259,6 +259,12 @@ export function convertOldFormatToNew(oldData: RawBudgetData): ConvertedBudgetDa
         }
       });
       
+      // Per-year locks: prefer the year block's own map; fall back to the
+      // top-level (legacy) map only if the year block has none.
+      if (yearData.lockedMonths && typeof yearData.lockedMonths === 'object') {
+        newData.lockedMonths = { ...yearData.lockedMonths };
+      }
+
       if (rawOneTimeIncomes && (rawOneTimeIncomes as any)[yearKey]) {
         const yearIncomes = (rawOneTimeIncomes as any)[yearKey];
         if (Array.isArray(yearIncomes)) {
@@ -337,6 +343,10 @@ export function convertNewFormatToOld(
     monthComments: [] as string[],
     expenseComments: [] as Array<Record<string, string>>,
     deletedMonths: [] as number[],
+    // Locks are per-year: a month locked in 2025 must not lock the same month
+    // in 2026. Stored inside the year block; the top-level lockedMonths is kept
+    // only as a current-year compatibility snapshot (see below).
+    lockedMonths: (newData.lockedMonths || {}) as LockedMonths,
   };
   const currentOneTime: Array<{ amount: number; description: string }> = [];
 
