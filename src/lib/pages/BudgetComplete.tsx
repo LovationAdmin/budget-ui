@@ -106,6 +106,7 @@ const NAV_TO_ROUTE: Record<string, string> = {
   charges: 'charges',
   projects: 'projects',
   calendar: 'calendar',
+  ai: 'ai',
   reality: 'reality',
 };
 
