@@ -41,15 +41,17 @@ import type {
   ProjectComments,
   LockedMonths
 } from '@/utils/importConverter';
+import { isSavingsRecurring } from '@/utils/importConverter';
 
 // Debounced Input Component
-const DebouncedInput = ({ value, onChange, type = "text", className, placeholder, disabled }: { 
-    value: string | number; 
-    onChange: (val: number) => void; 
-    type?: string; 
-    className?: string; 
+const DebouncedInput = ({ value, onChange, type = "text", className, placeholder, disabled, title }: {
+    value: string | number;
+    onChange: (val: number) => void;
+    type?: string;
+    className?: string;
     placeholder?: string;
     disabled?: boolean;
+    title?: string;
 }) => {
     const [localValue, setLocalValue] = useState<string | number>(value);
 
@@ -65,15 +67,16 @@ const DebouncedInput = ({ value, onChange, type = "text", className, placeholder
     };
 
     return (
-        <Input 
+        <Input
             type={type}
-            value={localValue} 
-            onChange={(e) => setLocalValue(e.target.value)} 
+            value={localValue}
+            onChange={(e) => setLocalValue(e.target.value)}
             onBlur={handleBlur}
             onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()}
-            className={className} 
+            className={className}
             placeholder={placeholder}
             disabled={disabled}
+            title={title}
         />
     );
 };
@@ -405,9 +408,9 @@ export default function MonthlyTable({
                     
                     <DropdownMenuSeparator />
                     
-                    {/* Projets */}
+                    {/* Épargne particulière */}
                     <DropdownMenuLabel className="text-xs flex items-center justify-between">
-                        <span>Projets</span>
+                        <span>Épargne</span>
                         <div className="flex gap-1">
                             <button 
                                 onClick={(e) => { e.preventDefault(); showAllProjects(); }}
@@ -539,17 +542,22 @@ export default function MonthlyTable({
                         const expense = yearlyExpenses[month]?.[project.id] || 0;
                         const comment = projectComments[month]?.[project.id];
                         const cumulative = getCumulativeProjectTotal(project.id, monthIndex);
+                        // Recurring "épargne particulière" allocations are driven
+                        // by the saving's monthly amount + date window, so the cell
+                        // is auto-filled and read-only (edit it from the Épargne tab).
+                        const isRecurring = isSavingsRecurring(project);
                         return (
                           <td key={project.id} className="px-1 py-2 border-r border-dashed border-border/50">
                             <div className="flex flex-col gap-1">
                               <div className="flex items-center gap-1">
-                                <DebouncedInput 
-                                    type="number" 
-                                    value={allocation || ''} 
-                                    onChange={(val) => updateAllocation(month, project.id, val)} 
-                                    disabled={isLocked} 
-                                    className={cn("text-center h-10 sm:h-7 text-sm sm:text-xs px-3 sm:px-1 font-medium bg-background border-primary/20 focus-visible:ring-primary/30 shadow-sm", allocation > 0 && "text-primary font-bold bg-primary/5", isLocked && "opacity-50")} 
-                                    placeholder="0" 
+                                <DebouncedInput
+                                    type="number"
+                                    value={allocation || ''}
+                                    onChange={(val) => updateAllocation(month, project.id, val)}
+                                    disabled={isLocked || isRecurring}
+                                    title={isRecurring ? "Montant automatique (épargne particulière) — modifiez-le dans l'onglet Épargne" : undefined}
+                                    className={cn("text-center h-10 sm:h-7 text-sm sm:text-xs px-3 sm:px-1 font-medium bg-background border-primary/20 focus-visible:ring-primary/30 shadow-sm", allocation > 0 && "text-primary font-bold bg-primary/5", (isLocked || isRecurring) && "opacity-70 cursor-not-allowed")}
+                                    placeholder="0"
                                 />
                                 <DebouncedInput 
                                     type="number" 

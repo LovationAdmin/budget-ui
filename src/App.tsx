@@ -49,6 +49,7 @@ import OverviewTab from './lib/pages/budget-tabs/OverviewTab';
 import MembersTab from './lib/pages/budget-tabs/MembersTab';
 import ChargesTab from './lib/pages/budget-tabs/ChargesTab';
 import ProjectsTab from './lib/pages/budget-tabs/ProjectsTab';
+import AIBudgetTab from './lib/pages/budget-tabs/AIBudgetTab';
 import CalendarTab from './lib/pages/budget-tabs/CalendarTab';
 import RealityTab from './lib/pages/budget-tabs/RealityTab';
 import AdminStats from './lib/pages/AdminStats';
@@ -134,6 +135,7 @@ export default function App() {
           <Route path="charges" element={<ChargesTab />} />
           <Route path="projects" element={<ProjectsTab />} />
           <Route path="calendar" element={<CalendarTab />} />
+          <Route path="ai" element={<AIBudgetTab />} />
           <Route path="reality" element={<RealityTab />} />
           <Route path="*" element={<Navigate to="overview" replace />} />
         </Route>

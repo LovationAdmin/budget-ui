@@ -14,6 +14,7 @@
 // ============================================================================
 
 import axios, { AxiosError, InternalAxiosRequestConfig, AxiosResponse } from 'axios';
+import type { HouseholdInput, BudgetProposal } from '@/types/aiBudget';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api/v1';
 
@@ -366,6 +367,13 @@ export const budgetAPI = {
   // Categorization (AI)
   categorize: (label: string): Promise<AxiosResponse<CategorizeResponse>> =>
     api.post('/categorize', { label }),
+
+  // Budget proposé par IA — génère une répartition mensuelle structurée.
+  // Serveur : traitement confidentiel, ne journalise ni le texte ni les montants.
+  generateAIProposal: (
+    input: HouseholdInput,
+  ): Promise<AxiosResponse<BudgetProposal>> =>
+    api.post('/budgets/ai-proposal', input),
 
   // Market Suggestions — bulk (async, retour via WS)
   bulkAnalyzeSuggestions: (

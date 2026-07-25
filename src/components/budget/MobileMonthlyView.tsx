@@ -44,6 +44,7 @@ import type {
   ProjectComments,
   LockedMonths,
 } from '@/utils/importConverter';
+import { isSavingsRecurring } from '@/utils/importConverter';
 
 // ============================================================================
 // CONSTANTS
@@ -307,12 +308,15 @@ const MonthCard = memo(function MonthCard(props: MonthCardProps) {
             <section>
               <div className="flex items-center gap-1.5 mb-2 text-xs font-semibold text-secondary uppercase tracking-wide">
                 <PiggyBank className="h-3 w-3" />
-                Projets
+                Épargne particulière
               </div>
               <div className="space-y-1.5">
                 {standardProjects.map((project) => {
                   const allocation = yearlyData[month]?.[project.id] || 0;
                   const expense = yearlyExpenses[month]?.[project.id] || 0;
+                  // Recurring "épargne particulière" is auto-filled from its
+                  // monthly amount + date window → read-only here.
+                  const isRecurring = isSavingsRecurring(project);
                   return (
                     <div
                       key={project.id}
@@ -338,9 +342,10 @@ const MonthCard = memo(function MonthCard(props: MonthCardProps) {
                                 parseFloat(e.target.value) || 0
                               )
                             }
-                            disabled={isLocked}
+                            disabled={isLocked || isRecurring}
+                            title={isRecurring ? "Montant automatique (épargne particulière)" : undefined}
                             placeholder="0"
-                            className="h-9 text-sm font-mono"
+                            className="h-9 text-sm font-mono disabled:opacity-70"
                           />
                         </div>
                         <div>

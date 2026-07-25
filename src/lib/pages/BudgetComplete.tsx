@@ -17,6 +17,7 @@ import {
   convertNewFormatToOld,
   autoLockPastMonths,
   lockedMonthsEqual,
+  syncRecurringSavings,
   type Person,
   type Charge,
   type Project,
@@ -57,9 +58,10 @@ import {
   LayoutDashboard,
   Users,
   Receipt,
-  Target,
+  PiggyBank,
   CalendarDays,
   FlaskConical,
+  Sparkles,
 } from 'lucide-react';
 import {
   Dialog,
@@ -89,8 +91,9 @@ const BUDGET_NAV_ITEMS: NavItem[] = [
   { id: 'overview', label: "Vue d'ensemble", icon: LayoutDashboard },
   { id: 'members', label: 'Membres', icon: Users },
   { id: 'charges', label: 'Charges', icon: Receipt },
-  { id: 'projects', label: 'Projets', icon: Target },
+  { id: 'projects', label: 'Épargne', icon: PiggyBank },
   { id: 'calendar', label: 'Calendrier', icon: CalendarDays },
+  { id: 'ai', label: 'Budget IA', icon: Sparkles },
   { id: 'reality', label: 'Reality Check', icon: FlaskConical },
 ];
 
@@ -189,7 +192,6 @@ export default function BudgetCompleteLayout() {
       setPeople(data.people || []);
       setCharges(data.charges || []);
       setProjects(data.projects || []);
-      setYearlyData(data.yearlyData || {});
       setYearlyExpenses(data.yearlyExpenses || {});
       setOneTimeIncomes(data.oneTimeIncomes || {});
       setMonthComments(data.monthComments || {});
@@ -200,6 +202,16 @@ export default function BudgetCompleteLayout() {
         data.currentYear || new Date().getFullYear()
       );
       setLockedMonths(autoLockedResult);
+      // Auto-fill the calendar for recurring "épargne particulière" savings,
+      // skipping locked months so history is preserved.
+      setYearlyData(
+        syncRecurringSavings(
+          data.projects || [],
+          data.yearlyData || {},
+          autoLockedResult,
+          data.currentYear || new Date().getFullYear()
+        )
+      );
       if (!lockedMonthsEqual(loadedLockedMonths, autoLockedResult)) {
         // Defer persistence until after the autosave hook has been wired
         // up — the effect below catches this flag once lockedMonths flushes.
@@ -391,8 +403,13 @@ export default function BudgetCompleteLayout() {
 
   const handleProjectsChange = useCallback((newProjects: Project[]) => {
     setProjects(newProjects);
+    // Re-fill the calendar so a new/edited recurring "épargne particulière"
+    // (monthly amount or date window) is reflected immediately.
+    setYearlyData((prev) =>
+      syncRecurringSavings(newProjects, prev, lockedMonths, currentYear)
+    );
     triggerModified();
-  }, [triggerModified]);
+  }, [triggerModified, lockedMonths, currentYear]);
 
   const handleYearlyDataChange = useCallback((d: YearlyData) => {
     setYearlyData(d);
@@ -421,8 +438,11 @@ export default function BudgetCompleteLayout() {
 
   const handleLockedMonthsChange = useCallback((d: LockedMonths) => {
     setLockedMonths(d);
+    // Unlocking a month should re-apply recurring savings; locking one freezes
+    // its current value (syncRecurringSavings skips locked months).
+    setYearlyData((prev) => syncRecurringSavings(projects, prev, d, currentYear));
     triggerModified();
-  }, [triggerModified]);
+  }, [triggerModified, projects, currentYear]);
 
   const handleSetBudgetTitle = useCallback((title: string) => {
     setBudgetTitle(title);
@@ -434,6 +454,10 @@ export default function BudgetCompleteLayout() {
   // ============================================================================
   const handleYearChange = useCallback((year: number) => {
     setCurrentYear(year);
+    // Locks that will apply to the target year, so recurring savings skip
+    // locked (historical) months when we auto-fill below.
+    const nextLocked = autoLockPastMonths(lockedMonths, year);
+
     if (globalDataRef.current?.yearlyData?.[year]) {
       const yearData = globalDataRef.current.yearlyData[year];
       const newYearly: YearlyData = {};
@@ -452,13 +476,13 @@ export default function BudgetCompleteLayout() {
         }
       });
 
-      setYearlyData(newYearly);
+      setYearlyData(syncRecurringSavings(projects, newYearly, nextLocked, year));
       setYearlyExpenses(newExpenses);
       setOneTimeIncomes(newOneTime);
       setMonthComments(newMc);
       setProjectComments(newPc);
     } else {
-      setYearlyData({});
+      setYearlyData(syncRecurringSavings(projects, {}, nextLocked, year));
       setYearlyExpenses({});
       setOneTimeIncomes({});
       setMonthComments({});
@@ -471,7 +495,7 @@ export default function BudgetCompleteLayout() {
       }
       return next;
     });
-  }, []);
+  }, [projects, lockedMonths]);
 
   // ============================================================================
   // BANKING
