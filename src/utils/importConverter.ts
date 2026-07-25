@@ -22,6 +22,13 @@ export interface Project {
   id: string;
   label: string;
   targetAmount?: number;
+  // "Épargne particulière" : montant fixe mis de côté chaque mois, avec une
+  // fenêtre optionnelle (début/fin) exactement comme une charge. Quand
+  // `monthlyAmount` est défini, l'allocation du calendrier est renseignée
+  // automatiquement pour les mois actifs (voir syncRecurringSavings).
+  monthlyAmount?: number;
+  startDate?: string;
+  endDate?: string;
 }
 
 export interface YearlyData {
@@ -336,6 +343,84 @@ export function convertNewFormatToOld(newData: ConvertedBudgetData): RawBudgetDa
 }
 
 export const FRENCH_MONTHS = MONTHS;
+
+// ============================================================================
+// ÉPARGNE PARTICULIÈRE (recurring dedicated savings)
+// ============================================================================
+
+/**
+ * A project is a recurring "épargne particulière" when it carries a
+ * `monthlyAmount`. Legacy goal-only projects (targetAmount, manual monthly
+ * entries) leave `monthlyAmount` undefined and keep their manual behaviour.
+ */
+export function isSavingsRecurring(project: Project): boolean {
+  return typeof project.monthlyAmount === 'number' && !Number.isNaN(project.monthlyAmount);
+}
+
+/**
+ * Whether a recurring saving is active in a given month, based on its optional
+ * start/end window. Mirrors the charge active-window logic used elsewhere.
+ */
+export function isSavingsActive(project: Project, year: number, monthIndex: number): boolean {
+  const monthStart = new Date(year, monthIndex, 1);
+  const monthEnd = new Date(year, monthIndex + 1, 0);
+  if (project.startDate) {
+    const start = new Date(project.startDate);
+    if (start > monthEnd) return false;
+  }
+  if (project.endDate) {
+    const end = new Date(project.endDate);
+    if (end < monthStart) return false;
+  }
+  return true;
+}
+
+/**
+ * Auto-fills the calendar allocations (`yearlyData`) for every recurring
+ * "épargne particulière" of the given year:
+ *   - active + unlocked month  → allocation = monthlyAmount
+ *   - inactive + unlocked month → allocation = 0
+ *   - locked month             → left untouched (preserves history)
+ *
+ * The definition (monthlyAmount + start/end) is authoritative, just like a
+ * charge. Returns the SAME reference when nothing changed so callers can feed
+ * it straight into setState without triggering needless renders or autosaves.
+ */
+export function syncRecurringSavings(
+  projects: Project[],
+  yearlyData: YearlyData,
+  lockedMonths: LockedMonths,
+  year: number
+): YearlyData {
+  const recurring = projects.filter(isSavingsRecurring);
+  if (recurring.length === 0) return yearlyData;
+
+  let changed = false;
+  const next: YearlyData = { ...yearlyData };
+
+  MONTHS.forEach((month, idx) => {
+    if (lockedMonths[month]) return; // preserve locked (historical) months
+
+    const current = next[month] || {};
+    const updated = { ...current };
+    let monthChanged = false;
+
+    recurring.forEach((project) => {
+      const target = isSavingsActive(project, year, idx) ? (project.monthlyAmount || 0) : 0;
+      if ((updated[project.id] || 0) !== target) {
+        updated[project.id] = target;
+        monthChanged = true;
+      }
+    });
+
+    if (monthChanged) {
+      next[month] = updated;
+      changed = true;
+    }
+  });
+
+  return changed ? next : yearlyData;
+}
 
 /**
  * Shallow-equal check for two LockedMonths maps. Used by the load and
