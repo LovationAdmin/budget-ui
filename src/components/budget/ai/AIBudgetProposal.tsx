@@ -33,8 +33,6 @@ import {
   Lightbulb,
   RotateCcw,
   SlidersHorizontal,
-  Plus,
-  Trash2,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { budgetAPI } from '@/services/api';
@@ -67,7 +65,7 @@ const FEASIBILITY_STYLES: Record<Feasibility, { ring: string; badge: string; lab
   infeasible: { ring: 'border-red-200 bg-red-50/50', badge: 'bg-red-100 text-red-700', label: 'Intenable' },
 };
 
-type View = 'intake' | 'loading' | 'result';
+type View = 'intake' | 'loading' | 'result' | 'error';
 
 export default function AIBudgetProposal() {
   const {
@@ -86,6 +84,8 @@ export default function AIBudgetProposal() {
   const [proposal, setProposal] = useState<BudgetProposal | null>(null);
   const [simulating, setSimulating] = useState(false);
   const [undoSnapshot, setUndoSnapshot] = useState<Project[] | null>(null);
+  const [errorMsg, setErrorMsg] = useState<string>('');
+  const [elapsed, setElapsed] = useState(0);
 
   // ---- Intake state (prefilled from the budget) ----
   const [householdType, setHouseholdType] = useState<HouseholdType>('couple');
@@ -94,68 +94,25 @@ export default function AIBudgetProposal() {
   const [preferredMethod, setPreferredMethod] = useState<Method | 'auto'>('auto');
   const [freeText, setFreeText] = useState('');
 
-  const [members, setMembers] = useState(() =>
-    people.map((p) => ({
-      id: p.id,
-      label: p.name || 'Membre',
-      netIncome: p.salary || 0,
-      variableIncomeYearly: '' as number | '',
-      personalSpendingMonthly: '' as number | '',
-    })),
-  );
-
-  const updateMember = (id: string, patch: Partial<(typeof members)[number]>) => {
-    setMembers((prev) => prev.map((m) => (m.id === id ? { ...m, ...patch } : m)));
-  };
-  const addMember = () => {
-    setMembers((prev) => [
-      ...prev,
-      { id: `m-${Date.now()}`, label: '', netIncome: 0, variableIncomeYearly: '' as number | '', personalSpendingMonthly: '' as number | '' },
-    ]);
-  };
-  const removeMember = (id: string) => setMembers((prev) => prev.filter((m) => m.id !== id));
-
-  // Charges are editable here too (prefilled from the budget).
-  const [chargeRows, setChargeRows] = useState(() =>
-    charges.map((c) => ({
-      id: c.id,
-      label: c.label,
-      amount: (c.amount ?? '') as number | '',
-      category: c.category || 'autre',
-    })),
-  );
-  const updateCharge = (id: string, patch: Partial<(typeof chargeRows)[number]>) => {
-    setChargeRows((prev) => prev.map((c) => (c.id === id ? { ...c, ...patch } : c)));
-  };
-  const addCharge = () => {
-    setChargeRows((prev) => [
-      ...prev,
-      { id: `c-${Date.now()}`, label: '', amount: '' as number | '', category: 'autre' },
-    ]);
-  };
-  const removeCharge = (id: string) => setChargeRows((prev) => prev.filter((c) => c.id !== id));
-
   // Simulator: per-envelope monthly contribution overrides (by name).
   const [envOverrides, setEnvOverrides] = useState<Record<string, number>>({});
 
+  // Members / charges / objectives are taken from the budget itself — the user
+  // never re-types them here; the free text carries everything else.
   const buildInput = (): HouseholdInput => ({
     householdType,
     country: budgetLocation || 'FR',
-    members: members.map((m) => ({
-      id: m.id,
-      label: m.label,
-      netIncome: Number(m.netIncome) || 0,
-      ...(m.variableIncomeYearly !== '' ? { variableIncomeYearly: Number(m.variableIncomeYearly) } : {}),
-      ...(m.personalSpendingMonthly !== '' ? { personalSpendingMonthly: Number(m.personalSpendingMonthly) } : {}),
+    members: people.map((p) => ({
+      id: p.id,
+      label: p.name || 'Membre',
+      netIncome: p.salary || 0,
     })),
-    charges: chargeRows
-      .filter((c) => c.label.trim() !== '' || c.amount !== '')
-      .map((c) => ({
-        label: c.label.trim() || 'Charge',
-        amount: Number(c.amount) || 0,
-        category: c.category || 'autre',
-        scope: 'common' as const,
-      })),
+    charges: charges.map((c) => ({
+      label: c.label,
+      amount: c.amount,
+      category: c.category || 'autre',
+      scope: 'common' as const,
+    })),
     objectives: projects.map((p) => ({
       label: p.label,
       ...(p.targetAmount ? { targetAmount: p.targetAmount } : {}),
@@ -168,25 +125,47 @@ export default function AIBudgetProposal() {
   });
 
   const generate = async () => {
-    if (members.length === 0) {
-      toast({ title: 'Aucun membre', description: 'Ajoutez au moins un membre au budget.', variant: 'destructive' });
+    if (people.length === 0) {
+      toast({
+        title: 'Aucun membre',
+        description: "Ajoutez d'abord les membres du foyer (onglet Membres).",
+        variant: 'destructive',
+      });
       return;
     }
+    if (freeText.trim().length < 20) {
+      toast({
+        title: 'Décrivez votre situation',
+        description: 'Écrivez quelques phrases sur vos objectifs et contraintes pour guider l’IA.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setErrorMsg('');
+    setElapsed(0);
     setView('loading');
+    const started = Date.now();
+    const ticker = window.setInterval(() => setElapsed(Math.floor((Date.now() - started) / 1000)), 1000);
     try {
-      const res = await budgetAPI.generateAIProposal(buildInput());
+      // Generous client timeout so a stuck request surfaces an error instead of
+      // spinning forever (the LLM call can take ~20-40s).
+      const res = await budgetAPI.generateAIProposal(buildInput(), { timeout: 120000 });
       setProposal(res.data);
       setEnvOverrides({});
       setSimulating(false);
       setView('result');
     } catch (err: unknown) {
-      const anyErr = err as { response?: { data?: { error?: string } } };
-      toast({
-        title: 'Échec de la génération',
-        description: anyErr?.response?.data?.error || "L'IA n'a pas pu proposer de budget. Réessayez.",
-        variant: 'destructive',
-      });
-      setView('intake');
+      const anyErr = err as { code?: string; response?: { data?: { error?: string } } };
+      const timedOut = anyErr?.code === 'ECONNABORTED';
+      setErrorMsg(
+        timedOut
+          ? "L'IA met trop de temps à répondre. Réessayez dans un instant."
+          : anyErr?.response?.data?.error || "L'IA n'a pas pu proposer de budget. Réessayez dans un instant.",
+      );
+      setView('error');
+    } finally {
+      window.clearInterval(ticker);
     }
   };
 
@@ -257,7 +236,8 @@ export default function AIBudgetProposal() {
     toast({ title: 'Proposition rejetée', description: 'Aucune modification apportée à votre budget.' });
   };
 
-  const memberLabel = (id: string): string => members.find((m) => m.id === id)?.label || id;
+  // Members come straight from the budget (People tab); labels resolve from there.
+  const memberLabel = (id: string): string => people.find((p) => p.id === id)?.name || id;
 
   // =====================================================================
   // RENDER
@@ -265,9 +245,34 @@ export default function AIBudgetProposal() {
   if (view === 'loading') {
     return (
       <Card className="border-primary/20">
-        <CardContent className="flex flex-col items-center justify-center py-20 gap-4">
+        <CardContent className="flex flex-col items-center justify-center py-20 gap-4 text-center">
           <Loader2 className="h-10 w-10 animate-spin text-primary" />
           <p className="text-sm text-muted-foreground">L'IA construit une répartition juste et soutenable…</p>
+          <p className="text-xs text-muted-foreground/70">
+            {elapsed}s · cela prend généralement 20 à 40 secondes.
+          </p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (view === 'error') {
+    return (
+      <Card className="border-red-200">
+        <CardContent className="flex flex-col items-center justify-center py-16 gap-4 text-center">
+          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-red-100 text-red-600">
+            <AlertTriangle className="h-6 w-6" />
+          </div>
+          <div>
+            <p className="font-medium">La génération a échoué</p>
+            <p className="text-sm text-muted-foreground max-w-sm mt-1">{errorMsg}</p>
+          </div>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => setView('intake')}>Modifier ma demande</Button>
+            <Button onClick={generate}>
+              <RotateCcw className="h-4 w-4 mr-1" /> Réessayer
+            </Button>
+          </div>
         </CardContent>
       </Card>
     );
@@ -551,105 +556,38 @@ export default function AIBudgetProposal() {
             </label>
           </div>
 
-          {/* Members */}
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <Label className="text-xs">Membres & revenus</Label>
-              <Button type="button" size="sm" variant="outline" onClick={addMember} className="h-8 gap-1">
-                <Plus className="h-3.5 w-3.5" /> Ajouter un membre
-              </Button>
-            </div>
-            {members.length === 0 && (
-              <p className="text-sm text-muted-foreground">Aucun membre. Cliquez sur « Ajouter un membre » pour commencer.</p>
-            )}
-            {members.map((m) => (
-              <div key={m.id} className="relative grid grid-cols-2 sm:grid-cols-4 gap-2 items-end rounded-lg border border-border/60 p-3 pr-9">
-                <div className="space-y-1">
-                  <Label className="text-[10px] text-muted-foreground">Nom</Label>
-                  <Input value={m.label} onChange={(e) => updateMember(m.id, { label: e.target.value })} className="h-8" placeholder="Alex" />
-                </div>
-                <div className="space-y-1">
-                  <Label className="text-[10px] text-muted-foreground">Salaire net ({sym})</Label>
-                  <Input type="number" value={m.netIncome} onChange={(e) => updateMember(m.id, { netIncome: Number(e.target.value) })} className="h-8 font-mono" />
-                </div>
-                <div className="space-y-1">
-                  <Label className="text-[10px] text-muted-foreground">Variable/an ({sym})</Label>
-                  <Input type="number" value={m.variableIncomeYearly} onChange={(e) => updateMember(m.id, { variableIncomeYearly: e.target.value === '' ? '' : Number(e.target.value) })} className="h-8 font-mono" placeholder="prime…" />
-                </div>
-                <div className="space-y-1">
-                  <Label className="text-[10px] text-muted-foreground">Perso/mois ({sym})</Label>
-                  <Input type="number" value={m.personalSpendingMonthly} onChange={(e) => updateMember(m.id, { personalSpendingMonthly: e.target.value === '' ? '' : Number(e.target.value) })} className="h-8 font-mono" placeholder="lifestyle" />
-                </div>
-                <Button
-                  type="button"
-                  size="icon"
-                  variant="ghost"
-                  onClick={() => removeMember(m.id)}
-                  className="absolute top-1.5 right-1.5 h-7 w-7 text-muted-foreground hover:text-red-500"
-                  title="Retirer ce membre"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </div>
-            ))}
-          </div>
-
-          {/* Charges (editable, prefilled from the budget) */}
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <Label className="text-xs">Charges communes</Label>
-              <Button type="button" size="sm" variant="outline" onClick={addCharge} className="h-8 gap-1">
-                <Plus className="h-3.5 w-3.5" /> Ajouter une charge
-              </Button>
-            </div>
-            {chargeRows.length === 0 && (
-              <p className="text-sm text-muted-foreground">Aucune charge. Ajoutez vos dépenses fixes (loyer, courses…).</p>
-            )}
-            {chargeRows.map((c) => (
-              <div key={c.id} className="relative grid grid-cols-2 gap-2 items-end rounded-lg border border-border/60 p-3 pr-9">
-                <div className="space-y-1">
-                  <Label className="text-[10px] text-muted-foreground">Libellé</Label>
-                  <Input value={c.label} onChange={(e) => updateCharge(c.id, { label: e.target.value })} className="h-8" placeholder="Loyer" />
-                </div>
-                <div className="space-y-1">
-                  <Label className="text-[10px] text-muted-foreground">Montant/mois ({sym})</Label>
-                  <Input type="number" value={c.amount} onChange={(e) => updateCharge(c.id, { amount: e.target.value === '' ? '' : Number(e.target.value) })} className="h-8 font-mono" />
-                </div>
-                <Button
-                  type="button"
-                  size="icon"
-                  variant="ghost"
-                  onClick={() => removeCharge(c.id)}
-                  className="absolute top-1.5 right-1.5 h-7 w-7 text-muted-foreground hover:text-red-500"
-                  title="Retirer cette charge"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </div>
-            ))}
-          </div>
-
-          {/* Context summary */}
-          <div className="flex flex-wrap gap-2 text-xs">
-            <Badge variant="secondary">{projects.length} objectif(s) d'épargne repris du budget</Badge>
-            {budget?.members && <Badge variant="secondary">{budget.members.length} membre(s) partagé(s)</Badge>}
-          </div>
-
-          {/* Free text */}
+          {/* Free text — the primary input */}
           <div className="space-y-1.5">
-            <Label className="text-xs">Votre situation, en toutes lettres</Label>
+            <Label className="text-sm font-medium">Décrivez votre situation, en toutes lettres</Label>
             <Textarea
               value={freeText}
               onChange={(e) => setFreeText(e.target.value)}
-              rows={6}
-              placeholder="Racontez : objectifs (mariage, apport, voyage), contraintes, événements de vie à venir, ce que vous voulez pour votre argent de poche…"
+              rows={8}
+              placeholder="Ex : On est en couple, on veut fusionner nos comptes. On vise un apport pour un appart d'ici 3-4 ans, un mariage l'an prochain, et un gros voyage l'été. Léa a une prime annuelle. On aimerait garder chacun un peu d'argent de poche…"
             />
-            <p className="text-[11px] text-muted-foreground">Plus vous détaillez, plus la proposition sera juste. Vos données restent traitées côté serveur.</p>
+            <p className="text-[11px] text-muted-foreground">
+              Objectifs, contraintes, événements de vie à venir, argent de poche souhaité, primes… Plus vous détaillez,
+              plus la proposition sera juste. Traitement côté serveur.
+            </p>
           </div>
 
-          <Button onClick={generate} className="w-full" size="lg">
+          {/* Transparency: the AI also uses the budget's own data */}
+          <div className="rounded-lg border border-border/60 bg-muted/30 p-3 text-xs text-muted-foreground">
+            L'IA s'appuie aussi sur les données de votre budget —{' '}
+            <span className="font-medium text-foreground">{people.length} membre(s)</span> et leurs revenus,{' '}
+            <span className="font-medium text-foreground">{charges.length} charge(s)</span>,{' '}
+            <span className="font-medium text-foreground">{projects.length} objectif(s)</span>. Pas besoin de les ressaisir
+            ici : ajustez-les dans les onglets <em>Membres</em>, <em>Charges</em> et <em>Épargne</em> si nécessaire.
+          </div>
+
+          <Button onClick={generate} className="w-full" size="lg" disabled={people.length === 0}>
             <Sparkles className="h-4 w-4 mr-2" /> Générer la proposition
           </Button>
+          {people.length === 0 && (
+            <p className="text-xs text-muted-foreground text-center -mt-2">
+              Ajoutez d'abord au moins un membre dans l'onglet <em>Membres</em>.
+            </p>
+          )}
         </CardContent>
       </Card>
     </div>

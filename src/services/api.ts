@@ -372,8 +372,9 @@ export const budgetAPI = {
   // Serveur : traitement confidentiel, ne journalise ni le texte ni les montants.
   generateAIProposal: (
     input: HouseholdInput,
+    config?: { timeout?: number },
   ): Promise<AxiosResponse<BudgetProposal>> =>
-    api.post('/budgets/ai-proposal', input),
+    api.post('/budgets/ai-proposal', input, config),
 
   // Market Suggestions — bulk (async, retour via WS)
   bulkAnalyzeSuggestions: (
