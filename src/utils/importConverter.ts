@@ -484,6 +484,34 @@ export function lockedMonthsEqual(a: LockedMonths, b: LockedMonths): boolean {
 }
 
 /**
+ * One-shot migration for legacy budgets whose global (cross-year) lock map got
+ * "contaminated" — e.g. visiting a past year locked all 12 months in the shared
+ * map, which then made the current/next year look fully locked.
+ *
+ * It removes locks on months that are strictly in the FUTURE relative to today
+ * for the given year. Auto-lock never locks future months, so a locked future
+ * month can only come from that contamination. Past-month locks (legitimate
+ * frozen history) are preserved. Only run this when the payload has no per-year
+ * lock data yet; once locks are stored per year the map is trustworthy.
+ */
+export function clearFutureLocks(
+  lockedMonths: LockedMonths,
+  year: number,
+  now: Date = new Date()
+): LockedMonths {
+  const todayYear = now.getFullYear();
+  const todayMonthIndex = now.getMonth();
+  const next: LockedMonths = { ...lockedMonths };
+  MONTHS.forEach((month, idx) => {
+    const isFuture = year > todayYear || (year === todayYear && idx > todayMonthIndex);
+    if (isFuture && Object.prototype.hasOwnProperty.call(next, month)) {
+      delete next[month];
+    }
+  });
+  return next;
+}
+
+/**
  * Returns lockedMonths with past months in `currentYear` auto-locked,
  * preserving any explicit user choices (true or false) already in the map.
  *
