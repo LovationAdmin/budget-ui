@@ -17,6 +17,7 @@ import {
   convertNewFormatToOld,
   autoLockPastMonths,
   lockedMonthsEqual,
+  clearFutureLocks,
   syncRecurringSavings,
   isSavingsRecurring,
   isSavingsActive,
@@ -198,11 +199,15 @@ export default function BudgetCompleteLayout() {
       setOneTimeIncomes(data.oneTimeIncomes || {});
       setMonthComments(data.monthComments || {});
       setProjectComments(data.projectComments || {});
-      const loadedLockedMonths = data.lockedMonths || {};
-      const autoLockedResult = autoLockPastMonths(
-        loadedLockedMonths,
-        data.currentYear || new Date().getFullYear()
-      );
+      const loadYear = data.currentYear || new Date().getFullYear();
+      // Migration: if this payload predates per-year locks, strip contaminated
+      // future-month locks inherited from the old global lock map (one-shot —
+      // once locks are stored per year the map is trustworthy).
+      const hadPerYearLocks = !!rawData?.yearlyData?.[String(loadYear)]?.lockedMonths;
+      const loadedLockedMonths = hadPerYearLocks
+        ? data.lockedMonths || {}
+        : clearFutureLocks(data.lockedMonths || {}, loadYear);
+      const autoLockedResult = autoLockPastMonths(loadedLockedMonths, loadYear);
       setLockedMonths(autoLockedResult);
       // Auto-fill the calendar for recurring "épargne particulière" savings,
       // skipping locked months so history is preserved.
