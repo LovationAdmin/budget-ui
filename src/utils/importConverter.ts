@@ -299,8 +299,58 @@ export function convertOldFormatToNew(oldData: RawBudgetData): ConvertedBudgetDa
   return newData;
 }
 
-export function convertNewFormatToOld(newData: ConvertedBudgetData): RawBudgetData {
+/**
+ * Serializes the current-year flat state back to the stored (year-based) format.
+ *
+ * `previousData` is the full multi-year payload currently held in memory
+ * (globalDataRef). Its OTHER years are preserved so that saving/switching on one
+ * year never wipes the others — this is the fix for cross-year misalignment.
+ * Only 4-digit-year keys are carried over: a legacy month-name payload holds a
+ * single year, already captured in the current flat state, so there is nothing
+ * else to preserve. `chargeMappings` (not part of ConvertedBudgetData) is passed
+ * through from the state bag or the previous payload so it survives a save too.
+ */
+export function convertNewFormatToOld(
+  newData: ConvertedBudgetData,
+  previousData?: RawBudgetData
+): RawBudgetData {
   const year = newData.currentYear || new Date().getFullYear();
+
+  const prevYearly: Record<string, unknown> = {};
+  const prevOneTime: Record<string, unknown> = {};
+  const py = (previousData as any)?.yearlyData;
+  const po = (previousData as any)?.oneTimeIncomes;
+  if (py && typeof py === 'object') {
+    for (const [k, v] of Object.entries(py)) {
+      if (/^\d{4}$/.test(k)) prevYearly[k] = v;
+    }
+  }
+  if (po && typeof po === 'object') {
+    for (const [k, v] of Object.entries(po)) {
+      if (/^\d{4}$/.test(k)) prevOneTime[k] = v;
+    }
+  }
+
+  const currentYearData = {
+    months: [] as Array<Record<string, number>>,
+    expenses: [] as Array<Record<string, number>>,
+    monthComments: [] as string[],
+    expenseComments: [] as Array<Record<string, string>>,
+    deletedMonths: [] as number[],
+  };
+  const currentOneTime: Array<{ amount: number; description: string }> = [];
+
+  MONTHS.forEach(month => {
+    currentYearData.months.push(newData.yearlyData[month] || {});
+    currentYearData.expenses.push(newData.yearlyExpenses[month] || {});
+    currentYearData.monthComments.push(newData.monthComments?.[month] || '');
+    currentYearData.expenseComments.push(newData.projectComments?.[month] || {});
+    currentOneTime.push({
+      amount: newData.oneTimeIncomes?.[month] || 0,
+      description: '',
+    });
+  });
+
   const oldData: any = {
     budgetTitle: newData.budgetTitle,
     currentYear: year,
@@ -308,36 +358,22 @@ export function convertNewFormatToOld(newData: ConvertedBudgetData): RawBudgetDa
     charges: newData.charges,
     projects: newData.projects,
     yearlyData: {
-      [year]: {
-        months: [],
-        expenses: [],
-        monthComments: [],
-        expenseComments: [],
-        deletedMonths: []
-      }
+      ...prevYearly,
+      [year]: currentYearData,
     },
     oneTimeIncomes: {
-      [year]: []
+      ...prevOneTime,
+      [year]: currentOneTime,
     },
     lockedMonths: newData.lockedMonths || {},
-    date: new Date().toISOString()
+    date: new Date().toISOString(),
   };
 
-  MONTHS.forEach(month => {
-    const allocationData = newData.yearlyData[month] || {};
-    const expenseData = newData.yearlyExpenses[month] || {};
-
-    oldData.yearlyData[year].months.push(allocationData);
-    oldData.yearlyData[year].expenses.push(expenseData);
-
-    oldData.yearlyData[year].monthComments.push(newData.monthComments?.[month] || '');
-    oldData.yearlyData[year].expenseComments.push(newData.projectComments?.[month] || {});
-
-    oldData.oneTimeIncomes[year].push({
-      amount: newData.oneTimeIncomes?.[month] || 0,
-      description: ''
-    });
-  });
+  const chargeMappings =
+    (newData as any).chargeMappings ?? (previousData as any)?.chargeMappings;
+  if (chargeMappings !== undefined) {
+    oldData.chargeMappings = chargeMappings;
+  }
 
   return oldData;
 }

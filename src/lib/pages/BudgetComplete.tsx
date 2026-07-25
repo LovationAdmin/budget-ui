@@ -321,7 +321,8 @@ export default function BudgetCompleteLayout() {
     saveStateMachine.markSaving();
 
     try {
-      // ✅ FIX: convertNewFormatToOld takes a SINGLE arg (state bag)
+      // Merge the current year into the existing multi-year payload so other
+      // years are preserved (fix for cross-year data loss / misalignment).
       const newData = convertNewFormatToOld({
         budgetTitle,
         currentYear,
@@ -335,7 +336,7 @@ export default function BudgetCompleteLayout() {
         projectComments,
         lockedMonths,
         chargeMappings,
-      } as any);
+      } as any, globalDataRef.current);
 
       globalDataRef.current = newData;
 
@@ -453,6 +454,26 @@ export default function BudgetCompleteLayout() {
   // YEAR
   // ============================================================================
   const handleYearChange = useCallback((year: number) => {
+    if (year === currentYear) return;
+
+    // Flush the OUTGOING year's edits into the multi-year payload before we load
+    // another year. Without this, switching years drops any changes not yet
+    // persisted (and, combined with the save merge, keeps every year intact).
+    globalDataRef.current = convertNewFormatToOld({
+      budgetTitle,
+      currentYear,
+      people,
+      charges,
+      projects,
+      yearlyData,
+      yearlyExpenses,
+      oneTimeIncomes,
+      monthComments,
+      projectComments,
+      lockedMonths,
+      chargeMappings,
+    } as any, globalDataRef.current);
+
     setCurrentYear(year);
     // Locks that will apply to the target year, so recurring savings skip
     // locked (historical) months when we auto-fill below.
@@ -495,7 +516,25 @@ export default function BudgetCompleteLayout() {
       }
       return next;
     });
-  }, [projects, lockedMonths]);
+
+    // Persist the flushed multi-year payload so the outgoing year's edits reach
+    // the server even if the user leaves without touching the new year.
+    triggerModified();
+  }, [
+    currentYear,
+    budgetTitle,
+    people,
+    charges,
+    projects,
+    yearlyData,
+    yearlyExpenses,
+    oneTimeIncomes,
+    monthComments,
+    projectComments,
+    lockedMonths,
+    chargeMappings,
+    triggerModified,
+  ]);
 
   // ============================================================================
   // BANKING
