@@ -61,6 +61,7 @@ import {
   PiggyBank,
   CalendarDays,
   FlaskConical,
+  Sparkles,
 } from 'lucide-react';
 import {
   Dialog,
@@ -92,6 +93,7 @@ const BUDGET_NAV_ITEMS: NavItem[] = [
   { id: 'charges', label: 'Charges', icon: Receipt },
   { id: 'projects', label: 'Épargne', icon: PiggyBank },
   { id: 'calendar', label: 'Calendrier', icon: CalendarDays },
+  { id: 'ai', label: 'Budget IA', icon: Sparkles },
   { id: 'reality', label: 'Reality Check', icon: FlaskConical },
 ];
 
