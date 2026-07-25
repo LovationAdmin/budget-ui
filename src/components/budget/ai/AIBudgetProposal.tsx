@@ -33,6 +33,8 @@ import {
   Lightbulb,
   RotateCcw,
   SlidersHorizontal,
+  Plus,
+  Trash2,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { budgetAPI } from '@/services/api';
@@ -105,6 +107,33 @@ export default function AIBudgetProposal() {
   const updateMember = (id: string, patch: Partial<(typeof members)[number]>) => {
     setMembers((prev) => prev.map((m) => (m.id === id ? { ...m, ...patch } : m)));
   };
+  const addMember = () => {
+    setMembers((prev) => [
+      ...prev,
+      { id: `m-${Date.now()}`, label: '', netIncome: 0, variableIncomeYearly: '' as number | '', personalSpendingMonthly: '' as number | '' },
+    ]);
+  };
+  const removeMember = (id: string) => setMembers((prev) => prev.filter((m) => m.id !== id));
+
+  // Charges are editable here too (prefilled from the budget).
+  const [chargeRows, setChargeRows] = useState(() =>
+    charges.map((c) => ({
+      id: c.id,
+      label: c.label,
+      amount: (c.amount ?? '') as number | '',
+      category: c.category || 'autre',
+    })),
+  );
+  const updateCharge = (id: string, patch: Partial<(typeof chargeRows)[number]>) => {
+    setChargeRows((prev) => prev.map((c) => (c.id === id ? { ...c, ...patch } : c)));
+  };
+  const addCharge = () => {
+    setChargeRows((prev) => [
+      ...prev,
+      { id: `c-${Date.now()}`, label: '', amount: '' as number | '', category: 'autre' },
+    ]);
+  };
+  const removeCharge = (id: string) => setChargeRows((prev) => prev.filter((c) => c.id !== id));
 
   // Simulator: per-envelope monthly contribution overrides (by name).
   const [envOverrides, setEnvOverrides] = useState<Record<string, number>>({});
@@ -119,12 +148,14 @@ export default function AIBudgetProposal() {
       ...(m.variableIncomeYearly !== '' ? { variableIncomeYearly: Number(m.variableIncomeYearly) } : {}),
       ...(m.personalSpendingMonthly !== '' ? { personalSpendingMonthly: Number(m.personalSpendingMonthly) } : {}),
     })),
-    charges: charges.map((c) => ({
-      label: c.label,
-      amount: c.amount,
-      category: c.category || 'autre',
-      scope: 'common' as const,
-    })),
+    charges: chargeRows
+      .filter((c) => c.label.trim() !== '' || c.amount !== '')
+      .map((c) => ({
+        label: c.label.trim() || 'Charge',
+        amount: Number(c.amount) || 0,
+        category: c.category || 'autre',
+        scope: 'common' as const,
+      })),
     objectives: projects.map((p) => ({
       label: p.label,
       ...(p.targetAmount ? { targetAmount: p.targetAmount } : {}),
@@ -522,15 +553,20 @@ export default function AIBudgetProposal() {
 
           {/* Members */}
           <div className="space-y-2">
-            <Label className="text-xs">Membres & revenus</Label>
+            <div className="flex items-center justify-between">
+              <Label className="text-xs">Membres & revenus</Label>
+              <Button type="button" size="sm" variant="outline" onClick={addMember} className="h-8 gap-1">
+                <Plus className="h-3.5 w-3.5" /> Ajouter un membre
+              </Button>
+            </div>
             {members.length === 0 && (
-              <p className="text-sm text-muted-foreground">Aucun membre dans ce budget. Ajoutez des personnes d'abord.</p>
+              <p className="text-sm text-muted-foreground">Aucun membre. Cliquez sur « Ajouter un membre » pour commencer.</p>
             )}
             {members.map((m) => (
-              <div key={m.id} className="grid grid-cols-2 sm:grid-cols-4 gap-2 items-end rounded-lg border border-border/60 p-3">
+              <div key={m.id} className="relative grid grid-cols-2 sm:grid-cols-4 gap-2 items-end rounded-lg border border-border/60 p-3 pr-9">
                 <div className="space-y-1">
                   <Label className="text-[10px] text-muted-foreground">Nom</Label>
-                  <Input value={m.label} onChange={(e) => updateMember(m.id, { label: e.target.value })} className="h-8" />
+                  <Input value={m.label} onChange={(e) => updateMember(m.id, { label: e.target.value })} className="h-8" placeholder="Alex" />
                 </div>
                 <div className="space-y-1">
                   <Label className="text-[10px] text-muted-foreground">Salaire net ({sym})</Label>
@@ -544,15 +580,59 @@ export default function AIBudgetProposal() {
                   <Label className="text-[10px] text-muted-foreground">Perso/mois ({sym})</Label>
                   <Input type="number" value={m.personalSpendingMonthly} onChange={(e) => updateMember(m.id, { personalSpendingMonthly: e.target.value === '' ? '' : Number(e.target.value) })} className="h-8 font-mono" placeholder="lifestyle" />
                 </div>
+                <Button
+                  type="button"
+                  size="icon"
+                  variant="ghost"
+                  onClick={() => removeMember(m.id)}
+                  className="absolute top-1.5 right-1.5 h-7 w-7 text-muted-foreground hover:text-red-500"
+                  title="Retirer ce membre"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
+            ))}
+          </div>
+
+          {/* Charges (editable, prefilled from the budget) */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <Label className="text-xs">Charges communes</Label>
+              <Button type="button" size="sm" variant="outline" onClick={addCharge} className="h-8 gap-1">
+                <Plus className="h-3.5 w-3.5" /> Ajouter une charge
+              </Button>
+            </div>
+            {chargeRows.length === 0 && (
+              <p className="text-sm text-muted-foreground">Aucune charge. Ajoutez vos dépenses fixes (loyer, courses…).</p>
+            )}
+            {chargeRows.map((c) => (
+              <div key={c.id} className="relative grid grid-cols-2 gap-2 items-end rounded-lg border border-border/60 p-3 pr-9">
+                <div className="space-y-1">
+                  <Label className="text-[10px] text-muted-foreground">Libellé</Label>
+                  <Input value={c.label} onChange={(e) => updateCharge(c.id, { label: e.target.value })} className="h-8" placeholder="Loyer" />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-[10px] text-muted-foreground">Montant/mois ({sym})</Label>
+                  <Input type="number" value={c.amount} onChange={(e) => updateCharge(c.id, { amount: e.target.value === '' ? '' : Number(e.target.value) })} className="h-8 font-mono" />
+                </div>
+                <Button
+                  type="button"
+                  size="icon"
+                  variant="ghost"
+                  onClick={() => removeCharge(c.id)}
+                  className="absolute top-1.5 right-1.5 h-7 w-7 text-muted-foreground hover:text-red-500"
+                  title="Retirer cette charge"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
               </div>
             ))}
           </div>
 
           {/* Context summary */}
           <div className="flex flex-wrap gap-2 text-xs">
-            <Badge variant="secondary">{charges.length} charge(s) prises en compte</Badge>
-            <Badge variant="secondary">{projects.length} objectif(s) d'épargne</Badge>
-            {budget?.members && <Badge variant="secondary">{budget.members.length} membre(s) du budget</Badge>}
+            <Badge variant="secondary">{projects.length} objectif(s) d'épargne repris du budget</Badge>
+            {budget?.members && <Badge variant="secondary">{budget.members.length} membre(s) partagé(s)</Badge>}
           </div>
 
           {/* Free text */}
