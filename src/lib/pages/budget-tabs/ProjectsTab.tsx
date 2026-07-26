@@ -11,6 +11,7 @@ export default function ProjectsTab() {
     projects,
     handleProjectsChange,
     yearlyData,
+    yearlyExpenses,
     currentYear,
     projectCarryOvers,
     budgetCurrency,
@@ -22,6 +23,7 @@ export default function ProjectsTab() {
         projects={projects}
         onProjectsChange={handleProjectsChange}
         yearlyData={yearlyData}
+        yearlyExpenses={yearlyExpenses}
         currentYear={currentYear}
         projectCarryOvers={projectCarryOvers}
         currency={budgetCurrency}

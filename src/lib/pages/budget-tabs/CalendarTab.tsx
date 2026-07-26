@@ -66,7 +66,7 @@ export default function CalendarTab() {
 
       {/* Mobile view */}
       <div className="md:hidden">
-        <MobileMonthlyView {...sharedProps} />
+        <MobileMonthlyView {...sharedProps} onYearChange={handleYearChange} />
       </div>
     </div>
   );

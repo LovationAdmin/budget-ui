@@ -19,7 +19,8 @@
 import { useState, useCallback, useMemo, memo } from 'react';
 import {
   ChevronDown,
-  ChevronUp,
+  ChevronLeft,
+  ChevronRight,
   Lock,
   Unlock,
   MessageSquare,
@@ -130,6 +131,7 @@ interface MobileMonthlyViewProps {
   onMonthCommentsChange: (data: MonthComments) => void;
   onProjectCommentsChange: (data: ProjectComments) => void;
   onLockedMonthsChange: (data: LockedMonths) => void;
+  onYearChange?: (year: number) => void;
 }
 
 // ============================================================================
@@ -507,6 +509,7 @@ export default function MobileMonthlyView({
   onOneTimeIncomesChange,
   onMonthCommentsChange,
   onLockedMonthsChange,
+  onYearChange,
 }: MobileMonthlyViewProps) {
   const currencySymbol = getCurrencySymbol(currency);
   const todayMonthIndex = new Date().getMonth();
@@ -666,9 +669,31 @@ export default function MobileMonthlyView({
     <div className="space-y-3">
       {/* Quick actions */}
       <div className="flex items-center justify-between gap-2 px-1">
-        <Badge variant="secondary" className="font-mono">
-          {currentYear}
-        </Badge>
+        <div className="flex items-center gap-1 bg-background rounded-lg border p-0.5">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7"
+            onClick={() => onYearChange?.(currentYear - 1)}
+            disabled={!onYearChange}
+            aria-label="Année précédente"
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+          <Badge variant="secondary" className="font-mono">
+            {currentYear}
+          </Badge>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7"
+            onClick={() => onYearChange?.(currentYear + 1)}
+            disabled={!onYearChange}
+            aria-label="Année suivante"
+          >
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+        </div>
         <div className="flex gap-1">
           <Button
             variant="ghost"
