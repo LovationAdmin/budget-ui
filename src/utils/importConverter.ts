@@ -160,10 +160,16 @@ function isNewYearBasedFormat(yearlyData: unknown): boolean {
   });
 }
 
-export function convertOldFormatToNew(oldData: RawBudgetData): ConvertedBudgetData {
+export function convertOldFormatToNew(
+  oldData: RawBudgetData,
+  forceYear?: number
+): ConvertedBudgetData {
   const newData: ConvertedBudgetData = {
     budgetTitle: oldData.budgetTitle || '',
-    currentYear: oldData.currentYear || new Date().getFullYear(),
+    // `forceYear` lets the app open a budget on a chosen year (e.g. today's)
+    // instead of whatever year was last saved. Year-based payloads then extract
+    // that year's slice; single-year (legacy) payloads keep their only dataset.
+    currentYear: forceYear ?? oldData.currentYear ?? new Date().getFullYear(),
     people: oldData.people || [],
     charges: oldData.charges || [], // TypeScript includes ignoreSuggestions automatically
     projects: oldData.projects || [],

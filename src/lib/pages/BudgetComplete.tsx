@@ -189,10 +189,13 @@ export default function BudgetCompleteLayout() {
       const rawData: any = dataRes.data?.data ?? dataRes.data ?? {};
       globalDataRef.current = rawData;
 
-      const data = convertOldFormatToNew(rawData);
+      // Always open a budget on the current year (prior years stay accessible
+      // via the year navigator), so "today" is the default landing point.
+      const openYear = new Date().getFullYear();
+      const data = convertOldFormatToNew(rawData, openYear);
 
       setBudgetTitle(data.budgetTitle || budgetRes.data.name || '');
-      setCurrentYear(data.currentYear || new Date().getFullYear());
+      setCurrentYear(openYear);
       setPeople(data.people || []);
       setCharges(data.charges || []);
       setProjects(data.projects || []);
