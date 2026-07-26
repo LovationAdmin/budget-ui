@@ -12,6 +12,7 @@ interface ProjectsSectionProps {
   projects: Project[];
   onProjectsChange: (projects: Project[]) => void;
   yearlyData?: YearlyData;
+  yearlyExpenses?: YearlyData;
   currentYear?: number;
   projectCarryOvers?: Record<string, number>;
   currency?: string;
@@ -37,6 +38,7 @@ export default function ProjectsSection({
     projects,
     onProjectsChange,
     yearlyData = {},
+    yearlyExpenses = {},
     currentYear = new Date().getFullYear(),
     projectCarryOvers = {},
     currency = 'EUR'
@@ -55,25 +57,22 @@ export default function ProjectsSection({
   const currentMonthIndex = today.getMonth();
   const currentRealYear = today.getFullYear();
 
-  const getProjectStats = (projectId: string) => {
-    // Report des années précédentes (Net : Alloué - Dépensé)
-    const carryOver = projectCarryOvers[projectId] || 0;
-
-    let totalPlanned = carryOver;
-    let totalRealized = carryOver;
-
+  // "En caisse" = calendar cumulative (source of truth): carry-over from prior
+  // years + net (alloué − dépensé) of each month up to today. This mirrors
+  // MonthlyTable.getCumulativeProjectTotal so the card and the calendar match.
+  const getEnCaisse = (projectId: string): number => {
+    let total = projectCarryOvers[projectId] || 0;
     MONTHS.forEach((month, index) => {
-        const amount = yearlyData[month]?.[projectId] || 0;
-        totalPlanned += amount;
-
-        if (currentYear < currentRealYear) {
-            totalRealized += amount;
-        } else if (currentYear === currentRealYear && index <= currentMonthIndex) {
-            totalRealized += amount;
-        }
+      const alloc = yearlyData[month]?.[projectId] || 0;
+      const expense = yearlyExpenses[month]?.[projectId] || 0;
+      const net = alloc - expense;
+      if (currentYear < currentRealYear) {
+        total += net;
+      } else if (currentYear === currentRealYear && index <= currentMonthIndex) {
+        total += net;
+      }
     });
-
-    return { totalPlanned, totalRealized };
+    return total;
   };
 
   const addProject = (e: React.FormEvent) => {
@@ -231,11 +230,8 @@ export default function ProjectsSection({
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {projects.map((project) => {
-              const { totalRealized } = getProjectStats(project.id);
+              const totalRealized = getEnCaisse(project.id);
               const monthly = project.monthlyAmount ?? 0;
-              const target = project.targetAmount || 0;
-              const hasTarget = target > 0;
-              const progress = hasTarget ? Math.min((totalRealized / target) * 100, 100) : 0;
 
               return (
                 <div
@@ -319,22 +315,6 @@ export default function ProjectsSection({
                                 <span className="font-medium text-indigo-600">{monthly.toLocaleString()} {currencySymbol}</span> / mois
                             </div>
                         </div>
-
-                        {/* Optional legacy objectif progress */}
-                        {hasTarget && (
-                            <div className="space-y-1.5">
-                                <div className="relative h-2 w-full bg-gray-100 rounded-full overflow-hidden shadow-inner">
-                                    <div
-                                        className="absolute top-0 left-0 h-full bg-emerald-500 transition-all duration-700 ease-out"
-                                        style={{ width: `${progress}%` }}
-                                    />
-                                </div>
-                                <div className="flex justify-between text-[10px] text-gray-400 font-medium">
-                                    <span>Objectif : {target.toLocaleString()} {currencySymbol}</span>
-                                    <span>{progress.toFixed(0)}%</span>
-                                </div>
-                            </div>
-                        )}
                     </div>
                 </div>
               );
