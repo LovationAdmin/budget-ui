@@ -33,6 +33,8 @@ import {
   Lightbulb,
   RotateCcw,
   SlidersHorizontal,
+  Plus,
+  Trash2,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { budgetAPI } from '@/services/api';
@@ -76,6 +78,7 @@ export default function AIBudgetProposal() {
     budgetCurrency,
     budgetLocation,
     handleProjectsChange,
+    handlePeopleChange,
   } = useBudget();
   const { toast } = useToast();
   const sym = currencySymbol(budgetCurrency);
@@ -93,6 +96,25 @@ export default function AIBudgetProposal() {
   const [allowInterMemberTopUp, setAllowInterMemberTopUp] = useState(true);
   const [preferredMethod, setPreferredMethod] = useState<Method | 'auto'>('auto');
   const [freeText, setFreeText] = useState('');
+
+  // When the budget has no members yet (typical for the "create + IA" flow),
+  // let the user add them right here instead of bouncing to the Members tab.
+  const [memberSetup] = useState(() => people.length === 0);
+  const [newMemberName, setNewMemberName] = useState('');
+  const [newMemberSalary, setNewMemberSalary] = useState('');
+
+  const addBudgetMember = () => {
+    if (!newMemberName.trim()) return;
+    handlePeopleChange([
+      ...people,
+      { id: `p-${Date.now()}`, name: newMemberName.trim(), salary: parseFloat(newMemberSalary) || 0 },
+    ]);
+    setNewMemberName('');
+    setNewMemberSalary('');
+  };
+  const removeBudgetMember = (id: string) => {
+    handlePeopleChange(people.filter((p) => p.id !== id));
+  };
 
   // Simulator: per-envelope monthly contribution overrides (by name).
   const [envOverrides, setEnvOverrides] = useState<Record<string, number>>({});
@@ -556,6 +578,53 @@ export default function AIBudgetProposal() {
             </label>
           </div>
 
+          {/* Member setup — only when the budget has no members yet */}
+          {memberSetup && (
+            <div className="space-y-2 rounded-lg border border-primary/30 bg-primary/5 p-3">
+              <Label className="text-sm font-medium">Membres du foyer & revenus</Label>
+              <p className="text-[11px] text-muted-foreground -mt-1">
+                Ce budget est vide : ajoutez au moins un membre pour que l'IA puisse répartir.
+              </p>
+              {people.map((p) => (
+                <div key={p.id} className="flex items-center justify-between gap-2 rounded-md bg-background border border-border/50 px-3 py-2">
+                  <span className="text-sm font-medium truncate">{p.name}</span>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <span className="text-sm font-mono">{(p.salary || 0).toLocaleString()} {sym}</span>
+                    <Button type="button" size="icon" variant="ghost" onClick={() => removeBudgetMember(p.id)} className="h-7 w-7 text-muted-foreground hover:text-red-500">
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              ))}
+              <div className="flex flex-col sm:flex-row gap-2 items-stretch sm:items-end">
+                <div className="flex-1 space-y-1">
+                  <Label className="text-[10px] text-muted-foreground">Nom</Label>
+                  <Input
+                    value={newMemberName}
+                    onChange={(e) => setNewMemberName(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addBudgetMember())}
+                    placeholder="Alex"
+                    className="h-9"
+                  />
+                </div>
+                <div className="w-full sm:w-36 space-y-1">
+                  <Label className="text-[10px] text-muted-foreground">Salaire net ({sym})</Label>
+                  <Input
+                    type="number"
+                    value={newMemberSalary}
+                    onChange={(e) => setNewMemberSalary(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addBudgetMember())}
+                    placeholder="2500"
+                    className="h-9 font-mono"
+                  />
+                </div>
+                <Button type="button" onClick={addBudgetMember} disabled={!newMemberName.trim()} className="h-9 gap-1">
+                  <Plus className="h-4 w-4" /> Ajouter
+                </Button>
+              </div>
+            </div>
+          )}
+
           {/* Free text — the primary input */}
           <div className="space-y-1.5">
             <Label className="text-sm font-medium">Décrivez votre situation, en toutes lettres</Label>
@@ -576,8 +645,10 @@ export default function AIBudgetProposal() {
             L'IA s'appuie aussi sur les données de votre budget —{' '}
             <span className="font-medium text-foreground">{people.length} membre(s)</span> et leurs revenus,{' '}
             <span className="font-medium text-foreground">{charges.length} charge(s)</span>,{' '}
-            <span className="font-medium text-foreground">{projects.length} objectif(s)</span>. Pas besoin de les ressaisir
-            ici : ajustez-les dans les onglets <em>Membres</em>, <em>Charges</em> et <em>Épargne</em> si nécessaire.
+            <span className="font-medium text-foreground">{projects.length} objectif(s)</span>.{' '}
+            {memberSetup
+              ? 'Vous pourrez affiner charges et objectifs dans leurs onglets après la proposition.'
+              : <>Pas besoin de les ressaisir ici : ajustez-les dans les onglets <em>Membres</em>, <em>Charges</em> et <em>Épargne</em> si nécessaire.</>}
           </div>
 
           <Button onClick={generate} className="w-full" size="lg" disabled={people.length === 0}>
