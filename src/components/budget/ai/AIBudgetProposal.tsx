@@ -170,9 +170,9 @@ export default function AIBudgetProposal() {
     const started = Date.now();
     const ticker = window.setInterval(() => setElapsed(Math.floor((Date.now() - started) / 1000)), 1000);
     try {
-      // Generous client timeout so a stuck request surfaces an error instead of
-      // spinning forever (the LLM call can take ~20-40s).
-      const res = await budgetAPI.generateAIProposal(buildInput(), { timeout: 120000 });
+      // Generous client timeout: a full Sonnet-5 proposal (~5-6k tokens) can
+      // take ~60s; leave headroom above that so we don't cut off a valid call.
+      const res = await budgetAPI.generateAIProposal(buildInput(), { timeout: 150000 });
       setProposal(res.data);
       setEnvOverrides({});
       setSimulating(false);
@@ -271,7 +271,7 @@ export default function AIBudgetProposal() {
           <Loader2 className="h-10 w-10 animate-spin text-primary" />
           <p className="text-sm text-muted-foreground">L'IA construit une répartition juste et soutenable…</p>
           <p className="text-xs text-muted-foreground/70">
-            {elapsed}s · cela prend généralement 20 à 40 secondes.
+            {elapsed}s · cela prend généralement 30 à 60 secondes.
           </p>
         </CardContent>
       </Card>
