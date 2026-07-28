@@ -2,7 +2,7 @@
 // VERSION SIMPLE - DROPDOWN COMPACT ET INTUITIF
 // ✅ CORRIGÉ : Ajout prop currency et utilisation cohérente
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -213,11 +213,13 @@ export default function MonthlyTable({
   // ✅ Symbole de devise dynamique
   const currencySymbol = getCurrencySymbol(currency);
   
-  // ✅ DEFAULT: Tout désélectionné par défaut
+  // Show incomes, charges and every savings column by default so the budget is
+  // visible at a glance (previously all off → the calendar looked empty even
+  // when charges/épargne existed).
   const [visibleProjectIds, setVisibleProjectIds] = useState<string[]>([]);
-  const [showIncome, setShowIncome] = useState(false); 
+  const [showIncome, setShowIncome] = useState(true);
   const [showOneTime, setShowOneTime] = useState(false);
-  const [showCharges, setShowCharges] = useState(false);
+  const [showCharges, setShowCharges] = useState(true);
 
   // Calculations
   const getMonthlyBaseIncome = (monthIndex: number) => {
@@ -326,6 +328,20 @@ export default function MonthlyTable({
   };
 
   const standardProjects = projects.filter(p => p.id !== GENERAL_SAVINGS_ID);
+
+  // Auto-reveal newly added savings columns (e.g. after an AI proposal is
+  // applied) while respecting any column the user later hides.
+  const seenProjectIdsRef = useRef<string[]>([]);
+  useEffect(() => {
+    const ids = standardProjects.map(p => p.id);
+    const newIds = ids.filter(id => !seenProjectIdsRef.current.includes(id));
+    if (newIds.length > 0) {
+      setVisibleProjectIds(prev => Array.from(new Set([...prev, ...newIds])));
+    }
+    seenProjectIdsRef.current = ids;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [projects]);
+
   const visibleProjects = standardProjects.filter(p => visibleProjectIds.includes(p.id));
 
   const toggleProjectVisibility = (projectId: string) => {

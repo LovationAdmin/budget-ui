@@ -320,6 +320,9 @@ export default function AIBudgetProposal() {
     setUndoSnapshot(projects);
     handleChargesChange(nextCharges);
     handleProjectsChange(nextProjects);
+    // Persistence is handled by the autosave that these handlers trigger (it
+    // runs after re-render with the new state; calling performSave here would
+    // capture stale state and could overwrite the change).
 
     setAppliedSummary({ charges: nextCharges.length, projects: nextProjects.length, isFresh });
     setView('applied');
