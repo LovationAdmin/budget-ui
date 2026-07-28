@@ -75,6 +75,32 @@ function firstOfCurrentMonthISO(): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-01`;
 }
 
+const norm = (s: string) => s.trim().toLowerCase();
+
+// Merge incoming charges into existing ones by label: update the amount of a
+// matching charge, add the ones that don't exist, keep everything else.
+function mergeCharges(existing: Charge[], incoming: Charge[]): Charge[] {
+  const result = existing.map((c) => ({ ...c }));
+  for (const inc of incoming) {
+    const i = result.findIndex((c) => norm(c.label) === norm(inc.label));
+    if (i >= 0) result[i] = { ...result[i], amount: inc.amount };
+    else result.push(inc);
+  }
+  return result;
+}
+
+// Same idea for savings: update the monthly amount of a matching épargne, add
+// new ones, keep the rest.
+function mergeProjects(existing: Project[], incoming: Project[]): Project[] {
+  const result = existing.map((p) => ({ ...p }));
+  for (const inc of incoming) {
+    const i = result.findIndex((p) => norm(p.label) === norm(inc.label));
+    if (i >= 0) result[i] = { ...result[i], monthlyAmount: inc.monthlyAmount };
+    else result.push(inc);
+  }
+  return result;
+}
+
 // Cosmetic step labels shown while the LLM works, to make the wait less dull.
 const LOADING_STEPS = [
   { at: 0, label: 'Analyse de votre situation et de vos revenus' },
@@ -93,7 +119,6 @@ export default function AIBudgetProposal() {
     charges,
     projects,
     budget,
-    budgetTitle,
     budgetCurrency,
     budgetLocation,
     handleProjectsChange,
@@ -111,9 +136,8 @@ export default function AIBudgetProposal() {
   const [undoSnapshot, setUndoSnapshot] = useState<Project[] | null>(null);
   const [undoCharges, setUndoCharges] = useState<Charge[] | null>(null);
   const [appliedSummary, setAppliedSummary] = useState<
-    { projects: number; charges: number; newBudget: { id: string; name: string } | null } | null
+    { projects: number; charges: number; isFresh: boolean } | null
   >(null);
-  const [applying, setApplying] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string>('');
   const [elapsed, setElapsed] = useState(0);
 
@@ -276,61 +300,29 @@ export default function AIBudgetProposal() {
       }));
   };
 
-  const applyProposal = async () => {
+  // Applies the proposal to the CURRENT budget, in place.
+  //  - Fresh budget (no charges/savings): generate charges + savings from the
+  //    proposal, stamped to start this month → the calendar fills from creation.
+  //  - Existing budget: merge the proposal into it (update matching charges /
+  //    savings by label, add new ones, keep the rest and all history/comments).
+  const applyProposal = () => {
     if (!proposal) return;
-    // An existing (non-empty) budget is duplicated rather than overwritten.
-    const isExisting = charges.length > 0 || projects.length > 0;
+    const isFresh = charges.length === 0 && projects.length === 0;
+    const start = isFresh ? firstOfCurrentMonthISO() : undefined;
 
-    if (!isExisting) {
-      // Fresh "create + AI" budget → apply in place. Everything starts at the
-      // creation month (start dates), and charges are itemized.
-      const start = firstOfCurrentMonthISO();
-      const aiCharges = buildItemizedCharges(start);
-      const aiSavings = buildSavingsProjects(start);
-      if (aiCharges.length > 0) {
-        setUndoCharges(charges);
-        handleChargesChange(aiCharges);
-      }
-      setUndoSnapshot(projects);
-      handleProjectsChange(aiSavings);
-      setAppliedSummary({ projects: aiSavings.length, charges: aiCharges.length, newBudget: null });
-      setView('applied');
-      return;
-    }
+    const aiCharges = buildItemizedCharges(start);
+    const aiSavings = buildSavingsProjects(start);
 
-    // Existing budget → duplicate ("<name> IA"), apply the AI savings plan, and
-    // keep everything else from the source (charges, comments, notes, years).
-    // No start dates here: it's a modification of an ongoing budget.
-    setApplying(true);
-    try {
-      const res = await budgetAPI.getData(budgetId!);
-      const body = (res as { data?: { data?: unknown } })?.data;
-      const raw = ((body as { data?: unknown })?.data ?? body ?? {}) as Record<string, unknown>;
-      const clone = JSON.parse(JSON.stringify(raw)) as Record<string, unknown>;
-      const newName = `${budgetTitle || 'Budget'} IA`;
-      clone.projects = buildSavingsProjects();
-      clone.budgetTitle = newName;
-      const created = await budgetAPI.create({
-        name: newName,
-        year: new Date().getFullYear(),
-        location: budgetLocation,
-        currency: budgetCurrency,
-      } as never);
-      const newId = (created as { data?: { id?: string } })?.data?.id;
-      if (!newId) throw new Error('missing new budget id');
-      await budgetAPI.updateData(newId, { data: clone } as never);
-      setAppliedSummary({
-        projects: (clone.projects as unknown[]).length,
-        charges: 0,
-        newBudget: { id: newId, name: newName },
-      });
-      setView('applied');
-    } catch {
-      setErrorMsg('La duplication du budget a échoué. Réessayez dans un instant.');
-      setView('error');
-    } finally {
-      setApplying(false);
-    }
+    const nextCharges = isFresh ? aiCharges : mergeCharges(charges, aiCharges);
+    const nextProjects = isFresh ? aiSavings : mergeProjects(projects, aiSavings);
+
+    setUndoCharges(charges);
+    setUndoSnapshot(projects);
+    handleChargesChange(nextCharges);
+    handleProjectsChange(nextProjects);
+
+    setAppliedSummary({ charges: nextCharges.length, projects: nextProjects.length, isFresh });
+    setView('applied');
   };
 
   const undoApply = () => {
@@ -414,55 +406,31 @@ export default function AIBudgetProposal() {
   }
 
   if (view === 'applied') {
-    const nb = appliedSummary?.newBudget;
+    const fresh = appliedSummary?.isFresh;
     return (
       <Card className="border-emerald-200">
         <CardContent className="flex flex-col items-center justify-center py-16 gap-4 text-center">
           <div className="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
             <CheckCircle2 className="h-6 w-6" />
           </div>
-          {nb ? (
-            <>
-              <div>
-                <p className="font-medium">Nouveau budget créé : « {nb.name} »</p>
-                <p className="text-sm text-muted-foreground max-w-sm mt-1">
-                  La proposition de l'IA a été appliquée à une <strong>copie</strong> de votre budget
-                  ({appliedSummary?.projects || 0} épargne(s)). Votre budget d'origine et ses commentaires
-                  restent <strong>inchangés</strong>.
-                </p>
-              </div>
-              <div className="flex flex-col sm:flex-row gap-2">
-                <Button onClick={() => navigate(`/budget/${nb.id}/complete/calendar`)}>
-                  <CalendarRange className="h-4 w-4 mr-1" /> Ouvrir le budget IA
-                </Button>
-                <Button variant="ghost" onClick={() => { setAppliedSummary(null); setView('intake'); }}>
-                  Rester sur ce budget
-                </Button>
-              </div>
-            </>
-          ) : (
-            <>
-              <div>
-                <p className="font-medium">Budget appliqué</p>
-                <p className="text-sm text-muted-foreground max-w-sm mt-1">
-                  {appliedSummary?.projects || 0} épargne(s) renseignée(s) dans le calendrier
-                  {appliedSummary?.charges ? ` · ${appliedSummary.charges} charge(s) créée(s)` : ''}. Vos revenus et charges
-                  restent modifiables dans leurs onglets.
-                </p>
-              </div>
-              <div className="flex flex-col sm:flex-row gap-2">
-                <Button onClick={() => budgetId && navigate(`/budget/${budgetId}/complete/calendar`)}>
-                  <CalendarRange className="h-4 w-4 mr-1" /> Voir le calendrier
-                </Button>
-                <Button variant="outline" onClick={() => budgetId && navigate(`/budget/${budgetId}/complete/projects`)}>
-                  <PiggyBank className="h-4 w-4 mr-1" /> Voir l'épargne
-                </Button>
-                <Button variant="ghost" onClick={() => { undoApply(); setAppliedSummary(null); setView('intake'); }}>
-                  <RotateCcw className="h-4 w-4 mr-1" /> Annuler
-                </Button>
-              </div>
-            </>
-          )}
+          <div>
+            <p className="font-medium">{fresh ? 'Budget créé' : 'Budget mis à jour'}</p>
+            <p className="text-sm text-muted-foreground max-w-sm mt-1">
+              {appliedSummary?.charges || 0} charge(s) et {appliedSummary?.projects || 0} épargne(s)
+              {fresh ? ' générées' : ' fusionnées'} — le calendrier est renseigné en conséquence.
+            </p>
+          </div>
+          <div className="flex flex-col sm:flex-row gap-2">
+            <Button onClick={() => budgetId && navigate(`/budget/${budgetId}/complete/calendar`)}>
+              <CalendarRange className="h-4 w-4 mr-1" /> Voir le calendrier
+            </Button>
+            <Button variant="outline" onClick={() => budgetId && navigate(`/budget/${budgetId}/complete/projects`)}>
+              <PiggyBank className="h-4 w-4 mr-1" /> Voir l'épargne
+            </Button>
+            <Button variant="ghost" onClick={() => { undoApply(); setAppliedSummary(null); setView('intake'); }}>
+              <RotateCcw className="h-4 w-4 mr-1" /> Annuler
+            </Button>
+          </div>
         </CardContent>
       </Card>
     );
@@ -678,23 +646,19 @@ export default function AIBudgetProposal() {
         {/* ACTIONS */}
         <p className="text-[11px] text-muted-foreground text-center">
           {charges.length > 0 || projects.length > 0 ? (
-            <>
-              Ce budget contient déjà des données : Valider crée une <strong>copie</strong> «{' '}
-              {budgetTitle || 'Budget'} IA » (l'original et ses commentaires restent intacts).
-            </>
+            <>Valider <strong>fusionne</strong> la proposition dans ce budget : charges et épargnes mises à jour, le reste (historique, commentaires) conservé.</>
           ) : (
-            <>Valider remplit ce budget : charges et épargne seront créées à partir de la proposition.</>
+            <>Valider <strong>remplit</strong> ce budget : charges, épargne et calendrier générés à partir de la proposition.</>
           )}
         </p>
         <div className="flex flex-col sm:flex-row gap-2 sticky bottom-2 bg-background/80 backdrop-blur rounded-xl p-2 border border-border">
-          <Button className="flex-1" onClick={applyProposal} disabled={feas.status === 'infeasible' || applying}>
-            {applying ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <CheckCircle2 className="h-4 w-4 mr-1" />}
-            {applying ? 'Application…' : 'Valider'}
+          <Button className="flex-1" onClick={applyProposal} disabled={feas.status === 'infeasible'}>
+            <CheckCircle2 className="h-4 w-4 mr-1" /> Valider
           </Button>
-          <Button className="flex-1" variant="outline" onClick={() => setSimulating(true)} disabled={applying}>
+          <Button className="flex-1" variant="outline" onClick={() => setSimulating(true)}>
             <SlidersHorizontal className="h-4 w-4 mr-1" /> Ouvrir le simulateur
           </Button>
-          <Button className="flex-1" variant="ghost" onClick={reject} disabled={applying}>
+          <Button className="flex-1" variant="ghost" onClick={reject}>
             <XCircle className="h-4 w-4 mr-1" /> Rejeter
           </Button>
         </div>
