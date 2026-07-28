@@ -274,22 +274,26 @@ export default function AIBudgetProposal() {
   // represented — pocket money included, per the product decision.
   const buildSavingsProjects = (startDate?: string): Project[] => {
     if (!proposal) return [];
-    const lines = proposal.monthlyAllocation.filter((l) => l.type !== 'common_charge');
+    const allocation = proposal.monthlyAllocation ?? [];
+    const envelopes = proposal.savingsEnvelopes ?? [];
+    const lines = allocation.filter((l) => l.type !== 'common_charge');
     const source =
       lines.length > 0
         ? lines.map((l) => ({ name: l.label, amount: l.amount }))
-        : proposal.savingsEnvelopes.map((e) => ({ name: e.name, amount: e.monthlyContribution }));
-    return source.map((s, idx) => ({
-      id: `${Date.now()}-${idx}`,
-      label: s.name,
-      monthlyAmount: Math.round(envOverrides[s.name] ?? s.amount),
-      ...(startDate ? { startDate } : {}),
-    }));
+        : envelopes.map((e) => ({ name: e.name, amount: e.monthlyContribution }));
+    return source
+      .filter((s) => (Number(s.amount) || 0) > 0)
+      .map((s, idx) => ({
+        id: `${Date.now()}-${idx}`,
+        label: s.name,
+        monthlyAmount: Math.round(envOverrides[s.name] ?? s.amount),
+        ...(startDate ? { startDate } : {}),
+      }));
   };
 
   const buildItemizedCharges = (startDate?: string): Charge[] => {
     if (!proposal) return [];
-    return proposal.monthlyAllocation
+    return (proposal.monthlyAllocation ?? [])
       .filter((l) => l.type === 'common_charge')
       .map((l, idx) => ({
         id: `c-${Date.now()}-${idx}`,
@@ -312,6 +316,16 @@ export default function AIBudgetProposal() {
 
     const aiCharges = buildItemizedCharges(start);
     const aiSavings = buildSavingsProjects(start);
+
+    if (aiCharges.length === 0 && aiSavings.length === 0) {
+      toast({
+        title: 'Proposition inexploitable',
+        description:
+          "La proposition ne contient ni charge ni épargne à appliquer (répartition vide). Réessayez une génération.",
+        variant: 'destructive',
+      });
+      return;
+    }
 
     const nextCharges = isFresh ? aiCharges : mergeCharges(charges, aiCharges);
     const nextProjects = isFresh ? aiSavings : mergeProjects(projects, aiSavings);
