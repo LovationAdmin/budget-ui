@@ -676,12 +676,16 @@ export default function AIBudgetProposal() {
         <p className="text-[11px] text-muted-foreground italic border-l-2 border-border pl-3">{proposal.disclaimer}</p>
 
         {/* ACTIONS */}
-        {(charges.length > 0 || projects.length > 0) && (
-          <p className="text-[11px] text-muted-foreground text-center">
-            Valider crée une <strong>copie</strong> « {budgetTitle || 'Budget'} IA » de ce budget (l'original et ses
-            commentaires restent intacts).
-          </p>
-        )}
+        <p className="text-[11px] text-muted-foreground text-center">
+          {charges.length > 0 || projects.length > 0 ? (
+            <>
+              Ce budget contient déjà des données : Valider crée une <strong>copie</strong> «{' '}
+              {budgetTitle || 'Budget'} IA » (l'original et ses commentaires restent intacts).
+            </>
+          ) : (
+            <>Valider remplit ce budget : charges et épargne seront créées à partir de la proposition.</>
+          )}
+        </p>
         <div className="flex flex-col sm:flex-row gap-2 sticky bottom-2 bg-background/80 backdrop-blur rounded-xl p-2 border border-border">
           <Button className="flex-1" onClick={applyProposal} disabled={feas.status === 'infeasible' || applying}>
             {applying ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <CheckCircle2 className="h-4 w-4 mr-1" />}
