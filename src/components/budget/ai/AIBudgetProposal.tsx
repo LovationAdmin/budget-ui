@@ -33,13 +33,15 @@ import {
   Lightbulb,
   RotateCcw,
   SlidersHorizontal,
+  CalendarRange,
   Plus,
   Trash2,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { budgetAPI } from '@/services/api';
 import { useBudget } from '@/contexts/BudgetContext';
-import type { Project } from '@/utils/importConverter';
+import { useNavigate, useParams } from 'react-router-dom';
+import type { Project, Charge } from '@/utils/importConverter';
 import {
   HouseholdInput,
   HouseholdType,
@@ -67,7 +69,7 @@ const FEASIBILITY_STYLES: Record<Feasibility, { ring: string; badge: string; lab
   infeasible: { ring: 'border-red-200 bg-red-50/50', badge: 'bg-red-100 text-red-700', label: 'Intenable' },
 };
 
-type View = 'intake' | 'loading' | 'result' | 'error';
+type View = 'intake' | 'loading' | 'result' | 'error' | 'applied';
 
 export default function AIBudgetProposal() {
   const {
@@ -79,7 +81,10 @@ export default function AIBudgetProposal() {
     budgetLocation,
     handleProjectsChange,
     handlePeopleChange,
+    handleChargesChange,
   } = useBudget();
+  const navigate = useNavigate();
+  const { id: budgetId } = useParams<{ id: string }>();
   const { toast } = useToast();
   const sym = currencySymbol(budgetCurrency);
 
@@ -87,6 +92,8 @@ export default function AIBudgetProposal() {
   const [proposal, setProposal] = useState<BudgetProposal | null>(null);
   const [simulating, setSimulating] = useState(false);
   const [undoSnapshot, setUndoSnapshot] = useState<Project[] | null>(null);
+  const [undoCharges, setUndoCharges] = useState<Charge[] | null>(null);
+  const [appliedSummary, setAppliedSummary] = useState<{ projects: number; charges: number } | null>(null);
   const [errorMsg, setErrorMsg] = useState<string>('');
   const [elapsed, setElapsed] = useState(0);
 
@@ -212,21 +219,19 @@ export default function AIBudgetProposal() {
   const savingsDelta = totalSavings - baselineSavings;
 
   // ---- Actions ----
-  const applyToSavings = () => {
+  const applyProposal = () => {
     if (!proposal) return;
-    // Map savings-type allocation lines / envelopes into recurring
-    // "épargne particulière" projects and overwrite the current ones.
+
+    // 1) Savings-type allocation lines / envelopes → recurring "épargne
+    //    particulière" projects (auto-fill the calendar). Overwrite current.
     const savingsLines = proposal.monthlyAllocation.filter((l) =>
       SAVINGS_ALLOCATION_TYPES.includes(l.type),
     );
-
-    const source =
+    const savingsSource =
       savingsLines.length > 0
         ? savingsLines.map((l) => ({ name: l.label, amount: l.amount }))
         : proposal.savingsEnvelopes.map((e) => ({ name: e.name, amount: e.monthlyContribution }));
-
-    const newProjects: Project[] = source.map((s, idx) => {
-      // Honor simulator overrides when the label matches an envelope.
+    const newProjects: Project[] = savingsSource.map((s, idx) => {
       const overridden = envOverrides[s.name];
       return {
         id: `${Date.now()}-${idx}`,
@@ -235,21 +240,37 @@ export default function AIBudgetProposal() {
       };
     });
 
+    // 2) Charges: only when the budget has none yet (typical "create + AI"
+    //    flow). We never overwrite the user's own itemized charges.
+    let chargesCreated = 0;
+    if (charges.length === 0) {
+      const chargeLines = proposal.monthlyAllocation.filter((l) => l.type === 'common_charge');
+      if (chargeLines.length > 0) {
+        const newCharges: Charge[] = chargeLines.map((l, idx) => ({
+          id: `c-${Date.now()}-${idx}`,
+          label: l.label,
+          amount: Math.round(l.amount),
+          category: l.category || 'autre',
+        }));
+        setUndoCharges(charges);
+        handleChargesChange(newCharges);
+        chargesCreated = newCharges.length;
+      }
+    }
+
     setUndoSnapshot(projects);
     handleProjectsChange(newProjects);
-    toast({
-      title: 'Budget appliqué',
-      description: `${newProjects.length} enveloppe(s) d'épargne renseignée(s) dans le calendrier.`,
-    });
-    setView('intake');
-    setProposal(null);
+
+    setAppliedSummary({ projects: newProjects.length, charges: chargesCreated });
+    setView('applied');
   };
 
   const undoApply = () => {
-    if (undoSnapshot === null) return;
-    handleProjectsChange(undoSnapshot);
+    if (undoSnapshot !== null) handleProjectsChange(undoSnapshot);
+    if (undoCharges !== null) handleChargesChange(undoCharges);
     setUndoSnapshot(null);
-    toast({ title: 'Annulé', description: "Vos enveloppes d'épargne précédentes ont été restaurées." });
+    setUndoCharges(null);
+    toast({ title: 'Annulé', description: 'Votre budget précédent a été restauré.' });
   };
 
   const reject = () => {
@@ -293,6 +314,37 @@ export default function AIBudgetProposal() {
             <Button variant="outline" onClick={() => setView('intake')}>Modifier ma demande</Button>
             <Button onClick={generate}>
               <RotateCcw className="h-4 w-4 mr-1" /> Réessayer
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (view === 'applied') {
+    return (
+      <Card className="border-emerald-200">
+        <CardContent className="flex flex-col items-center justify-center py-16 gap-4 text-center">
+          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
+            <CheckCircle2 className="h-6 w-6" />
+          </div>
+          <div>
+            <p className="font-medium">Budget appliqué</p>
+            <p className="text-sm text-muted-foreground max-w-sm mt-1">
+              {appliedSummary?.projects || 0} épargne(s) renseignée(s) dans le calendrier
+              {appliedSummary?.charges ? ` · ${appliedSummary.charges} charge(s) créée(s)` : ''}. Vos revenus et charges
+              restent modifiables dans leurs onglets.
+            </p>
+          </div>
+          <div className="flex flex-col sm:flex-row gap-2">
+            <Button onClick={() => budgetId && navigate(`/budget/${budgetId}/complete/calendar`)}>
+              <CalendarRange className="h-4 w-4 mr-1" /> Voir le calendrier
+            </Button>
+            <Button variant="outline" onClick={() => budgetId && navigate(`/budget/${budgetId}/complete/projects`)}>
+              <PiggyBank className="h-4 w-4 mr-1" /> Voir l'épargne
+            </Button>
+            <Button variant="ghost" onClick={() => { undoApply(); setAppliedSummary(null); setView('intake'); }}>
+              <RotateCcw className="h-4 w-4 mr-1" /> Annuler
             </Button>
           </div>
         </CardContent>
@@ -509,7 +561,7 @@ export default function AIBudgetProposal() {
 
         {/* ACTIONS */}
         <div className="flex flex-col sm:flex-row gap-2 sticky bottom-2 bg-background/80 backdrop-blur rounded-xl p-2 border border-border">
-          <Button className="flex-1" onClick={applyToSavings} disabled={feas.status === 'infeasible'}>
+          <Button className="flex-1" onClick={applyProposal} disabled={feas.status === 'infeasible'}>
             <CheckCircle2 className="h-4 w-4 mr-1" /> Valider
           </Button>
           <Button className="flex-1" variant="outline" onClick={() => setSimulating(true)}>
