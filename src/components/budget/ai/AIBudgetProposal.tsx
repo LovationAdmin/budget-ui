@@ -48,7 +48,6 @@ import {
   Method,
   BudgetProposal,
   Feasibility,
-  SAVINGS_ALLOCATION_TYPES,
 } from '@/types/aiBudget';
 
 function currencySymbol(code?: string): string {
@@ -68,6 +67,23 @@ const FEASIBILITY_STYLES: Record<Feasibility, { ring: string; badge: string; lab
   tight: { ring: 'border-amber-200 bg-amber-50/50', badge: 'bg-amber-100 text-amber-700', label: 'Serré' },
   infeasible: { ring: 'border-red-200 bg-red-50/50', badge: 'bg-red-100 text-red-700', label: 'Intenable' },
 };
+
+// First day of the current month, YYYY-MM-DD — used so a brand-new budget's
+// incomes/charges/savings start at creation rather than retroactively.
+function firstOfCurrentMonthISO(): string {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-01`;
+}
+
+// Cosmetic step labels shown while the LLM works, to make the wait less dull.
+const LOADING_STEPS = [
+  { at: 0, label: 'Analyse de votre situation et de vos revenus' },
+  { at: 8, label: 'Choix de la méthode de répartition la plus juste' },
+  { at: 18, label: 'Répartition des charges, poste par poste' },
+  { at: 30, label: "Calcul des enveloppes d'épargne (sécurité, projets, vacances)" },
+  { at: 42, label: 'Vérification de la faisabilité pour chaque membre' },
+  { at: 54, label: 'Rédaction du résumé et finalisation' },
+];
 
 type View = 'intake' | 'loading' | 'result' | 'error' | 'applied';
 
@@ -118,7 +134,13 @@ export default function AIBudgetProposal() {
     if (!newMemberName.trim()) return;
     handlePeopleChange([
       ...people,
-      { id: `p-${Date.now()}`, name: newMemberName.trim(), salary: parseFloat(newMemberSalary) || 0 },
+      {
+        id: `p-${Date.now()}`,
+        name: newMemberName.trim(),
+        salary: parseFloat(newMemberSalary) || 0,
+        // New household on a fresh budget → income starts this month.
+        startDate: firstOfCurrentMonthISO(),
+      },
     ]);
     setNewMemberName('');
     setNewMemberSalary('');
@@ -223,26 +245,25 @@ export default function AIBudgetProposal() {
   const savingsDelta = totalSavings - baselineSavings;
 
   // ---- Actions ----
-  const buildSavingsProjects = (): Project[] => {
+  // Every non-charge allocation line (safety/projects/vacances/pocket money/
+  // personal) becomes a recurring "épargne particulière" so the whole plan is
+  // represented — pocket money included, per the product decision.
+  const buildSavingsProjects = (startDate?: string): Project[] => {
     if (!proposal) return [];
-    const savingsLines = proposal.monthlyAllocation.filter((l) =>
-      SAVINGS_ALLOCATION_TYPES.includes(l.type),
-    );
+    const lines = proposal.monthlyAllocation.filter((l) => l.type !== 'common_charge');
     const source =
-      savingsLines.length > 0
-        ? savingsLines.map((l) => ({ name: l.label, amount: l.amount }))
+      lines.length > 0
+        ? lines.map((l) => ({ name: l.label, amount: l.amount }))
         : proposal.savingsEnvelopes.map((e) => ({ name: e.name, amount: e.monthlyContribution }));
-    return source.map((s, idx) => {
-      const overridden = envOverrides[s.name];
-      return {
-        id: `${Date.now()}-${idx}`,
-        label: s.name,
-        monthlyAmount: Math.round(overridden !== undefined ? overridden : s.amount),
-      };
-    });
+    return source.map((s, idx) => ({
+      id: `${Date.now()}-${idx}`,
+      label: s.name,
+      monthlyAmount: Math.round(envOverrides[s.name] ?? s.amount),
+      ...(startDate ? { startDate } : {}),
+    }));
   };
 
-  const buildItemizedCharges = (): Charge[] => {
+  const buildItemizedCharges = (startDate?: string): Charge[] => {
     if (!proposal) return [];
     return proposal.monthlyAllocation
       .filter((l) => l.type === 'common_charge')
@@ -251,18 +272,21 @@ export default function AIBudgetProposal() {
         label: l.label,
         amount: Math.round(l.amount),
         category: l.category || 'autre',
+        ...(startDate ? { startDate } : {}),
       }));
   };
 
   const applyProposal = async () => {
     if (!proposal) return;
-    const aiSavings = buildSavingsProjects();
     // An existing (non-empty) budget is duplicated rather than overwritten.
     const isExisting = charges.length > 0 || projects.length > 0;
 
     if (!isExisting) {
-      // Fresh "create + AI" budget → apply in place: itemized charges + savings.
-      const aiCharges = buildItemizedCharges();
+      // Fresh "create + AI" budget → apply in place. Everything starts at the
+      // creation month (start dates), and charges are itemized.
+      const start = firstOfCurrentMonthISO();
+      const aiCharges = buildItemizedCharges(start);
+      const aiSavings = buildSavingsProjects(start);
       if (aiCharges.length > 0) {
         setUndoCharges(charges);
         handleChargesChange(aiCharges);
@@ -276,13 +300,15 @@ export default function AIBudgetProposal() {
 
     // Existing budget → duplicate ("<name> IA"), apply the AI savings plan, and
     // keep everything else from the source (charges, comments, notes, years).
+    // No start dates here: it's a modification of an ongoing budget.
     setApplying(true);
     try {
       const res = await budgetAPI.getData(budgetId!);
-      const raw = ((res as { data?: { data?: unknown } })?.data?.data ?? {}) as Record<string, unknown>;
+      const body = (res as { data?: { data?: unknown } })?.data;
+      const raw = ((body as { data?: unknown })?.data ?? body ?? {}) as Record<string, unknown>;
       const clone = JSON.parse(JSON.stringify(raw)) as Record<string, unknown>;
       const newName = `${budgetTitle || 'Budget'} IA`;
-      clone.projects = aiSavings; // apply the AI savings plan
+      clone.projects = buildSavingsProjects();
       clone.budgetTitle = newName;
       const created = await budgetAPI.create({
         name: newName,
@@ -293,10 +319,14 @@ export default function AIBudgetProposal() {
       const newId = (created as { data?: { id?: string } })?.data?.id;
       if (!newId) throw new Error('missing new budget id');
       await budgetAPI.updateData(newId, { data: clone } as never);
-      setAppliedSummary({ projects: aiSavings.length, charges: 0, newBudget: { id: newId, name: newName } });
+      setAppliedSummary({
+        projects: (clone.projects as unknown[]).length,
+        charges: 0,
+        newBudget: { id: newId, name: newName },
+      });
       setView('applied');
     } catch {
-      setErrorMsg("La duplication du budget a échoué. Réessayez dans un instant.");
+      setErrorMsg('La duplication du budget a échoué. Réessayez dans un instant.');
       setView('error');
     } finally {
       setApplying(false);
@@ -326,12 +356,36 @@ export default function AIBudgetProposal() {
   if (view === 'loading') {
     return (
       <Card className="border-primary/20">
-        <CardContent className="flex flex-col items-center justify-center py-20 gap-4 text-center">
-          <Loader2 className="h-10 w-10 animate-spin text-primary" />
-          <p className="text-sm text-muted-foreground">L'IA construit une répartition juste et soutenable…</p>
-          <p className="text-xs text-muted-foreground/70">
-            {elapsed}s · cela prend généralement 30 à 60 secondes.
-          </p>
+        <CardContent className="flex flex-col items-center py-14 gap-5">
+          <div className="flex flex-col items-center gap-2 text-center">
+            <Loader2 className="h-9 w-9 animate-spin text-primary" />
+            <p className="text-sm font-medium">L'IA construit votre budget…</p>
+            <p className="text-xs text-muted-foreground/70">{elapsed}s · généralement 30 à 60 secondes</p>
+          </div>
+          <div className="w-full max-w-sm space-y-2.5">
+            {LOADING_STEPS.map((step, i) => {
+              const next = LOADING_STEPS[i + 1];
+              const done = next ? elapsed >= next.at : false;
+              const current = elapsed >= step.at && !done;
+              return (
+                <div
+                  key={i}
+                  className={`flex items-center gap-2.5 text-sm transition-colors ${
+                    done || current ? 'text-foreground' : 'text-muted-foreground/40'
+                  }`}
+                >
+                  {done ? (
+                    <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-500" />
+                  ) : current ? (
+                    <Loader2 className="h-4 w-4 shrink-0 animate-spin text-primary" />
+                  ) : (
+                    <div className="h-4 w-4 shrink-0 rounded-full border border-muted-foreground/30" />
+                  )}
+                  <span>{step.label}</span>
+                </div>
+              );
+            })}
+          </div>
         </CardContent>
       </Card>
     );
