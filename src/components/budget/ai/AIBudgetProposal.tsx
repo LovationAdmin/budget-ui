@@ -77,6 +77,7 @@ export default function AIBudgetProposal() {
     charges,
     projects,
     budget,
+    budgetTitle,
     budgetCurrency,
     budgetLocation,
     handleProjectsChange,
@@ -93,7 +94,10 @@ export default function AIBudgetProposal() {
   const [simulating, setSimulating] = useState(false);
   const [undoSnapshot, setUndoSnapshot] = useState<Project[] | null>(null);
   const [undoCharges, setUndoCharges] = useState<Charge[] | null>(null);
-  const [appliedSummary, setAppliedSummary] = useState<{ projects: number; charges: number } | null>(null);
+  const [appliedSummary, setAppliedSummary] = useState<
+    { projects: number; charges: number; newBudget: { id: string; name: string } | null } | null
+  >(null);
+  const [applying, setApplying] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string>('');
   const [elapsed, setElapsed] = useState(0);
 
@@ -219,19 +223,16 @@ export default function AIBudgetProposal() {
   const savingsDelta = totalSavings - baselineSavings;
 
   // ---- Actions ----
-  const applyProposal = () => {
-    if (!proposal) return;
-
-    // 1) Savings-type allocation lines / envelopes → recurring "épargne
-    //    particulière" projects (auto-fill the calendar). Overwrite current.
+  const buildSavingsProjects = (): Project[] => {
+    if (!proposal) return [];
     const savingsLines = proposal.monthlyAllocation.filter((l) =>
       SAVINGS_ALLOCATION_TYPES.includes(l.type),
     );
-    const savingsSource =
+    const source =
       savingsLines.length > 0
         ? savingsLines.map((l) => ({ name: l.label, amount: l.amount }))
         : proposal.savingsEnvelopes.map((e) => ({ name: e.name, amount: e.monthlyContribution }));
-    const newProjects: Project[] = savingsSource.map((s, idx) => {
+    return source.map((s, idx) => {
       const overridden = envOverrides[s.name];
       return {
         id: `${Date.now()}-${idx}`,
@@ -239,30 +240,67 @@ export default function AIBudgetProposal() {
         monthlyAmount: Math.round(overridden !== undefined ? overridden : s.amount),
       };
     });
+  };
 
-    // 2) Charges: only when the budget has none yet (typical "create + AI"
-    //    flow). We never overwrite the user's own itemized charges.
-    let chargesCreated = 0;
-    if (charges.length === 0) {
-      const chargeLines = proposal.monthlyAllocation.filter((l) => l.type === 'common_charge');
-      if (chargeLines.length > 0) {
-        const newCharges: Charge[] = chargeLines.map((l, idx) => ({
-          id: `c-${Date.now()}-${idx}`,
-          label: l.label,
-          amount: Math.round(l.amount),
-          category: l.category || 'autre',
-        }));
+  const buildItemizedCharges = (): Charge[] => {
+    if (!proposal) return [];
+    return proposal.monthlyAllocation
+      .filter((l) => l.type === 'common_charge')
+      .map((l, idx) => ({
+        id: `c-${Date.now()}-${idx}`,
+        label: l.label,
+        amount: Math.round(l.amount),
+        category: l.category || 'autre',
+      }));
+  };
+
+  const applyProposal = async () => {
+    if (!proposal) return;
+    const aiSavings = buildSavingsProjects();
+    // An existing (non-empty) budget is duplicated rather than overwritten.
+    const isExisting = charges.length > 0 || projects.length > 0;
+
+    if (!isExisting) {
+      // Fresh "create + AI" budget → apply in place: itemized charges + savings.
+      const aiCharges = buildItemizedCharges();
+      if (aiCharges.length > 0) {
         setUndoCharges(charges);
-        handleChargesChange(newCharges);
-        chargesCreated = newCharges.length;
+        handleChargesChange(aiCharges);
       }
+      setUndoSnapshot(projects);
+      handleProjectsChange(aiSavings);
+      setAppliedSummary({ projects: aiSavings.length, charges: aiCharges.length, newBudget: null });
+      setView('applied');
+      return;
     }
 
-    setUndoSnapshot(projects);
-    handleProjectsChange(newProjects);
-
-    setAppliedSummary({ projects: newProjects.length, charges: chargesCreated });
-    setView('applied');
+    // Existing budget → duplicate ("<name> IA"), apply the AI savings plan, and
+    // keep everything else from the source (charges, comments, notes, years).
+    setApplying(true);
+    try {
+      const res = await budgetAPI.getData(budgetId!);
+      const raw = ((res as { data?: { data?: unknown } })?.data?.data ?? {}) as Record<string, unknown>;
+      const clone = JSON.parse(JSON.stringify(raw)) as Record<string, unknown>;
+      const newName = `${budgetTitle || 'Budget'} IA`;
+      clone.projects = aiSavings; // apply the AI savings plan
+      clone.budgetTitle = newName;
+      const created = await budgetAPI.create({
+        name: newName,
+        year: new Date().getFullYear(),
+        location: budgetLocation,
+        currency: budgetCurrency,
+      } as never);
+      const newId = (created as { data?: { id?: string } })?.data?.id;
+      if (!newId) throw new Error('missing new budget id');
+      await budgetAPI.updateData(newId, { data: clone } as never);
+      setAppliedSummary({ projects: aiSavings.length, charges: 0, newBudget: { id: newId, name: newName } });
+      setView('applied');
+    } catch {
+      setErrorMsg("La duplication du budget a échoué. Réessayez dans un instant.");
+      setView('error');
+    } finally {
+      setApplying(false);
+    }
   };
 
   const undoApply = () => {
@@ -322,31 +360,55 @@ export default function AIBudgetProposal() {
   }
 
   if (view === 'applied') {
+    const nb = appliedSummary?.newBudget;
     return (
       <Card className="border-emerald-200">
         <CardContent className="flex flex-col items-center justify-center py-16 gap-4 text-center">
           <div className="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
             <CheckCircle2 className="h-6 w-6" />
           </div>
-          <div>
-            <p className="font-medium">Budget appliqué</p>
-            <p className="text-sm text-muted-foreground max-w-sm mt-1">
-              {appliedSummary?.projects || 0} épargne(s) renseignée(s) dans le calendrier
-              {appliedSummary?.charges ? ` · ${appliedSummary.charges} charge(s) créée(s)` : ''}. Vos revenus et charges
-              restent modifiables dans leurs onglets.
-            </p>
-          </div>
-          <div className="flex flex-col sm:flex-row gap-2">
-            <Button onClick={() => budgetId && navigate(`/budget/${budgetId}/complete/calendar`)}>
-              <CalendarRange className="h-4 w-4 mr-1" /> Voir le calendrier
-            </Button>
-            <Button variant="outline" onClick={() => budgetId && navigate(`/budget/${budgetId}/complete/projects`)}>
-              <PiggyBank className="h-4 w-4 mr-1" /> Voir l'épargne
-            </Button>
-            <Button variant="ghost" onClick={() => { undoApply(); setAppliedSummary(null); setView('intake'); }}>
-              <RotateCcw className="h-4 w-4 mr-1" /> Annuler
-            </Button>
-          </div>
+          {nb ? (
+            <>
+              <div>
+                <p className="font-medium">Nouveau budget créé : « {nb.name} »</p>
+                <p className="text-sm text-muted-foreground max-w-sm mt-1">
+                  La proposition de l'IA a été appliquée à une <strong>copie</strong> de votre budget
+                  ({appliedSummary?.projects || 0} épargne(s)). Votre budget d'origine et ses commentaires
+                  restent <strong>inchangés</strong>.
+                </p>
+              </div>
+              <div className="flex flex-col sm:flex-row gap-2">
+                <Button onClick={() => navigate(`/budget/${nb.id}/complete/calendar`)}>
+                  <CalendarRange className="h-4 w-4 mr-1" /> Ouvrir le budget IA
+                </Button>
+                <Button variant="ghost" onClick={() => { setAppliedSummary(null); setView('intake'); }}>
+                  Rester sur ce budget
+                </Button>
+              </div>
+            </>
+          ) : (
+            <>
+              <div>
+                <p className="font-medium">Budget appliqué</p>
+                <p className="text-sm text-muted-foreground max-w-sm mt-1">
+                  {appliedSummary?.projects || 0} épargne(s) renseignée(s) dans le calendrier
+                  {appliedSummary?.charges ? ` · ${appliedSummary.charges} charge(s) créée(s)` : ''}. Vos revenus et charges
+                  restent modifiables dans leurs onglets.
+                </p>
+              </div>
+              <div className="flex flex-col sm:flex-row gap-2">
+                <Button onClick={() => budgetId && navigate(`/budget/${budgetId}/complete/calendar`)}>
+                  <CalendarRange className="h-4 w-4 mr-1" /> Voir le calendrier
+                </Button>
+                <Button variant="outline" onClick={() => budgetId && navigate(`/budget/${budgetId}/complete/projects`)}>
+                  <PiggyBank className="h-4 w-4 mr-1" /> Voir l'épargne
+                </Button>
+                <Button variant="ghost" onClick={() => { undoApply(); setAppliedSummary(null); setView('intake'); }}>
+                  <RotateCcw className="h-4 w-4 mr-1" /> Annuler
+                </Button>
+              </div>
+            </>
+          )}
         </CardContent>
       </Card>
     );
@@ -560,14 +622,21 @@ export default function AIBudgetProposal() {
         <p className="text-[11px] text-muted-foreground italic border-l-2 border-border pl-3">{proposal.disclaimer}</p>
 
         {/* ACTIONS */}
+        {(charges.length > 0 || projects.length > 0) && (
+          <p className="text-[11px] text-muted-foreground text-center">
+            Valider crée une <strong>copie</strong> « {budgetTitle || 'Budget'} IA » de ce budget (l'original et ses
+            commentaires restent intacts).
+          </p>
+        )}
         <div className="flex flex-col sm:flex-row gap-2 sticky bottom-2 bg-background/80 backdrop-blur rounded-xl p-2 border border-border">
-          <Button className="flex-1" onClick={applyProposal} disabled={feas.status === 'infeasible'}>
-            <CheckCircle2 className="h-4 w-4 mr-1" /> Valider
+          <Button className="flex-1" onClick={applyProposal} disabled={feas.status === 'infeasible' || applying}>
+            {applying ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <CheckCircle2 className="h-4 w-4 mr-1" />}
+            {applying ? 'Application…' : 'Valider'}
           </Button>
-          <Button className="flex-1" variant="outline" onClick={() => setSimulating(true)}>
+          <Button className="flex-1" variant="outline" onClick={() => setSimulating(true)} disabled={applying}>
             <SlidersHorizontal className="h-4 w-4 mr-1" /> Ouvrir le simulateur
           </Button>
-          <Button className="flex-1" variant="ghost" onClick={reject}>
+          <Button className="flex-1" variant="ghost" onClick={reject} disabled={applying}>
             <XCircle className="h-4 w-4 mr-1" /> Rejeter
           </Button>
         </div>
