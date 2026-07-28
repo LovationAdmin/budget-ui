@@ -121,9 +121,8 @@ export default function AIBudgetProposal() {
     budget,
     budgetCurrency,
     budgetLocation,
-    handleProjectsChange,
     handlePeopleChange,
-    handleChargesChange,
+    applyChargesAndProjects,
   } = useBudget();
   const navigate = useNavigate();
   const { id: budgetId } = useParams<{ id: string }>();
@@ -332,19 +331,16 @@ export default function AIBudgetProposal() {
 
     setUndoCharges(charges);
     setUndoSnapshot(projects);
-    handleChargesChange(nextCharges);
-    handleProjectsChange(nextProjects);
-    // Persistence is handled by the autosave that these handlers trigger (it
-    // runs after re-render with the new state; calling performSave here would
-    // capture stale state and could overwrite the change).
+    // Sets state AND persists with the fresh values (bypasses the stale-closure
+    // autosave that could otherwise save the pre-change empty state).
+    void applyChargesAndProjects(nextCharges, nextProjects);
 
     setAppliedSummary({ charges: nextCharges.length, projects: nextProjects.length, isFresh });
     setView('applied');
   };
 
   const undoApply = () => {
-    if (undoSnapshot !== null) handleProjectsChange(undoSnapshot);
-    if (undoCharges !== null) handleChargesChange(undoCharges);
+    void applyChargesAndProjects(undoCharges ?? charges, undoSnapshot ?? projects);
     setUndoSnapshot(null);
     setUndoCharges(null);
     toast({ title: 'Annulé', description: 'Votre budget précédent a été restauré.' });

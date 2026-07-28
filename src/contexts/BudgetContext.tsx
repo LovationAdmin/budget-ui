@@ -75,6 +75,7 @@ export interface BudgetContextValue {
   handlePeopleChange: (people: Person[]) => void;
   handleChargesChange: (charges: Charge[]) => void;
   handleProjectsChange: (projects: Project[]) => void;
+  applyChargesAndProjects: (charges: Charge[], projects: Project[]) => Promise<void>;
   handleYearlyDataChange: (data: YearlyData) => void;
   handleYearlyExpensesChange: (data: YearlyData) => void;
   handleOneTimeIncomesChange: (data: OneTimeIncomes) => void;

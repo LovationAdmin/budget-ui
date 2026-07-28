@@ -436,6 +436,59 @@ export default function BudgetCompleteLayout() {
     chargeMappings,
   ]);
 
+  // Set charges + projects AND persist them immediately with the fresh values.
+  // The debounced autosave captures a stale closure at call time, so applying an
+  // AI proposal through it could save the pre-change (empty) state and overwrite
+  // the result. This bypasses that by building the payload from the new values.
+  const applyChargesAndProjects = useCallback(
+    async (newCharges: Charge[], newProjects: Project[]) => {
+      if (!id) return;
+      const syncedYearly = syncRecurringSavings(newProjects, yearlyData, lockedMonths, currentYear);
+      setCharges(newCharges);
+      setProjects(newProjects);
+      setYearlyData(syncedYearly);
+      if (isDemoMode) return;
+
+      saveStateMachine.markSaving();
+      try {
+        const newData = convertNewFormatToOld({
+          budgetTitle,
+          currentYear,
+          people,
+          charges: newCharges,
+          projects: newProjects,
+          yearlyData: syncedYearly,
+          yearlyExpenses,
+          oneTimeIncomes,
+          monthComments,
+          projectComments,
+          lockedMonths,
+          chargeMappings,
+        } as any, globalDataRef.current);
+        globalDataRef.current = newData;
+        await budgetAPI.updateData(id, { data: newData } as any);
+        saveStateMachine.markSaved();
+      } catch (err: any) {
+        saveStateMachine.markError(err?.response?.data?.error || 'Erreur de sauvegarde');
+      }
+    },
+    [
+      id,
+      isDemoMode,
+      saveStateMachine,
+      budgetTitle,
+      currentYear,
+      people,
+      yearlyData,
+      yearlyExpenses,
+      oneTimeIncomes,
+      monthComments,
+      projectComments,
+      lockedMonths,
+      chargeMappings,
+    ]
+  );
+
   // ✅ FIX: useAutoSave uses options object, returns { hasUnsavedChanges, isSaving, markAsModified, saveNow }
   const { markAsModified } = useAutoSave({
     onSave: performSave,
@@ -779,6 +832,7 @@ export default function BudgetCompleteLayout() {
       handlePeopleChange,
       handleChargesChange,
       handleProjectsChange,
+      applyChargesAndProjects,
       handleYearlyDataChange,
       handleYearlyExpensesChange,
       handleOneTimeIncomesChange,
@@ -826,6 +880,7 @@ export default function BudgetCompleteLayout() {
       handlePeopleChange,
       handleChargesChange,
       handleProjectsChange,
+      applyChargesAndProjects,
       handleYearlyDataChange,
       handleYearlyExpensesChange,
       handleOneTimeIncomesChange,
