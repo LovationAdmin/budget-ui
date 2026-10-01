@@ -11,12 +11,19 @@
         "source": "github",
         "repo": "supabase/agent-skills"
       }
+    },
+    "taste-skill": {
+      "source": {
+        "source": "github",
+        "repo": "Leonxlnx/taste-skill"
+      }
     }
   },
   "enabledPlugins": {
     "ponytail@ponytail": true,
     "supabase@supabase-agent-skills": true,
-    "postgres-best-practices@supabase-agent-skills": true
+    "postgres-best-practices@supabase-agent-skills": true,
+    "taste-skill@taste-skill": true
   },
   "hooks": {
     "PreToolUse": [
