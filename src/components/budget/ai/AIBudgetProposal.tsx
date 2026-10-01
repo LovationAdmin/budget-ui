@@ -69,7 +69,7 @@ import {
   upsertProject,
   type ContributionRule,
 } from '@/lib/budget/mutations';
-import { formatMonthLong, startDateOf } from '@/lib/budget/months';
+import { formatMonthLong, startDateOf, deMonth } from '@/lib/budget/months';
 import { roundCents } from '@/lib/budget/format';
 import { useFirstOpenMonth } from '@/components/budget/shared/hooks';
 import {
@@ -471,7 +471,7 @@ export default function AIBudgetProposal() {
             <p className="font-medium">{fresh ? 'Budget créé' : 'Budget mis à jour'}</p>
             <p className="text-sm text-muted-foreground max-w-sm mt-1">
               {appliedSummary?.charges || 0} charge(s) et {appliedSummary?.projects || 0} épargne(s)
-              {fresh ? ' créées' : ' mises à jour'} à partir de {formatMonthLong(start)}
+              {fresh ? ' créées' : ' mises à jour'} à partir {deMonth(formatMonthLong(start))}
               {appliedSummary?.contributions ? ', avec la contribution de chacun au pot commun' : ''}. Les mois d’avant ne changent pas.
             </p>
           </div>
@@ -701,9 +701,9 @@ export default function AIBudgetProposal() {
         {/* ACTIONS */}
         <p className="text-[11px] text-muted-foreground text-center">
           {charges.length > 0 || projects.length > 0 ? (
-            <>Valider <strong>fusionne</strong> la proposition dans ce budget à partir de {formatMonthLong(start)} : charges et épargnes mises à jour, les mois d’avant et l’historique conservés.</>
+            <>Valider <strong>fusionne</strong> la proposition dans ce budget à partir {deMonth(formatMonthLong(start))} : charges et épargnes mises à jour, les mois d’avant et l’historique conservés.</>
           ) : (
-            <>Valider <strong>remplit</strong> ce budget à partir de {formatMonthLong(start)} : charges, épargnes et contributions générées à partir de la proposition.</>
+            <>Valider <strong>remplit</strong> ce budget à partir {deMonth(formatMonthLong(start))} : charges, épargnes et contributions générées à partir de la proposition.</>
           )}
         </p>
         <div className="flex flex-col sm:flex-row gap-2 sticky bottom-2 bg-background/80 backdrop-blur rounded-xl p-2 border border-border">

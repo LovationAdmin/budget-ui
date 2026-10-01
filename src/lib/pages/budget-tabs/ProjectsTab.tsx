@@ -22,7 +22,7 @@ import {
   type ItemStatus,
 } from '@/lib/budget/engine';
 import { restartProject } from '@/lib/budget/mutations';
-import { formatMonthLong, monthNameLower, maxYM } from '@/lib/budget/months';
+import { formatMonthLong, monthNameLower, maxYM, deMonth } from '@/lib/budget/months';
 import { percent, roundCents } from '@/lib/budget/format';
 import { Pill } from '@/components/budget/shared/primitives';
 import { useFirstOpenMonth } from '@/components/budget/shared/hooks';
@@ -82,7 +82,7 @@ function SavingCard({ p }: { p: Project }) {
             variant="outline"
             className="min-h-[44px]"
             onClick={() =>
-              commit((m) => restartProject(m, p.id, firstOpen), { message: `« ${p.label} » relancée à partir de ${formatMonthLong(firstOpen)}.` })
+              commit((m) => restartProject(m, p.id, firstOpen), { message: `« ${p.label} » relancée à partir ${deMonth(formatMonthLong(firstOpen))}.` })
             }
           >
             <RotateCcw className="h-4 w-4" /> Relancer

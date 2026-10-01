@@ -63,6 +63,7 @@ import {
   MONTH_NAMES,
   startDateOf,
   yearOf,
+  deMonth,
 } from '@/lib/budget/months';
 import { moneySigned, parseAmount } from '@/lib/budget/format';
 import { categoryMeta, PICKER_CATEGORIES } from '@/lib/budget/categories';
@@ -124,10 +125,10 @@ export function ChargeActionsSheet({ sheet, onClose }: SheetProps<'charge'>) {
         {r && !r.skipped && (
           <ActionItem
             icon={<PauseCircle />}
-            title={`Retirer de ${month}`}
+            title={`Retirer ${deMonth(month)}`}
             sub="Une exception : les autres mois ne changent pas"
             onClick={() => {
-              commit((m) => setChargeMonthAmount(m, c.id, sheet.ym, 0), { message: `« ${c.label} » retirée de ${month} seulement.` });
+              commit((m) => setChargeMonthAmount(m, c.id, sheet.ym, 0), { message: `« ${c.label} » retirée ${deMonth(month)} seulement.` });
               onClose();
             }}
           />
@@ -181,7 +182,7 @@ export function ChargeAmountSheet({ sheet, onClose }: SheetProps<'chargeAmount'>
       commit((m) => setChargeMonthAmount(m, c.id, fromYm, v), { message: `« ${c.label} » : ${fmt(v)} en ${monthLabel} seulement.` });
     } else if (scope === 'forward') {
       commit((m) => setChargeAmountFrom(m, c.id, fromYm, v, today), {
-        message: `« ${c.label} » : ${fmt(v)}${yearly ? ' par an' : ''} à partir de ${monthLabel}. Les mois d’avant gardent leur montant.`,
+        message: `« ${c.label} » : ${fmt(v)}${yearly ? ' par an' : ''} à partir ${deMonth(monthLabel)}. Les mois d’avant gardent leur montant.`,
       });
     } else {
       commit((m) => setChargeAmountEverywhere(m, c.id, v), { message: `« ${c.label} » corrigé sur tous les mois ouverts. Les mois clôturés ne bougent pas.` });
@@ -213,7 +214,7 @@ export function ChargeAmountSheet({ sheet, onClose }: SheetProps<'chargeAmount'>
           <ChoiceCard title={`${MONTH_NAMES[monthIndex0(fromYm)]} seulement`} help={`Une exception : les autres mois restent à ${fmt(r!.planned)}.`} onClick={() => apply('month')} />
         )}
         <ChoiceCard
-          title={`À partir de ${formatMonthShort(fromYm)}`}
+          title={`À partir ${deMonth(formatMonthShort(fromYm))}`}
           help={prevAmount !== null ? `Les mois d’avant gardent ${fmt(prevAmount)}${yearly ? ' par an' : ''}.` : 'S’applique dès le premier mois.'}
           onClick={() => apply('forward')}
           selected={sheet.fromCatalog}
@@ -347,7 +348,7 @@ export function ChargeDetailSheet({ sheet, onClose }: SheetProps<'chargeDetail'>
                   <button
                     type="button"
                     className="py-1 text-sm font-semibold text-primary underline underline-offset-4"
-                    onClick={() => commit((m) => setChargeMonthAmount(m, c.id, x.ym, null), { message: `Exception de ${formatMonthLong(x.ym)} supprimée.` })}
+                    onClick={() => commit((m) => setChargeMonthAmount(m, c.id, x.ym, null), { message: `Exception ${deMonth(formatMonthLong(x.ym))} supprimée.` })}
                   >
                     Supprimer
                   </button>
@@ -378,10 +379,10 @@ export function ChargeDetailSheet({ sheet, onClose }: SheetProps<'chargeDetail'>
         {status === 'ended' && freq !== 'once' && (
           <ActionItem
             icon={<RotateCcw />}
-            title={`Relancer à partir de ${formatMonthLong(today)}`}
+            title={`Relancer à partir ${deMonth(formatMonthLong(today))}`}
             sub="Les mois où elle était arrêtée restent vides"
             onClick={() => {
-              commit((m) => restartCharge(m, c.id, today, today), { message: `« ${c.label} » relancée à partir de ${formatMonthLong(today)}.` });
+              commit((m) => restartCharge(m, c.id, today, today), { message: `« ${c.label} » relancée à partir ${deMonth(formatMonthLong(today))}.` });
               onClose();
             }}
           />
@@ -546,7 +547,7 @@ export function ChargeEditorSheet({ sheet, onClose }: SheetProps<'chargeEditor'>
     if (smooth && Number.isFinite(value) && value > 0) summary += ` Lissée : ${fmt(value / 12)} mis de côté chaque mois.`;
   } else {
     const base = freq === 'custom' ? customMonthsText(months).toLowerCase() : 'tous les mois';
-    summary = `${amountText} ${base}, à partir de ${formatMonthLong(start)}`;
+    summary = `${amountText} ${base}, à partir ${deMonth(formatMonthLong(start))}`;
     summary += endYm ? ` jusqu’en ${formatMonthLong(endYm)} (${monthsBetween(start, endYm)} mois).` : ', sans date de fin.';
   }
   const ctx = sheet.ym;

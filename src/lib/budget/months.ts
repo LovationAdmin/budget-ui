@@ -81,6 +81,11 @@ export const formatMonthShort = (ym: YM): string => `${MONTHS_SHORT[monthIndex0(
 /** "septembre" */
 export const monthNameLower = (ym: YM): string => MONTHS_LOWER[monthIndex0(ym)];
 
+/** French elision before a month label: "de septembre 2026" / "d’octobre 2026". */
+export function deMonth(label: string): string {
+  return /^[aeiouyàâäéèêëîïôöûüh]/i.test(label) ? `d’${label}` : `de ${label}`;
+}
+
 export function joinFr(parts: string[]): string {
   if (parts.length <= 1) return parts.join('');
   return `${parts.slice(0, -1).join(', ')} et ${parts[parts.length - 1]}`;

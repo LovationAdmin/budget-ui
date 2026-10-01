@@ -30,6 +30,7 @@ import {
   addMonths,
   compareYM,
   currentYM,
+  deMonth,
   formatMonthShort,
   joinFr,
   makeYM,
@@ -559,7 +560,7 @@ export function describeChargeSchedule(c: Charge, today: YM): string {
   const base = freq === 'custom' ? customMonthsText(c.months) : 'Tous les mois';
   if (w.start && w.end) return `${base} · ${formatMonthShort(w.start)} → ${formatMonthShort(w.end)} (${monthsBetween(w.start, w.end)} mois)`;
   if (w.end) return `${base} · jusqu’à ${formatMonthShort(w.end)}`;
-  if (w.start) return `${base} · ${compareYM(w.start, today) > 0 ? 'à partir de' : 'depuis'} ${formatMonthShort(w.start)}`;
+  if (w.start) return `${base} · ${compareYM(w.start, today) > 0 ? `à partir ${deMonth(formatMonthShort(w.start))}` : `depuis ${formatMonthShort(w.start)}`}`;
   return base;
 }
 
@@ -569,11 +570,11 @@ export function describeProjectSchedule(p: Project, today: YM): string {
   if (!isRecurringProject(p)) return 'Montant libre, choisi mois par mois';
   if (w.start && w.end) return `${formatMonthShort(w.start)} → ${formatMonthShort(w.end)}`;
   if (w.end) return `Jusqu’à ${formatMonthShort(w.end)}`;
-  if (w.start) return `${compareYM(w.start, today) > 0 ? 'À partir de' : 'Depuis'} ${formatMonthShort(w.start)}`;
+  if (w.start) return compareYM(w.start, today) > 0 ? `À partir ${deMonth(formatMonthShort(w.start))}` : `Depuis ${formatMonthShort(w.start)}`;
   return 'Chaque mois, sans échéance';
 }
 
-/** "1 250 € à partir de oct. 2026" / "Depuis sept. 2026 · avant 1 150 €" */
+/** "1 250 € à partir d’oct. 2026" / "Depuis sept. 2026 · avant 1 150 €" */
 export function amountHistoryHint(
   steps: AmountStep[] | undefined,
   ref: YM,
@@ -585,9 +586,9 @@ export function amountHistoryHint(
   const i = sorted.indexOf(cur);
   const next = sorted[i + 1];
   if (next) {
-    if (roundCents(next.amount) === 0) return `En pause à partir de ${formatMonthShort(next.from)}`;
+    if (roundCents(next.amount) === 0) return `En pause à partir ${deMonth(formatMonthShort(next.from))}`;
     if (roundCents(cur.amount) === 0) return `Reprend en ${formatMonthShort(next.from)} : ${fmt(next.amount)}`;
-    return `${fmt(next.amount)} à partir de ${formatMonthShort(next.from)}`;
+    return `${fmt(next.amount)} à partir ${deMonth(formatMonthShort(next.from))}`;
   }
   if (i > 0) {
     const before = sorted[i - 1];
@@ -617,7 +618,7 @@ export function contributionHistoryHint(p: Person, ref: YM, fmt: (n: number) => 
   const cur = stepAt(steps, ref)!;
   const i = steps.indexOf(cur);
   const next = steps[i + 1];
-  if (next) return `${contributionStepText(next, fmt)} à partir de ${formatMonthShort(next.from)}`;
+  if (next) return `${contributionStepText(next, fmt)} à partir ${deMonth(formatMonthShort(next.from))}`;
   if (i > 0) return `Depuis ${formatMonthShort(cur.from)} · avant ${contributionStepText(steps[i - 1], fmt)}`;
   return '';
 }

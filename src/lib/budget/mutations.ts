@@ -436,8 +436,9 @@ export function restartProject(model: BudgetModel, id: string, fromMonth: YM): B
 
 /**
  * Turns a free saving (amount chosen month by month) into a monthly one from
- * `from`. Amounts already planned in open months before `from` are kept as
- * month-only exceptions, so nothing that was planned disappears.
+ * `from`. Amounts put aside in earlier months are kept as month-only
+ * exceptions, so nothing disappears: open months keep what was planned, and a
+ * closed month (frozen by its snapshot) still finds its amount if reopened.
  */
 export function convertSavingToMonthly(
   model: BudgetModel,
@@ -453,7 +454,7 @@ export function convertSavingToMonthly(
   const kept: Record<YM, number> = {};
   for (const [ym, rec] of Object.entries(model.months)) {
     const v = rec.allocations?.[id];
-    if (compareYM(ym, from) < 0 && !isClosed(ym) && typeof v === 'number' && roundCents(v) !== 0) kept[ym] = roundCents(v);
+    if (compareYM(ym, from) < 0 && typeof v === 'number' && roundCents(v) !== 0) kept[ym] = roundCents(v);
   }
   const keptMonths = Object.keys(kept).sort(compareYM);
   let next: Project = { ...p, monthlyAmount: value, startDate: startDateOf(from) };

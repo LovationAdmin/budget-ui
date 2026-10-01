@@ -26,7 +26,7 @@ import {
   type SplitMethod,
 } from '@/lib/budget/engine';
 import { applyContributionRules, type ContributionRule } from '@/lib/budget/mutations';
-import { addMonths, formatMonthLong, formatMonthShort, maxYM } from '@/lib/budget/months';
+import { addMonths, formatMonthLong, formatMonthShort, maxYM, deMonth } from '@/lib/budget/months';
 import { moneySigned, percent, roundCents } from '@/lib/budget/format';
 import { ChipToggle, Pill, Segmented } from '@/components/budget/shared/primitives';
 import { MonthPicker } from '@/components/budget/shared/MonthPicker';
@@ -144,7 +144,7 @@ function SplitAssistant() {
       rules[m.person.id] = method === 'all' ? { mode: 'all' } : { mode: 'fixed', value: proposal[i] };
     });
     commit((m) => applyContributionRules(m, from, rules, today), {
-      message: `Nouvelles contributions appliquées à partir de ${formatMonthLong(from)}. Les mois précédents ne changent pas.`,
+      message: `Nouvelles contributions appliquées à partir ${deMonth(formatMonthLong(from))}. Les mois précédents ne changent pas.`,
     });
   };
 
@@ -179,7 +179,7 @@ function SplitAssistant() {
                   {margin ? ` + marge ${margin} %` : ''}
                 </span>
               </div>
-              <p className="mb-3 mt-1 text-xs text-muted-foreground">Moyenne des 12 mois à partir de {formatMonthShort(from)} : les mois plus chargés (fêtes, rentrée) sont lissés.</p>
+              <p className="mb-3 mt-1 text-xs text-muted-foreground">Moyenne des 12 mois à partir {deMonth(formatMonthShort(from))} : les mois plus chargés (fêtes, rentrée) sont lissés.</p>
               <div role="group" aria-label="Marge de sécurité" className="flex flex-wrap gap-2">
                 {[0, 5, 10].map((v) => (
                   <ChipToggle key={v} pressed={margin === v} onClick={() => setMargin(v)}>
@@ -216,7 +216,7 @@ function SplitAssistant() {
               <MonthPicker value={from} onChange={setFrom} min={firstOpen} ariaLabel="Appliquer à partir de" />
             </div>
             <Button className="min-h-[48px]" onClick={apply} disabled={unchanged}>
-              {unchanged ? 'Déjà en place' : `Appliquer à partir de ${formatMonthLong(from)}`}
+              {unchanged ? 'Déjà en place' : `Appliquer à partir ${deMonth(formatMonthLong(from))}`}
             </Button>
           </div>
         </div>

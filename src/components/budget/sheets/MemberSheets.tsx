@@ -30,6 +30,7 @@ import {
   monthIndex0,
   MONTH_NAMES,
   startDateOf,
+  deMonth,
 } from '@/lib/budget/months';
 import { parseAmount, roundCents } from '@/lib/budget/format';
 import { ResponsiveSheet } from '../shared/ResponsiveSheet';
@@ -155,7 +156,7 @@ function NewMember({ ym, onClose }: { ym: YM; onClose: () => void }) {
     if (mode !== 'all') person.contributions = [{ from: arrives ? start : today, mode, value: roundCents(check.v) }];
     const contribution = contributionOf(mode, check.s, check.v);
     commit((m) => upsertPerson(m, person), {
-      message: `${person.name} fait partie du foyer${arrives ? ` à partir de ${formatMonthLong(start)}` : ''} : ${fmt(contribution)} par mois au pot commun.`,
+      message: `${person.name} fait partie du foyer${arrives ? ` à partir ${deMonth(formatMonthLong(start))}` : ''} : ${fmt(contribution)} par mois au pot commun.`,
     });
     onClose();
   };
@@ -221,7 +222,7 @@ function EditMember({ person, ym, onClose }: { person: Person; ym: YM; onClose: 
       message:
         scope === 'month'
           ? `${person.name} : changement appliqué à ${monthLabel} seulement.`
-          : `${person.name} : changement appliqué à partir de ${monthLabel}. Les mois d’avant ne bougent pas.`,
+          : `${person.name} : changement appliqué à partir ${deMonth(monthLabel)}. Les mois d’avant ne bougent pas.`,
     });
     onClose();
   };
@@ -262,7 +263,7 @@ function EditMember({ person, ym, onClose }: { person: Person; ym: YM; onClose: 
                 onClick={() => apply('month')}
               />
             )}
-            <ChoiceCard title={`À partir de ${formatMonthShort(ym)}`} help="Les mois d’avant ne bougent pas." onClick={() => apply('forward')} />
+            <ChoiceCard title={`À partir ${deMonth(formatMonthShort(ym))}`} help="Les mois d’avant ne bougent pas." onClick={() => apply('forward')} />
           </div>
         ) : (
           <p className="text-sm text-muted-foreground">Modifiez le salaire ou la contribution, puis choisissez à quels mois l’appliquer.</p>
@@ -372,7 +373,7 @@ export function MemberDeleteSheet({ sheet, onClose }: SheetProps<'memberDelete'>
   const leaveInstead = () => {
     const last = addMonths(today, -1);
     commit((m) => updatePerson(m, person.id, { endDate: endDateOf(maxYM(last, windowOf(person).start ?? last)) }), {
-      message: `${person.name} ne compte plus à partir de ${formatMonthLong(today)}. L’historique est conservé.`,
+      message: `${person.name} ne compte plus à partir ${deMonth(formatMonthLong(today))}. L’historique est conservé.`,
     });
     onClose();
   };

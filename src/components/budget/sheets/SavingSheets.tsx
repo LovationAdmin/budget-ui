@@ -42,6 +42,7 @@ import {
   monthsBetween,
   MONTH_NAMES,
   startDateOf,
+  deMonth,
 } from '@/lib/budget/months';
 import { parseAmount, roundCents } from '@/lib/budget/format';
 import { ResponsiveSheet } from '../shared/ResponsiveSheet';
@@ -192,7 +193,7 @@ export function SavingAmountSheet({ sheet, onClose }: SheetProps<'savingAmount'>
     const convert = () => {
       if (!valid || v <= 0) return setError('Indiquez un montant supérieur à 0.');
       commit((m) => convertSavingToMonthly(m, p.id, fromYm, v, today, (ym) => engine.isClosed(ym)), {
-        message: `« ${p.label} » : ${fmt(v)} chaque mois à partir de ${monthLabel}.`,
+        message: `« ${p.label} » : ${fmt(v)} chaque mois à partir ${deMonth(monthLabel)}.`,
       });
       onClose();
     };
@@ -213,7 +214,7 @@ export function SavingAmountSheet({ sheet, onClose }: SheetProps<'savingAmount'>
           <Button type="submit" className="min-h-[48px]">Enregistrer pour {monthLabel}</Button>
           <ChoiceCard
             icon={<Repeat />}
-            title={`Mettre ce montant chaque mois à partir de ${formatMonthShort(fromYm)}`}
+            title={`Mettre ce montant chaque mois à partir ${deMonth(formatMonthShort(fromYm))}`}
             help="Elle devient une épargne mensuelle. Les montants déjà prévus avant restent."
             onClick={convert}
           />
@@ -231,7 +232,7 @@ export function SavingAmountSheet({ sheet, onClose }: SheetProps<'savingAmount'>
       commit((m) => setSavingMonthAmount(m, p.id, fromYm, v), { message: `« ${p.label} » : ${fmt(v)} en ${monthLabel} seulement.` });
     } else if (scope === 'forward') {
       commit((m) => setSavingAmountFrom(m, p.id, fromYm, v, today), {
-        message: `« ${p.label} » : ${fmt(v)} par mois à partir de ${monthLabel}. Les mois d’avant gardent leur montant.`,
+        message: `« ${p.label} » : ${fmt(v)} par mois à partir ${deMonth(monthLabel)}. Les mois d’avant gardent leur montant.`,
       });
     } else {
       commit((m) => setSavingAmountEverywhere(m, p.id, v), { message: `« ${p.label} » corrigée sur tous les mois ouverts. Les mois clôturés ne bougent pas.` });
@@ -259,7 +260,7 @@ export function SavingAmountSheet({ sheet, onClose }: SheetProps<'savingAmount'>
           <ChoiceCard title={`${MONTH_NAMES[monthIndex0(fromYm)]} seulement`} help={`Une exception : les autres mois restent à ${fmt(r!.planned)}.`} onClick={() => apply('month')} />
         )}
         <ChoiceCard
-          title={`À partir de ${formatMonthShort(fromYm)}`}
+          title={`À partir ${deMonth(formatMonthShort(fromYm))}`}
           help={prevAmount !== null ? `Les mois d’avant gardent ${fmt(prevAmount)}.` : 'S’applique dès le premier mois.'}
           onClick={() => apply('forward')}
           selected={sheet.fromCatalog}
@@ -365,7 +366,7 @@ export function SpendSheet({ sheet, onClose }: SheetProps<'spend'>) {
               <button
                 type="button"
                 className="py-1 text-sm font-semibold text-primary underline underline-offset-4"
-                onClick={() => commit((m) => setPotExpense(m, pot.id, ym, 0, ''), { message: `Dépense de ${formatMonthLong(ym)} retirée de « ${pot.label} ».` })}
+                onClick={() => commit((m) => setPotExpense(m, pot.id, ym, 0, ''), { message: `Dépense ${deMonth(formatMonthLong(ym))} retirée de « ${pot.label} ».` })}
               >
                 Retirer
               </button>
@@ -415,7 +416,7 @@ export function SavingEditorSheet({ sheet, onClose }: SheetProps<'savingEditor'>
     summary = 'Vous choisissez le montant chaque mois, directement dans la vue Mois.';
   } else {
     const amountText = amountOk ? fmt(monthlyAmount) : `… ${currencySymbol}`;
-    summary = `${amountText} mis de côté chaque mois, à partir de ${formatMonthLong(start)}`;
+    summary = `${amountText} mis de côté chaque mois, à partir ${deMonth(formatMonthLong(start))}`;
     if (endYm) {
       const n = monthsBetween(start, endYm);
       summary += ` jusqu’en ${formatMonthLong(endYm)} (${n} mois${amountOk ? `, soit ${fmt(monthlyAmount * n)}` : ''}).`;

@@ -11,7 +11,7 @@ import { useBudget } from '@/contexts/BudgetContext';
 import type { ResolvedCharge, ResolvedMonth } from '@/lib/budget/engine';
 import { contributionRuleText, customMonthsText, windowOf } from '@/lib/budget/engine';
 import { removeOneOff, setChargeMonthAmount } from '@/lib/budget/mutations';
-import { formatMonthLong, monthNameLower, MONTHS_SHORT, monthIndex0 } from '@/lib/budget/months';
+import { formatMonthLong, monthNameLower, MONTHS_SHORT, monthIndex0, deMonth } from '@/lib/budget/months';
 import type { YM } from '@/lib/budget/types';
 import { AddRowButton, Badge, CategoryIcon, IconTile, RowButton, SectionCard, type PillTone } from '../shared/primitives';
 
@@ -92,7 +92,7 @@ export function IncomeCard({ month }: { month: ResolvedMonth }) {
               size="icon"
               className="h-9 w-9 text-muted-foreground"
               aria-label={`Retirer « ${o.label} »`}
-              onClick={() => commit((m) => removeOneOff(m, month.ym, o.id), { message: `« ${o.label} » retiré de ${formatMonthLong(month.ym)}.` })}
+              onClick={() => commit((m) => removeOneOff(m, month.ym, o.id), { message: `« ${o.label} » retiré ${deMonth(formatMonthLong(month.ym))}.` })}
             >
               <X className="h-4 w-4" />
             </Button>
@@ -188,7 +188,7 @@ export function ChargesCard({ month, prevMonth }: { month: ResolvedMonth; prevMo
       })}
       {skipped.length > 0 && (
         <div className="mt-1 flex flex-col gap-1 border-t border-dashed border-border pt-3">
-          <span className="px-1 text-xs font-bold uppercase tracking-wide text-muted-foreground">Retirées de {label}</span>
+          <span className="px-1 text-xs font-bold uppercase tracking-wide text-muted-foreground">Retirées {deMonth(label)}</span>
           {skipped.map((c) => (
             <div key={c.id} className="flex min-h-[56px] items-center gap-3 rounded-xl px-2.5">
               <CategoryIcon category={c.category} tone="muted" />

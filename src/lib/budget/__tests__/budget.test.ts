@@ -450,6 +450,22 @@ test('savings: free pot converted to monthly, stop and restart', () => {
   near(e.month('2026-09').totals.savings, 80, 'history untouched');
 });
 
+test('savings: converting a free pot keeps closed months reopenable', () => {
+  let model = decodeBudget({ projects: [{ id: 'm', label: 'Travaux' }] }, '2026-09');
+  model = setSavingMonthAmount(model, 'm', '2026-08', 100);
+  model = setSavingMonthAmount(model, 'm', '2026-09', 50);
+  model = closeMonth(model, '2026-08', 'now');
+  let e = new BudgetEngine(model, '2026-09');
+  model = convertSavingToMonthly(model, 'm', '2026-09', 80, '2026-09', (ym) => e.isClosed(ym));
+  e = new BudgetEngine(model, '2026-09');
+  near(e.month('2026-08').totals.savings, 100, 'closed August frozen');
+  near(e.month('2026-09').totals.savings, 80, 'monthly from September');
+  model = reopenMonth(model, '2026-08');
+  e = new BudgetEngine(model, '2026-09');
+  near(e.month('2026-08').totals.savings, 100, 'reopened August keeps its amount');
+  near(e.savingBalance('m', '2026-09'), 180);
+});
+
 test('months: one-offs, close and reopen', () => {
   let model = decodeBudget({ people: [{ id: 'a', name: 'A', salary: 2000 }], charges: [{ id: 'c', label: 'C', amount: 500 }] }, '2026-09');
   model = addOneOff(model, '2026-09', { label: 'Prime', amount: 300 });

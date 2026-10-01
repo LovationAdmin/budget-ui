@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { useBudget } from '@/contexts/BudgetContext';
 import { resolveLiveMonth } from '@/lib/budget/engine';
 import { addOneOff, reopenMonth } from '@/lib/budget/mutations';
-import { formatMonthLong } from '@/lib/budget/months';
+import { formatMonthLong, deMonth } from '@/lib/budget/months';
 import { parseAmount } from '@/lib/budget/format';
 import { ResponsiveSheet } from '../shared/ResponsiveSheet';
 import { ErrorText, FieldLabel, IconTile, MoneyInput } from '../shared/primitives';
@@ -61,7 +61,7 @@ export function OneOffSheet({ sheet, onClose }: SheetProps<'oneOff'>) {
     onClose();
   };
   return (
-    <ResponsiveSheet open onOpenChange={(o) => !o && onClose()} title="Revenu ponctuel" description={`Il s’ajoute aux entrées de ${formatMonthLong(sheet.ym)} uniquement.`}>
+    <ResponsiveSheet open onOpenChange={(o) => !o && onClose()} title="Revenu ponctuel" description={`Il s’ajoute aux entrées ${deMonth(formatMonthLong(sheet.ym))} uniquement.`}>
       <form onSubmit={submit} className="flex flex-col gap-4">
         <div>
           <FieldLabel htmlFor="oo-label">Nom</FieldLabel>
@@ -97,9 +97,16 @@ export function ReopenSheet({ sheet, onClose }: SheetProps<'reopen'>) {
       if (l && Math.abs(l.contribution - p.contribution) >= 0.005) diffs.push(`${p.name} : contribution ${fmt(p.contribution)} → ${fmt(l.contribution)}.`);
       if (!l) diffs.push(`${p.name} ne fait plus partie du foyer : sa contribution (${fmt(p.contribution)}) ne sera plus comptée.`);
     }
+    for (const p of live.people) {
+      if (!frozen.people.find((x) => x.id === p.id) && p.contribution > 0) diffs.push(`${p.name} sera compté(e) : contribution ${fmt(p.contribution)}.`);
+    }
     for (const s of frozen.savings) {
       const l = live.savings.find((x) => x.id === s.id);
       if (l && Math.abs(l.allocation - s.allocation) >= 0.005) diffs.push(`Épargne « ${s.label} » : ${fmt(s.allocation)} → ${fmt(l.allocation)}.`);
+      if (!l && s.allocation !== 0) diffs.push(`Épargne « ${s.label} » (${fmt(s.allocation)}) ne sera plus comptée.`);
+    }
+    for (const s of live.savings) {
+      if (!frozen.savings.find((x) => x.id === s.id) && s.allocation > 0) diffs.push(`Épargne « ${s.label} » (${fmt(s.allocation)}) sera ajoutée.`);
     }
   }
   const confirm = () => {
