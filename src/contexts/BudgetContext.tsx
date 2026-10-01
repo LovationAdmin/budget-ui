@@ -1,31 +1,20 @@
 // src/contexts/BudgetContext.tsx
 // ============================================================================
-// 🎯 BudgetContext — Single source of truth shared across budget tabs
+// BudgetContext — single source of truth for the budget screens.
 // ============================================================================
-// Fixes P0 #1: enables routed sub-tabs without prop drilling. The parent
-// `BudgetCompleteLayout` hosts ALL state, exposes it via this context, and
-// renders <Outlet /> for the active tab.
-//
-// Each tab consumes only what it needs via useBudget().
+// The layout (BudgetCompleteLayout) owns the whole budget as ONE normalised
+// model (all years at once) and exposes:
+//   - `model` + `engine` (month values, balances, changes),
+//   - `commit(updater, toast?)` to change it (autosave + optional undo),
+//   - `openSheet()` to open any editing panel from any screen.
 // ============================================================================
 
-import { createContext, useContext, ReactNode } from 'react';
-import type {
-  Person,
-  Charge,
-  Project,
-  YearlyData,
-  OneTimeIncomes,
-  MonthComments,
-  ProjectComments,
-  LockedMonths,
-} from '@/utils/importConverter';
+import { createContext, useContext, type ReactNode } from 'react';
 import type { SaveStatus } from '@/hooks/useSaveStatus';
-import type { MappedTransaction, BridgeTransaction } from '@/components/budget/TransactionMapper';
-
-// ============================================================================
-// TYPES
-// ============================================================================
+import type { MappedTransaction } from '@/components/budget/TransactionMapper';
+import type { BudgetModel, Charge, YM } from '@/lib/budget/types';
+import type { BudgetEngine } from '@/lib/budget/engine';
+import type { SheetState } from '@/components/budget/sheets/types';
 
 export interface BudgetMember {
   id: string;
@@ -47,49 +36,40 @@ export interface BudgetData {
   currency?: string;
 }
 
+export interface CommitOptions {
+  /** Confirmation shown to the user (with an « Annuler » action). */
+  message?: string;
+  /** Save immediately instead of waiting for the autosave debounce. */
+  saveNow?: boolean;
+  /** Offer undo in the confirmation (default true when a message is given). */
+  undoable?: boolean;
+}
+
 export interface BudgetContextValue {
-  // ===== Core =====
+  budgetId: string;
   budget: BudgetData | null;
-  budgetTitle: string;
-  setBudgetTitle: (title: string) => void;
+  model: BudgetModel;
+  engine: BudgetEngine;
+  today: YM;
+
   budgetLocation: string;
   budgetCurrency: string;
+  currencySymbol: string;
+  /** Money formatter bound to the budget currency. */
+  fmt: (n: number) => string;
 
-  // ===== Year =====
-  currentYear: number;
-  handleYearChange: (year: number) => void;
+  commit: (updater: (m: BudgetModel) => BudgetModel, options?: CommitOptions) => void;
+  openSheet: (sheet: SheetState) => void;
+  closeSheet: () => void;
+  goToMonth: (ym: YM) => void;
 
-  // ===== Data slices =====
-  people: Person[];
-  charges: Charge[];
-  projects: Project[];
-  yearlyData: YearlyData;
-  yearlyExpenses: YearlyData;
-  oneTimeIncomes: OneTimeIncomes;
-  monthComments: MonthComments;
-  projectComments: ProjectComments;
-  lockedMonths: LockedMonths;
-  projectCarryOvers: Record<string, number>;
-
-  // ===== Handlers =====
-  handlePeopleChange: (people: Person[]) => void;
-  handleChargesChange: (charges: Charge[]) => void;
-  handleProjectsChange: (projects: Project[]) => void;
-  applyChargesAndProjects: (charges: Charge[], projects: Project[]) => Promise<void>;
-  handleYearlyDataChange: (data: YearlyData) => void;
-  handleYearlyExpensesChange: (data: YearlyData) => void;
-  handleOneTimeIncomesChange: (data: OneTimeIncomes) => void;
-  handleMonthCommentsChange: (data: MonthComments) => void;
-  handleProjectCommentsChange: (data: ProjectComments) => void;
-  handleLockedMonthsChange: (data: LockedMonths) => void;
-
-  // ===== Save state =====
+  // Save state
   saveStatus: SaveStatus;
   saveError: string | null;
   lastSavedAt: Date | null;
-  performSave: (silent?: boolean) => Promise<void>;
+  performSave: () => Promise<void>;
 
-  // ===== Reality Check / Banking =====
+  // Reality check / banking
   totalGlobalRealized: number;
   realBankBalance: number;
   demoBankBalance: number;
@@ -98,43 +78,27 @@ export interface BudgetContextValue {
   enableDemoMode: () => void;
   disableDemoMode: () => void;
   refreshBankData: () => void;
+  handleOpenBankManager: () => void;
 
-  // ===== Transaction mapping =====
+  // Transaction mapping
   chargeMappings: MappedTransaction[];
   mappedTotalsByChargeId: Record<string, number>;
   handleOpenMapper: (charge: Charge) => void;
 
-  // ===== Bank manager dialog =====
-  handleOpenBankManager: () => void;
-
-  // ===== Derived =====
   householdSize: number;
-
-  // ===== Members / invitations =====
   refreshMembersOnly: () => Promise<void>;
   handleShowInviteModal: () => void;
+  markSuggestionsRun: () => void;
 }
-
-// ============================================================================
-// CONTEXT
-// ============================================================================
 
 const BudgetContext = createContext<BudgetContextValue | null>(null);
 
-export function BudgetProvider({
-  value,
-  children,
-}: {
-  value: BudgetContextValue;
-  children: ReactNode;
-}) {
+export function BudgetProvider({ value, children }: { value: BudgetContextValue; children: ReactNode }) {
   return <BudgetContext.Provider value={value}>{children}</BudgetContext.Provider>;
 }
 
 export function useBudget(): BudgetContextValue {
   const ctx = useContext(BudgetContext);
-  if (!ctx) {
-    throw new Error('useBudget must be used inside <BudgetProvider>');
-  }
+  if (!ctx) throw new Error('useBudget must be used inside <BudgetProvider>');
   return ctx;
 }

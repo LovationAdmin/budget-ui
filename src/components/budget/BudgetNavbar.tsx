@@ -100,7 +100,7 @@ export const BudgetNavbar = memo(function BudgetNavbar({
   const handleNotificationClick = useCallback(
     (notificationId: string, budgetId: string) => {
       markAsRead(notificationId);
-      navigate(`/budget/${budgetId}/complete/overview`);
+      navigate(`/budget/${budgetId}/complete/month`);
     },
     [markAsRead, navigate]
   );

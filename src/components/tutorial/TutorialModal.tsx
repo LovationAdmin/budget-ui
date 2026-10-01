@@ -108,12 +108,13 @@ const STEPS = [
   // ==================== STEP 2: MEMBRES / REVENUS ====================
   {
     icon: Users,
-    title: "Étape 1 : Vos Revenus 💰",
-    description: "Définissez qui apporte de l'argent au foyer.",
+    title: "Étape 1 : Le Foyer 💰",
+    description: "Qui gagne quoi, et qui verse quoi au pot commun.",
     content: (
       <div className="space-y-4 text-sm text-muted-foreground">
         <p>
-          La section <strong className="text-green-700">"Membres du Foyer"</strong> (carte verte) vous permet de déclarer les revenus de chaque personne.
+          L'onglet <strong className="text-green-700">« Foyer »</strong> distingue le <strong>salaire</strong> de chacun et sa <strong>contribution au pot commun</strong> :
+          chacun garde le reste pour lui.
         </p>
 
         <div className="bg-green-50 border border-green-200 rounded-lg p-4">
@@ -123,15 +124,15 @@ const STEPS = [
           <ol className="space-y-2 text-xs text-green-700">
             <li className="flex items-start gap-2">
               <span className="bg-green-600 text-white rounded-full w-4 h-4 flex items-center justify-center text-[10px] flex-shrink-0">1</span>
-              <span>Cliquez sur <strong>"Ajouter un membre"</strong> en bas de la section verte.</span>
+              <span>Touchez <strong>« Ajouter un membre »</strong> (onglet Foyer).</span>
             </li>
             <li className="flex items-start gap-2">
               <span className="bg-green-600 text-white rounded-full w-4 h-4 flex items-center justify-center text-[10px] flex-shrink-0">2</span>
-              <span>Entrez le <strong>nom</strong> (ex: "Marie", "Jean") et le <strong>salaire NET mensuel</strong>.</span>
+              <span>Entrez le <strong>prénom</strong> et le <strong>salaire net mensuel</strong>.</span>
             </li>
             <li className="flex items-start gap-2">
               <span className="bg-green-600 text-white rounded-full w-4 h-4 flex items-center justify-center text-[10px] flex-shrink-0">3</span>
-              <span>Optionnel : ajoutez des <strong>dates de début/fin</strong> si l'emploi est temporaire.</span>
+              <span>Choisissez ce qu'il/elle <strong>verse au pot commun</strong> : tout le salaire, un montant fixe ou un pourcentage.</span>
             </li>
           </ol>
         </div>
@@ -140,20 +141,16 @@ const STEPS = [
 
         <div className="space-y-2">
           <p className="font-semibold text-sm flex items-center gap-2">
-            <Info className="h-4 w-4 text-blue-600" /> Boutons disponibles
+            <Info className="h-4 w-4 text-blue-600" /> Bon à savoir
           </p>
-          <div className="grid grid-cols-2 gap-2 text-xs">
+          <div className="grid grid-cols-1 gap-2 text-xs">
             <div className="flex items-center gap-2 p-2 bg-gray-50 rounded">
               <Edit className="h-3 w-3 text-gray-600" />
-              <span>Modifier</span>
-            </div>
-            <div className="flex items-center gap-2 p-2 bg-gray-50 rounded">
-              <Trash2 className="h-3 w-3 text-red-600" />
-              <span>Supprimer</span>
+              <span>Un changement s'applique à <strong>un mois seulement</strong> ou <strong>à partir d'un mois</strong> : le passé ne bouge pas.</span>
             </div>
             <div className="flex items-center gap-2 p-2 bg-gray-50 rounded">
               <Calendar className="h-3 w-3 text-orange-600" />
-              <span>Période d'emploi</span>
+              <span>L'assistant <strong>« Répartir le pot commun »</strong> propose une contribution juste pour chacun.</span>
             </div>
           </div>
         </div>
@@ -172,12 +169,13 @@ const STEPS = [
   // ==================== STEP 3: CHARGES ====================
   {
     icon: Receipt,
-    title: "Étape 2 : Vos Charges Fixes 📋",
-    description: "Listez vos dépenses récurrentes mensuelles.",
+    title: "Étape 2 : Vos Charges 📋",
+    description: "Des règles qui remplissent chaque mois toutes seules.",
     content: (
       <div className="space-y-4 text-sm text-muted-foreground">
         <p>
-          La section <strong className="text-orange-700">"Charges Mensuelles"</strong> (carte orange) regroupe toutes vos dépenses fixes : loyer, crédits, abonnements, assurances...
+          L'onglet <strong className="text-orange-700">« Charges »</strong> regroupe vos dépenses : chaque mois, certains mois (cantine), chaque année (taxe foncière) ou une seule fois.
+          Une charge terminée passe dans « Terminées » et reste dans l'historique.
         </p>
 
         <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
@@ -187,19 +185,19 @@ const STEPS = [
           <ol className="space-y-2 text-xs text-orange-700">
             <li className="flex items-start gap-2">
               <span className="bg-orange-600 text-white rounded-full w-4 h-4 flex items-center justify-center text-[10px] flex-shrink-0">1</span>
-              <span>Cliquez sur <strong>"Ajouter une charge"</strong>.</span>
+              <span>Touchez <strong>« Nouvelle charge »</strong>.</span>
             </li>
             <li className="flex items-start gap-2">
               <span className="bg-orange-600 text-white rounded-full w-4 h-4 flex items-center justify-center text-[10px] flex-shrink-0">2</span>
-              <span>Entrez le <strong>libellé</strong> précis (ex: "EDF", "Loyer", "Netflix").</span>
+              <span>Entrez le <strong>nom</strong> précis (ex: "EDF", "Loyer", "Netflix") : l'IA <strong>détecte la catégorie</strong>.</span>
             </li>
             <li className="flex items-start gap-2">
               <span className="bg-orange-600 text-white rounded-full w-4 h-4 flex items-center justify-center text-[10px] flex-shrink-0">3</span>
-              <span>L'IA <strong>détecte automatiquement</strong> la catégorie (Énergie, Mobile, etc.).</span>
+              <span>Choisissez <strong>quand elle revient</strong> et son <strong>montant</strong>.</span>
             </li>
             <li className="flex items-start gap-2">
               <span className="bg-orange-600 text-white rounded-full w-4 h-4 flex items-center justify-center text-[10px] flex-shrink-0">4</span>
-              <span>Indiquez le <strong>montant mensuel</strong> prélevé.</span>
+              <span>Indiquez le <strong>mois de début</strong> et, si besoin, une fin.</span>
             </li>
           </ol>
         </div>
@@ -212,8 +210,8 @@ const STEPS = [
             <div className="flex items-start gap-2 p-2 bg-gray-50 rounded">
               <Edit className="h-4 w-4 text-gray-600 mt-0.5 flex-shrink-0" />
               <div>
-                <span className="font-medium">Modifier (✏️)</span>
-                <span className="text-gray-500 block">Changez le libellé, montant ou dates.</span>
+                <span className="font-medium">Changer le montant (✏️)</span>
+                <span className="text-gray-500 block">Pour un mois seulement, ou à partir d'un mois : les mois d'avant gardent l'ancien montant.</span>
               </div>
             </div>
             <div className="flex items-start gap-2 p-2 bg-gray-50 rounded">
@@ -297,8 +295,8 @@ const STEPS = [
 
         <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
           <p className="text-xs text-yellow-800">
-            <strong>💡 Astuce :</strong> Pour désactiver les suggestions sur une charge (ex: votre loyer), 
-            cliquez sur l'icône 💡 dans la liste des charges.
+            <strong>💡 Astuce :</strong> Pour désactiver les suggestions sur une charge (ex: votre loyer),
+            ouvrez sa fiche dans l'onglet Charges.
           </p>
         </div>
       </div>
@@ -310,17 +308,17 @@ const STEPS = [
   // ==================== STEP 5: PROJETS ====================
   {
     icon: Target,
-    title: "Étape 4 : Projets d'Épargne 🎯",
-    description: "Créez des enveloppes pour vos objectifs financiers.",
+    title: "Étape 4 : L'Épargne 🎯",
+    description: "Des cagnottes alimentées chaque mois.",
     content: (
       <div className="space-y-4 text-sm text-muted-foreground">
         <p>
-          Les <strong className="text-purple-700">Projets</strong> sont des "enveloppes virtuelles" où vous accumulez de l'argent chaque mois pour des objectifs précis.
+          Dans l'onglet <strong className="text-purple-700">« Épargne »</strong>, chaque cagnotte reçoit un montant chaque mois. Ce qui reste du pot commun va dans l'<strong>épargne générale</strong>.
         </p>
 
         <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
           <p className="font-semibold text-purple-800 mb-2 flex items-center gap-2">
-            <Plus className="h-4 w-4" /> Exemples de projets
+            <Plus className="h-4 w-4" /> Exemples de cagnottes
           </p>
           <div className="grid grid-cols-2 gap-2 text-xs text-purple-700">
             <div className="flex items-center gap-1">🏖️ Vacances été</div>
@@ -340,27 +338,17 @@ const STEPS = [
           <div className="p-3 border rounded-lg bg-white">
             <div className="flex items-center gap-2 mb-2">
               <div className="h-3 w-3 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.5)]"></div>
-              <span className="font-semibold text-xs text-green-700">EN CAISSE (Réalisé)</span>
+              <span className="font-semibold text-xs text-green-700">EN CAISSE</span>
             </div>
             <p className="text-xs text-gray-600">
-              Argent <strong>déjà accumulé</strong> sur les mois passés. C'est de l'argent disponible aujourd'hui !
-            </p>
-          </div>
-
-          <div className="p-3 border rounded-lg bg-white">
-            <div className="flex items-center gap-2 mb-2">
-              <div className="h-3 w-3 rounded-full bg-primary/40"></div>
-              <span className="font-semibold text-xs text-primary">PLANIFIÉ (Projection)</span>
-            </div>
-            <p className="text-xs text-gray-600">
-              Ce que vous aurez <strong>en fin d'année</strong> si vous suivez votre plan. Une projection, pas une certitude !
+              Ce qui a été mis de côté, moins ce qui a été <strong>dépensé avec</strong> (ex : les vacances payées avec la cagnotte).
             </p>
           </div>
         </div>
 
         <div className="bg-green-50 border border-green-200 rounded-lg p-3">
           <p className="text-xs text-green-800">
-            <strong>🎉 Bonus :</strong> Définissez un "Objectif" (montant cible) et recevez une notification quand il est atteint !
+            <strong>🎉 Bonus :</strong> Définissez un objectif : l'écran indique quand il sera atteint.
           </p>
         </div>
       </div>
@@ -372,36 +360,32 @@ const STEPS = [
   // ==================== STEP 6: TABLEAU MENSUEL ====================
   {
     icon: Calendar,
-    title: "Étape 5 : Le Tableau Mensuel 📅",
-    description: "Le cœur de votre planification sur 12 mois.",
+    title: "Étape 5 : La vue Mois 📅",
+    description: "Un mois à la fois, rempli tout seul.",
     content: (
       <div className="space-y-4 text-sm text-muted-foreground">
         <p>
-          Le <strong>Tableau Mensuel</strong> affiche vos 12 mois en colonnes avec tous vos flux financiers.
+          La vue <strong>Mois</strong> montre un mois à la fois, rempli automatiquement à partir de vos règles. L'onglet <strong>Année</strong> montre les 12 mois côte à côte.
         </p>
 
         <div className="space-y-2">
-          <p className="font-semibold text-sm">Structure du tableau :</p>
+          <p className="font-semibold text-sm">Dans chaque mois :</p>
           <div className="space-y-1 text-xs">
             <div className="flex items-center gap-2 p-2 bg-green-50 rounded border-l-4 border-green-500">
-              <span className="font-medium">📈 Revenus</span>
-              <span className="text-gray-500">- Salaires + Exceptionnels</span>
+              <span className="font-medium">📈 Entrées</span>
+              <span className="text-gray-500">- Contributions au pot commun + revenus ponctuels</span>
             </div>
             <div className="flex items-center gap-2 p-2 bg-orange-50 rounded border-l-4 border-orange-500">
               <span className="font-medium">📉 Charges</span>
-              <span className="text-gray-500">- Total des charges fixes</span>
-            </div>
-            <div className="flex items-center gap-2 p-2 bg-blue-50 rounded border-l-4 border-blue-500">
-              <span className="font-medium">💰 Reste à Vivre</span>
-              <span className="text-gray-500">- Revenus - Charges</span>
+              <span className="text-gray-500">- Seulement celles du mois</span>
             </div>
             <div className="flex items-center gap-2 p-2 bg-purple-50 rounded border-l-4 border-purple-500">
-              <span className="font-medium">🎯 Projets</span>
-              <span className="text-gray-500">- Vos allocations mensuelles</span>
+              <span className="font-medium">🎯 Épargne</span>
+              <span className="text-gray-500">- Ce qui est mis de côté</span>
             </div>
-            <div className="flex items-center gap-2 p-2 bg-gray-50 rounded border-l-4 border-gray-500">
-              <span className="font-medium">✨ Solde</span>
-              <span className="text-gray-500">- Ce qui reste après projets</span>
+            <div className="flex items-center gap-2 p-2 bg-blue-50 rounded border-l-4 border-blue-500">
+              <span className="font-medium">✨ Reste</span>
+              <span className="text-gray-500">- Va dans l'épargne générale</span>
             </div>
           </div>
         </div>
@@ -411,20 +395,20 @@ const STEPS = [
         <div className="grid grid-cols-2 gap-2 text-xs">
           <div className="p-2 bg-gray-50 rounded border">
             <MessageCircle className="h-4 w-4 text-primary mb-1" />
-            <p className="font-medium">Commentaires 💬</p>
-            <p className="text-gray-500">Ajoutez des notes sur chaque mois</p>
+            <p className="font-medium">Note du mois 💬</p>
+            <p className="text-gray-500">Partagée avec tout le foyer</p>
           </div>
           <div className="p-2 bg-gray-50 rounded border">
             <Lock className="h-4 w-4 text-orange-500 mb-1" />
-            <p className="font-medium">Verrouillage 🔒</p>
-            <p className="text-gray-500">Figez les mois validés</p>
+            <p className="font-medium">Clôture 🔒</p>
+            <p className="text-gray-500">Les mois passés sont figés tout seuls</p>
           </div>
         </div>
 
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
           <p className="text-xs text-blue-800">
-            <strong>💡 Astuce :</strong> Cliquez directement sur n'importe quel chiffre pour le modifier. 
-            Utilisez les flèches ◀ ▶ pour changer d'année.
+            <strong>💡 Astuce :</strong> touchez une ligne pour la modifier « ce mois seulement » ou « à partir de ce mois ».
+            La section « Ce qui change » résume les différences avec le mois précédent.
           </p>
         </div>
       </div>
@@ -574,7 +558,7 @@ const STEPS = [
           <ol className="space-y-2 text-xs">
             <li className="flex items-center gap-2">
               <div className="w-5 h-5 rounded-full bg-green-100 text-green-700 flex items-center justify-center font-bold text-[10px]">1</div>
-              <span>Ajoutez les <strong>membres</strong> et leurs salaires</span>
+              <span>Ajoutez les <strong>membres du foyer</strong>, leur salaire et leur contribution</span>
             </li>
             <li className="flex items-center gap-2">
               <div className="w-5 h-5 rounded-full bg-orange-100 text-orange-700 flex items-center justify-center font-bold text-[10px]">2</div>
@@ -582,11 +566,11 @@ const STEPS = [
             </li>
             <li className="flex items-center gap-2">
               <div className="w-5 h-5 rounded-full bg-purple-100 text-purple-700 flex items-center justify-center font-bold text-[10px]">3</div>
-              <span>Créez vos <strong>projets d'épargne</strong></span>
+              <span>Créez vos <strong>cagnottes d'épargne</strong></span>
             </li>
             <li className="flex items-center gap-2">
               <div className="w-5 h-5 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center font-bold text-[10px]">4</div>
-              <span>Allez dans le <strong>Tableau Mensuel</strong> pour allouer</span>
+              <span>Ouvrez la vue <strong>Mois</strong> : tout est déjà rempli</span>
             </li>
             <li className="flex items-center gap-2">
               <div className="w-5 h-5 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center font-bold text-[10px]">5</div>

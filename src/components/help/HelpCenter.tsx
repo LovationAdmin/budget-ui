@@ -206,44 +206,54 @@ const HELP_ARTICLES: HelpArticle[] = [
   // ==================== MEMBRES & REVENUS ====================
   {
     id: 'people-section',
-    category: 'Revenus',
+    category: 'Foyer',
     icon: Users,
-    title: 'Gérer les Membres du Foyer',
-    description: 'Ajouter des salaires, gérer les revenus variables et les périodes d\'emploi.',
-    tags: ['salaire', 'revenus', 'membres', 'foyer', 'personnes', 'emploi'],
+    title: 'Le Foyer : salaires et pot commun',
+    description: 'Distinguer le salaire de chacun et ce qu’il verse au pot commun, répartir équitablement.',
+    tags: ['salaire', 'revenus', 'membres', 'foyer', 'personnes', 'contribution', 'pot commun', 'prorata', 'répartition'],
     content: (
       <div className="space-y-6">
         <p className="text-sm text-gray-600">
-          La section "Membres" vous permet de définir qui apporte des revenus au foyer et combien.
+          Chacun garde son salaire. Le <strong>pot commun</strong> ne reçoit que la <strong>contribution</strong> de chacun :
+          tout son salaire, un montant fixe ou un pourcentage. C’est ce pot qui paie les charges et l’épargne du foyer.
         </p>
 
         <div>
           <h4 className="font-semibold text-sm mb-3 flex items-center gap-2">
             <Plus className="h-4 w-4 text-primary" />
-            Ajouter un Membre
+            Ajouter un membre
           </h4>
           <StepGuide steps={[
-            { title: "Cliquez sur 'Ajouter un membre'", description: "Le bouton se trouve en bas de la section verte 'Membres du Foyer'." },
-            { title: "Entrez le nom", description: "Ex: 'Jean', 'Marie', ou même 'Freelance' si vous avez plusieurs sources." },
-            { title: "Définissez le salaire mensuel NET", description: "C'est le montant qui arrive réellement sur votre compte chaque mois." },
-            { title: "(Optionnel) Ajoutez des dates", description: "Si la personne a commencé ou terminé un emploi en cours d'année." }
+            { title: "Onglet « Foyer » → « Ajouter un membre »", description: "Ou depuis le bouton « Ajouter » de la vue Mois." },
+            { title: "Prénom et salaire net", description: "Le montant qui arrive réellement sur son compte chaque mois." },
+            { title: "Ce qu’il/elle verse au pot commun", description: "Tout le salaire, un montant fixe (ex. 1 200 €) ou un pourcentage (ex. 40 %). L’écran affiche aussitôt ce qu’il/elle garde pour soi." },
+            { title: "(Optionnel) Arrivée dans le foyer", description: "Pour un membre qui arrive plus tard (colocataire, reprise d’emploi…)." }
           ]} />
         </div>
 
         <Separator />
 
         <div className="grid gap-4">
-          <FeatureBox icon={Calendar} title="Revenus Temporaires" color="orange">
+          <FeatureBox icon={Calendar} title="« Ce mois-ci seulement » ou « À partir de ce mois »" color="orange">
             <p>
-              <strong>Date de début/fin :</strong> Utilisez ces champs si quelqu'un commence un emploi en Mars ou le quitte en Septembre. 
-              Le système calculera automatiquement les revenus uniquement sur les mois concernés.
+              Un salaire ou une contribution qui change ? Touchez le membre dans le mois concerné, modifiez, puis choisissez :
+              <strong> ce mois seulement</strong> (mois sans salaire, prime…) ou <strong>à partir de ce mois</strong> (augmentation, nouveau contrat).
+              Les mois d’avant ne bougent jamais.
             </p>
           </FeatureBox>
 
-          <FeatureBox icon={Banknote} title="Revenus Exceptionnels" color="green">
+          <FeatureBox icon={Calculator} title="Répartir le pot commun" color="blue">
             <p>
-              Pour les primes, 13ème mois, ou remboursements ponctuels, utilisez plutôt la ligne <strong>"Revenus Exceptionnels"</strong> dans le Tableau Mensuel. 
-              Cela évite de gonfler artificiellement vos revenus mensuels récurrents.
+              Dans « Foyer », l’assistant calcule une contribution juste pour chacun : <strong>au prorata</strong> des salaires,
+              <strong> à parts égales</strong> ou pour que chacun garde <strong>le même reste</strong>. Il part du besoin moyen des 12 prochains mois
+              (charges + épargne, avec une marge si vous voulez) et s’applique à partir du mois choisi.
+            </p>
+          </FeatureBox>
+
+          <FeatureBox icon={Banknote} title="Revenus ponctuels" color="green">
+            <p>
+              Prime, 13ᵉ mois, remboursement : ajoutez-les comme <strong>revenu ponctuel</strong> dans le mois concerné (vue Mois).
+              Ils s’ajoutent aux entrées de ce mois uniquement.
             </p>
           </FeatureBox>
         </div>
@@ -266,74 +276,78 @@ const HELP_ARTICLES: HelpArticle[] = [
     id: 'charges-section',
     category: 'Charges',
     icon: Receipt,
-    title: 'Gérer les Charges Fixes',
-    description: 'Ajouter, modifier et catégoriser vos dépenses récurrentes.',
-    tags: ['charges', 'dépenses', 'fixes', 'loyer', 'factures', 'abonnements', 'prélèvements'],
+    title: 'Les Charges : des règles, pas des cases',
+    description: 'Charges mensuelles, certains mois, annuelles ou ponctuelles ; changer un montant sans toucher au passé.',
+    tags: ['charges', 'dépenses', 'fixes', 'loyer', 'factures', 'abonnements', 'prélèvements', 'annuelle', 'terminée', 'arrêter', 'exception'],
     content: (
       <div className="space-y-6">
         <p className="text-sm text-gray-600">
-          Les charges sont vos dépenses fixes mensuelles : loyer, crédits, abonnements, assurances, etc.
+          Une charge est une <strong>règle</strong> : « 1 180 € tous les mois », « 120 € sauf juillet et août », « 960 € chaque année en octobre ».
+          Chaque mois se remplit tout seul à partir de ces règles.
         </p>
 
         <div>
           <h4 className="font-semibold text-sm mb-3 flex items-center gap-2">
             <Plus className="h-4 w-4 text-primary" />
-            Ajouter une Charge
+            Ajouter une charge
           </h4>
           <StepGuide steps={[
-            { title: "Cliquez sur 'Ajouter une charge'", description: "Le bouton se trouve en bas de la section orange 'Charges Mensuelles'." },
-            { title: "Entrez le libellé", description: "Ex: 'Loyer', 'EDF', 'Netflix', 'Crédit Auto'. Soyez précis !" },
-            { title: "Indiquez le montant mensuel", description: "Le montant prélevé chaque mois sur votre compte." },
-            { title: "L'IA détecte la catégorie", description: "En quittant le champ libellé, notre IA identifie automatiquement la catégorie (Énergie, Mobile, etc.)." }
+            { title: "« Nouvelle charge » (onglet Charges) ou « Ajouter » (vue Mois)", description: "Le formulaire s’ouvre dans un panneau, sans quitter l’écran." },
+            { title: "Nom et fréquence", description: "Chaque mois, certains mois (ex. cantine), chaque année (ex. taxe foncière, avec l’option de la lisser sur 12 mois) ou une seule fois." },
+            { title: "Montant et mois de début", description: "Optionnel : une fin (« pendant 12 mois » ou « jusqu’à juin 2027 »). L’encadré « En clair » résume la règle et son effet sur le mois." },
+            { title: "L’IA détecte la catégorie", description: "En quittant le champ du nom (Énergie, Mobile, Assurance…)." }
           ]} />
         </div>
 
         <Separator />
 
         <div>
-          <h4 className="font-semibold text-sm mb-3">Les Boutons d'Action</h4>
+          <h4 className="font-semibold text-sm mb-3">Modifier sans réécrire l’historique</h4>
           <div className="space-y-3">
             <div className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
               <div className="p-1.5 bg-white rounded border"><Edit className="h-4 w-4 text-gray-600" /></div>
               <div>
-                <p className="font-medium text-sm">Modifier (✏️)</p>
-                <p className="text-xs text-gray-600">Cliquez pour éditer le libellé, montant ou les dates de la charge.</p>
-              </div>
-            </div>
-
-            <div className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
-              <div className="p-1.5 bg-white rounded border"><Trash2 className="h-4 w-4 text-red-600" /></div>
-              <div>
-                <p className="font-medium text-sm">Supprimer (🗑️)</p>
-                <p className="text-xs text-gray-600">Supprime définitivement la charge. Une confirmation est demandée.</p>
+                <p className="font-medium text-sm">Changer le montant</p>
+                <p className="text-xs text-gray-600">
+                  Depuis un mois : <strong>ce mois seulement</strong> (une exception) ou <strong>à partir de ce mois</strong> (les mois d’avant gardent l’ancien montant).
+                  Une erreur de saisie se corrige sur tous les mois ouverts.
+                </p>
               </div>
             </div>
 
             <div className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
               <div className="p-1.5 bg-white rounded border"><Calendar className="h-4 w-4 text-orange-600" /></div>
               <div>
-                <p className="font-medium text-sm">Période (📅)</p>
-                <p className="text-xs text-gray-600">Définissez une date de début et/ou fin pour les charges temporaires (ex: crédit qui se termine en Juin).</p>
+                <p className="font-medium text-sm">Arrêter une charge</p>
+                <p className="text-xs text-gray-600">
+                  Elle passe dans « Terminées » : elle disparaît des mois suivants mais reste dans les mois où elle a compté.
+                  Un crédit de janvier à mars n’encombre plus la liste en août.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
+              <div className="p-1.5 bg-white rounded border"><Trash2 className="h-4 w-4 text-red-600" /></div>
+              <div>
+                <p className="font-medium text-sm">Supprimer</p>
+                <p className="text-xs text-gray-600">Les mois clôturés gardent leur photo : supprimer une charge ne change jamais l’historique.</p>
               </div>
             </div>
 
             <div className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
               <div className="p-1.5 bg-white rounded border"><Lightbulb className="h-4 w-4 text-yellow-500" /></div>
               <div>
-                <p className="font-medium text-sm">Suggestions ON/OFF (💡)</p>
-                <p className="text-xs text-gray-600">
-                  Active ou désactive les suggestions d'économies IA pour cette charge spécifique. 
-                  Utile si vous ne souhaitez pas de conseils pour certaines dépenses.
-                </p>
+                <p className="font-medium text-sm">Suggestions d’économies</p>
+                <p className="text-xs text-gray-600">Activables ou désactivables charge par charge, depuis sa fiche.</p>
               </div>
             </div>
 
             <div className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
               <div className="p-1.5 bg-white rounded border"><Link className="h-4 w-4 text-indigo-600" /></div>
               <div>
-                <p className="font-medium text-sm">Lier aux Transactions (🔗)</p>
+                <p className="font-medium text-sm">Lier aux transactions</p>
                 <p className="text-xs text-gray-600">
-                  <strong>(Beta 2 uniquement)</strong> Associez cette charge à des transactions bancaires réelles pour comparer prévu vs réel.
+                  Depuis la fiche d’une charge : associez-la à des transactions bancaires réelles pour comparer prévu et réel.
                 </p>
               </div>
             </div>
@@ -412,8 +426,8 @@ const HELP_ARTICLES: HelpArticle[] = [
 
           <FeatureBox icon={LightbulbOff} title="Désactiver pour une charge" color="orange">
             <p>
-              Si vous ne voulez pas de suggestions pour une charge spécifique (ex: votre loyer), 
-              cliquez sur l'icône 💡 dans la liste des charges pour la désactiver.
+              Si vous ne voulez pas de suggestions pour une charge spécifique (ex: votre loyer),
+              ouvrez sa fiche dans l’onglet Charges et choisissez « Désactiver les suggestions d’économies ».
             </p>
           </FeatureBox>
         </div>
@@ -433,64 +447,50 @@ const HELP_ARTICLES: HelpArticle[] = [
     id: 'projects-section',
     category: 'Épargne',
     icon: Target,
-    title: 'Projets d\'Épargne & Objectifs',
-    description: 'Créer des enveloppes budgétaires pour vos projets futurs.',
-    tags: ['projets', 'épargne', 'objectifs', 'vacances', 'travaux', 'économies', 'enveloppes'],
+    title: 'L’Épargne : cagnottes et épargne générale',
+    description: 'Mettre de côté chaque mois, suivre chaque cagnotte, payer une dépense avec.',
+    tags: ['projets', 'épargne', 'objectifs', 'vacances', 'travaux', 'économies', 'enveloppes', 'cagnotte', 'épargne générale'],
     content: (
       <div className="space-y-6">
         <p className="text-sm text-gray-600">
-          Les projets sont des "enveloppes virtuelles" où vous accumulez de l'argent chaque mois pour des objectifs précis.
+          Une épargne est une <strong>cagnotte</strong> : un montant mis de côté chaque mois (ou choisi mois par mois), avec un objectif si vous voulez.
+          Ce qui reste du pot commun à la fin de chaque mois va automatiquement dans l’<strong>épargne générale</strong>.
         </p>
 
         <div>
           <h4 className="font-semibold text-sm mb-3 flex items-center gap-2">
             <Plus className="h-4 w-4 text-primary" />
-            Créer un Projet
+            Créer une épargne
           </h4>
           <StepGuide steps={[
-            { title: "Cliquez sur 'Ajouter un projet'", description: "Le bouton se trouve dans la section violette 'Projets d'Épargne'." },
-            { title: "Nommez votre projet", description: "Ex: 'Vacances Été 2025', 'Travaux Salle de Bain', 'Fonds d'Urgence'." },
-            { title: "(Optionnel) Définissez un objectif", description: "Montant cible (ex: 3000€). Une barre de progression apparaîtra." }
+            { title: "Onglet « Épargne » → « Nouvelle épargne »", description: "Ou depuis le bouton « Ajouter » de la vue Mois." },
+            { title: "Nom et montant mensuel", description: "Ex. « Vacances » : 200 € chaque mois, à partir d’octobre. Ou « Montant libre » pour décider mois par mois." },
+            { title: "(Optionnel) Objectif et fin", description: "L’écran indique quand l’objectif sera atteint, ou ce qui manquera à l’échéance." }
           ]} />
         </div>
 
         <Separator />
 
-        <div>
-          <h4 className="font-semibold text-sm mb-3">Comprendre les Indicateurs</h4>
-          <div className="space-y-4">
-            <div className="p-4 border rounded-lg bg-white">
-              <div className="flex items-center gap-2 mb-3">
-                <div className="h-3 w-3 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.5)]"></div>
-                <span className="font-semibold text-sm text-green-700">EN CAISSE (Réalisé)</span>
-              </div>
-              <p className="text-xs text-gray-600">
-                C'est l'argent <strong>réellement accumulé</strong> sur les mois passés. 
-                Si nous sommes en Juin et que vous avez mis 200€/mois depuis Janvier, 
-                vous avez <strong>1200€ en caisse</strong>. C'est de l'argent disponible aujourd'hui.
-              </p>
-            </div>
+        <div className="grid gap-4">
+          <FeatureBox icon={PiggyBank} title="En caisse" color="purple">
+            <p>
+              Chaque carte affiche ce qu’il y a dans la cagnotte à la fin du mois en cours : tout ce qui a été mis de côté, moins ce qui a été dépensé avec.
+            </p>
+          </FeatureBox>
 
-            <div className="p-4 border rounded-lg bg-white">
-              <div className="flex items-center gap-2 mb-3">
-                <div className="h-3 w-3 rounded-full bg-primary/40"></div>
-                <span className="font-semibold text-sm text-primary">PLANIFIÉ (Projection)</span>
-              </div>
-              <p className="text-xs text-gray-600">
-                C'est une <strong>projection</strong> de ce que vous aurez en fin d'année si vous suivez votre plan. 
-                Ex: 200€/mois x 12 = <strong>2400€ planifiés</strong>. 
-                Utile pour savoir si vous pourrez financer vos vacances en Août !
-              </p>
-            </div>
-          </div>
+          <FeatureBox icon={Wallet} title="Payer une dépense avec une épargne" color="blue">
+            <p>
+              Les vacances payées avec la cagnotte « Vacances » ? Enregistrez-les comme <strong>dépense payée par une épargne</strong> :
+              l’argent sort de la cagnotte, pas du budget du mois.
+            </p>
+          </FeatureBox>
+
+          <FeatureBox icon={BarChart3} title="Objectif" color="green">
+            <p>
+              Avec un objectif (ex. 3 000 €), une barre de progression montre où vous en êtes et combien il reste à mettre de côté.
+            </p>
+          </FeatureBox>
         </div>
-
-        <FeatureBox icon={BarChart3} title="Barre de Progression" color="purple">
-          <p>
-            Si vous définissez un objectif (ex: 3000€), une barre de progression s'affiche.
-            Quand elle atteint 100%, vous recevez une notification 🎉 "Objectif Atteint !".
-          </p>
-        </FeatureBox>
 
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
           <p className="text-xs text-blue-800">
@@ -507,37 +507,34 @@ const HELP_ARTICLES: HelpArticle[] = [
     id: 'monthly-table',
     category: 'Planification',
     icon: Calendar,
-    title: 'Le Tableau Mensuel',
-    description: 'Le cœur de votre planification financière sur 12 mois.',
-    tags: ['tableau', 'mensuel', 'planification', 'budget', 'mois', 'allocation', 'reste à vivre'],
+    title: 'La vue Mois (et l’Année)',
+    description: 'Un mois à la fois : entrées du pot commun, charges, épargne, reste et ce qui change.',
+    tags: ['tableau', 'mensuel', 'planification', 'budget', 'mois', 'année', 'allocation', 'reste', 'clôture', 'verrouillage'],
     content: (
       <div className="space-y-6">
         <p className="text-sm text-gray-600">
-          Le Tableau Mensuel est le cœur de Budget Famille. Il affiche vos 12 mois en colonnes avec tous vos flux financiers.
+          La vue <strong>Mois</strong> est le cœur de Budget Famille : un mois à la fois, rempli automatiquement à partir de vos règles.
+          Naviguez avec les flèches ou la frise des 12 mois.
         </p>
 
         <div>
-          <h4 className="font-semibold text-sm mb-3">Structure du Tableau</h4>
+          <h4 className="font-semibold text-sm mb-3">Ce que montre un mois</h4>
           <div className="space-y-2 text-sm">
             <div className="flex items-center gap-2 p-2 bg-green-50 rounded border-l-4 border-green-500">
-              <span className="font-medium">📈 Revenus</span>
-              <span className="text-xs text-gray-600">- Salaires de chaque membre + Revenus exceptionnels</span>
+              <span className="font-medium">Entrées du pot commun</span>
+              <span className="text-xs text-gray-600">- Ce que chacun verse + les revenus ponctuels du mois</span>
             </div>
             <div className="flex items-center gap-2 p-2 bg-orange-50 rounded border-l-4 border-orange-500">
-              <span className="font-medium">📉 Charges</span>
-              <span className="text-xs text-gray-600">- Total de vos charges fixes du mois</span>
-            </div>
-            <div className="flex items-center gap-2 p-2 bg-blue-50 rounded border-l-4 border-blue-500">
-              <span className="font-medium">💰 Reste à Vivre</span>
-              <span className="text-xs text-gray-600">- Revenus - Charges = Ce qu'il vous reste</span>
+              <span className="font-medium">Charges du mois</span>
+              <span className="text-xs text-gray-600">- Seulement celles qui s’appliquent ce mois-ci</span>
             </div>
             <div className="flex items-center gap-2 p-2 bg-purple-50 rounded border-l-4 border-purple-500">
-              <span className="font-medium">🎯 Projets</span>
-              <span className="text-xs text-gray-600">- Lignes pour allouer de l'argent à vos projets</span>
+              <span className="font-medium">Épargne</span>
+              <span className="text-xs text-gray-600">- Ce qui est mis de côté, cagnotte par cagnotte</span>
             </div>
-            <div className="flex items-center gap-2 p-2 bg-gray-50 rounded border-l-4 border-gray-500">
-              <span className="font-medium">✨ Solde du mois</span>
-              <span className="text-xs text-gray-600">- Ce qui reste après avoir alimenté vos projets</span>
+            <div className="flex items-center gap-2 p-2 bg-blue-50 rounded border-l-4 border-blue-500">
+              <span className="font-medium">Reste du mois</span>
+              <span className="text-xs text-gray-600">- Entrées − charges − épargne : il part dans l’épargne générale</span>
             </div>
           </div>
         </div>
@@ -545,16 +542,24 @@ const HELP_ARTICLES: HelpArticle[] = [
         <Separator />
 
         <div>
-          <h4 className="font-semibold text-sm mb-3">Fonctionnalités Avancées</h4>
+          <h4 className="font-semibold text-sm mb-3">Au quotidien</h4>
           <div className="grid gap-3">
+            <div className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
+              <ArrowLeftRight className="h-5 w-5 text-blue-500 mt-0.5" />
+              <div>
+                <p className="font-medium text-sm">Ce qui change</p>
+                <p className="text-xs text-gray-600">
+                  Chaque mois liste ce qui a changé depuis le mois précédent : nouvelle charge, hausse, fin d’un crédit, contribution modifiée…
+                </p>
+              </div>
+            </div>
+
             <div className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
               <MessageCircle className="h-5 w-5 text-primary mt-0.5" />
               <div>
-                <p className="font-medium text-sm">Commentaires 💬</p>
+                <p className="font-medium text-sm">Note du mois</p>
                 <p className="text-xs text-gray-600">
-                  Cliquez sur l'icône bulle pour ajouter une note. 
-                  Ex: "Prime reçue", "Régularisation EDF", "Anniversaire enfant".
-                  Idéal pour communiquer avec votre conjoint(e).
+                  Ex : « Prime reçue », « Régularisation EDF », « Anniversaire de Léa ». Visible par tout le foyer.
                 </p>
               </div>
             </div>
@@ -562,21 +567,20 @@ const HELP_ARTICLES: HelpArticle[] = [
             <div className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
               <Lock className="h-5 w-5 text-orange-500 mt-0.5" />
               <div>
-                <p className="font-medium text-sm">Verrouillage 🔒</p>
+                <p className="font-medium text-sm">Mois clôturés</p>
                 <p className="text-xs text-gray-600">
-                  Une fois un mois écoulé et vérifié, verrouillez-le pour éviter les modifications accidentelles.
-                  Le cadenas apparaît en haut de la colonne du mois.
+                  Un mois passé se clôture tout seul : ses montants sont figés, même si une charge change ou disparaît ensuite.
+                  Besoin de corriger ? « Rouvrir » montre d’abord ce qui changera.
                 </p>
               </div>
             </div>
 
             <div className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
-              <ArrowLeftRight className="h-5 w-5 text-blue-500 mt-0.5" />
+              <BarChart3 className="h-5 w-5 text-indigo-500 mt-0.5" />
               <div>
-                <p className="font-medium text-sm">Navigation Années</p>
+                <p className="font-medium text-sm">L’année en un coup d’œil</p>
                 <p className="text-xs text-gray-600">
-                  Utilisez les flèches ◀ 2024 ▶ en haut pour naviguer entre les années.
-                  Vos données sont conservées pour chaque année séparément.
+                  L’onglet « Année » montre les 12 mois côte à côte (entrées, charges, épargne, reste). Touchez un mois pour l’ouvrir.
                 </p>
               </div>
             </div>
@@ -587,8 +591,8 @@ const HELP_ARTICLES: HelpArticle[] = [
           <div className="flex items-start gap-2">
             <Info className="h-4 w-4 text-yellow-600 mt-0.5 flex-shrink-0" />
             <div className="text-xs text-yellow-800">
-              <strong>Astuce :</strong> Cliquez directement dans une cellule pour modifier le montant.
-              Les totaux se mettent à jour automatiquement en temps réel.
+              <strong>Astuce :</strong> touchez une ligne pour la modifier. Chaque modification propose « ce mois seulement » ou
+              « à partir de ce mois », et peut être annulée juste après.
             </div>
           </div>
         </div>
@@ -709,7 +713,7 @@ const HELP_ARTICLES: HelpArticle[] = [
 
           <FeatureBox icon={MessageCircle} title="Communication via Commentaires" color="green">
             <p>
-              Utilisez les commentaires du Tableau Mensuel pour communiquer : 
+              Utilisez la note de chaque mois (vue Mois) pour communiquer :
               "J'ai payé la régul EDF", "On peut se permettre un resto ce mois-ci ?", etc.
             </p>
           </FeatureBox>

@@ -240,52 +240,53 @@ interface BudgetData {
   peopleCount: number;
   chargesCount: number;
   projectsCount: number;
-  hasFilledMonthlyData: boolean;
+  /** At least one member has an explicit contribution rule. */
+  contributionsSet: boolean;
   hasRunSuggestions: boolean;
 }
 
 export function useOnboardingProgress(
   data: BudgetData,
   actions: {
-    scrollToPeople?: () => void;
-    scrollToCharges?: () => void;
-    scrollToProjects?: () => void;
-    scrollToCalendar?: () => void;
-    scrollToSuggestions?: () => void;
+    goToMembers?: () => void;
+    goToCharges?: () => void;
+    goToProjects?: () => void;
+    goToContributions?: () => void;
+    goToSuggestions?: () => void;
   }
 ): OnboardingStep[] {
   return useMemo(
     () => [
       {
         id: 'add-member',
-        label: 'Ajoute un membre du foyer',
-        description: 'Pour calculer tes revenus mensuels',
+        label: 'Ajoute les membres du foyer',
+        description: 'Leur salaire net, pour calculer la part de chacun',
         completed: data.peopleCount > 0,
-        onAction: actions.scrollToPeople,
+        onAction: actions.goToMembers,
+        actionLabel: 'Ouvrir',
+      },
+      {
+        id: 'set-contributions',
+        label: 'Choisis qui met quoi dans le pot commun',
+        description: 'Tout le salaire, un montant fixe ou un pourcentage',
+        completed: data.contributionsSet,
+        onAction: actions.goToContributions,
         actionLabel: 'Ouvrir',
       },
       {
         id: 'add-charge',
-        label: 'Ajoute ta première charge',
-        description: 'Loyer, abonnements, factures…',
+        label: 'Ajoute tes charges',
+        description: 'Loyer, abonnements, cantine, taxe annuelle…',
         completed: data.chargesCount > 0,
-        onAction: actions.scrollToCharges,
+        onAction: actions.goToCharges,
         actionLabel: 'Ouvrir',
       },
       {
         id: 'add-project',
-        label: 'Crée un projet d’épargne',
-        description: 'Vacances, achat, fonds de sécurité',
+        label: 'Crée une épargne',
+        description: 'Vacances, fonds d’urgence, projets',
         completed: data.projectsCount > 0,
-        onAction: actions.scrollToProjects,
-        actionLabel: 'Ouvrir',
-      },
-      {
-        id: 'fill-month',
-        label: 'Remplis le mois en cours',
-        description: 'Alloue tes revenus aux projets',
-        completed: data.hasFilledMonthlyData,
-        onAction: actions.scrollToCalendar,
+        onAction: actions.goToProjects,
         actionLabel: 'Ouvrir',
       },
       {
@@ -293,7 +294,7 @@ export function useOnboardingProgress(
         label: 'Lance l’analyse IA',
         description: 'Trouve des économies sur tes charges',
         completed: data.hasRunSuggestions,
-        onAction: actions.scrollToSuggestions,
+        onAction: actions.goToSuggestions,
         actionLabel: 'Lancer',
       },
     ],
