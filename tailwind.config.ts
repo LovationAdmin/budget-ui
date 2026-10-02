@@ -1,4 +1,11 @@
 import type { Config } from "tailwindcss";
+import plugin from "tailwindcss/plugin";
+import { paletteFor, paletteVars } from "./tailwind.palette";
+
+// Palette classes adapt to dark mode by role (see tailwind.palette.ts).
+const bgPalette = paletteFor("bg");
+const fgPalette = paletteFor("fg");
+const bdPalette = paletteFor("bd");
 
 export default {
   darkMode: ["class"],
@@ -17,7 +24,9 @@ export default {
         sans: ['DM Sans', 'system-ui', 'sans-serif'],
         display: ['Plus Jakarta Sans', 'system-ui', 'sans-serif'],
       },
+      // Default for every colour utility (bg, gradients, ring offset…): surface role.
       colors: {
+        ...bgPalette,
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
@@ -70,6 +79,14 @@ export default {
           ring: "hsl(var(--sidebar-ring))",
         },
       },
+      textColor: fgPalette,
+      fill: fgPalette,
+      stroke: fgPalette,
+      placeholderColor: fgPalette,
+      borderColor: bdPalette,
+      divideColor: bdPalette,
+      ringColor: bdPalette,
+      outlineColor: bdPalette,
       borderRadius: {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
@@ -136,5 +153,5 @@ export default {
       },
     },
   },
-  plugins: [require("tailwindcss-animate")],
+  plugins: [require("tailwindcss-animate"), plugin(({ addBase }) => addBase(paletteVars()))],
 } satisfies Config;

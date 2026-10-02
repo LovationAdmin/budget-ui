@@ -8,7 +8,9 @@
 // ============================================================================
 
 import { useState, useCallback, memo, useMemo, type ComponentType } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { ThemeMenuItems } from '@/components/theme/ThemeMenu';
+import { THEMED_ROUTES } from '@/components/theme/AppThemeProvider';
 import { Bell, Menu, X, HelpCircle, LogIn, UserPlus, User, LogOut, Settings, MoreHorizontal } from 'lucide-react';
 import {
   DropdownMenu,
@@ -65,6 +67,8 @@ export const BudgetNavbar = memo(function BudgetNavbar({
   className,
 }: BudgetNavbarProps) {
   const navigate = useNavigate();
+  // The appearance choice only applies to signed-in screens (public pages stay light).
+  const themed = THEMED_ROUTES.test(useLocation().pathname);
   const { user, logout } = useAuth();
   const { notifications, unreadCount, markAsRead, markAllAsRead } =
     useNotifications();
@@ -305,6 +309,12 @@ export const BudgetNavbar = memo(function BudgetNavbar({
                     <DropdownMenuItem onClick={() => navigate('/dashboard')} className="min-h-[44px]">
                       <Settings className="mr-2 h-4 w-4" /> Mes budgets
                     </DropdownMenuItem>
+                    {themed && (
+                      <>
+                        <DropdownMenuSeparator />
+                        <ThemeMenuItems />
+                      </>
+                    )}
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={startTutorial} className="min-h-[44px]">
                       <HelpCircle className="mr-2 h-4 w-4" /> Voir le tutoriel

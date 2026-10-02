@@ -30,7 +30,17 @@ Familles d'éléments (pastilles et barres) :
 
 Le texte des KPI reste en encre neutre : la couleur sert d'indice (pastille), jamais de seul porteur de sens.
 
-> Mode sombre : non actif. La palette `.dark` existante est un héritage de l'ancien thème et n'est branchée sur aucune bascule.
+### Mode sombre
+
+- **Portée** : les écrans connectés (`/dashboard`, `/budget`, `/profile`, `/admin`). Les pages publiques restent claires.
+- **Choix** : menu du compte › Apparence (Automatique, Clair ou Sombre). Il est stocké dans `localStorage.theme` et appliqué avant le premier rendu par le script d'`index.html`. `theme-color` suit le thème.
+- **Tokens** : bloc `.dark` de `src/index.css`, avec les mêmes teintes que le thème clair (primaire bleue) sur un fond bleu-gris profond.
+- **Classes de palette** (`bg-indigo-50`, `text-gray-600`…) : elles s'adaptent seules, selon leur rôle (`tailwind.palette.ts`).
+  - Les fonds pâles deviennent des surfaces teintées sombres.
+  - Les encres foncées deviennent claires.
+  - Les aplats pleins (≥ 400) gardent leur texte blanc.
+  - `bg-white` devient `--card`.
+- **Code nouveau** : préférer les tokens (`bg-card`, `text-muted-foreground`…) ; n'ajouter un `dark:` que pour un cas que ce mapping ne couvre pas, par exemple l'état actif d'un contrôle segmenté (`dark:bg-white/10`).
 
 ## Typographie
 
