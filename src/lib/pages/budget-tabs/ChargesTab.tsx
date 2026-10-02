@@ -331,10 +331,10 @@ export default function ChargesTab() {
                     onClick={() => openSheet({ kind: 'chargeDetail', id: c.id })}
                     className="flex min-h-[56px] w-full items-center gap-3 rounded-xl px-2.5 py-2 text-left transition-colors hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   >
-                    <CategoryIcon category={c.category} tone={filter === 'ended' ? 'muted' : 'charge'} />
+                    <CategoryIcon category={privacy.category(c)} tone={filter === 'ended' ? 'muted' : 'charge'} />
                     <span className="flex min-w-0 flex-1 flex-col gap-0.5">
                       <span className="flex items-center gap-1.5 truncate text-[15px] font-semibold">
-                        {c.label}
+                        {privacy.label(c)}
                         {c.private && <Lock className="h-3.5 w-3.5 shrink-0 text-muted-foreground" aria-label="privée" />}
                       </span>
                       <span className="text-[13px] text-muted-foreground">{describeChargeSchedule(c, today)}</span>

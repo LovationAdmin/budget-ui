@@ -97,4 +97,6 @@ Une charge perso est une charge payée par un membre sur son argent de poche (im
 - **En mémoire** : elle vit dans `model.charges`, avec `ownerId`. Toutes les mutations des charges (montant daté, exception, arrêt, suppression) s'appliquent à l'identique.
 - **Moteur** : `month.personal` donne les charges perso du mois. Pour chaque membre, `people[].personalCharges` en donne la somme et `available` vaut `keep − personalCharges`. `totals.personal` donne le total du foyer. Les charges perso n'entrent jamais dans `reste`. Elles sont figées avec le mois clôturé (`snapshot.personal`).
 - **Répartition** : elle les ignore. Les montants sont simplement indiqués dans l'argent de poche de chacun (« dont X € de charges perso »).
-- **Privée** : seul le créateur voit le nom et la catégorie ; les montants restent visibles de tous. C'est un masquage dans l'interface : le blob est commun au foyer, il ne s'agit donc pas d'un chiffrement.
+- **Privée** : le blob partagé ne contient que `label: "Charge privée"`, sans catégorie ni note. Le vrai nom, la catégorie et la note sont stockés côté serveur (`/budgets/:id/private-items`, table `private_items`, chiffrés en AES) et lisibles par leur seul créateur ; les montants restent dans le blob, visibles de tous.
+  - Clé : `charge:<id>` ; le contexte expose `privateCharges`, `savePrivateCharge` et `deletePrivateCharge`.
+  - Migration : une charge privée créée avant ce stockage, qui porte encore son vrai nom dans le blob, est déplacée côté serveur puis effacée du blob la première fois que son créateur ouvre le budget.
