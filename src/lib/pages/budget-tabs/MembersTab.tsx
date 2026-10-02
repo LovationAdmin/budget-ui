@@ -7,7 +7,7 @@
 // budget (invitations, roles) stays at the bottom.
 // ============================================================================
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { ChevronLeft, ChevronRight, History, Pencil, Plus, Sparkles, UserPlus } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -194,12 +194,58 @@ function PotPanel({ ym }: { ym: YM }) {
   );
 }
 
+type SplitBasis = 'month' | 'average' | 'peak';
+interface SplitSettings {
+  method: SplitMethod;
+  margin: number;
+  basis: SplitBasis;
+}
+
+const SPLIT_DEFAULTS: SplitSettings = { method: 'prorata', margin: 5, basis: 'month' };
+/** Top-level key of the shared budget data holding the settings last applied. */
+const SPLIT_KEY = 'splitSettings';
+const draftKey = (budgetId: string) => `split-draft:${budgetId}`;
+
+/** Keeps only valid settings from stored, untrusted data. */
+function readSplit(raw: unknown): Partial<SplitSettings> {
+  if (!raw || typeof raw !== 'object') return {};
+  const v = raw as Record<string, unknown>;
+  const out: Partial<SplitSettings> = {};
+  if (METHODS.some((m) => m.value === v.method)) out.method = v.method as SplitMethod;
+  if (v.margin === 0 || v.margin === 5 || v.margin === 10) out.margin = v.margin;
+  if (v.basis === 'month' || v.basis === 'average' || v.basis === 'peak') out.basis = v.basis;
+  return out;
+}
+
+function readDraft(budgetId: string | undefined): Partial<SplitSettings> {
+  if (!budgetId) return {};
+  try {
+    return readSplit(JSON.parse(localStorage.getItem(draftKey(budgetId)) ?? 'null'));
+  } catch {
+    return {};
+  }
+}
+
 function SplitAssistant() {
-  const { model, engine, today, fmt, commit, currencySymbol } = useBudget();
+  const { model, engine, today, fmt, commit, currencySymbol, budget } = useBudget();
   const firstOpen = useFirstOpenMonth();
-  const [method, setMethod] = useState<SplitMethod>('prorata');
-  const [margin, setMargin] = useState(5);
-  const [basis, setBasis] = useState<'month' | 'average' | 'peak'>('month');
+  // The household's applied settings are shared in the budget data; choices not
+  // applied yet are kept on this device so leaving the tab does not lose them.
+  const applied: SplitSettings = { ...SPLIT_DEFAULTS, ...readSplit(model.extras[SPLIT_KEY]) };
+  const [initial] = useState<SplitSettings>(() => ({ ...applied, ...readDraft(budget?.id) }));
+  const [method, setMethod] = useState<SplitMethod>(initial.method);
+  const [margin, setMargin] = useState(initial.margin);
+  const [basis, setBasis] = useState<SplitBasis>(initial.basis);
+  const isDraft = method !== applied.method || margin !== applied.margin || basis !== applied.basis;
+  useEffect(() => {
+    if (!budget?.id) return;
+    try {
+      if (isDraft) localStorage.setItem(draftKey(budget.id), JSON.stringify({ method, margin, basis }));
+      else localStorage.removeItem(draftKey(budget.id));
+    } catch {
+      // Storage unavailable (private mode): the choice simply is not remembered.
+    }
+  }, [budget?.id, method, margin, basis, isDraft]);
   // Starts with the current (first open) month: what the household needs now.
   const [from, setFrom] = useState<YM>(firstOpen);
 
@@ -253,8 +299,11 @@ function SplitAssistant() {
     members.forEach((m, i) => {
       rules[m.person.id] = method === 'all' ? { mode: 'all' } : { mode: 'fixed', value: proposal[i] };
     });
-    commit((m) => applyContributionRules(m, from, rules, today), {
-      message: `Nouvelles contributions appliquées à partir ${deMonth(formatMonthLong(from))}. Les mois précédents ne changent pas.`,
+    const settings: SplitSettings = { method, margin, basis };
+    commit((m) => ({ ...applyContributionRules(m, from, rules, today), extras: { ...m.extras, [SPLIT_KEY]: settings } }), {
+      message: unchanged
+        ? 'Réglage de répartition enregistré pour le foyer.'
+        : `Nouvelles contributions appliquées à partir ${deMonth(formatMonthLong(from))}. Les mois précédents ne changent pas.`,
     });
   };
 
@@ -353,8 +402,21 @@ function SplitAssistant() {
               <span className="text-sm font-semibold">Appliquer à partir de</span>
               <MonthPicker value={from} onChange={setFrom} min={firstOpen} ariaLabel="Appliquer à partir de" />
             </div>
-            <Button className="min-h-[48px]" onClick={apply} disabled={unchanged}>
-              {unchanged ? 'Déjà en place' : `Appliquer à partir ${deMonth(formatMonthLong(from))}`}
+            {isDraft && model.extras[SPLIT_KEY] !== undefined && (
+              <p className="text-xs text-muted-foreground">
+                Réglage en place : {METHODS.find((m) => m.value === applied.method)!.label}
+                {applied.margin ? ` · marge ${applied.margin} %` : ' · sans marge'}.{' '}
+                <button
+                  type="button"
+                  className="font-semibold text-primary underline-offset-2 hover:underline"
+                  onClick={() => { setMethod(applied.method); setMargin(applied.margin); setBasis(applied.basis); }}
+                >
+                  Revenir à ce réglage
+                </button>
+              </p>
+            )}
+            <Button className="min-h-[48px]" onClick={apply} disabled={unchanged && !isDraft}>
+              {unchanged ? (isDraft ? 'Enregistrer ce réglage' : 'Déjà en place') : `Appliquer à partir ${deMonth(formatMonthLong(from))}`}
             </Button>
           </div>
         </div>
