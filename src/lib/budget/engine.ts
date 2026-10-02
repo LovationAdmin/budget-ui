@@ -492,6 +492,22 @@ function monthFromSnapshot(model: BudgetModel, ym: YM, snap: MonthSnapshot, reco
   };
 }
 
+/**
+ * Charges running at `from` whose last month falls before `to`: they weigh on
+ * the first months only, which is why a 12-month average sits below the
+ * current month. Sorted by last month.
+ */
+export function chargesEndingBetween(model: BudgetModel, from: YM, to: YM): Array<{ charge: Charge; last: YM }> {
+  const out: Array<{ charge: Charge; last: YM }> = [];
+  for (const c of model.charges) {
+    const w = windowOf(c);
+    if (!w.end || !inWindow(w, from) || compareYM(w.end, to) >= 0) continue;
+    if (chargeFrequency(c) === 'once') continue;
+    out.push({ charge: c, last: w.end });
+  }
+  return out.sort((a, b) => compareYM(a.last, b.last) || a.charge.label.localeCompare(b.charge.label, 'fr'));
+}
+
 export function isMonthClosed(model: BudgetModel, ym: YM, today: YM): boolean {
   const lock = model.months[ym]?.lock;
   if (lock === true) return true;

@@ -21,12 +21,13 @@ import {
   chargeBaseAmount,
   chargeFrequency,
   chargeStatus,
+  chargesEndingBetween,
   describeChargeSchedule,
   windowOf,
   type ItemStatus,
 } from '@/lib/budget/engine';
 import { updateCharge } from '@/lib/budget/mutations';
-import { addMonths } from '@/lib/budget/months';
+import { addMonths, deMonth, joinFr, monthNameLower } from '@/lib/budget/months';
 import { roundCents } from '@/lib/budget/format';
 import { CategoryIcon, ChipToggle } from '@/components/budget/shared/primitives';
 import { useFirstOpenMonth, useHashScroll } from '@/components/budget/shared/hooks';
@@ -84,9 +85,13 @@ export default function ChargesTab() {
       .sort((a, b) => b.amount - a.amount || a.c.label.localeCompare(b.c.label, 'fr')),
   })).filter((g) => g.items.length > 0);
 
+  // This month's total (what the month screen shows) and the 12-month average,
+  // with the charges that end soon and pull the average down.
+  const thisMonth = engine.month(today);
   let avg = 0;
   for (let i = 0; i < 12; i++) avg += engine.month(addMonths(today, i)).totals.charges;
   avg = roundCents(avg / 12);
+  const ending = chargesEndingBetween(model, today, addMonths(today, 11));
 
   // Charges the savings analysis looks at: running ones, at their monthly cost.
   const suggestionCharges = useMemo(
@@ -172,9 +177,34 @@ export default function ChargesTab() {
         </p>
       )}
       {filter === 'active' && counts.active > 0 && (
-        <p className="text-sm text-muted-foreground">
-          En moyenne sur les 12 prochains mois : <strong className="tabular-nums text-foreground">{fmt(avg)}</strong> de charges par mois.
-        </p>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <Link
+            to={`/budget/${id}/complete/month?m=${today}`}
+            className="group flex flex-col gap-1 rounded-2xl border border-border/70 bg-card p-4 shadow-soft transition-colors hover:border-primary/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          >
+            <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Charges {deMonth(monthNameLower(today))}</span>
+            <span className="font-display text-3xl font-extrabold tracking-tight tabular-nums">{fmt(thisMonth.totals.charges)}</span>
+            <span className="flex items-center gap-1 text-sm text-muted-foreground">
+              {thisMonth.charges.filter((c) => c.amount !== 0).length} charges ce mois-ci
+              <ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
+            </span>
+          </Link>
+          {Math.abs(avg - thisMonth.totals.charges) < 0.5 ? (
+            <p className="self-center text-sm text-muted-foreground">Le même montant chaque mois sur les 12 prochains mois.</p>
+          ) : (
+          <div className="flex flex-col gap-1 rounded-2xl border border-border/70 bg-card p-4 shadow-soft">
+            <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Moyenne sur 12 mois</span>
+            <span className="font-display text-3xl font-extrabold tracking-tight tabular-nums">{fmt(avg)}</span>
+            <span className="text-sm text-muted-foreground">
+              {ending.length > 0
+                ? `Plus basse car ${joinFr(ending.map(({ charge, last }) => `« ${charge.label} » (jusqu’en ${monthNameLower(last)})`))} ${ending.length > 1 ? 's’arrêtent' : 's’arrête'} bientôt.`
+                : avg < thisMonth.totals.charges
+                  ? 'Plus basse : ce mois-ci compte des charges qui ne reviennent pas tous les mois.'
+                  : 'Plus haute : des charges annuelles ou ponctuelles arrivent dans les prochains mois.'}
+            </span>
+          </div>
+          )}
+        </div>
       )}
       {filter !== 'ended' && uncategorized.length > 0 && (
         <div className="flex flex-col gap-2 rounded-2xl border border-sky-100 bg-sky-50 px-4 py-3 sm:flex-row sm:items-center">

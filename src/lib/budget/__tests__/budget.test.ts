@@ -11,6 +11,7 @@ import {
   chargeStatus,
   describeChargeSchedule,
   customMonthsText,
+  chargesEndingBetween,
 } from '../engine';
 import { autoCloseMonths, decodeBudget, encodeBudget } from '../codec';
 import {
@@ -508,4 +509,40 @@ test('changes: new, resume, end and increases', () => {
 test('months helpers', () => {
   eq(addMonths('2026-12', 1), '2027-01');
   eq(addMonths('2026-01', -1), '2025-12');
+});
+
+test('charges: this month vs 12-month average with charges ending soon', () => {
+  // Real-world case: two temporary charges end within the window, so the
+  // month total (old « total des charges ») sits above the 12-month average.
+  const c = (id: string, label: string, amount: number, extra: Partial<Charge> = {}) => ({ id, label, amount, startDate: '2026-08-01', ...extra });
+  const model = decodeBudget(
+    {
+      charges: [
+        c('loyer', 'Loyer', 1160),
+        c('massage', 'massage drainage', 480, { startDate: '2026-09-01', endDate: '2026-11-30', amountHistory: [{ from: '2026-09', amount: 470 }, { from: '2026-10', amount: 480 }] }),
+        c('food', 'Nourriture', 400),
+        c('car', 'remb cred voiture', 372),
+        c('navigo', 'Navigo', 178),
+        c('clim', 'versmnt CLIM 3x', 178, { startDate: '2026-09-01', endDate: '2026-10-31' }),
+        c('sport', 'Sport', 75),
+        c('elec', 'Électricité', 60, { startDate: '2026-09-01' }),
+        c('mobile', 'Forfaits Mobiles', 30),
+        c('internet', 'Internet', 26),
+      ],
+    },
+    '2026-10',
+  );
+  const e = new BudgetEngine(model, '2026-10');
+  near(e.month('2026-10').totals.charges, 2959, 'October total');
+  near(e.month('2026-09').totals.charges, 2949, 'September (massage at 470)');
+  const avg = (from: string) => {
+    let t = 0;
+    for (let i = 0; i < 12; i++) t += e.month(addMonths(from, i)).totals.charges;
+    return t / 12;
+  };
+  near(Math.round(avg('2026-10') * 100) / 100, 2395.83, '12-month average from October');
+  near(Math.round(avg('2026-11')), 2341, '12-month average from November (Foyer default)');
+  near(e.month('2026-11').totals.charges, 2781, 'heaviest month from November');
+  eq(chargesEndingBetween(model, '2026-10', '2027-09').map((x) => `${x.charge.label}:${x.last}`), ['versmnt CLIM 3x:2026-10', 'massage drainage:2026-11']);
+  eq(chargesEndingBetween(model, '2026-11', '2027-10').map((x) => x.charge.id), ['massage']);
 });

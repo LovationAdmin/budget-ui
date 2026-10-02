@@ -17,6 +17,7 @@ import MemberManagementSection from '@/components/budget/MemberManagementSection
 import type { Person, YM } from '@/lib/budget/types';
 import {
   amountHistoryHint,
+  chargesEndingBetween,
   contributionHistoryHint,
   contributionRuleText,
   personStatus,
@@ -26,7 +27,7 @@ import {
   type SplitMethod,
 } from '@/lib/budget/engine';
 import { applyContributionRules, type ContributionRule } from '@/lib/budget/mutations';
-import { addMonths, formatMonthLong, formatMonthShort, maxYM, deMonth } from '@/lib/budget/months';
+import { addMonths, formatMonthLong, formatMonthShort, formatMonthTitle, joinFr, maxYM, deMonth } from '@/lib/budget/months';
 import { moneySigned, percent, roundCents } from '@/lib/budget/format';
 import { ChipToggle, Pill, Segmented } from '@/components/budget/shared/primitives';
 import { MonthPicker } from '@/components/budget/shared/MonthPicker';
@@ -104,6 +105,7 @@ function SplitAssistant() {
   const firstOpen = useFirstOpenMonth();
   const [method, setMethod] = useState<SplitMethod>('prorata');
   const [margin, setMargin] = useState(5);
+  const [basis, setBasis] = useState<'average' | 'peak'>('average');
   const [from, setFrom] = useState<YM>(maxYM(addMonths(today, 1), firstOpen));
 
   const members = useMemo(
@@ -114,16 +116,24 @@ function SplitAssistant() {
     [model.people, from],
   );
 
-  let needC = 0;
-  let needS = 0;
-  for (let i = 0; i < 12; i++) {
-    const m = engine.month(addMonths(from, i));
-    needC += m.totals.charges;
-    needS += m.totals.savings;
-  }
-  needC = Math.round(needC / 12);
-  needS = Math.round(needS / 12);
-  const need = Math.round((needC + needS) * (1 + margin / 100));
+  // Two ways to size the pot over the 12 months from `from`: the average
+  // (heavier months draw on the general savings) or the heaviest month
+  // (every month is covered; lighter months feed the general savings).
+  const months12 = Array.from({ length: 12 }, (_, i) => engine.month(addMonths(from, i)));
+  const avgC = Math.round(months12.reduce((a, m) => a + m.totals.charges, 0) / 12);
+  const avgS = Math.round(months12.reduce((a, m) => a + m.totals.savings, 0) / 12);
+  const peakMonth = months12.reduce((best, m) =>
+    m.totals.charges + m.totals.savings > best.totals.charges + best.totals.savings ? m : best,
+  );
+  // The choice only matters when some months weigh more than others.
+  const peakTotal = Math.round(peakMonth.totals.charges + peakMonth.totals.savings);
+  const uneven = peakTotal > avgC + avgS;
+  const usePeak = basis === 'peak' && uneven;
+  const needC = usePeak ? Math.round(peakMonth.totals.charges) : avgC;
+  const needS = usePeak ? Math.round(peakMonth.totals.savings) : avgS;
+  const withMargin = (v: number) => Math.round(v * (1 + margin / 100));
+  const need = withMargin(needC + needS);
+  const ending = chargesEndingBetween(model, from, addMonths(from, 11));
   const salaries = members.map((m) => m.r.salary);
   const proposal = splitContributions(method, salaries, need);
   const totalSalaries = salaries.reduce((a, b) => a + b, 0);
@@ -179,7 +189,27 @@ function SplitAssistant() {
                   {margin ? ` + marge ${margin} %` : ''}
                 </span>
               </div>
-              <p className="mb-3 mt-1 text-xs text-muted-foreground">Moyenne des 12 mois à partir {deMonth(formatMonthShort(from))} : les mois plus chargés (fêtes, rentrée) sont lissés.</p>
+              {uneven && (
+              <Segmented
+                className="mt-3"
+                label="Base de calcul du besoin"
+                value={basis}
+                onChange={setBasis}
+                options={[
+                  { value: 'average', label: `Lissé sur 12 mois · ${fmt(withMargin(avgC + avgS))}` },
+                  { value: 'peak', label: `Mois le plus chargé · ${fmt(withMargin(peakTotal))}` },
+                ]}
+              />
+              )}
+              <p className="mb-3 mt-2 text-xs text-muted-foreground">
+                {!uneven
+                  ? `Le même besoin chaque mois sur les 12 mois à partir ${deMonth(formatMonthShort(from))}.`
+                  : !usePeak
+                  ? `Moyenne des 12 mois à partir ${deMonth(formatMonthShort(from))} : les mois plus chargés puisent dans l’épargne générale.`
+                  : `${formatMonthTitle(peakMonth.ym)} est le mois le plus chargé : chaque mois est couvert, le surplus des autres va à l’épargne générale.`}
+                {ending.length > 0 &&
+                  ` ${joinFr(ending.map(({ charge }) => `« ${charge.label} »`))} ${ending.length > 1 ? 's’arrêtent' : 's’arrête'} en cours de route (${joinFr(ending.map(({ last }) => `fin ${formatMonthShort(last)}`))}) : ${ending.length > 1 ? 'elles ne pèsent' : 'elle ne pèse'} que sur les premiers mois.`}
+              </p>
               <div role="group" aria-label="Marge de sécurité" className="flex flex-wrap gap-2">
                 {[0, 5, 10].map((v) => (
                   <ChipToggle key={v} pressed={margin === v} onClick={() => setMargin(v)}>
