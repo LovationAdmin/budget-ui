@@ -22,6 +22,8 @@ interface NotificationContextType {
   isConnected: boolean;
   // 🔥 NEW: Subscribe to specific message types
   onSuggestionsReady: (callback: MessageCallback) => () => void;
+  /** Called when ANOTHER member saved the budget currently connected. */
+  onBudgetUpdated: (callback: (info: { budgetId: string; user: string }) => void) => () => void;
 }
 
 const NotificationContext = createContext<NotificationContextType | undefined>(undefined);
@@ -44,6 +46,7 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
   
   // 🔥 NEW: Pub/Sub system for message types
   const suggestionsCallbacksRef = useRef<Set<MessageCallback>>(new Set());
+  const budgetUpdatedCallbacksRef = useRef<Set<(info: { budgetId: string; user: string }) => void>>(new Set());
 
   const connectToBudget = useCallback((budgetId: string, budgetName: string) => {
     // 1. Prevent connecting if already connected to the same budget
@@ -82,6 +85,15 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
               console.log('🚫 [Notifications] Ignoring own update');
               return;
             }
+
+            // Let the open budget refresh itself (it decides whether it is safe).
+            budgetUpdatedCallbacksRef.current.forEach((callback) => {
+              try {
+                callback({ budgetId, user: message.user || 'Un membre' });
+              } catch (err) {
+                console.error('❌ [Notifications] Callback error:', err);
+              }
+            });
 
             // 🔥 PROTECTION 2: Déduplication - Garder seulement la notification la plus récente
             setNotifications(prev => {
@@ -172,6 +184,13 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
     };
   }, []);
 
+  const onBudgetUpdated = useCallback((callback: (info: { budgetId: string; user: string }) => void) => {
+    budgetUpdatedCallbacksRef.current.add(callback);
+    return () => {
+      budgetUpdatedCallbacksRef.current.delete(callback);
+    };
+  }, []);
+
   // Cleanup on unmount
   useEffect(() => {
     return () => {
@@ -201,6 +220,7 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
       disconnectFromBudget,
       isConnected,
       onSuggestionsReady, // 🔥 NEW
+      onBudgetUpdated,
     }}>
       {children}
     </NotificationContext.Provider>

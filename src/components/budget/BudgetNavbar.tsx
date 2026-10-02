@@ -100,7 +100,7 @@ export const BudgetNavbar = memo(function BudgetNavbar({
   const handleNotificationClick = useCallback(
     (notificationId: string, budgetId: string) => {
       markAsRead(notificationId);
-      navigate(`/budget/${budgetId}/complete/overview`);
+      navigate(`/budget/${budgetId}/complete/month`);
     },
     [markAsRead, navigate]
   );
@@ -145,9 +145,9 @@ export const BudgetNavbar = memo(function BudgetNavbar({
             >
               <BudgetLogo size={36} />
               <div className="hidden sm:block min-w-0">
-                <h1 className="font-display font-semibold text-foreground truncate max-w-[200px]">
+                <p className="font-display font-semibold text-foreground truncate max-w-[200px]">
                   {budgetTitle}
-                </h1>
+                </p>
                 <p className="text-xs text-muted-foreground">Gestion financière</p>
               </div>
             </button>

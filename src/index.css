@@ -27,8 +27,8 @@
     --popover: 0 0% 100%;
     --popover-foreground: 240 10% 10%;
 
-    /* Brand Colors - Warm Coral/Peach */
-    --primary: 200 75% 50%;  
+    /* Brand color — blue, dark enough for white text (4.8:1, WCAG AA) */
+    --primary: 200 75% 38%;
     --primary-foreground: 0 0% 100%;
     
     /* Soft Teal Accent */
@@ -44,7 +44,7 @@
     --accent-foreground: 260 40% 40%;
 
     /* States */
-    --destructive: 0 72% 55%;
+    --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
     
     --success: 152 60% 45%;
@@ -56,7 +56,8 @@
     /* Borders & Inputs */
     --border: 30 15% 90%;
     --input: 30 15% 90%;
-    --ring: 16 85% 60%;
+    /* Focus ring = brand color (≥ 3:1 against the page) */
+    --ring: 200 75% 38%;
 
     --radius: 1rem;
 
@@ -143,6 +144,26 @@
   h1, h2, h3, h4, h5, h6 {
     font-family: 'Plus Jakarta Sans', sans-serif;
     @apply font-semibold tracking-tight;
+    /* Plus Jakarta Sans has a narrow space: with tight tracking, words ran together. */
+    word-spacing: 0.08em;
+  }
+
+  /* No double-tap zoom delay on controls; states are drawn by the components. */
+  a, button, input, select, textarea, label, [role='button'] {
+    touch-action: manipulation;
+  }
+
+  html {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
   }
 }
 

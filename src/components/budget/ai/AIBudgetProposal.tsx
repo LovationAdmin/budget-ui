@@ -3,6 +3,11 @@
 // « Budget proposé par IA » — intake → résultat → simulateur.
 // Consomme le contexte budget pour pré-remplir HouseholdInput, appelle l'API,
 // puis rend le BudgetProposal avec les actions Valider / Rejeter / Simulateur.
+//
+// Applying a proposal never rewrites the past: amounts change « à partir de »
+// the first open month, new charges / savings start that month, and — when
+// the plan uses separate accounts — each member's contribution to the
+// household pot is set from the proposal (salary ≠ contribution).
 // ============================================================================
 
 import { useMemo, useState } from 'react';
@@ -33,7 +38,7 @@ import {
   Lightbulb,
   RotateCcw,
   SlidersHorizontal,
-  CalendarRange,
+  CalendarDays,
   Plus,
   Trash2,
 } from 'lucide-react';
@@ -41,7 +46,32 @@ import { useToast } from '@/hooks/use-toast';
 import { budgetAPI } from '@/services/api';
 import { useBudget } from '@/contexts/BudgetContext';
 import { useNavigate, useParams } from 'react-router-dom';
-import type { Project, Charge } from '@/utils/importConverter';
+import type { BudgetModel, Charge, Person, Project, YM } from '@/lib/budget/types';
+import { GENERAL_SAVINGS_ID } from '@/lib/budget/types';
+import {
+  chargeBaseAmount,
+  chargeFrequency,
+  chargeStatus,
+  isRecurringProject,
+  personStatus,
+  projectStatus,
+  resolvePerson,
+} from '@/lib/budget/engine';
+import {
+  applyContributionRules,
+  convertSavingToMonthly,
+  newId,
+  removePerson,
+  setChargeAmountFrom,
+  setSavingAmountFrom,
+  upsertCharge,
+  upsertPerson,
+  upsertProject,
+  type ContributionRule,
+} from '@/lib/budget/mutations';
+import { formatMonthLong, startDateOf, deMonth } from '@/lib/budget/months';
+import { roundCents } from '@/lib/budget/format';
+import { useFirstOpenMonth } from '@/components/budget/shared/hooks';
 import {
   HouseholdInput,
   HouseholdType,
@@ -68,37 +98,45 @@ const FEASIBILITY_STYLES: Record<Feasibility, { ring: string; badge: string; lab
   infeasible: { ring: 'border-red-200 bg-red-50/50', badge: 'bg-red-100 text-red-700', label: 'Intenable' },
 };
 
-// First day of the current month, YYYY-MM-DD — used so a brand-new budget's
-// incomes/charges/savings start at creation rather than retroactively.
-function firstOfCurrentMonthISO(): string {
-  const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-01`;
-}
-
 const norm = (s: string) => s.trim().toLowerCase();
 
-// Merge incoming charges into existing ones by label: update the amount of a
-// matching charge, add the ones that don't exist, keep everything else.
-function mergeCharges(existing: Charge[], incoming: Charge[]): Charge[] {
-  const result = existing.map((c) => ({ ...c }));
-  for (const inc of incoming) {
-    const i = result.findIndex((c) => norm(c.label) === norm(inc.label));
-    if (i >= 0) result[i] = { ...result[i], amount: inc.amount };
-    else result.push(inc);
-  }
-  return result;
+interface AILine {
+  label: string;
+  amount: number;
+  category?: string;
 }
 
-// Same idea for savings: update the monthly amount of a matching épargne, add
-// new ones, keep the rest.
-function mergeProjects(existing: Project[], incoming: Project[]): Project[] {
-  const result = existing.map((p) => ({ ...p }));
-  for (const inc of incoming) {
-    const i = result.findIndex((p) => norm(p.label) === norm(inc.label));
-    if (i >= 0) result[i] = { ...result[i], monthlyAmount: inc.monthlyAmount };
-    else result.push(inc);
+/**
+ * Merges the proposal into the budget from `start`: a charge / saving with the
+ * same name gets its new amount from that month (earlier months keep theirs),
+ * the others are added starting that month. Nothing else is touched.
+ */
+function mergeProposal(
+  model: BudgetModel,
+  charges: AILine[],
+  savings: AILine[],
+  start: YM,
+  today: YM,
+  isClosed: (ym: YM) => boolean,
+): BudgetModel {
+  let next = model;
+  for (const line of charges) {
+    const existing = next.charges.find((c) => norm(c.label) === norm(line.label) && chargeStatus(c, today) !== 'ended');
+    if (existing && chargeFrequency(existing) === 'monthly') {
+      next = setChargeAmountFrom(next, existing.id, start, line.amount, today);
+    } else {
+      const charge: Charge = { id: newId('c'), label: line.label, amount: line.amount, startDate: startDateOf(start) };
+      if (line.category && line.category !== 'autre') charge.category = line.category;
+      next = upsertCharge(next, charge);
+    }
   }
-  return result;
+  for (const line of savings) {
+    const existing = next.projects.find((p) => p.id !== GENERAL_SAVINGS_ID && norm(p.label) === norm(line.label) && projectStatus(p, today) !== 'ended');
+    if (existing && isRecurringProject(existing)) next = setSavingAmountFrom(next, existing.id, start, line.amount, today);
+    else if (existing) next = convertSavingToMonthly(next, existing.id, start, line.amount, today, isClosed);
+    else next = upsertProject(next, { id: newId('p'), label: line.label, monthlyAmount: line.amount, startDate: startDateOf(start) });
+  }
+  return next;
 }
 
 // Cosmetic step labels shown while the LLM works, to make the wait less dull.
@@ -114,28 +152,24 @@ const LOADING_STEPS = [
 type View = 'intake' | 'loading' | 'result' | 'error' | 'applied';
 
 export default function AIBudgetProposal() {
-  const {
-    people,
-    charges,
-    projects,
-    budget,
-    budgetCurrency,
-    budgetLocation,
-    handlePeopleChange,
-    applyChargesAndProjects,
-  } = useBudget();
+  const { model, engine, today, commit, budgetCurrency, budgetLocation, goToMonth } = useBudget();
   const navigate = useNavigate();
   const { id: budgetId } = useParams<{ id: string }>();
   const { toast } = useToast();
   const sym = currencySymbol(budgetCurrency);
+  const start = useFirstOpenMonth();
+
+  // What the proposal works from: the household and rules in force today.
+  const people: Person[] = model.people.filter((p) => personStatus(p, today) !== 'ended');
+  const charges: Charge[] = model.charges.filter((c) => chargeStatus(c, today) === 'active' && chargeFrequency(c) !== 'once');
+  const projects: Project[] = model.projects.filter((p) => p.id !== GENERAL_SAVINGS_ID && projectStatus(p, today) !== 'ended');
 
   const [view, setView] = useState<View>('intake');
   const [proposal, setProposal] = useState<BudgetProposal | null>(null);
   const [simulating, setSimulating] = useState(false);
-  const [undoSnapshot, setUndoSnapshot] = useState<Project[] | null>(null);
-  const [undoCharges, setUndoCharges] = useState<Charge[] | null>(null);
+  const [undoModel, setUndoModel] = useState<BudgetModel | null>(null);
   const [appliedSummary, setAppliedSummary] = useState<
-    { projects: number; charges: number; isFresh: boolean } | null
+    { projects: number; charges: number; isFresh: boolean; contributions: boolean } | null
   >(null);
   const [errorMsg, setErrorMsg] = useState<string>('');
   const [elapsed, setElapsed] = useState(0);
@@ -155,21 +189,17 @@ export default function AIBudgetProposal() {
 
   const addBudgetMember = () => {
     if (!newMemberName.trim()) return;
-    handlePeopleChange([
-      ...people,
-      {
-        id: `p-${Date.now()}`,
-        name: newMemberName.trim(),
-        salary: parseFloat(newMemberSalary) || 0,
-        // New household on a fresh budget → income starts this month.
-        startDate: firstOfCurrentMonthISO(),
-      },
-    ]);
+    const person: Person = {
+      id: newId('m'),
+      name: newMemberName.trim(),
+      salary: roundCents(parseFloat(newMemberSalary.replace(',', '.')) || 0),
+    };
+    commit((m) => upsertPerson(m, person), { saveNow: true });
     setNewMemberName('');
     setNewMemberSalary('');
   };
   const removeBudgetMember = (id: string) => {
-    handlePeopleChange(people.filter((p) => p.id !== id));
+    commit((m) => removePerson(m, id), { saveNow: true });
   };
 
   // Simulator: per-envelope monthly contribution overrides (by name).
@@ -183,14 +213,17 @@ export default function AIBudgetProposal() {
     members: people.map((p) => ({
       id: p.id,
       label: p.name || 'Membre',
-      netIncome: p.salary || 0,
+      netIncome: resolvePerson(p, start)?.salary ?? p.salary ?? 0,
     })),
-    charges: charges.map((c) => ({
-      label: c.label,
-      amount: c.amount,
-      category: c.category || 'autre',
-      scope: 'common' as const,
-    })),
+    charges: charges.map((c) => {
+      const base = chargeBaseAmount(c, today);
+      return {
+        label: c.label,
+        amount: chargeFrequency(c) === 'yearly' ? roundCents(base / 12) : base,
+        category: c.category || 'autre',
+        scope: 'common' as const,
+      };
+    }),
     objectives: projects.map((p) => ({
       label: p.label,
       ...(p.targetAmount ? { targetAmount: p.targetAmount } : {}),
@@ -206,7 +239,7 @@ export default function AIBudgetProposal() {
     if (people.length === 0) {
       toast({
         title: 'Aucun membre',
-        description: "Ajoutez d'abord les membres du foyer (onglet Membres).",
+        description: "Ajoutez d'abord les membres du foyer (onglet Foyer).",
         variant: 'destructive',
       });
       return;
@@ -268,55 +301,62 @@ export default function AIBudgetProposal() {
   const savingsDelta = totalSavings - baselineSavings;
 
   // ---- Actions ----
-  // Every non-charge allocation line (safety/projects/vacances/pocket money/
-  // personal) becomes a recurring "épargne particulière" so the whole plan is
-  // represented — pocket money included, per the product decision.
-  const buildSavingsProjects = (startDate?: string): Project[] => {
+  // With separate accounts, each member keeps what they do not put in the pot:
+  // pocket money and personal savings stay with them, and the proposal's
+  // contribution becomes their contribution to the household pot. Otherwise
+  // (everything in common), every non-charge line becomes a monthly saving so
+  // the whole plan is represented — pocket money included.
+  const PERSONAL_TYPES = ['pocket_money', 'personal'];
+
+  const buildSavingsLines = (keepPersonal: boolean): AILine[] => {
     if (!proposal) return [];
     const allocation = proposal.monthlyAllocation ?? [];
     const envelopes = proposal.savingsEnvelopes ?? [];
-    const lines = allocation.filter((l) => l.type !== 'common_charge');
+    const lines = allocation.filter((l) => l.type !== 'common_charge' && (keepPersonal || !PERSONAL_TYPES.includes(l.type)));
     const source =
-      lines.length > 0
+      allocation.some((l) => l.type !== 'common_charge')
         ? lines.map((l) => ({ name: l.label, amount: l.amount }))
         : envelopes.map((e) => ({ name: e.name, amount: e.monthlyContribution }));
     return source
-      .filter((s) => (Number(s.amount) || 0) > 0)
-      .map((s, idx) => ({
-        id: `${Date.now()}-${idx}`,
-        label: s.name,
-        monthlyAmount: Math.round(envOverrides[s.name] ?? s.amount),
-        ...(startDate ? { startDate } : {}),
-      }));
+      .map((s) => ({ label: s.name, amount: Math.round(envOverrides[s.name] ?? s.amount) }))
+      .filter((s) => s.amount > 0);
   };
 
-  const buildItemizedCharges = (startDate?: string): Charge[] => {
+  const buildChargeLines = (): AILine[] => {
     if (!proposal) return [];
     return (proposal.monthlyAllocation ?? [])
       .filter((l) => l.type === 'common_charge')
-      .map((l, idx) => ({
-        id: `c-${Date.now()}-${idx}`,
-        label: l.label,
-        amount: Math.round(l.amount),
-        category: l.category || 'autre',
-        ...(startDate ? { startDate } : {}),
-      }));
+      .map((l) => ({ label: l.label, amount: Math.round(l.amount), category: l.category || 'autre' }))
+      .filter((l) => l.amount > 0);
   };
 
-  // Applies the proposal to the CURRENT budget, in place.
-  //  - Fresh budget (no charges/savings): generate charges + savings from the
-  //    proposal, stamped to start this month → the calendar fills from creation.
-  //  - Existing budget: merge the proposal into it (update matching charges /
-  //    savings by label, add new ones, keep the rest and all history/comments).
+  /** Contributions from the proposal, when they are usable and cover the pot. */
+  const proposalContributions = (potTotal: number): Record<string, ContributionRule> | null => {
+    if (!proposal || proposal.accountStructure !== 'three_accounts') return null;
+    const rules: Record<string, ContributionRule> = {};
+    let total = 0;
+    for (const p of people) {
+      const m = proposal.perMember.find((x) => x.memberId === p.id);
+      const v = Number(m?.monthlyContribution);
+      if (!m || !Number.isFinite(v) || v < 0) return null;
+      rules[p.id] = { mode: 'fixed', value: Math.round(v) };
+      total += Math.round(v);
+    }
+    return total > 0 && total >= potTotal * 0.99 ? rules : null;
+  };
+
+  // Applies the proposal to the CURRENT budget, from the first open month on.
+  // Earlier months (and every closed month) keep their amounts.
   const applyProposal = () => {
     if (!proposal) return;
     const isFresh = charges.length === 0 && projects.length === 0;
-    const start = isFresh ? firstOfCurrentMonthISO() : undefined;
+    const chargeLines = buildChargeLines();
+    const commonSavings = buildSavingsLines(false);
+    const potTotal = [...chargeLines, ...commonSavings].reduce((s, l) => s + l.amount, 0);
+    const rules = proposalContributions(potTotal);
+    const savingLines = rules ? commonSavings : buildSavingsLines(true);
 
-    const aiCharges = buildItemizedCharges(start);
-    const aiSavings = buildSavingsProjects(start);
-
-    if (aiCharges.length === 0 && aiSavings.length === 0) {
+    if (chargeLines.length === 0 && savingLines.length === 0) {
       toast({
         title: 'Proposition inexploitable',
         description:
@@ -326,23 +366,24 @@ export default function AIBudgetProposal() {
       return;
     }
 
-    const nextCharges = isFresh ? aiCharges : mergeCharges(charges, aiCharges);
-    const nextProjects = isFresh ? aiSavings : mergeProjects(projects, aiSavings);
-
-    setUndoCharges(charges);
-    setUndoSnapshot(projects);
-    // Sets state AND persists with the fresh values (bypasses the stale-closure
-    // autosave that could otherwise save the pre-change empty state).
-    void applyChargesAndProjects(nextCharges, nextProjects);
-
-    setAppliedSummary({ charges: nextCharges.length, projects: nextProjects.length, isFresh });
+    setUndoModel(model);
+    commit(
+      (m) => {
+        let next = mergeProposal(m, chargeLines, savingLines, start, today, (ym) => engine.isClosed(ym));
+        if (rules) next = applyContributionRules(next, start, rules, today);
+        return next;
+      },
+      { saveNow: true, undoable: false },
+    );
+    setAppliedSummary({ charges: chargeLines.length, projects: savingLines.length, isFresh, contributions: !!rules });
     setView('applied');
   };
 
   const undoApply = () => {
-    void applyChargesAndProjects(undoCharges ?? charges, undoSnapshot ?? projects);
-    setUndoSnapshot(null);
-    setUndoCharges(null);
+    if (!undoModel) return;
+    const previous = undoModel;
+    commit(() => previous, { saveNow: true, undoable: false });
+    setUndoModel(null);
     toast({ title: 'Annulé', description: 'Votre budget précédent a été restauré.' });
   };
 
@@ -430,12 +471,13 @@ export default function AIBudgetProposal() {
             <p className="font-medium">{fresh ? 'Budget créé' : 'Budget mis à jour'}</p>
             <p className="text-sm text-muted-foreground max-w-sm mt-1">
               {appliedSummary?.charges || 0} charge(s) et {appliedSummary?.projects || 0} épargne(s)
-              {fresh ? ' générées' : ' fusionnées'} — le calendrier est renseigné en conséquence.
+              {fresh ? ' créées' : ' mises à jour'} à partir {deMonth(formatMonthLong(start))}
+              {appliedSummary?.contributions ? ', avec la contribution de chacun au pot commun' : ''}. Les mois d’avant ne changent pas.
             </p>
           </div>
           <div className="flex flex-col sm:flex-row gap-2">
-            <Button onClick={() => budgetId && navigate(`/budget/${budgetId}/complete/calendar`)}>
-              <CalendarRange className="h-4 w-4 mr-1" /> Voir le calendrier
+            <Button onClick={() => goToMonth(start)}>
+              <CalendarDays className="h-4 w-4 mr-1" /> Voir le mois
             </Button>
             <Button variant="outline" onClick={() => budgetId && navigate(`/budget/${budgetId}/complete/projects`)}>
               <PiggyBank className="h-4 w-4 mr-1" /> Voir l'épargne
@@ -454,7 +496,7 @@ export default function AIBudgetProposal() {
     return (
       <div className="space-y-5 animate-in fade-in duration-200">
         {/* Undo bar */}
-        {undoSnapshot !== null && (
+        {undoModel !== null && (
           <div className="flex items-center justify-between rounded-lg border border-border bg-muted/40 px-3 py-2 text-sm">
             <span>Un budget IA a été appliqué.</span>
             <Button size="sm" variant="ghost" onClick={undoApply}>
@@ -659,9 +701,9 @@ export default function AIBudgetProposal() {
         {/* ACTIONS */}
         <p className="text-[11px] text-muted-foreground text-center">
           {charges.length > 0 || projects.length > 0 ? (
-            <>Valider <strong>fusionne</strong> la proposition dans ce budget : charges et épargnes mises à jour, le reste (historique, commentaires) conservé.</>
+            <>Valider <strong>fusionne</strong> la proposition dans ce budget à partir {deMonth(formatMonthLong(start))} : charges et épargnes mises à jour, les mois d’avant et l’historique conservés.</>
           ) : (
-            <>Valider <strong>remplit</strong> ce budget : charges, épargne et calendrier générés à partir de la proposition.</>
+            <>Valider <strong>remplit</strong> ce budget à partir {deMonth(formatMonthLong(start))} : charges, épargnes et contributions générées à partir de la proposition.</>
           )}
         </p>
         <div className="flex flex-col sm:flex-row gap-2 sticky bottom-2 bg-background/80 backdrop-blur rounded-xl p-2 border border-border">
@@ -745,7 +787,7 @@ export default function AIBudgetProposal() {
                 <div key={p.id} className="flex items-center justify-between gap-2 rounded-md bg-background border border-border/50 px-3 py-2">
                   <span className="text-sm font-medium truncate">{p.name}</span>
                   <div className="flex items-center gap-2 shrink-0">
-                    <span className="text-sm font-mono">{(p.salary || 0).toLocaleString()} {sym}</span>
+                    <span className="text-sm font-mono">{(resolvePerson(p, start)?.salary ?? p.salary ?? 0).toLocaleString()} {sym}</span>
                     <Button type="button" size="icon" variant="ghost" onClick={() => removeBudgetMember(p.id)} className="h-7 w-7 text-muted-foreground hover:text-red-500">
                       <Trash2 className="h-4 w-4" />
                     </Button>
@@ -804,7 +846,7 @@ export default function AIBudgetProposal() {
             <span className="font-medium text-foreground">{projects.length} objectif(s)</span>.{' '}
             {memberSetup
               ? 'Vous pourrez affiner charges et objectifs dans leurs onglets après la proposition.'
-              : <>Pas besoin de les ressaisir ici : ajustez-les dans les onglets <em>Membres</em>, <em>Charges</em> et <em>Épargne</em> si nécessaire.</>}
+              : <>Pas besoin de les ressaisir ici : ajustez-les dans les onglets <em>Foyer</em>, <em>Charges</em> et <em>Épargne</em> si nécessaire.</>}
           </div>
 
           <Button onClick={generate} className="w-full" size="lg" disabled={people.length === 0}>
@@ -812,7 +854,7 @@ export default function AIBudgetProposal() {
           </Button>
           {people.length === 0 && (
             <p className="text-xs text-muted-foreground text-center -mt-2">
-              Ajoutez d'abord au moins un membre dans l'onglet <em>Membres</em>.
+              Ajoutez d'abord au moins un membre dans l'onglet <em>Foyer</em>.
             </p>
           )}
         </CardContent>

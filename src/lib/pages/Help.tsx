@@ -127,8 +127,18 @@ export default function Help() {
     // Features
     {
       category: 'features',
-      question: 'Comment fonctionnent les Projets ?',
-      answer: 'Les Projets sont des objectifs d\'épargne (ex: "Vacances 2025"). Créez un projet, définissez un montant cible, puis allouez de l\'argent chaque mois dans le tableau mensuel. Budget Famille calcule automatiquement votre progression et vous notifie quand l\'objectif est atteint.'
+      question: 'Comment fonctionne l\'épargne ?',
+      answer: 'Dans l\'onglet « Épargne », créez une cagnotte (ex : « Vacances ») avec un montant mis de côté chaque mois et, si vous voulez, un objectif. Chaque carte affiche ce qu\'il y a en caisse et la progression vers l\'objectif. Ce qui reste du pot commun chaque mois va automatiquement dans l\'épargne générale.'
+    },
+    {
+      category: 'features',
+      question: 'Salaire et contribution au pot commun, quelle différence ?',
+      answer: 'Chaque membre du foyer a un salaire net ET une contribution : ce qu\'il verse au pot commun (tout son salaire, un montant fixe ou un pourcentage). Seules les contributions paient les charges et l\'épargne du foyer. Dans l\'onglet « Foyer », l\'assistant « Répartir le pot commun » calcule une contribution juste (au prorata, à parts égales ou avec le même reste pour chacun).'
+    },
+    {
+      category: 'features',
+      question: 'Une charge terminée reste-t-elle dans l\'historique ?',
+      answer: 'Oui. Une charge arrêtée passe dans « Terminées » : elle disparaît des mois suivants mais reste dans les mois où elle a compté. Les mois passés sont clôturés automatiquement et gardent leurs montants, même si vous supprimez la charge ensuite.'
     },
     {
       category: 'features',
@@ -137,8 +147,8 @@ export default function Help() {
     },
     {
       category: 'features',
-      question: 'Comment verrouiller un mois ?',
-      answer: 'Dans le tableau mensuel, cliquez sur l\'icône cadenas en haut de la colonne du mois. Un mois verrouillé ne peut plus être modifié (utile pour archiver les mois passés). Vous pouvez le déverrouiller en re-cliquant.'
+      question: 'Comment clôturer (verrouiller) un mois ?',
+      answer: 'Les mois passés se clôturent tout seuls le 1er du mois suivant : leurs montants sont figés. Vous pouvez aussi clôturer le mois en cours depuis la vue Mois (« Clôturer »). Pour corriger un mois clôturé, touchez « Rouvrir » : l\'écran montre d\'abord ce qui va changer.'
     },
     {
       category: 'features',

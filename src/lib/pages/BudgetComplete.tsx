@@ -1,665 +1,245 @@
 // src/lib/pages/BudgetComplete.tsx
 // ============================================================================
-// 🎯 BudgetComplete (Layout) — patch v2
+// BudgetComplete (layout) — owns the budget and renders the active tab.
 // ============================================================================
-// Corrections vs v1:
-//   - budgetAPI.getById(id)  (not .get)
-//   - budgetAPI.updateData(id, { data: newData })  (wrap in {data})
-//   - convertNewFormatToOld(stateBag) takes 1 argument (state bag)
-//   - useAutoSave({ onSave, delay, enabled }) — options object signature
+// State model (v3): the whole budget, all years at once, lives in ONE
+// normalised `BudgetModel`. Every change goes through `commit()`, which:
+//   - updates a ref synchronously (the autosave always serialises the latest
+//     state — no stale closures),
+//   - schedules the debounced autosave (or saves right away),
+//   - optionally shows a confirmation with « Annuler ».
+// Past months are closed automatically on load and keep a frozen snapshot.
 // ============================================================================
 
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { useParams, useNavigate, useLocation, Outlet } from 'react-router-dom';
 import api, { budgetAPI } from '../../services/api';
-import {
-  convertOldFormatToNew,
-  convertNewFormatToOld,
-  autoLockPastMonths,
-  lockedMonthsEqual,
-  clearFutureLocks,
-  syncRecurringSavings,
-  isSavingsRecurring,
-  isSavingsActive,
-  type Person,
-  type Charge,
-  type Project,
-  type YearlyData,
-  type OneTimeIncomes,
-  type MonthComments,
-  type ProjectComments,
-  type LockedMonths,
-} from '../../utils/importConverter';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
+import { ToastAction } from '@/components/ui/toast';
 import { useNotifications } from '@/contexts/NotificationContext';
 import { useAutoSave } from '../../hooks/useAutoSave';
 import { useSaveStatus } from '../../hooks/useSaveStatus';
 
 import { BudgetNavbar, NavItem } from '@/components/budget/BudgetNavbar';
+import { BudgetTabBar } from '@/components/budget/BudgetTabBar';
 import { SaveStatusIndicator } from '@/components/budget/SaveStatusIndicator';
-import {
-  OnboardingCoach,
-  useOnboardingProgress,
-} from '@/components/onboarding/OnboardingCoach';
+import { OnboardingCoach, useOnboardingProgress } from '@/components/onboarding/OnboardingCoach';
 import InviteModal from '../../components/InviteModal';
 import { EnableBankingManager } from '../../components/budget/EnableBankingManager';
-import {
-  TransactionMapper,
-  MappedTransaction,
-  BridgeTransaction,
-} from '../../components/budget/TransactionMapper';
+import { TransactionMapper, MappedTransaction, BridgeTransaction } from '../../components/budget/TransactionMapper';
 import { DemoBanner } from '@/components/budget/DemoBanner';
+import { BudgetSheets } from '@/components/budget/sheets/BudgetSheets';
+import type { SheetState } from '@/components/budget/sheets/types';
 
-import {
-  BudgetProvider,
-  type BudgetContextValue,
-  type BudgetData,
-} from '@/contexts/BudgetContext';
+import { BudgetProvider, type BudgetContextValue, type BudgetData, type CommitOptions } from '@/contexts/BudgetContext';
+import type { BudgetModel, Charge, YM } from '@/lib/budget/types';
+import { GENERAL_SAVINGS_ID } from '@/lib/budget/types';
+import { BudgetEngine } from '@/lib/budget/engine';
+import { autoCloseMonths, decodeBudget, encodeBudget } from '@/lib/budget/codec';
+import { currentYM } from '@/lib/budget/months';
+import { currencySymbol as symbolFor, money } from '@/lib/budget/format';
 
-import {
-  LayoutDashboard,
-  Users,
-  Receipt,
-  PiggyBank,
-  CalendarDays,
-  FlaskConical,
-  Sparkles,
-} from 'lucide-react';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from '@/components/ui/dialog';
-
-import {
-  DEMO_TRANSACTIONS,
-  DEMO_BANK_BALANCE,
-  DEMO_MODE_LIMITS,
-} from '@/constants/demoData';
-
-const MONTHS = [
-  'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
-  'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre',
-];
-
-const GENERAL_SAVINGS_ID = 'epargne';
+import { CalendarDays, Receipt, PiggyBank, Users, BarChart3, Sparkles, FlaskConical } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { DEMO_TRANSACTIONS, DEMO_BANK_BALANCE, DEMO_MODE_LIMITS } from '@/constants/demoData';
 
 // ============================================================================
-// NAV ITEMS
+// NAVIGATION
 // ============================================================================
-const BUDGET_NAV_ITEMS: NavItem[] = [
-  { id: 'overview', label: "Vue d'ensemble", icon: LayoutDashboard },
-  { id: 'members', label: 'Membres', icon: Users },
+export const BUDGET_NAV_ITEMS: NavItem[] = [
+  { id: 'month', label: 'Mois', icon: CalendarDays },
   { id: 'charges', label: 'Charges', icon: Receipt },
   { id: 'projects', label: 'Épargne', icon: PiggyBank },
-  { id: 'calendar', label: 'Calendrier', icon: CalendarDays },
+  { id: 'members', label: 'Foyer', icon: Users },
+  { id: 'year', label: 'Année', icon: BarChart3 },
   { id: 'ai', label: 'Budget IA', icon: Sparkles },
   { id: 'reality', label: 'Reality Check', icon: FlaskConical },
 ];
+const MAIN_TABS = BUDGET_NAV_ITEMS.slice(0, 5);
 
-const NAV_TO_ROUTE: Record<string, string> = {
-  overview: 'overview',
-  members: 'members',
-  charges: 'charges',
-  projects: 'projects',
-  calendar: 'calendar',
-  ai: 'ai',
-  reality: 'reality',
+const EMPTY_MODEL: BudgetModel = {
+  budgetTitle: '',
+  people: [],
+  charges: [],
+  projects: [],
+  months: {},
+  chargeMappings: [],
+  extras: {},
+  yearExtras: {},
 };
 
 // ============================================================================
 // COMPONENT
 // ============================================================================
-
 export default function BudgetCompleteLayout() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const location = useLocation();
   const { user } = useAuth();
   const { toast } = useToast();
-  const { connectToBudget, disconnectFromBudget } = useNotifications();
-
-  // ===== Save state machine for the SaveStatusIndicator =====
+  const { connectToBudget, disconnectFromBudget, onBudgetUpdated } = useNotifications();
   const saveStateMachine = useSaveStatus();
 
-  // ===== Core =====
+  const [today] = useState<YM>(() => currentYM());
   const [budget, setBudget] = useState<BudgetData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [showInviteModal, setShowInviteModal] = useState(false);
+  const [model, setModel] = useState<BudgetModel>(EMPTY_MODEL);
+  const modelRef = useRef<BudgetModel>(EMPTY_MODEL);
   const loadedRef = useRef(false);
-  // Flagged whenever autoLockPastMonths mutates the in-memory lock map
-  // during load or year-switch. The effect below uses this to schedule the
-  // autosave once useAutoSave is wired up and lockedMonths has flushed.
-  const pendingAutoLockSaveRef = useRef(false);
+  const dirtyRef = useRef(false);
+  const pendingInitialSaveRef = useRef(false);
 
-  const globalDataRef = useRef<any>(null);
+  const [sheet, setSheet] = useState<SheetState | null>(null);
+  const [showInviteModal, setShowInviteModal] = useState(false);
 
-  const [budgetTitle, setBudgetTitle] = useState('');
-  const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
-  const [people, setPeople] = useState<Person[]>([]);
-  const [charges, setCharges] = useState<Charge[]>([]);
-  const [projects, setProjects] = useState<Project[]>([]);
-  const [yearlyData, setYearlyData] = useState<YearlyData>({});
-  const [yearlyExpenses, setYearlyExpenses] = useState<YearlyData>({});
-  const [oneTimeIncomes, setOneTimeIncomes] = useState<OneTimeIncomes>({});
-  const [monthComments, setMonthComments] = useState<MonthComments>({});
-  const [projectComments, setProjectComments] = useState<ProjectComments>({});
-  const [lockedMonths, setLockedMonths] = useState<LockedMonths>({});
-  const [budgetLocation, setBudgetLocation] = useState<string>('FR');
-  const [budgetCurrency, setBudgetCurrency] = useState<string>('EUR');
-
-  // ===== Reality Check / banking =====
+  // Reality check / banking
   const [showBankManager, setShowBankManager] = useState(false);
-  const [chargeMappings, setChargeMappings] = useState<MappedTransaction[]>([]);
   const [chargeToMap, setChargeToMap] = useState<Charge | null>(null);
   const [showMapper, setShowMapper] = useState(false);
   const [realBankBalance, setRealBankBalance] = useState(0);
   const [hasActiveConnection, setHasActiveConnection] = useState(false);
 
-  // ===== Demo mode =====
+  // Demo (bank-only) mode
   const [isDemoMode, setIsDemoMode] = useState(false);
   const [demoBankBalance, setDemoBankBalance] = useState(0);
   const [demoTransactions, setDemoTransactions] = useState<BridgeTransaction[]>([]);
-
-  // ===== AI tracking (for onboarding) =====
   const [hasRunSuggestions, setHasRunSuggestions] = useState(false);
 
+  const budgetCurrency = budget?.currency || 'EUR';
+  const budgetLocation = budget?.location || 'FR';
+  const symbol = symbolFor(budgetCurrency);
+  const fmt = useCallback((n: number) => money(n, symbol), [symbol]);
+
+  const engine = useMemo(() => new BudgetEngine(model, today), [model, today]);
+
   // ============================================================================
-  // LOAD BUDGET
+  // LOAD
   // ============================================================================
-  const loadBudget = useCallback(async () => {
-    if (!id) return;
-
-    setLoading(true);
-    try {
-      // ✅ FIX: getById, not get
-      const [budgetRes, dataRes] = await Promise.all([
-        budgetAPI.getById(id),
-        budgetAPI.getData(id),
-      ]);
-
-      setBudget(budgetRes.data);
-      setBudgetLocation(budgetRes.data.location || 'FR');
-      setBudgetCurrency(budgetRes.data.currency || 'EUR');
-
-      // Server returns { data: { ... } }; the original code reads `dataRes.data.data`
-      const rawData: any = dataRes.data?.data ?? dataRes.data ?? {};
-      globalDataRef.current = rawData;
-
-      // Always open a budget on the current year (prior years stay accessible
-      // via the year navigator), so "today" is the default landing point.
-      const openYear = new Date().getFullYear();
-      const data = convertOldFormatToNew(rawData, openYear);
-
-      setBudgetTitle(data.budgetTitle || budgetRes.data.name || '');
-      setCurrentYear(openYear);
-      setPeople(data.people || []);
-      setCharges(data.charges || []);
-      setProjects(data.projects || []);
-      setYearlyExpenses(data.yearlyExpenses || {});
-      setOneTimeIncomes(data.oneTimeIncomes || {});
-      setMonthComments(data.monthComments || {});
-      setProjectComments(data.projectComments || {});
-      const loadYear = data.currentYear || new Date().getFullYear();
-      // Migration: if this payload predates per-year locks, strip contaminated
-      // future-month locks inherited from the old global lock map (one-shot —
-      // once locks are stored per year the map is trustworthy).
-      const hadPerYearLocks = !!rawData?.yearlyData?.[String(loadYear)]?.lockedMonths;
-      const loadedLockedMonths = hadPerYearLocks
-        ? data.lockedMonths || {}
-        : clearFutureLocks(data.lockedMonths || {}, loadYear);
-      const autoLockedResult = autoLockPastMonths(loadedLockedMonths, loadYear);
-      setLockedMonths(autoLockedResult);
-      // Auto-fill the calendar for recurring "épargne particulière" savings,
-      // skipping locked months so history is preserved.
-      setYearlyData(
-        syncRecurringSavings(
-          data.projects || [],
-          data.yearlyData || {},
-          autoLockedResult,
-          data.currentYear || new Date().getFullYear()
-        )
-      );
-      if (!lockedMonthsEqual(loadedLockedMonths, autoLockedResult)) {
-        // Defer persistence until after the autosave hook has been wired
-        // up — the effect below catches this flag once lockedMonths flushes.
-        pendingAutoLockSaveRef.current = true;
+  const loadBudget = useCallback(
+    async (silent = false) => {
+      if (!id) return;
+      if (!silent) setLoading(true);
+      try {
+        const [budgetRes, dataRes] = await Promise.all([budgetAPI.getById(id), budgetAPI.getData(id)]);
+        setBudget(budgetRes.data);
+        const raw: unknown = dataRes.data?.data ?? dataRes.data ?? {};
+        const decoded = decodeBudget(raw, today);
+        if (!decoded.budgetTitle) decoded.budgetTitle = budgetRes.data?.name || '';
+        const { model: closed, changed } = autoCloseMonths(decoded, today, new Date().toISOString());
+        modelRef.current = closed;
+        setModel(closed);
+        dirtyRef.current = false;
+        // Months closed on load (or a format migration) are persisted once
+        // the autosave is wired (see effect below).
+        const rawObj = raw as Record<string, unknown>;
+        if (changed || rawObj?.schemaVersion !== 3) pendingInitialSaveRef.current = Object.keys(rawObj || {}).length > 0;
+        loadedRef.current = true;
+      } catch (err: unknown) {
+        const status = (err as { response?: { status?: number } })?.response?.status;
+        console.error('[BudgetComplete] load error', err);
+        if (status === 404) navigate('/404');
+        toast({ title: 'Erreur', description: 'Impossible de charger le budget', variant: 'destructive' });
+      } finally {
+        if (!silent) setLoading(false);
       }
-      setChargeMappings(rawData.chargeMappings || []);
-
-      loadedRef.current = true;
-    } catch (err: any) {
-      console.error('[BudgetComplete] load error', err);
-      if (err?.response?.status === 404) {
-        navigate('/404');
-      }
-      toast({
-        title: 'Erreur',
-        description: 'Impossible de charger le budget',
-        variant: 'destructive',
-      });
-    } finally {
-      setLoading(false);
-    }
-  }, [id, navigate, toast]);
+    },
+    [id, navigate, toast, today],
+  );
 
   useEffect(() => {
     loadBudget();
   }, [loadBudget]);
 
   // ============================================================================
-  // PROJECT CARRY-OVERS
-  // ============================================================================
-  const projectCarryOvers = useMemo(() => {
-    const carryOvers: Record<string, number> = {};
-    const yearlyDataAll: Record<string, any> = globalDataRef.current?.yearlyData || {};
-    const storedYears = Object.keys(yearlyDataAll)
-      .map((y) => parseInt(y, 10))
-      .filter((y) => !Number.isNaN(y));
-    const earliestStored = storedYears.length ? Math.min(...storedYears) : currentYear;
-
-    projects.forEach((proj) => {
-      const recurring = isSavingsRecurring(proj);
-      // For a recurring "épargne particulière", prior-year allocations are
-      // derived from its definition (monthlyAmount over active months) so the
-      // running total carries forward across years even for years the user
-      // never opened. Non-recurring projects keep the stored-allocation sum.
-      const startYear =
-        recurring && proj.startDate
-          ? new Date(proj.startDate).getFullYear()
-          : earliestStored;
-
-      let total = 0;
-      for (let year = startYear; year < currentYear; year++) {
-        const yearData = yearlyDataAll[String(year)];
-        for (let idx = 0; idx < 12; idx++) {
-          const allocated = recurring
-            ? (isSavingsActive(proj, year, idx) ? (proj.monthlyAmount || 0) : 0)
-            : (yearData?.months?.[idx]?.[proj.id] || 0);
-          const spent = yearData?.expenses?.[idx]?.[proj.id] || 0;
-          total += allocated - spent;
-        }
-      }
-      carryOvers[proj.id] = total;
-    });
-
-    // General savings ("Épargne Générale") is a derived column, not a project,
-    // so it also needs a cross-year carry-over. For each prior year & month it
-    // equals (income + one-time − charges − project allocations) − its own
-    // recorded expense, mirroring how the calendar computes it live.
-    const activeInMonth = (
-      startDate: string | undefined,
-      endDate: string | undefined,
-      year: number,
-      idx: number
-    ): boolean => {
-      const monthStart = new Date(year, idx, 1);
-      const monthEnd = new Date(year, idx + 1, 0);
-      if (startDate && new Date(startDate) > monthEnd) return false;
-      if (endDate && new Date(endDate) < monthStart) return false;
-      return true;
-    };
-
-    const realProjects = projects.filter((p) => p.id !== GENERAL_SAVINGS_ID);
-    let generalTotal = 0;
-    for (let year = earliestStored; year < currentYear; year++) {
-      const yearData = yearlyDataAll[String(year)];
-      const oneTimeYear = globalDataRef.current?.oneTimeIncomes?.[String(year)];
-      for (let idx = 0; idx < 12; idx++) {
-        const income = people.reduce(
-          (s, p) => (activeInMonth(p.startDate, p.endDate, year, idx) ? s + (p.salary || 0) : s),
-          0
-        );
-        const chargesTotal = charges.reduce(
-          (s, c) => (activeInMonth(c.startDate, c.endDate, year, idx) ? s + (c.amount || 0) : s),
-          0
-        );
-        const oneTime = Array.isArray(oneTimeYear) ? Number(oneTimeYear[idx]?.amount || 0) : 0;
-        const available = income + oneTime - chargesTotal;
-        const projAlloc = realProjects.reduce((s, proj) => {
-          const a = isSavingsRecurring(proj)
-            ? (isSavingsActive(proj, year, idx) ? (proj.monthlyAmount || 0) : 0)
-            : (yearData?.months?.[idx]?.[proj.id] || 0);
-          return s + a;
-        }, 0);
-        const genExpense = yearData?.expenses?.[idx]?.[GENERAL_SAVINGS_ID] || 0;
-        generalTotal += (available - projAlloc) - genExpense;
-      }
-    }
-    carryOvers[GENERAL_SAVINGS_ID] = generalTotal;
-
-    return carryOvers;
-  }, [projects, people, charges, currentYear]);
-
-  // ============================================================================
-  // DERIVED VALUES
-  // ============================================================================
-  const householdSize = useMemo(() => Math.max(1, people.length), [people]);
-
-  const mappedTotalsByChargeId = useMemo(() => {
-    const totals: Record<string, number> = {};
-    charges.forEach((ch) => {
-      const mapped = chargeMappings.filter((m) => m.chargeId === ch.id);
-      totals[ch.id] = mapped.reduce((sum, m) => sum + Math.abs(m.amount), 0);
-    });
-    return totals;
-  }, [charges, chargeMappings]);
-
-  const totalGlobalRealized = useMemo(() => {
-    const today = new Date();
-    const currentMonthIndex = today.getMonth();
-    const currentRealYear = today.getFullYear();
-    let total = 0;
-
-    if (currentYear <= currentRealYear) {
-      projects.forEach((proj) => {
-        total += projectCarryOvers[proj.id] || 0;
-        MONTHS.forEach((month, idx) => {
-          if (currentYear < currentRealYear || idx <= currentMonthIndex) {
-            const allocation = yearlyData[month]?.[proj.id] || 0;
-            const expense = yearlyExpenses[month]?.[proj.id] || 0;
-            total += allocation - expense;
-          }
-        });
-      });
-    }
-
-    return total;
-  }, [currentYear, projects, projectCarryOvers, yearlyData, yearlyExpenses]);
-
-  const hasFilledMonthlyData = useMemo(() => {
-    return (
-      Object.values(yearlyData).some((monthData) =>
-        Object.values(monthData).some((v) => v && v > 0)
-      ) || Object.values(oneTimeIncomes).some((v) => v && v > 0)
-    );
-  }, [yearlyData, oneTimeIncomes]);
-
-  // ============================================================================
   // SAVE
   // ============================================================================
+  const isDemoRef = useRef(false);
+  isDemoRef.current = isDemoMode;
+
   const performSave = useCallback(async () => {
-    if (!id) return;
-    if (isDemoMode) {
-      console.warn('[Save Guard] Skipped: demo mode');
-      return;
-    }
-
+    if (!id || !loadedRef.current) return;
+    if (isDemoRef.current) return;
     saveStateMachine.markSaving();
-
     try {
-      // Merge the current year into the existing multi-year payload so other
-      // years are preserved (fix for cross-year data loss / misalignment).
-      const newData = convertNewFormatToOld({
-        budgetTitle,
-        currentYear,
-        people,
-        charges,
-        projects,
-        yearlyData,
-        yearlyExpenses,
-        oneTimeIncomes,
-        monthComments,
-        projectComments,
-        lockedMonths,
-        chargeMappings,
-      } as any, globalDataRef.current);
-
-      globalDataRef.current = newData;
-
-      // ✅ FIX: updateData expects { data: ... }
-      await budgetAPI.updateData(id, { data: newData } as any);
-
+      const data = encodeBudget(modelRef.current, today, new Date().toISOString());
+      await budgetAPI.updateData(id, { data } as never);
+      dirtyRef.current = false;
       saveStateMachine.markSaved();
-    } catch (err: any) {
-      const message = err?.response?.data?.error || 'Erreur de sauvegarde';
+    } catch (err: unknown) {
+      const message = (err as { response?: { data?: { error?: string } } })?.response?.data?.error || 'Erreur de sauvegarde';
       saveStateMachine.markError(message);
     }
-  }, [
-    id,
-    isDemoMode,
-    saveStateMachine,
-    budgetTitle,
-    currentYear,
-    people,
-    charges,
-    projects,
-    yearlyData,
-    yearlyExpenses,
-    oneTimeIncomes,
-    monthComments,
-    projectComments,
-    lockedMonths,
-    chargeMappings,
-  ]);
+  }, [id, today, saveStateMachine]);
 
-  // Set charges + projects AND persist them immediately with the fresh values.
-  // The debounced autosave captures a stale closure at call time, so applying an
-  // AI proposal through it could save the pre-change (empty) state and overwrite
-  // the result. This bypasses that by building the payload from the new values.
-  const applyChargesAndProjects = useCallback(
-    async (newCharges: Charge[], newProjects: Project[]) => {
-      if (!id) return;
-      const syncedYearly = syncRecurringSavings(newProjects, yearlyData, lockedMonths, currentYear);
-      setCharges(newCharges);
-      setProjects(newProjects);
-      setYearlyData(syncedYearly);
-      if (isDemoMode) return;
-
-      saveStateMachine.markSaving();
-      try {
-        const newData = convertNewFormatToOld({
-          budgetTitle,
-          currentYear,
-          people,
-          charges: newCharges,
-          projects: newProjects,
-          yearlyData: syncedYearly,
-          yearlyExpenses,
-          oneTimeIncomes,
-          monthComments,
-          projectComments,
-          lockedMonths,
-          chargeMappings,
-        } as any, globalDataRef.current);
-        globalDataRef.current = newData;
-        await budgetAPI.updateData(id, { data: newData } as any);
-        saveStateMachine.markSaved();
-      } catch (err: any) {
-        saveStateMachine.markError(err?.response?.data?.error || 'Erreur de sauvegarde');
-      }
-    },
-    [
-      id,
-      isDemoMode,
-      saveStateMachine,
-      budgetTitle,
-      currentYear,
-      people,
-      yearlyData,
-      yearlyExpenses,
-      oneTimeIncomes,
-      monthComments,
-      projectComments,
-      lockedMonths,
-      chargeMappings,
-    ]
-  );
-
-  // ✅ FIX: useAutoSave uses options object, returns { hasUnsavedChanges, isSaving, markAsModified, saveNow }
-  const { markAsModified } = useAutoSave({
+  const { markAsModified, saveNow } = useAutoSave({
     onSave: performSave,
-    delay: 2000,
-    enabled: loadedRef.current && !isDemoMode,
+    delay: 1500,
+    enabled: !loading && !isDemoMode,
   });
 
-  // Wrapper that triggers BOTH the existing autosave hook AND our state machine
-  const triggerModified = useCallback(() => {
-    if (isDemoMode) return;
-    markAsModified();
-    saveStateMachine.markPending();
-  }, [isDemoMode, markAsModified, saveStateMachine]);
+  const scheduleSave = useCallback(
+    (immediate?: boolean) => {
+      if (isDemoRef.current) return;
+      dirtyRef.current = true;
+      saveStateMachine.markPending();
+      if (immediate) saveNow().catch(() => undefined);
+      else markAsModified();
+    },
+    [markAsModified, saveNow, saveStateMachine],
+  );
 
-  // When autoLockPastMonths mutates lockedMonths on load or year-switch
-  // (e.g. backfilling past-month locks that were never persisted because of
-  // the pre-2026-05-15 save bug), schedule an autosave so the new state
-  // reaches the DB without waiting for an unrelated user edit.
   useEffect(() => {
-    if (!loadedRef.current || isDemoMode) return;
-    if (!pendingAutoLockSaveRef.current) return;
-    pendingAutoLockSaveRef.current = false;
-    triggerModified();
-  }, [lockedMonths, isDemoMode, triggerModified]);
+    if (loading || !pendingInitialSaveRef.current || isDemoMode) return;
+    pendingInitialSaveRef.current = false;
+    scheduleSave();
+  }, [loading, isDemoMode, scheduleSave]);
 
-  // Setter wrappers
-  const handlePeopleChange = useCallback((newPeople: Person[]) => {
-    setPeople(newPeople);
-    triggerModified();
-  }, [triggerModified]);
-
-  const handleChargesChange = useCallback((newCharges: Charge[]) => {
-    setCharges(newCharges);
-    triggerModified();
-  }, [triggerModified]);
-
-  const handleProjectsChange = useCallback((newProjects: Project[]) => {
-    setProjects(newProjects);
-    // Re-fill the calendar so a new/edited recurring "épargne particulière"
-    // (monthly amount or date window) is reflected immediately.
-    setYearlyData((prev) =>
-      syncRecurringSavings(newProjects, prev, lockedMonths, currentYear)
-    );
-    triggerModified();
-  }, [triggerModified, lockedMonths, currentYear]);
-
-  const handleYearlyDataChange = useCallback((d: YearlyData) => {
-    setYearlyData(d);
-    triggerModified();
-  }, [triggerModified]);
-
-  const handleYearlyExpensesChange = useCallback((d: YearlyData) => {
-    setYearlyExpenses(d);
-    triggerModified();
-  }, [triggerModified]);
-
-  const handleOneTimeIncomesChange = useCallback((d: OneTimeIncomes) => {
-    setOneTimeIncomes(d);
-    triggerModified();
-  }, [triggerModified]);
-
-  const handleMonthCommentsChange = useCallback((d: MonthComments) => {
-    setMonthComments(d);
-    triggerModified();
-  }, [triggerModified]);
-
-  const handleProjectCommentsChange = useCallback((d: ProjectComments) => {
-    setProjectComments(d);
-    triggerModified();
-  }, [triggerModified]);
-
-  const handleLockedMonthsChange = useCallback((d: LockedMonths) => {
-    setLockedMonths(d);
-    // Unlocking a month should re-apply recurring savings; locking one freezes
-    // its current value (syncRecurringSavings skips locked months).
-    setYearlyData((prev) => syncRecurringSavings(projects, prev, d, currentYear));
-    triggerModified();
-  }, [triggerModified, projects, currentYear]);
-
-  const handleSetBudgetTitle = useCallback((title: string) => {
-    setBudgetTitle(title);
-    triggerModified();
-  }, [triggerModified]);
+  const commit = useCallback(
+    (updater: (m: BudgetModel) => BudgetModel, options: CommitOptions = {}) => {
+      const prev = modelRef.current;
+      const next = updater(prev);
+      if (next === prev) return;
+      modelRef.current = next;
+      setModel(next);
+      scheduleSave(options.saveNow);
+      if (options.message) {
+        const undoable = options.undoable !== false;
+        toast({
+          description: options.message,
+          action: undoable ? (
+            <ToastAction
+              altText="Annuler cette modification"
+              onClick={() => {
+                if (modelRef.current !== next) {
+                  toast({ description: 'Impossible d’annuler : le budget a changé depuis.' });
+                  return;
+                }
+                modelRef.current = prev;
+                setModel(prev);
+                scheduleSave();
+              }}
+            >
+              Annuler
+            </ToastAction>
+          ) : undefined,
+        });
+      }
+    },
+    [scheduleSave, toast],
+  );
 
   // ============================================================================
-  // YEAR
+  // REAL-TIME: another member saved → refresh when it is safe
   // ============================================================================
-  const handleYearChange = useCallback((year: number) => {
-    if (year === currentYear) return;
-
-    // Flush the OUTGOING year's edits into the multi-year payload before we load
-    // another year. Without this, switching years drops any changes not yet
-    // persisted (and, combined with the save merge, keeps every year intact).
-    globalDataRef.current = convertNewFormatToOld({
-      budgetTitle,
-      currentYear,
-      people,
-      charges,
-      projects,
-      yearlyData,
-      yearlyExpenses,
-      oneTimeIncomes,
-      monthComments,
-      projectComments,
-      lockedMonths,
-      chargeMappings,
-    } as any, globalDataRef.current);
-
-    setCurrentYear(year);
-
-    // Locks are per-year: load the TARGET year's own locks (not the outgoing
-    // year's), then auto-lock its past months. This is used both to seed the
-    // lock state and to let recurring savings skip locked months.
-    const storedLocks: LockedMonths =
-      (globalDataRef.current?.yearlyData?.[year]?.lockedMonths as LockedMonths) || {};
-    const nextLocked = autoLockPastMonths(storedLocks, year);
-
-    if (globalDataRef.current?.yearlyData?.[year]) {
-      const yearData = globalDataRef.current.yearlyData[year];
-      const newYearly: YearlyData = {};
-      const newExpenses: YearlyData = {};
-      const newOneTime: OneTimeIncomes = {};
-      const newMc: MonthComments = {};
-      const newPc: ProjectComments = {};
-
-      MONTHS.forEach((month, idx) => {
-        if (yearData.months?.[idx]) newYearly[month] = yearData.months[idx];
-        if (yearData.expenses?.[idx]) newExpenses[month] = yearData.expenses[idx];
-        if (yearData.monthComments?.[idx]) newMc[month] = yearData.monthComments[idx];
-        if (yearData.expenseComments?.[idx]) newPc[month] = yearData.expenseComments[idx];
-        if (globalDataRef.current.oneTimeIncomes?.[year]?.[idx]) {
-          newOneTime[month] = Number(globalDataRef.current.oneTimeIncomes[year][idx].amount || 0);
-        }
-      });
-
-      setYearlyData(syncRecurringSavings(projects, newYearly, nextLocked, year));
-      setYearlyExpenses(newExpenses);
-      setOneTimeIncomes(newOneTime);
-      setMonthComments(newMc);
-      setProjectComments(newPc);
-    } else {
-      setYearlyData(syncRecurringSavings(projects, {}, nextLocked, year));
-      setYearlyExpenses({});
-      setOneTimeIncomes({});
-      setMonthComments({});
-      setProjectComments({});
-    }
-
-    if (!lockedMonthsEqual(storedLocks, nextLocked)) {
-      pendingAutoLockSaveRef.current = true;
-    }
-    setLockedMonths(nextLocked);
-
-    // Persist the flushed multi-year payload so the outgoing year's edits reach
-    // the server even if the user leaves without touching the new year.
-    triggerModified();
-  }, [
-    currentYear,
-    budgetTitle,
-    people,
-    charges,
-    projects,
-    yearlyData,
-    yearlyExpenses,
-    oneTimeIncomes,
-    monthComments,
-    projectComments,
-    lockedMonths,
-    chargeMappings,
-    triggerModified,
-  ]);
+  useEffect(() => {
+    if (!id) return;
+    return onBudgetUpdated(({ budgetId, user: who }) => {
+      if (budgetId !== id || isDemoRef.current) return;
+      if (dirtyRef.current) return; // never overwrite local edits; the bell still notifies
+      loadBudget(true).then(() => toast({ description: `Budget mis à jour par ${who}.` }));
+    });
+  }, [id, onBudgetUpdated, loadBudget, toast]);
 
   // ============================================================================
   // BANKING
@@ -670,29 +250,30 @@ export default function BudgetCompleteLayout() {
       const response = await api.get(`/banking/budgets/${id}/reality-check`);
       setRealBankBalance(response.data.total_real_cash || 0);
       setHasActiveConnection(response.data.total_real_cash > 0);
-    } catch (err) {
+    } catch {
       setHasActiveConnection(false);
     }
   }, [id, isDemoMode]);
 
-  // ============================================================================
-  // DEMO MODE
-  // ============================================================================
   const getDemoStorageKey = useCallback(() => `demo-mode-${id}`, [id]);
   const getDemoTimestampKey = useCallback(() => `demo-timestamp-${id}`, [id]);
 
   useEffect(() => {
     if (!id) return;
-    const enabled = localStorage.getItem(getDemoStorageKey()) === 'true';
-    const ts = localStorage.getItem(getDemoTimestampKey());
-    if (enabled && ts) {
-      const days = (Date.now() - parseInt(ts, 10)) / (1000 * 60 * 60 * 24);
-      if (days < DEMO_MODE_LIMITS.EXPIRE_AFTER_DAYS) {
-        setDemoTransactions(DEMO_TRANSACTIONS);
-        setDemoBankBalance(DEMO_BANK_BALANCE);
-        setIsDemoMode(true);
-        setHasActiveConnection(true);
+    try {
+      const enabled = localStorage.getItem(getDemoStorageKey()) === 'true';
+      const ts = localStorage.getItem(getDemoTimestampKey());
+      if (enabled && ts) {
+        const days = (Date.now() - parseInt(ts, 10)) / (1000 * 60 * 60 * 24);
+        if (days < DEMO_MODE_LIMITS.EXPIRE_AFTER_DAYS) {
+          setDemoTransactions(DEMO_TRANSACTIONS);
+          setDemoBankBalance(DEMO_BANK_BALANCE);
+          setIsDemoMode(true);
+          setHasActiveConnection(true);
+        }
       }
+    } catch {
+      /* storage unavailable */
     }
   }, [id, getDemoStorageKey, getDemoTimestampKey]);
 
@@ -702,13 +283,13 @@ export default function BudgetCompleteLayout() {
     setDemoBankBalance(DEMO_BANK_BALANCE);
     setIsDemoMode(true);
     setHasActiveConnection(true);
-    localStorage.setItem(getDemoStorageKey(), 'true');
-    localStorage.setItem(getDemoTimestampKey(), Date.now().toString());
-    toast({
-      title: '🎬 Mode Démo Banque activé',
-      description:
-        'Données bancaires fictives chargées (vos données budgétaires restent inchangées).',
-    });
+    try {
+      localStorage.setItem(getDemoStorageKey(), 'true');
+      localStorage.setItem(getDemoTimestampKey(), Date.now().toString());
+    } catch {
+      /* ignore */
+    }
+    toast({ title: 'Mode Démo Banque activé', description: 'Données bancaires fictives chargées (vos données budgétaires restent inchangées).' });
   }, [id, getDemoStorageKey, getDemoTimestampKey, toast]);
 
   const disableDemoMode = useCallback(() => {
@@ -716,18 +297,18 @@ export default function BudgetCompleteLayout() {
     setHasActiveConnection(false);
     setDemoTransactions([]);
     setDemoBankBalance(0);
-    localStorage.removeItem(getDemoStorageKey());
-    localStorage.removeItem(getDemoTimestampKey());
+    try {
+      localStorage.removeItem(getDemoStorageKey());
+      localStorage.removeItem(getDemoTimestampKey());
+    } catch {
+      /* ignore */
+    }
     loadBudget();
   }, [getDemoStorageKey, getDemoTimestampKey, loadBudget]);
 
-  // ============================================================================
-  // MEMBERS
-  // ============================================================================
   const refreshMembersOnly = useCallback(async () => {
     if (!id) return;
     try {
-      // ✅ FIX: getById, not get
       const res = await budgetAPI.getById(id);
       setBudget(res.data);
     } catch (err) {
@@ -735,27 +316,28 @@ export default function BudgetCompleteLayout() {
     }
   }, [id]);
 
-  const handleShowInviteModal = useCallback(() => setShowInviteModal(true), []);
-
-  // ============================================================================
-  // TRANSACTION MAPPER
-  // ============================================================================
   const handleOpenMapper = useCallback((charge: Charge) => {
     setChargeToMap(charge);
     setShowMapper(true);
   }, []);
-
   const handleCloseMapper = useCallback(() => {
     setShowMapper(false);
     setChargeToMap(null);
   }, []);
-
   const handleOpenBankManager = useCallback(() => setShowBankManager(true), []);
-
   const handleCloseBankManager = useCallback(() => {
     setShowBankManager(false);
     if (!isDemoMode) refreshBankData();
   }, [isDemoMode, refreshBankData]);
+
+  const chargeMappings = model.chargeMappings as MappedTransaction[];
+  const mappedTotalsByChargeId = useMemo(() => {
+    const totals: Record<string, number> = {};
+    for (const c of model.charges) {
+      totals[c.id] = chargeMappings.filter((m) => m.chargeId === c.id).reduce((s, m) => s + Math.abs(m.amount), 0);
+    }
+    return totals;
+  }, [model.charges, chargeMappings]);
 
   // ============================================================================
   // WS
@@ -770,75 +352,76 @@ export default function BudgetCompleteLayout() {
   // ============================================================================
   const handleSectionChange = useCallback(
     (section: string) => {
-      const target = NAV_TO_ROUTE[section];
-      if (target && id) navigate(`/budget/${id}/complete/${target}`);
+      if (id) navigate(`/budget/${id}/complete/${section}`);
     },
-    [navigate, id]
+    [navigate, id],
   );
 
   const currentSection = useMemo(() => {
     const segments = location.pathname.split('/').filter(Boolean);
     const last = segments[segments.length - 1];
-    return BUDGET_NAV_ITEMS.find((it) => it.id === last)?.id || 'overview';
+    return BUDGET_NAV_ITEMS.find((it) => it.id === last)?.id || 'month';
   }, [location.pathname]);
+
+  const goToMonth = useCallback(
+    (ym: YM) => {
+      if (id) navigate(`/budget/${id}/complete/month?m=${ym}`);
+    },
+    [navigate, id],
+  );
 
   // ============================================================================
   // ONBOARDING
   // ============================================================================
   const onboardingSteps = useOnboardingProgress(
     {
-      peopleCount: people.length,
-      chargesCount: charges.length,
-      projectsCount: projects.filter((p) => p.id !== GENERAL_SAVINGS_ID).length,
-      hasFilledMonthlyData,
+      peopleCount: model.people.length,
+      chargesCount: model.charges.length,
+      projectsCount: model.projects.filter((p) => p.id !== GENERAL_SAVINGS_ID).length,
+      contributionsSet: model.people.some((p) => (p.contributions?.length ?? 0) > 0),
       hasRunSuggestions,
     },
     {
-      scrollToPeople: () => navigate(`/budget/${id}/complete/members`),
-      scrollToCharges: () => navigate(`/budget/${id}/complete/charges`),
-      scrollToProjects: () => navigate(`/budget/${id}/complete/projects`),
-      scrollToCalendar: () => navigate(`/budget/${id}/complete/calendar`),
-      scrollToSuggestions: () => navigate(`/budget/${id}/complete/charges`),
-    }
+      goToMembers: () => navigate(`/budget/${id}/complete/members`),
+      goToCharges: () => navigate(`/budget/${id}/complete/charges`),
+      goToProjects: () => navigate(`/budget/${id}/complete/projects`),
+      goToContributions: () => navigate(`/budget/${id}/complete/members#repartition`),
+      goToSuggestions: () => navigate(`/budget/${id}/complete/charges#suggestions`),
+    },
   );
 
   const [coachDismissed, setCoachDismissed] = useState(() => {
-    if (typeof window === 'undefined') return false;
-    return localStorage.getItem(`coach-dismissed-${id}`) === '1';
+    try {
+      return localStorage.getItem(`coach-dismissed-${id}`) === '1';
+    } catch {
+      return false;
+    }
   });
 
   // ============================================================================
-  // CONTEXT VALUE
+  // CONTEXT
   // ============================================================================
+  const totalGlobalRealized = useMemo(() => engine.projectsBalance(today), [engine, today]);
+  const householdSize = Math.max(1, engine.month(today).people.length || model.people.length);
+  const closeSheet = useCallback(() => setSheet(null), []);
+  const handleShowInviteModal = useCallback(() => setShowInviteModal(true), []);
+  const markSuggestionsRun = useCallback(() => setHasRunSuggestions(true), []);
+
   const contextValue: BudgetContextValue = useMemo(
     () => ({
+      budgetId: id || '',
       budget,
-      budgetTitle,
-      setBudgetTitle: handleSetBudgetTitle,
+      model,
+      engine,
+      today,
       budgetLocation,
       budgetCurrency,
-      currentYear,
-      handleYearChange,
-      people,
-      charges,
-      projects,
-      yearlyData,
-      yearlyExpenses,
-      oneTimeIncomes,
-      monthComments,
-      projectComments,
-      lockedMonths,
-      projectCarryOvers,
-      handlePeopleChange,
-      handleChargesChange,
-      handleProjectsChange,
-      applyChargesAndProjects,
-      handleYearlyDataChange,
-      handleYearlyExpensesChange,
-      handleOneTimeIncomesChange,
-      handleMonthCommentsChange,
-      handleProjectCommentsChange,
-      handleLockedMonthsChange,
+      currencySymbol: symbol,
+      fmt,
+      commit,
+      openSheet: setSheet,
+      closeSheet,
+      goToMonth,
       saveStatus: saveStateMachine.status,
       saveError: saveStateMachine.errorMessage,
       lastSavedAt: saveStateMachine.lastSavedAt,
@@ -851,62 +434,22 @@ export default function BudgetCompleteLayout() {
       enableDemoMode,
       disableDemoMode,
       refreshBankData,
+      handleOpenBankManager,
       chargeMappings,
       mappedTotalsByChargeId,
       handleOpenMapper,
-      handleOpenBankManager,
       householdSize,
       refreshMembersOnly,
       handleShowInviteModal,
+      markSuggestionsRun,
     }),
     [
-      budget,
-      budgetTitle,
-      handleSetBudgetTitle,
-      budgetLocation,
-      budgetCurrency,
-      currentYear,
-      handleYearChange,
-      people,
-      charges,
-      projects,
-      yearlyData,
-      yearlyExpenses,
-      oneTimeIncomes,
-      monthComments,
-      projectComments,
-      lockedMonths,
-      projectCarryOvers,
-      handlePeopleChange,
-      handleChargesChange,
-      handleProjectsChange,
-      applyChargesAndProjects,
-      handleYearlyDataChange,
-      handleYearlyExpensesChange,
-      handleOneTimeIncomesChange,
-      handleMonthCommentsChange,
-      handleProjectCommentsChange,
-      handleLockedMonthsChange,
-      saveStateMachine.status,
-      saveStateMachine.errorMessage,
-      saveStateMachine.lastSavedAt,
-      performSave,
-      totalGlobalRealized,
-      realBankBalance,
-      demoBankBalance,
-      hasActiveConnection,
-      isDemoMode,
-      enableDemoMode,
-      disableDemoMode,
-      refreshBankData,
-      chargeMappings,
-      mappedTotalsByChargeId,
-      handleOpenMapper,
-      handleOpenBankManager,
-      householdSize,
-      refreshMembersOnly,
-      handleShowInviteModal,
-    ]
+      id, budget, model, engine, today, budgetLocation, budgetCurrency, symbol, fmt, commit, closeSheet, goToMonth,
+      saveStateMachine.status, saveStateMachine.errorMessage, saveStateMachine.lastSavedAt, performSave,
+      totalGlobalRealized, realBankBalance, demoBankBalance, hasActiveConnection, isDemoMode,
+      enableDemoMode, disableDemoMode, refreshBankData, handleOpenBankManager, chargeMappings,
+      mappedTotalsByChargeId, handleOpenMapper, householdSize, refreshMembersOnly, handleShowInviteModal, markSuggestionsRun,
+    ],
   );
 
   // ============================================================================
@@ -914,15 +457,21 @@ export default function BudgetCompleteLayout() {
   // ============================================================================
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-primary-50 to-purple-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600" />
+      <div className="min-h-screen bg-background flex items-center justify-center" role="status" aria-label="Chargement du budget">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary" />
       </div>
     );
   }
 
   return (
     <BudgetProvider value={contextValue}>
-      <div className="min-h-screen bg-gradient-to-br from-primary-50 to-purple-50">
+      <div className="min-h-screen bg-background">
+        <a
+          href="#contenu"
+          className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[60] focus:rounded-xl focus:bg-card focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:shadow-floating focus:outline-none focus:ring-2 focus:ring-ring"
+        >
+          Aller au contenu
+        </a>
         <BudgetNavbar
           budgetTitle={budget?.name}
           userName={user?.name}
@@ -940,26 +489,37 @@ export default function BudgetCompleteLayout() {
           </div>
         )}
 
-        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 pb-24">
+        <main id="contenu" tabIndex={-1} className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-5 sm:py-8 pb-32 lg:pb-16 focus:outline-none">
           <Outlet />
         </main>
 
+        <BudgetTabBar items={MAIN_TABS} currentSection={currentSection} onSectionChange={handleSectionChange} />
+
+        {/* Bottom centre: toasts live bottom-right, the setup coach bottom-left. */}
         <SaveStatusIndicator
+          className="left-0 right-0 mx-auto w-fit bottom-[calc(5rem+env(safe-area-inset-bottom))] lg:bottom-4"
           status={saveStateMachine.status}
           errorMessage={saveStateMachine.errorMessage}
           lastSavedAt={saveStateMachine.lastSavedAt}
-          onRetry={() => performSave()}
+          onRetry={() => performSave().catch(() => undefined)}
         />
 
         {!coachDismissed && (
           <OnboardingCoach
             steps={onboardingSteps}
+            className="bottom-[calc(9rem+env(safe-area-inset-bottom))] lg:bottom-4"
             onDismiss={() => {
               setCoachDismissed(true);
-              localStorage.setItem(`coach-dismissed-${id}`, '1');
+              try {
+                localStorage.setItem(`coach-dismissed-${id}`, '1');
+              } catch {
+                /* ignore */
+              }
             }}
           />
         )}
+
+        <BudgetSheets sheet={sheet} onClose={() => setSheet(null)} />
 
         {showInviteModal && id && (
           <InviteModal
@@ -977,9 +537,7 @@ export default function BudgetCompleteLayout() {
           <DialogContent className="sm:max-w-2xl max-h-[80vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Gestion des Connexions Bancaires</DialogTitle>
-              <DialogDescription>
-                Connectez vos comptes via Enable Banking (2500+ banques européennes).
-              </DialogDescription>
+              <DialogDescription>Connectez vos comptes via Enable Banking (2500+ banques européennes).</DialogDescription>
             </DialogHeader>
             <EnableBankingManager budgetId={id!} onUpdate={refreshBankData} />
           </DialogContent>
@@ -992,11 +550,8 @@ export default function BudgetCompleteLayout() {
             charge={chargeToMap}
             currentMappings={chargeMappings}
             onSave={(newMappings) => {
-              const others = chargeMappings.filter(
-                (m) => m.chargeId !== chargeToMap.id
-              );
-              setChargeMappings([...others, ...newMappings]);
-              if (!isDemoMode) triggerModified();
+              const others = chargeMappings.filter((m) => m.chargeId !== chargeToMap.id);
+              commit((m) => ({ ...m, chargeMappings: [...others, ...newMappings] }));
               handleCloseMapper();
             }}
             budgetId={id!}

@@ -1,17 +1,18 @@
 // src/App.tsx
 // ============================================================================
-// 🎯 App.tsx — Updated routing with nested budget tabs
+// App routing — nested budget tabs
 // ============================================================================
-// Fixes P0 #1: replaces the single "scroll to section" page with proper
-// nested routes. Each tab is a real URL (deep-linkable, browser-history aware).
+// Each tab is a real URL (deep-linkable, browser-history aware).
 //
-// /budget/:id/complete           → redirects to /overview
-// /budget/:id/complete/overview  → OverviewTab
-// /budget/:id/complete/members   → MembersTab
-// /budget/:id/complete/charges   → ChargesTab + Suggestions
-// /budget/:id/complete/projects  → ProjectsTab
-// /budget/:id/complete/calendar  → CalendarTab (table desktop / cards mobile)
+// /budget/:id/complete           → redirects to /month
+// /budget/:id/complete/month     → MonthTab (?m=YYYY-MM) — the heart of the app
+// /budget/:id/complete/charges   → ChargesTab (catalog of rules + suggestions)
+// /budget/:id/complete/projects  → ProjectsTab (« Épargne »)
+// /budget/:id/complete/members   → MembersTab (« Foyer » + contribution assistant)
+// /budget/:id/complete/year      → YearTab (?y=YYYY)
+// /budget/:id/complete/ai        → AIBudgetTab
 // /budget/:id/complete/reality   → RealityTab
+// Legacy URLs: /overview → /month, /calendar → /year.
 // ============================================================================
 
 import { Routes, Route, Navigate, useParams } from 'react-router-dom';
@@ -45,12 +46,12 @@ import NotFound from './lib/pages/NotFound';
 
 // ===== Budget tabs (NEW) =====
 import BudgetCompleteLayout from './lib/pages/BudgetComplete';
-import OverviewTab from './lib/pages/budget-tabs/OverviewTab';
+import MonthTab from './lib/pages/budget-tabs/MonthTab';
 import MembersTab from './lib/pages/budget-tabs/MembersTab';
 import ChargesTab from './lib/pages/budget-tabs/ChargesTab';
 import ProjectsTab from './lib/pages/budget-tabs/ProjectsTab';
+import YearTab from './lib/pages/budget-tabs/YearTab';
 import AIBudgetTab from './lib/pages/budget-tabs/AIBudgetTab';
-import CalendarTab from './lib/pages/budget-tabs/CalendarTab';
 import RealityTab from './lib/pages/budget-tabs/RealityTab';
 import AdminStats from './lib/pages/AdminStats';
 import AdminRoute from './components/AdminRoute';
@@ -109,7 +110,7 @@ export default function App() {
           }
         />
 
-        {/* BUDGET — legacy redirect /budget/:id → /complete/overview */}
+        {/* BUDGET — legacy redirect /budget/:id → /complete/month */}
         <Route
           path="/budget/:id"
           element={
@@ -128,22 +129,25 @@ export default function App() {
             </PrivateRoute>
           }
         >
-          {/* /budget/:id/complete → /overview */}
-          <Route index element={<Navigate to="overview" replace />} />
-          <Route path="overview" element={<OverviewTab />} />
-          <Route path="members" element={<MembersTab />} />
+          {/* /budget/:id/complete → /month */}
+          <Route index element={<Navigate to="month" replace />} />
+          <Route path="month" element={<MonthTab />} />
           <Route path="charges" element={<ChargesTab />} />
           <Route path="projects" element={<ProjectsTab />} />
-          <Route path="calendar" element={<CalendarTab />} />
+          <Route path="members" element={<MembersTab />} />
+          <Route path="year" element={<YearTab />} />
           <Route path="ai" element={<AIBudgetTab />} />
           <Route path="reality" element={<RealityTab />} />
-          <Route path="*" element={<Navigate to="overview" replace />} />
+          {/* Legacy tab URLs */}
+          <Route path="overview" element={<Navigate to="../month" replace />} />
+          <Route path="calendar" element={<Navigate to="../year" replace />} />
+          <Route path="*" element={<Navigate to="month" replace />} />
         </Route>
 
         {/* BANKING CALLBACK */}
         <Route path="/beta2/callback" element={<EnableBankingCallbackPage />} />
 
-        {/* LEGACY — redirect /beta2/:id to /complete/overview */}
+        {/* LEGACY — redirect /beta2/:id to /complete/month */}
         <Route
           path="/beta2/:id"
           element={
@@ -163,8 +167,8 @@ export default function App() {
   );
 }
 
-// Helper component to redirect /budget/:id → /budget/:id/complete/overview
+// Helper component to redirect /budget/:id → /budget/:id/complete/month
 function RedirectToBudgetComplete() {
   const { id } = useParams();
-  return <Navigate to={`/budget/${id}/complete/overview`} replace />;
+  return <Navigate to={`/budget/${id}/complete/month`} replace />;
 }

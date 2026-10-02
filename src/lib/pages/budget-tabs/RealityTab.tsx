@@ -27,6 +27,12 @@ export default function RealityTab() {
 
   return (
     <div className="space-y-6 animate-in fade-in duration-200">
+      <div>
+        <h1 className="font-display text-2xl sm:text-3xl font-extrabold tracking-tight">Reality Check</h1>
+        <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
+          Comparez l’épargne prévue par votre budget avec l’argent réellement présent sur vos comptes.
+        </p>
+      </div>
       {/* Clear scope notice — fixes P1 #10 */}
       {isDemoMode && (
         <Card className="p-3 bg-indigo-50 border-indigo-200">
