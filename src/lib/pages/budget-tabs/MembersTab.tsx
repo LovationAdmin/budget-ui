@@ -8,7 +8,8 @@
 // ============================================================================
 
 import { useMemo, useState } from 'react';
-import { Pencil, Plus, Sparkles, UserPlus } from 'lucide-react';
+import { ChevronLeft, ChevronRight, History, Pencil, Plus, Sparkles, UserPlus } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
@@ -27,7 +28,7 @@ import {
   type SplitMethod,
 } from '@/lib/budget/engine';
 import { applyContributionRules, type ContributionRule } from '@/lib/budget/mutations';
-import { addMonths, formatMonthLong, formatMonthShort, formatMonthTitle, joinFr, maxYM, deMonth } from '@/lib/budget/months';
+import { addMonths, compareYM, formatMonthLong, formatMonthShort, formatMonthTitle, joinFr, maxYM, deMonth, monthNameLower } from '@/lib/budget/months';
 import { moneySigned, percent, roundCents } from '@/lib/budget/format';
 import { ChipToggle, Pill, Segmented } from '@/components/budget/shared/primitives';
 import { MonthPicker } from '@/components/budget/shared/MonthPicker';
@@ -43,12 +44,28 @@ const METHODS: Array<{ value: SplitMethod; label: string; help: string }> = [
 ];
 
 function MemberCard({ person, index, refYm }: { person: Person; index: number; refYm: YM }) {
-  const { fmt, openSheet, today } = useBudget();
+  const { fmt, openSheet, today, engine } = useBudget();
+  const firstOpen = useFirstOpenMonth();
   const status = personStatus(person, today);
   const w = windowOf(person);
   const ref = status === 'upcoming' ? w.start ?? refYm : status === 'ended' ? w.end ?? refYm : refYm;
-  const r = resolvePerson(person, ref);
-  if (!r) return null;
+  // The viewed month as the month screen shows it: frozen values for a closed month.
+  const r = engine.month(ref).people.find((p) => p.id === person.id) ?? resolvePerson(person, ref);
+  if (!r) {
+    return (
+      <article className="flex items-center gap-3 rounded-2xl border border-dashed border-border bg-muted/20 p-5">
+        <span aria-hidden="true" className={cn('inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl font-display text-lg font-extrabold opacity-60', AVATAR_TONES[index % AVATAR_TONES.length])}>
+          {person.name.charAt(0).toUpperCase() || '?'}
+        </span>
+        <p className="flex-1 text-sm text-muted-foreground">
+          <strong className="text-foreground">{person.name}</strong> ne fait pas partie du foyer en {formatMonthLong(ref)}.
+        </p>
+        <Button variant="ghost" className="min-h-[44px]" onClick={() => openSheet({ kind: 'memberDetail', id: person.id })}>
+          <History className="h-4 w-4" /> Historique
+        </Button>
+      </article>
+    );
+  }
   const share = r.salary > 0 ? (r.contribution / r.salary) * 100 : 0;
   const salaryHint = amountHistoryHint(person.salaryHistory, ref, fmt);
   const contributionHint = contributionHistoryHint(person, ref, fmt);
@@ -64,7 +81,7 @@ function MemberCard({ person, index, refYm }: { person: Person; index: number; r
           {status === 'ended' && w.end && <Pill tone="grey">Dernier mois : {formatMonthLong(w.end)}</Pill>}
           {status === 'active' && w.end && <Pill tone="amber">Jusqu’en {formatMonthLong(w.end)}</Pill>}
         </div>
-        <Button variant="outline" className="min-h-[44px]" onClick={() => openSheet({ kind: 'member', id: person.id, ym: status === 'active' ? refYm : ref })}>
+        <Button variant="outline" className="min-h-[44px]" onClick={() => openSheet({ kind: 'member', id: person.id, ym: maxYM(status === 'active' ? refYm : ref, firstOpen) })}>
           <Pencil className="h-4 w-4" /> Modifier
         </Button>
       </div>
@@ -90,13 +107,74 @@ function MemberCard({ person, index, refYm }: { person: Person; index: number; r
           Verse {percent(share)} de son salaire · règle : {r.contributionAdjusted ? 'ajustée ce mois-ci' : contributionRuleText(r.mode, r.value)}
         </span>
       </div>
-      {(salaryHint || contributionHint) && (
-        <div className="flex flex-col gap-0.5 border-t border-border/60 pt-3 text-xs text-muted-foreground">
+      <div className="flex flex-col gap-2 border-t border-border/60 pt-3 sm:flex-row sm:items-end sm:justify-between">
+        <div className="flex flex-col gap-0.5 text-xs text-muted-foreground">
           {salaryHint && <span>Salaire : {salaryHint}</span>}
           {contributionHint && <span>Contribution : {contributionHint}</span>}
+          {!salaryHint && !contributionHint && <span>Aucun changement de salaire ni de contribution.</span>}
         </div>
-      )}
+        <button
+          type="button"
+          onClick={() => openSheet({ kind: 'memberDetail', id: person.id })}
+          className="inline-flex min-h-[40px] shrink-0 items-center gap-1.5 self-start rounded-lg px-1 text-sm font-semibold text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:self-auto"
+        >
+          <History className="h-4 w-4" aria-hidden="true" /> Historique
+        </button>
+      </div>
     </article>
+  );
+}
+
+/** The household pot for one month: what comes in vs what the month needs. */
+function PotPanel({ ym }: { ym: YM }) {
+  const { engine, fmt, budgetId } = useBudget();
+  const m = engine.month(ym);
+  const t = m.totals;
+  const need = roundCents(t.charges + t.savings);
+  const coverage = need > 0 ? (t.entrees / need) * 100 : 100;
+  const scale = Math.max(t.entrees, need, 1);
+  return (
+    <section aria-labelledby="pot-title" className="flex flex-col gap-4 rounded-2xl border border-border/70 bg-card p-5 shadow-soft">
+      <div className="flex flex-wrap items-baseline justify-between gap-2">
+        <h2 id="pot-title" className="font-display text-lg font-extrabold">Le pot commun en {monthNameLower(ym)}</h2>
+        <Link to={`/budget/${budgetId}/complete/month?m=${ym}`} className="inline-flex min-h-[40px] items-center gap-1 text-sm font-semibold text-primary hover:underline">
+          Voir le mois <ChevronRight className="h-4 w-4" aria-hidden="true" />
+        </Link>
+      </div>
+      <dl className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        {[
+          { label: 'Entrées', value: t.entrees, dot: 'bg-emerald-500', hint: t.oneOff ? `dont ${fmt(t.oneOff)} ponctuels` : `${m.people.length} contribution${m.people.length > 1 ? 's' : ''}` },
+          { label: 'Charges', value: t.charges, dot: 'bg-orange-500', hint: `${m.charges.filter((c) => c.amount !== 0).length} charges` },
+          { label: 'Épargne', value: t.savings, dot: 'bg-indigo-500', hint: 'mise de côté' },
+          { label: t.reste >= 0 ? 'Reste' : 'Manque', value: t.reste, dot: t.reste >= 0 ? 'bg-emerald-300' : 'bg-red-500', hint: t.reste >= 0 ? '→ épargne générale' : 'pris sur l’épargne générale' },
+        ].map((k) => (
+          <div key={k.label} className="flex flex-col gap-0.5">
+            <dt className="flex items-center gap-1.5 text-xs font-bold text-muted-foreground">
+              <span aria-hidden="true" className={cn('h-2 w-2 rounded-full', k.dot)} /> {k.label}
+            </dt>
+            <dd className={cn('font-display text-xl font-extrabold tabular-nums', k.label === 'Manque' && 'text-red-700')}>{fmt(Math.abs(k.value))}</dd>
+            <dd className="text-xs text-muted-foreground">{k.hint}</dd>
+          </div>
+        ))}
+      </dl>
+      <div className="flex flex-col gap-1.5" aria-hidden="true">
+        <span className="flex h-2.5 overflow-hidden rounded-full bg-muted">
+          <span className="h-full bg-emerald-500" style={{ width: `${(t.entrees / scale) * 100}%` }} />
+        </span>
+        <span className="flex h-2.5 gap-[2px] overflow-hidden rounded-full bg-muted">
+          <span className="h-full bg-orange-500" style={{ width: `${(t.charges / scale) * 100}%` }} />
+          <span className="h-full bg-indigo-500" style={{ width: `${(t.savings / scale) * 100}%` }} />
+        </span>
+      </div>
+      <p className="text-sm text-muted-foreground">
+        {need === 0
+          ? 'Aucune charge ni épargne ce mois-ci.'
+          : t.reste >= 0
+            ? `Les entrées couvrent ${percent(coverage)} des besoins du mois (charges + épargne).`
+            : `Les entrées couvrent ${percent(coverage)} des besoins : il manque ${fmt(-t.reste)}.`}
+        {m.frozen && ' Mois clôturé : montants figés.'}
+      </p>
+    </section>
   );
 }
 
@@ -105,7 +183,7 @@ function SplitAssistant() {
   const firstOpen = useFirstOpenMonth();
   const [method, setMethod] = useState<SplitMethod>('prorata');
   const [margin, setMargin] = useState(5);
-  const [basis, setBasis] = useState<'average' | 'peak'>('average');
+  const [basis, setBasis] = useState<'month' | 'average' | 'peak'>('month');
   const [from, setFrom] = useState<YM>(maxYM(addMonths(today, 1), firstOpen));
 
   const members = useMemo(
@@ -126,11 +204,14 @@ function SplitAssistant() {
     m.totals.charges + m.totals.savings > best.totals.charges + best.totals.savings ? m : best,
   );
   // The choice only matters when some months weigh more than others.
+  const fromMonth = months12[0];
+  const monthTotal = Math.round(fromMonth.totals.charges + fromMonth.totals.savings);
   const peakTotal = Math.round(peakMonth.totals.charges + peakMonth.totals.savings);
-  const uneven = peakTotal > avgC + avgS;
-  const usePeak = basis === 'peak' && uneven;
-  const needC = usePeak ? Math.round(peakMonth.totals.charges) : avgC;
-  const needS = usePeak ? Math.round(peakMonth.totals.savings) : avgS;
+  const uneven = peakTotal > avgC + avgS || monthTotal !== avgC + avgS;
+  const effBasis = uneven ? basis : 'average';
+  const basisMonth = effBasis === 'peak' ? peakMonth : effBasis === 'month' ? fromMonth : null;
+  const needC = basisMonth ? Math.round(basisMonth.totals.charges) : avgC;
+  const needS = basisMonth ? Math.round(basisMonth.totals.savings) : avgS;
   const withMargin = (v: number) => Math.round(v * (1 + margin / 100));
   const need = withMargin(needC + needS);
   const ending = chargesEndingBetween(model, from, addMonths(from, 11));
@@ -193,18 +274,22 @@ function SplitAssistant() {
               <Segmented
                 className="mt-3"
                 label="Base de calcul du besoin"
+                stackOnMobile
                 value={basis}
                 onChange={setBasis}
                 options={[
+                  { value: 'month', label: `Mois ${deMonth(monthNameLower(from))} · ${fmt(withMargin(monthTotal))}` },
                   { value: 'average', label: `Lissé sur 12 mois · ${fmt(withMargin(avgC + avgS))}` },
-                  { value: 'peak', label: `Mois le plus chargé · ${fmt(withMargin(peakTotal))}` },
+                  { value: 'peak', label: `Le plus chargé · ${fmt(withMargin(peakTotal))}` },
                 ]}
               />
               )}
               <p className="mb-3 mt-2 text-xs text-muted-foreground">
                 {!uneven
                   ? `Le même besoin chaque mois sur les 12 mois à partir ${deMonth(formatMonthShort(from))}.`
-                  : !usePeak
+                  : effBasis === 'month'
+                  ? `Les charges et l’épargne prévues en ${formatMonthLong(from)}, le mois où la répartition commence. À revoir quand elles changent.`
+                  : effBasis === 'average'
                   ? `Moyenne des 12 mois à partir ${deMonth(formatMonthShort(from))} : les mois plus chargés puisent dans l’épargne générale.`
                   : `${formatMonthTitle(peakMonth.ym)} est le mois le plus chargé : chaque mois est couvert, le surplus des autres va à l’épargne générale.`}
                 {ending.length > 0 &&
@@ -260,7 +345,10 @@ export default function MembersTab() {
   const { model, engine, fmt, openSheet, budget, refreshMembersOnly, today } = useBudget();
   const firstOpen = useFirstOpenMonth();
   useHashScroll('repartition');
-  const month = engine.month(firstOpen);
+  // The month shown by the cards and the pot panel (browse past months to see history).
+  const [viewYm, setViewYm] = useState<YM>(firstOpen);
+  const month = engine.month(viewYm);
+  const viewStatus = month.closed ? 'Clôturé' : compareYM(viewYm, today) > 0 ? 'Prévisionnel' : 'En cours';
   const indexed = model.people.map((p, i) => ({ p, i }));
   const current = indexed.filter(({ p }) => personStatus(p, today) !== 'ended');
   const former = indexed.filter(({ p }) => personStatus(p, today) === 'ended');
@@ -271,7 +359,7 @@ export default function MembersTab() {
         <div>
           <h1 className="font-display text-2xl sm:text-3xl font-extrabold tracking-tight">Foyer</h1>
           <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
-            Chacun garde son salaire. Le pot commun ne reçoit que la contribution de chacun : en {formatMonthLong(firstOpen)},{' '}
+            Chacun garde son salaire. Le pot commun ne reçoit que la contribution de chacun : en {formatMonthLong(viewYm)},{' '}
             <strong className="tabular-nums text-foreground">{fmt(month.totals.contributions)}</strong> sur {fmt(month.totals.salaries)} de salaires.
           </p>
         </div>
@@ -280,10 +368,28 @@ export default function MembersTab() {
         </Button>
       </div>
 
+      {model.people.length > 0 && (
+        <div className="flex flex-wrap items-center gap-2">
+          <Button variant="outline" size="icon" className="h-11 w-11 shrink-0" aria-label="Mois précédent" onClick={() => setViewYm(addMonths(viewYm, -1))}>
+            <ChevronLeft className="h-5 w-5" />
+          </Button>
+          <span className="min-w-[150px] text-center font-display text-lg font-extrabold tabular-nums" aria-live="polite">{formatMonthTitle(viewYm)}</span>
+          <Button variant="outline" size="icon" className="h-11 w-11 shrink-0" aria-label="Mois suivant" onClick={() => setViewYm(addMonths(viewYm, 1))}>
+            <ChevronRight className="h-5 w-5" />
+          </Button>
+          <Pill tone={month.closed ? 'grey' : viewStatus === 'En cours' ? 'green' : 'blue'}>{viewStatus}</Pill>
+          {viewYm !== firstOpen && (
+            <Button variant="ghost" className="min-h-[44px]" onClick={() => setViewYm(firstOpen)}>
+              Revenir au mois en cours
+            </Button>
+          )}
+        </div>
+      )}
+
       {current.length > 0 ? (
         <div className="grid gap-4 md:grid-cols-2">
           {current.map(({ p, i }) => (
-            <MemberCard key={p.id} person={p} index={i} refYm={firstOpen} />
+            <MemberCard key={p.id} person={p} index={i} refYm={viewYm} />
           ))}
         </div>
       ) : (
@@ -305,6 +411,8 @@ export default function MembersTab() {
           </div>
         </section>
       )}
+
+      {model.people.length > 0 && <PotPanel ym={viewYm} />}
 
       <SplitAssistant />
 

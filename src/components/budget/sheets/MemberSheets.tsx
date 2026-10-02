@@ -4,7 +4,7 @@
 // month on; arrival / departure; deletion.
 
 import { useMemo, useState } from 'react';
-import { AlertTriangle, CheckCircle2, ChevronDown, Trash2 } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, ChevronDown, Lock, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
@@ -14,11 +14,13 @@ import {
   amountHistoryHint,
   contributionFor,
   contributionHistoryHint,
+  contributionStepText,
   resolvePerson,
+  sortSteps,
   stepAt,
   windowOf,
 } from '@/lib/budget/engine';
-import { newId, removePerson, setPersonMoney, updatePerson, upsertPerson } from '@/lib/budget/mutations';
+import { clearPersonMonthException, newId, removePerson, setPersonMoney, updatePerson, upsertPerson } from '@/lib/budget/mutations';
 import {
   addMonths,
   compareYM,
@@ -396,6 +398,146 @@ export function MemberDeleteSheet({ sheet, onClose }: SheetProps<'memberDelete'>
         <Button variant="outline" className="min-h-[44px]" onClick={leaveInstead}>Ne plus compter dès {formatMonthLong(today)}</Button>
         <Button variant="destructive" className="min-h-[44px]" onClick={confirm}>Supprimer</Button>
       </div>
+    </ResponsiveSheet>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// History: successive salaries and contributions, month-only exceptions and
+// what the member actually put in, month by month (frozen for closed months).
+// ---------------------------------------------------------------------------
+function StepTimeline({ title, rows }: { title: string; rows: Array<{ key: string; period: string; value: string; current: boolean }> }) {
+  return (
+    <div>
+      <h3 className="mb-2 text-sm font-semibold">{title}</h3>
+      <ol className="flex flex-col">
+        {rows.map((row) => (
+          <li key={row.key} className="relative ml-1.5 flex min-h-[40px] items-center gap-3 border-l-2 border-border pl-4">
+            <span aria-hidden="true" className={cn('absolute -left-[7px] h-3 w-3 rounded-full border-2 border-background', row.current ? 'bg-primary' : 'bg-muted-foreground/40')} />
+            <span className="flex-1 text-sm">{row.period}</span>
+            <strong className="text-sm tabular-nums">{row.value}</strong>
+          </li>
+        ))}
+      </ol>
+    </div>
+  );
+}
+
+function periodsOf<T extends { from: YM }>(steps: T[], start: YM | undefined, end: YM | undefined, ref: YM) {
+  const current = stepAt(steps, ref);
+  return steps
+    .map((s, i) => {
+      const next = steps[i + 1];
+      const to = next ? addMonths(next.from, -1) : end;
+      const from = i === 0 ? start ?? s.from : s.from;
+      const period = from && to ? `${formatMonthShort(from)} → ${formatMonthShort(to)}` : from ? `Depuis ${formatMonthShort(from)}` : to ? `Jusqu’à ${formatMonthShort(to)}` : 'Depuis toujours';
+      return { step: s, key: `${s.from}-${i}`, period, current: s === current };
+    })
+    .reverse();
+}
+
+export function MemberDetailSheet({ sheet, onClose }: SheetProps<'memberDetail'>) {
+  const { model, engine, fmt, today, commit, openSheet } = useBudget();
+  const person = model.people.find((p) => p.id === sheet.id);
+  if (!person) return null;
+  const w = windowOf(person);
+  const ref = w.end && compareYM(w.end, today) < 0 ? w.end : w.start && compareYM(w.start, today) > 0 ? w.start : today;
+
+  const salarySteps = sortSteps(person.salaryHistory?.length ? person.salaryHistory : [{ from: w.start ?? today, amount: person.salary }]);
+  const salaryRows = periodsOf(salarySteps, w.start, w.end, ref).map((r) => ({ ...r, value: fmt(r.step.amount) }));
+  const contributionSteps = sortSteps(person.contributions?.length ? person.contributions : [{ from: w.start ?? today, mode: 'all' as const }]);
+  const contributionRows = periodsOf(contributionSteps, w.start, w.end, ref).map((r) => ({ ...r, value: contributionStepText(r.step, fmt) }));
+
+  const exceptionMonths = Array.from(new Set([...Object.keys(person.salaryOverrides ?? {}), ...Object.keys(person.contributionOverrides ?? {})])).sort(compareYM);
+
+  // Month by month: the 6 months before today and the 6 after (within the member's window).
+  const months: YM[] = [];
+  for (let i = -6; i <= 5; i++) {
+    const ym = addMonths(today, i);
+    if ((!w.start || compareYM(ym, w.start) >= 0) && (!w.end || compareYM(ym, w.end) <= 0)) months.push(ym);
+  }
+  const monthRows = months
+    .map((ym) => ({ ym, r: engine.month(ym).people.find((p) => p.id === person.id), closed: engine.isClosed(ym) }))
+    .filter((x) => !!x.r)
+    .reverse();
+
+  return (
+    <ResponsiveSheet open onOpenChange={(o) => !o && onClose()} title={`Historique de ${person.name}`}>
+      <StepTimeline title="Salaires successifs" rows={salaryRows} />
+      <StepTimeline title="Contributions au pot" rows={contributionRows} />
+
+      {exceptionMonths.length > 0 && (
+        <div>
+          <h3 className="mb-2 text-sm font-semibold">Exceptions (un seul mois)</h3>
+          <div className="flex flex-col gap-1.5">
+            {exceptionMonths.map((ym) => {
+              const s = person.salaryOverrides?.[ym];
+              const c = person.contributionOverrides?.[ym];
+              const text = [s !== undefined ? `salaire ${fmt(s)}` : '', c !== undefined ? `verse ${fmt(c)}` : ''].filter(Boolean).join(' · ');
+              const closed = engine.isClosed(ym);
+              return (
+                <div key={ym} className="flex items-center gap-2 rounded-xl bg-muted/50 px-3 py-2 text-sm">
+                  <span className="flex-1">
+                    <strong>{formatMonthTitle(ym)}</strong> · {text}
+                  </span>
+                  {closed ? (
+                    <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+                      <Lock className="h-3 w-3" aria-hidden="true" /> clôturé
+                    </span>
+                  ) : (
+                    <button
+                      type="button"
+                      className="py-1 text-sm font-semibold text-primary underline underline-offset-4"
+                      onClick={() => commit((m) => clearPersonMonthException(m, person.id, ym), { message: `Exception ${deMonth(formatMonthLong(ym))} supprimée.` })}
+                    >
+                      Supprimer
+                    </button>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {monthRows.length > 0 && (
+        <div>
+          <h3 className="mb-2 text-sm font-semibold">Mois par mois</h3>
+          <div className="overflow-x-auto rounded-xl border border-border/60">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="text-left text-xs text-muted-foreground">
+                  <th scope="col" className="px-3 py-2 font-semibold">Mois</th>
+                  <th scope="col" className="px-3 py-2 text-right font-semibold">Salaire</th>
+                  <th scope="col" className="px-3 py-2 text-right font-semibold">Verse</th>
+                  <th scope="col" className="px-3 py-2 text-right font-semibold">Garde</th>
+                </tr>
+              </thead>
+              <tbody>
+                {monthRows.map(({ ym, r, closed }) => (
+                  <tr key={ym} className={cn('border-t border-border/60', ym === today && 'bg-primary/5')}>
+                    <th scope="row" className="px-3 py-2 text-left font-medium">
+                      <span className="inline-flex items-center gap-1.5 whitespace-nowrap">
+                        {formatMonthShort(ym)}
+                        {closed && <Lock className="h-3 w-3 text-muted-foreground" aria-label="clôturé" />}
+                      </span>
+                      {(r!.salaryAdjusted || r!.contributionAdjusted) && <span className="block text-xs font-normal text-sky-700">exception</span>}
+                    </th>
+                    <td className="px-3 py-2 text-right tabular-nums">{fmt(r!.salary)}</td>
+                    <td className="px-3 py-2 text-right font-semibold tabular-nums text-emerald-700">{fmt(r!.contribution)}</td>
+                    <td className="px-3 py-2 text-right tabular-nums">{fmt(r!.keep)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <p className="mt-2 text-xs text-muted-foreground">Les mois clôturés gardent les montants de leur clôture, même si les règles changent ensuite.</p>
+        </div>
+      )}
+
+      <Button variant="outline" className="min-h-[44px]" onClick={() => openSheet({ kind: 'member', id: person.id, ym: maxYM(today, w.start ?? today) })}>
+        Modifier le salaire ou la contribution
+      </Button>
     </ResponsiveSheet>
   );
 }

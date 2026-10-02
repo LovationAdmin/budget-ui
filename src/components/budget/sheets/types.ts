@@ -17,5 +17,6 @@ export type SheetState =
   | { kind: 'spend'; ym: YM; potId?: string }
   | { kind: 'oneOff'; ym: YM }
   | { kind: 'member'; id?: string; ym: YM }
+  | { kind: 'memberDetail'; id: string }
   | { kind: 'memberDelete'; id: string }
   | { kind: 'reopen'; ym: YM };
