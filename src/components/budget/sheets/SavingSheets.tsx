@@ -3,7 +3,8 @@
 // spent from a pot (including the general savings), create / edit and delete.
 
 import { useEffect, useMemo, useState } from 'react';
-import { CheckCircle2, AlertTriangle, PauseCircle, Pencil, RotateCcw, Settings2, ShoppingBag, StopCircle, Trash2, Repeat } from 'lucide-react';
+import { CheckCircle2, AlertTriangle, PauseCircle, Pencil, RotateCcw, Settings2, ShoppingBag, Sparkles, StopCircle, Trash2, Repeat } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
@@ -387,7 +388,8 @@ type EndMode = 'none' | 'count' | 'until';
 type SavingKind = 'monthly' | 'free';
 
 export function SavingEditorSheet({ sheet, onClose }: SheetProps<'savingEditor'>) {
-  const { fmt, commit, today, currencySymbol } = useBudget();
+  const { fmt, commit, today, currencySymbol, engine, budgetId } = useBudget();
+  const navigate = useNavigate();
   const existing = useProject(sheet.id ?? '');
   const editing = !!existing;
   const w = existing ? windowOf(existing) : {};
@@ -397,6 +399,8 @@ export function SavingEditorSheet({ sheet, onClose }: SheetProps<'savingEditor'>
   const [label, setLabel] = useState(existing?.label ?? '');
   const [kind, setKind] = useState<SavingKind>(existingKind);
   const [amount, setAmount] = useState('');
+  // Until the amount is typed, it follows the goal: target ÷ months to the end.
+  const [amountTouched, setAmountTouched] = useState(false);
   const [target, setTarget] = useState(existing?.targetAmount ? String(existing.targetAmount) : '');
   const [start, setStart] = useState<YM>(w.start ?? defaultStart);
   const [endMode, setEndMode] = useState<EndMode>(w.end ? 'until' : 'none');
@@ -404,10 +408,13 @@ export function SavingEditorSheet({ sheet, onClose }: SheetProps<'savingEditor'>
   const [end, setEnd] = useState<YM>(w.end ?? addMonths(w.start ?? defaultStart, 11));
   const [error, setError] = useState('');
 
-  const value = parseAmount(amount);
   const targetValue = parseAmount(target);
   const hasTarget = Number.isFinite(targetValue) && targetValue > 0;
   const endYm = kind === 'monthly' ? computeEnd(start, endMode, count, end) : undefined;
+  const planMonths = hasTarget && endYm && compareYM(endYm, start) >= 0 ? monthsBetween(start, endYm) : 0;
+  const planMonthly = planMonths > 0 ? Math.ceil(targetValue / planMonths) : 0;
+  const shownAmount = !editing && !amountTouched && planMonthly > 0 ? String(planMonthly) : amount;
+  const value = parseAmount(shownAmount);
   const monthlyAmount = editing && existingKind === 'monthly' ? projectPlanned(existing!, maxYM(today, start)) : value;
   const amountOk = Number.isFinite(monthlyAmount) && monthlyAmount > 0;
 
@@ -434,15 +441,31 @@ export function SavingEditorSheet({ sheet, onClose }: SheetProps<'savingEditor'>
     ? 'Les mois clôturés ne changent pas ; les mois ouverts suivent les nouveaux réglages.'
     : kind === 'free'
       ? 'Rien n’est mis de côté tant que vous n’indiquez pas de montant.'
-      : compareYM(sheet.ym, start) >= 0 && (!endYm || compareYM(sheet.ym, endYm) <= 0) && amountOk
-        ? `En ${formatMonthLong(sheet.ym)} : ${fmt(monthlyAmount)} mis de côté, le reste du mois baisse d’autant.`
-        : `Rien en ${formatMonthLong(sheet.ym)} : premier versement en ${formatMonthLong(start)}.`;
+      : !amountOk
+        ? ''
+        : compareYM(sheet.ym, start) >= 0 && (!endYm || compareYM(sheet.ym, endYm) <= 0)
+          ? `En ${formatMonthLong(sheet.ym)} : ${fmt(monthlyAmount)} mis de côté, le reste du pot baisse d’autant.`
+          : `Rien en ${formatMonthLong(sheet.ym)} : premier versement en ${formatMonthLong(start)}.`;
 
-  const submit = (e: React.FormEvent) => {
+  // Can the pot keep this pace? Compare with what each month of the period
+  // leaves today (before this saving): the tightest month decides.
+  const feasibility = useMemo(() => {
+    if (editing || kind !== 'monthly' || !amountOk) return null;
+    const last = endYm ?? addMonths(start, 11);
+    let worst: { ym: YM; reste: number } | null = null;
+    for (let ym = start, i = 0; compareYM(ym, last) <= 0 && i < 60; ym = addMonths(ym, 1), i++) {
+      const reste = engine.month(ym).totals.reste;
+      if (!worst || reste < worst.reste) worst = { ym, reste };
+    }
+    if (!worst) return null;
+    return { worst, shortfall: roundCents(monthlyAmount - worst.reste) };
+  }, [editing, kind, amountOk, endYm, start, engine, monthlyAmount]);
+
+  const submit = (e: React.FormEvent, then?: 'ai' | 'split') => {
     e.preventDefault();
     if (!label.trim()) return failOn('sv-label', setError, 'Donnez un nom (ex. : Vacances, Voiture, Coup dur…).');
     if (target.trim() && !hasTarget) return failOn('sv-target', setError, 'L’objectif doit être un montant supérieur à 0.');
-    if (kind === 'monthly' && !editing && !amountOk) return setError('Indiquez le montant mis de côté chaque mois.');
+    if (kind === 'monthly' && !editing && !amountOk) return failOn('sv-amount', setError, hasTarget ? 'Indiquez le montant mis de côté chaque mois, ou une date « Jusqu’à… » pour le calculer depuis l’objectif.' : 'Indiquez le montant mis de côté chaque mois.');
     if (endYm && compareYM(endYm, start) < 0) return setError('La fin doit venir après le début.');
     const name = label.trim();
     if (editing) {
@@ -460,9 +483,17 @@ export function SavingEditorSheet({ sheet, onClose }: SheetProps<'savingEditor'>
         project.startDate = startDateOf(start);
         if (endYm) project.endDate = endDateOf(endYm);
       }
-      commit((m) => upsertProject(m, project), { message: `« ${name} » ajoutée à vos épargnes.` });
+      commit((m) => upsertProject(m, project), { message: `« ${name} » ajoutée à vos épargnes.`, saveNow: !!then });
     }
     onClose();
+    // The split assistant then includes the new saving in the month's need.
+    if (then === 'split') navigate(`/budget/${budgetId}/complete/members#repartition`);
+    if (then === 'ai') {
+      const goalText = hasTarget
+        ? `Objectif prioritaire : réunir ${fmt(targetValue)} pour « ${name} »${endYm ? ` d’ici ${formatMonthLong(endYm)} (${monthsBetween(start, endYm)} mois)` : ''}. Aidez-nous à répartir l’effort entre les membres et à trouver où dégager l’argent si le budget ne suffit pas.`
+        : `Nouvelle épargne « ${name} » : aidez-nous à trouver un rythme réaliste.`;
+      navigate(`/budget/${budgetId}/complete/ai?objectif=${encodeURIComponent(goalText)}`);
+    }
   };
 
   return (
@@ -471,6 +502,11 @@ export function SavingEditorSheet({ sheet, onClose }: SheetProps<'savingEditor'>
         <div>
           <FieldLabel htmlFor="sv-label">Nom</FieldLabel>
           <Input id="sv-label" autoComplete="off" value={label} onChange={(e) => { setLabel(e.target.value); setError(''); }} placeholder="Ex. : Vacances, Voiture, Coup dur…" className="h-12 rounded-xl text-base" />
+        </div>
+
+        <div>
+          <FieldLabel htmlFor="sv-target" hint="(optionnel)">Objectif</FieldLabel>
+          <MoneyInput id="sv-target" value={target} onChange={(e) => { setTarget(e.target.value); setError(''); }} placeholder="Ex. : 3 000" suffix={currencySymbol} />
         </div>
 
         {editing ? (
@@ -495,19 +531,8 @@ export function SavingEditorSheet({ sheet, onClose }: SheetProps<'savingEditor'>
                 onChange={setKind}
               />
             </div>
-            {kind === 'monthly' && (
-              <div>
-                <FieldLabel htmlFor="sv-amount">Montant mis de côté chaque mois</FieldLabel>
-                <MoneyInput id="sv-amount" value={amount} onChange={(e) => { setAmount(e.target.value); setError(''); }} placeholder="0" suffix={currencySymbol} />
-              </div>
-            )}
           </>
         )}
-
-        <div>
-          <FieldLabel htmlFor="sv-target" hint="(optionnel)">Objectif</FieldLabel>
-          <MoneyInput id="sv-target" value={target} onChange={(e) => { setTarget(e.target.value); setError(''); }} placeholder="Ex. : 3 000" suffix={currencySymbol} />
-        </div>
 
         {kind === 'monthly' && (
           <>
@@ -516,6 +541,33 @@ export function SavingEditorSheet({ sheet, onClose }: SheetProps<'savingEditor'>
               <MonthPicker id="sv-start" value={start} onChange={(ym) => { setStart(ym); if (compareYM(end, ym) < 0) setEnd(addMonths(ym, 2)); }} ariaLabel="Début" />
             </div>
             <EndFields start={start} endMode={endMode} setEndMode={setEndMode} count={count} setCount={setCount} end={end} setEnd={setEnd} />
+            {!editing && (
+              <div>
+                <FieldLabel htmlFor="sv-amount">Montant mis de côté chaque mois</FieldLabel>
+                <MoneyInput
+                  id="sv-amount"
+                  value={shownAmount}
+                  onChange={(e) => { setAmount(e.target.value); setAmountTouched(true); setError(''); }}
+                  placeholder="0"
+                  suffix={currencySymbol}
+                />
+                {planMonthly > 0 && (
+                  <p className="mt-1.5 flex flex-wrap items-center gap-x-2 text-xs text-muted-foreground">
+                    <span>
+                      Pour réunir {fmt(targetValue)} en {planMonths} mois : <strong className="tabular-nums text-foreground">{fmt(planMonthly)}</strong> par mois.
+                    </span>
+                    {amountTouched && value !== planMonthly && (
+                      <button type="button" className="min-h-[32px] font-semibold text-primary underline underline-offset-4" onClick={() => { setAmount(String(planMonthly)); setAmountTouched(false); }}>
+                        Utiliser ce montant
+                      </button>
+                    )}
+                  </p>
+                )}
+                {hasTarget && !endYm && (
+                  <p className="mt-1.5 text-xs text-muted-foreground">Choisissez « Pendant… » ou « Jusqu’à… » ci-dessus : le montant mensuel se calculera depuis l’objectif.</p>
+                )}
+              </div>
+            )}
           </>
         )}
 
@@ -523,8 +575,31 @@ export function SavingEditorSheet({ sheet, onClose }: SheetProps<'savingEditor'>
           <span className="text-xs font-bold uppercase tracking-wider text-indigo-900">En clair</span>
           <p className="mt-1 text-[15px] font-semibold text-foreground">{summary}</p>
           {goal && <p className="mt-1 text-sm text-indigo-950">{goal}</p>}
-          <p className="mt-1 text-sm text-indigo-950">{impact}</p>
+          {impact && <p className="mt-1 text-sm text-indigo-950">{impact}</p>}
         </div>
+
+        {feasibility && (
+          <div className={cn('flex flex-col gap-2 rounded-xl border px-4 py-3', feasibility.shortfall <= 0 ? 'border-emerald-100 bg-emerald-50' : 'border-orange-100 bg-orange-50')}>
+            <p className={cn('flex gap-2 text-sm', feasibility.shortfall <= 0 ? 'text-emerald-950' : 'text-orange-950')}>
+              {feasibility.shortfall <= 0 ? <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" /> : <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />}
+              <span>
+                {feasibility.shortfall <= 0
+                  ? `Le pot commun peut suivre : sur la période, il reste au moins ${fmt(feasibility.worst.reste)} chaque mois (le plus serré : ${formatMonthLong(feasibility.worst.ym)}).`
+                  : `Le pot commun ne suit pas : en ${formatMonthLong(feasibility.worst.ym)}, il ne reste que ${fmt(Math.max(0, feasibility.worst.reste))} pour ${fmt(monthlyAmount)} à mettre de côté. Il manque jusqu’à ${fmt(feasibility.shortfall)} par mois : l’épargne générale comblerait la différence tant qu’elle le peut.`}
+              </span>
+            </p>
+            {feasibility.shortfall > 0 && (
+              <div className="flex flex-wrap gap-2">
+                <Button type="button" variant="outline" className="min-h-[44px] bg-card" onClick={(e) => submit(e as unknown as React.FormEvent, 'split')}>
+                  Créer et ajuster les contributions
+                </Button>
+                <Button type="button" variant="outline" className="min-h-[44px] bg-card" onClick={(e) => submit(e as unknown as React.FormEvent, 'ai')}>
+                  <Sparkles className="h-4 w-4" aria-hidden="true" /> Créer et demander un plan au Budget IA
+                </Button>
+              </div>
+            )}
+          </div>
+        )}
 
         <ErrorText>{error}</ErrorText>
         <Button type="submit" className="min-h-[48px]">{editing ? 'Enregistrer' : 'Créer l’épargne'}</Button>

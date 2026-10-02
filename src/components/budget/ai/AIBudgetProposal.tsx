@@ -45,7 +45,7 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { budgetAPI } from '@/services/api';
 import { useBudget } from '@/contexts/BudgetContext';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import type { BudgetModel, Charge, Person, Project, YM } from '@/lib/budget/types';
 import { GENERAL_SAVINGS_ID } from '@/lib/budget/types';
 import {
@@ -56,6 +56,7 @@ import {
   personStatus,
   projectStatus,
   resolvePerson,
+  windowOf,
 } from '@/lib/budget/engine';
 import {
   applyContributionRules,
@@ -69,7 +70,7 @@ import {
   upsertProject,
   type ContributionRule,
 } from '@/lib/budget/mutations';
-import { formatMonthLong, startDateOf, deMonth } from '@/lib/budget/months';
+import { compareYM, formatMonthLong, monthsBetween, startDateOf, deMonth } from '@/lib/budget/months';
 import { roundCents } from '@/lib/budget/format';
 import { useFirstOpenMonth } from '@/components/budget/shared/hooks';
 import {
@@ -179,7 +180,9 @@ export default function AIBudgetProposal() {
   const [wantsPersonalSavings, setWantsPersonalSavings] = useState(false);
   const [allowInterMemberTopUp, setAllowInterMemberTopUp] = useState(true);
   const [preferredMethod, setPreferredMethod] = useState<Method | 'auto'>('auto');
-  const [freeText, setFreeText] = useState('');
+  // Prefilled when coming from a saving goal (« Demander un plan à Budget IA »).
+  const [searchParams] = useSearchParams();
+  const [freeText, setFreeText] = useState(() => searchParams.get('objectif') ?? '');
 
   // When the budget has no members yet (typical for the "create + IA" flow),
   // let the user add them right here instead of bouncing to the Members tab.
@@ -224,11 +227,19 @@ export default function AIBudgetProposal() {
         scope: 'common' as const,
       };
     }),
-    objectives: projects.map((p) => ({
-      label: p.label,
-      ...(p.targetAmount ? { targetAmount: p.targetAmount } : {}),
-      priority: 'medium' as const,
-    })),
+    objectives: projects.map((p) => {
+      // A saving with an end month is a deadline: the AI paces it to finish on time.
+      const end = windowOf(p).end;
+      const horizon = end && compareYM(end, start) >= 0 ? monthsBetween(start, end) : undefined;
+      const saved = engine.savingBalance(p.id, today);
+      return {
+        label: p.label,
+        ...(p.targetAmount ? { targetAmount: p.targetAmount } : {}),
+        ...(horizon ? { horizonMonths: horizon } : {}),
+        ...(saved > 0 ? { alreadySaved: saved } : {}),
+        priority: horizon && p.targetAmount ? ('high' as const) : ('medium' as const),
+      };
+    }),
     wantsPersonalSavings,
     allowInterMemberTopUp,
     ...(preferredMethod !== 'auto' ? { preferredMethod } : {}),

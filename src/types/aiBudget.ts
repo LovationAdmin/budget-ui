@@ -48,6 +48,8 @@ export interface AIObjective {
   label: string;
   targetAmount?: number;
   horizonMonths?: number;
+  /** Already in the pot for this objective (the pace only covers the rest). */
+  alreadySaved?: number;
   priority: Priority;
 }
 
