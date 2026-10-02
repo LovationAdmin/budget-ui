@@ -36,6 +36,19 @@
   <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
   <link rel="manifest" href="/site.webmanifest" />
   <meta name="theme-color" content="#FCFAF8" />
+  <!-- Theme before first paint (signed-in routes only; see AppThemeProvider). -->
+  <script>
+    try {
+      if (/^\/(dashboard|budget|profile|admin|beta2)(\/|$)/.test(location.pathname)) {
+        var t = localStorage.getItem('theme');
+        if (t === 'dark' || ((!t || t === 'system') && matchMedia('(prefers-color-scheme: dark)').matches)) {
+          document.documentElement.classList.add('dark');
+          document.documentElement.style.colorScheme = 'dark';
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#121317');
+        }
+      }
+    } catch (e) {}
+  </script>
   
   <meta name="author" content="Budget Famille" />
   <meta name="copyright" content="Budget Famille © 2025" />

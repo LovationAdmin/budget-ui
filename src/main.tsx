@@ -9,6 +9,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
+import { AppThemeProvider } from './components/theme/AppThemeProvider';
 import { registerSW } from 'virtual:pwa-register';
 
 import App from './App';
@@ -51,6 +52,7 @@ const updateSW = registerSW({
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <BrowserRouter>
+      <AppThemeProvider>
       <AuthProvider>
         <NotificationProvider>
           <TutorialProvider>
@@ -58,6 +60,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
           </TutorialProvider>
         </NotificationProvider>
       </AuthProvider>
+      </AppThemeProvider>
     </BrowserRouter>
   </React.StrictMode>
 );
