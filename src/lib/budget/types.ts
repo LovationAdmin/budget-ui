@@ -155,3 +155,16 @@ export interface BudgetModel {
 }
 
 export const GENERAL_SAVINGS_ID = 'epargne';
+
+/**
+ * Name stored in the shared data for a private personal charge: the real name,
+ * category and note live server-side, readable by their creator only.
+ */
+export const PRIVATE_CHARGE_LABEL = 'Charge privée';
+
+/** What the creator of a private personal charge keeps server-side. */
+export interface PrivateChargeDetails {
+  label: string;
+  category?: string;
+  description?: string;
+}

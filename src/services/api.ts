@@ -351,6 +351,14 @@ export const budgetAPI = {
 
   // Budget Data
   getData: (id: string) => api.get(`/budgets/${id}/data`),
+
+  // Private items: the caller's secrets for this budget (e.g. names of private
+  // personal charges), encrypted server-side and never put in the shared data.
+  privateItems: {
+    list: (id: string): Promise<AxiosResponse<{ items: Record<string, unknown> }>> => api.get(`/budgets/${id}/private-items`),
+    put: (id: string, itemId: string, payload: unknown) => api.put(`/budgets/${id}/private-items/${encodeURIComponent(itemId)}`, payload),
+    remove: (id: string, itemId: string) => api.delete(`/budgets/${id}/private-items/${encodeURIComponent(itemId)}`),
+  },
   updateData: (id: string, data: BudgetUpdateData) =>
     api.put(`/budgets/${id}/data`, data),
 

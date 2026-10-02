@@ -27,6 +27,7 @@ import { budgetAPI } from '@/services/api';
 import { useBudget } from '@/contexts/BudgetContext';
 import { useAuth } from '@/contexts/AuthContext';
 import type { Charge, Frequency, YM } from '@/lib/budget/types';
+import { PRIVATE_CHARGE_LABEL } from '@/lib/budget/types';
 import {
   chargeBaseAmount,
   chargeFrequency,
@@ -83,9 +84,15 @@ import {
 } from '../shared/primitives';
 import type { SheetProps } from './BudgetSheets';
 
+/**
+ * A charge as its viewer may see it: for the creator of a private personal
+ * charge, its real name / category / note come from the server-side store.
+ */
 function useCharge(id: string): Charge | undefined {
-  const { model } = useBudget();
-  return model.charges.find((c) => c.id === id);
+  const { model, privateCharges } = useBudget();
+  const c = model.charges.find((x) => x.id === id);
+  const details = c?.private ? privateCharges[c.id] : undefined;
+  return c && details ? { ...c, label: details.label, category: details.category ?? c.category, description: details.description ?? c.description } : c;
 }
 
 function ActionItem({ icon, title, sub, onClick, danger }: { icon: React.ReactNode; title: string; sub?: string; onClick: () => void; danger?: boolean }) {
@@ -509,8 +516,9 @@ export function computeEnd(start: YM, endMode: EndMode, count: string, end: YM):
 }
 
 export function ChargeEditorSheet({ sheet, onClose }: SheetProps<'chargeEditor'>) {
-  const { fmt, commit, today, currencySymbol, model } = useBudget();
+  const { fmt, commit, today, currencySymbol, model, savePrivateCharge, deletePrivateCharge } = useBudget();
   const { user } = useAuth();
+  const [saving, setSaving] = useState(false);
   const existing = useCharge(sheet.id ?? '');
   const editing = !!existing;
   const w = existing ? windowOf(existing) : {};
@@ -595,7 +603,7 @@ export function ChargeEditorSheet({ sheet, onClose }: SheetProps<'chargeEditor'>
     }
   };
 
-  const submit = (e: React.FormEvent) => {
+  const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!label.trim()) return failOn('ch-label', setError, 'Donnez un nom (ex. : Loyer, Cantine, Taxe foncière…).');
     if (!editing && (!Number.isFinite(value) || value <= 0)) return failOn('ch-amount', setError, 'Indiquez un montant supérieur à 0.');
@@ -614,10 +622,29 @@ export function ChargeEditorSheet({ sheet, onClose }: SheetProps<'chargeEditor'>
       private: personal && isPrivate ? true : undefined,
       createdBy: personal ? existing?.createdBy ?? user?.id : undefined,
     };
+    const chargeId = existing?.id ?? newId('c');
+    if (personal && isPrivate) {
+      // Confidential: the real name, category and note are stored server-side
+      // for their creator only; the shared data only says « Charge privée ».
+      setSaving(true);
+      try {
+        await savePrivateCharge(chargeId, { label: label.trim(), category: category || undefined, description: description.trim() || undefined });
+      } catch {
+        setSaving(false);
+        return setError('Impossible d’enregistrer le nom privé pour le moment. Réessayez, ou rendez la charge visible.');
+      }
+      setSaving(false);
+      settings.label = PRIVATE_CHARGE_LABEL;
+      settings.category = undefined;
+      settings.description = undefined;
+    } else if (existing?.private) {
+      // No longer private: the name goes back into the shared data.
+      void deletePrivateCharge(existing.id);
+    }
     if (editing) {
       commit((m) => updateCharge(m, existing!.id, settings), { message: `« ${label.trim()} » mise à jour.` });
     } else {
-      const charge: Charge = { id: newId('c'), amount: value, ignoreSuggestions: false, ...settings, label: label.trim() } as Charge;
+      const charge: Charge = { id: chargeId, amount: value, ignoreSuggestions: false, ...settings, label: settings.label ?? label.trim() } as Charge;
       for (const k of Object.keys(charge) as Array<keyof Charge>) if (charge[k] === undefined) delete charge[k];
       commit((m) => upsertCharge(m, charge), {
         message: personal ? `« ${label.trim()} » ajoutée aux charges perso de ${ownerName}.` : `« ${label.trim()} » ajoutée à vos charges.`,
@@ -676,7 +703,7 @@ export function ChargeEditorSheet({ sheet, onClose }: SheetProps<'chargeEditor'>
                 <p className="text-xs text-muted-foreground">
                   Elle se déduit de l’argent de poche {ownerName ? `de ${ownerName}` : 'du membre'} et ne touche pas au pot commun ni à la répartition.{' '}
                   {isPrivate
-                    ? 'Privée : son nom et sa catégorie ne sont visibles que par vous ; le montant reste visible de tous dans le Foyer.'
+                    ? 'Privée : son nom, sa catégorie et sa note sont chiffrés à part et visibles par vous uniquement, même les autres membres ne peuvent pas les lire. Le montant reste visible de tous dans le Foyer.'
                     : 'Tout le foyer voit son nom et son montant.'}
                 </p>
               </>
@@ -784,7 +811,7 @@ export function ChargeEditorSheet({ sheet, onClose }: SheetProps<'chargeEditor'>
         </div>
 
         <ErrorText>{error}</ErrorText>
-        <Button type="submit" className="min-h-[48px]">{editing ? 'Enregistrer' : 'Ajouter la charge'}</Button>
+        <Button type="submit" className="min-h-[48px]" disabled={saving}>{saving ? 'Enregistrement…' : editing ? 'Enregistrer' : 'Ajouter la charge'}</Button>
       </form>
     </ResponsiveSheet>
   );

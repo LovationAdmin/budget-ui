@@ -12,7 +12,7 @@
 import { createContext, useContext, type ReactNode } from 'react';
 import type { SaveStatus } from '@/hooks/useSaveStatus';
 import type { MappedTransaction } from '@/components/budget/TransactionMapper';
-import type { BudgetModel, Charge, YM } from '@/lib/budget/types';
+import type { BudgetModel, Charge, YM, PrivateChargeDetails } from '@/lib/budget/types';
 import type { BudgetEngine } from '@/lib/budget/engine';
 import type { SheetState } from '@/components/budget/sheets/types';
 
@@ -59,6 +59,13 @@ export interface BudgetContextValue {
   fmt: (n: number) => string;
 
   commit: (updater: (m: BudgetModel) => BudgetModel, options?: CommitOptions) => void;
+
+  /** The current user's private charge details (by charge id), from the server. */
+  privateCharges: Record<string, PrivateChargeDetails>;
+  /** Saves a private charge's real name server-side (rejects on failure). */
+  savePrivateCharge: (chargeId: string, details: PrivateChargeDetails) => Promise<void>;
+  /** Forgets a private charge's server-side details. */
+  deletePrivateCharge: (chargeId: string) => Promise<void>;
   openSheet: (sheet: SheetState) => void;
   closeSheet: () => void;
   goToMonth: (ym: YM) => void;

@@ -33,8 +33,8 @@ import { BudgetSheets } from '@/components/budget/sheets/BudgetSheets';
 import type { SheetState } from '@/components/budget/sheets/types';
 
 import { BudgetProvider, type BudgetContextValue, type BudgetData, type CommitOptions } from '@/contexts/BudgetContext';
-import type { BudgetModel, Charge, YM } from '@/lib/budget/types';
-import { GENERAL_SAVINGS_ID } from '@/lib/budget/types';
+import type { BudgetModel, Charge, PrivateChargeDetails, YM } from '@/lib/budget/types';
+import { GENERAL_SAVINGS_ID, PRIVATE_CHARGE_LABEL } from '@/lib/budget/types';
 import { BudgetEngine } from '@/lib/budget/engine';
 import { autoCloseMonths, decodeBudget, encodeBudget } from '@/lib/budget/codec';
 import { currentYM } from '@/lib/budget/months';
@@ -83,6 +83,9 @@ export default function BudgetCompleteLayout() {
 
   const [today] = useState<YM>(() => currentYM());
   const [budget, setBudget] = useState<BudgetData | null>(null);
+  // The current user's private charge details, kept server-side only.
+  const [privateCharges, setPrivateCharges] = useState<Record<string, PrivateChargeDetails>>({});
+  const [privateLoaded, setPrivateLoaded] = useState(false);
   const [loading, setLoading] = useState(true);
   const [model, setModel] = useState<BudgetModel>(EMPTY_MODEL);
   const modelRef = useRef<BudgetModel>(EMPTY_MODEL);
@@ -121,8 +124,21 @@ export default function BudgetCompleteLayout() {
       if (!id) return;
       if (!silent) setLoading(true);
       try {
-        const [budgetRes, dataRes] = await Promise.all([budgetAPI.getById(id), budgetAPI.getData(id)]);
+        const [budgetRes, dataRes, privateRes] = await Promise.all([
+          budgetAPI.getById(id),
+          budgetAPI.getData(id),
+          budgetAPI.privateItems.list(id).catch(() => null),
+        ]);
         setBudget(budgetRes.data);
+        if (privateRes) {
+          const found: Record<string, PrivateChargeDetails> = {};
+          for (const [key, value] of Object.entries(privateRes.data?.items ?? {})) {
+            const v = value as Partial<PrivateChargeDetails> | null;
+            if (key.startsWith('charge:') && v && typeof v.label === 'string') found[key.slice(7)] = v as PrivateChargeDetails;
+          }
+          setPrivateCharges(found);
+          setPrivateLoaded(true);
+        }
         const raw: unknown = dataRes.data?.data ?? dataRes.data ?? {};
         const decoded = decodeBudget(raw, today);
         if (!decoded.budgetTitle) decoded.budgetTitle = budgetRes.data?.name || '';
@@ -228,6 +244,78 @@ export default function BudgetCompleteLayout() {
     },
     [scheduleSave, toast],
   );
+
+  // ============================================================================
+  // PRIVATE CHARGES: real names live server-side, readable by their creator only
+  // ============================================================================
+  const savePrivateCharge = useCallback(
+    async (chargeId: string, details: PrivateChargeDetails) => {
+      if (!id) return;
+      const clean: PrivateChargeDetails = { label: details.label.trim() };
+      if (details.category) clean.category = details.category;
+      if (details.description) clean.description = details.description;
+      await budgetAPI.privateItems.put(id, `charge:${chargeId}`, clean);
+      setPrivateCharges((prev) => ({ ...prev, [chargeId]: clean }));
+    },
+    [id],
+  );
+  const deletePrivateCharge = useCallback(
+    async (chargeId: string) => {
+      if (!id) return;
+      setPrivateCharges((prev) => {
+        const next = { ...prev };
+        delete next[chargeId];
+        return next;
+      });
+      await budgetAPI.privateItems.remove(id, `charge:${chargeId}`).catch(() => undefined);
+    },
+    [id],
+  );
+
+  // Private charges saved before the server-side store still carry their real
+  // name in the shared data: move it server-side, then scrub the shared copy.
+  // Only their creator can do it, the first time they open the budget.
+  const migratingRef = useRef(false);
+  const privateChargesRef = useRef(privateCharges);
+  privateChargesRef.current = privateCharges;
+  useEffect(() => {
+    if (!privateLoaded || !user?.id || isDemoMode || migratingRef.current) return;
+    const leaking = model.charges.filter((c) => c.private && c.createdBy === user.id && (c.label !== PRIVATE_CHARGE_LABEL || c.category || c.description));
+    if (!leaking.length) return;
+    migratingRef.current = true;
+    (async () => {
+      const moved: string[] = [];
+      for (const c of leaking) {
+        try {
+          const keep = privateChargesRef.current[c.id];
+          await savePrivateCharge(c.id, {
+            label: c.label !== PRIVATE_CHARGE_LABEL ? c.label : keep?.label ?? c.label,
+            category: c.category ?? keep?.category,
+            description: c.description ?? keep?.description,
+          });
+          moved.push(c.id);
+        } catch {
+          /* retried on the next load */
+        }
+      }
+      migratingRef.current = false;
+      if (!moved.length) return;
+      // Scrub only the copies that still match what was moved server-side.
+      commit(
+        (m) => ({
+          ...m,
+          charges: m.charges.map((c) => {
+            if (!moved.includes(c.id) || !c.private) return c;
+            const next = { ...c, label: PRIVATE_CHARGE_LABEL };
+            delete next.category;
+            delete next.description;
+            return next;
+          }),
+        }),
+        { saveNow: true },
+      );
+    })();
+  }, [privateLoaded, user?.id, isDemoMode, model.charges, savePrivateCharge, commit]);
 
   // ============================================================================
   // REAL-TIME: another member saved → refresh when it is safe
@@ -419,6 +507,9 @@ export default function BudgetCompleteLayout() {
       currencySymbol: symbol,
       fmt,
       commit,
+      privateCharges,
+      savePrivateCharge,
+      deletePrivateCharge,
       openSheet: setSheet,
       closeSheet,
       goToMonth,
@@ -445,6 +536,7 @@ export default function BudgetCompleteLayout() {
     }),
     [
       id, budget, model, engine, today, budgetLocation, budgetCurrency, symbol, fmt, commit, closeSheet, goToMonth,
+      privateCharges, savePrivateCharge, deletePrivateCharge,
       saveStateMachine.status, saveStateMachine.errorMessage, saveStateMachine.lastSavedAt, performSave,
       totalGlobalRealized, realBankBalance, demoBankBalance, hasActiveConnection, isDemoMode,
       enableDemoMode, disableDemoMode, refreshBankData, handleOpenBankManager, chargeMappings,
