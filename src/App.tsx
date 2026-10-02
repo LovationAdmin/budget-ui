@@ -22,6 +22,7 @@
 import { lazy, Suspense } from 'react';
 import { Routes, Route, Navigate, useParams } from 'react-router-dom';
 import { useAuth } from './contexts/AuthContext';
+import { useTutorial } from './contexts/TutorialContext';
 import PrivateRoute from './components/PrivateRoute';
 import { Toaster } from '@/components/ui/toaster';
 
@@ -62,6 +63,7 @@ const YearTab = lazy(() => import('./lib/pages/budget-tabs/YearTab'));
 const AIBudgetTab = lazy(() => import('./lib/pages/budget-tabs/AIBudgetTab'));
 const RealityTab = lazy(() => import('./lib/pages/budget-tabs/RealityTab'));
 const AdminStats = lazy(() => import('./lib/pages/AdminStats'));
+const TutorialModal = lazy(() => import('./components/tutorial/TutorialModal').then((m) => ({ default: m.TutorialModal })));
 
 export default function App() {
   const { user } = useAuth();
@@ -171,8 +173,21 @@ export default function App() {
         </Routes>
       </Suspense>
 
+      <TutorialHost />
       <Toaster />
     </>
+  );
+}
+
+// The guided tour (« Voir le tutoriel » in the account menu): its code is only
+// downloaded once someone opens it.
+function TutorialHost() {
+  const { isOpen } = useTutorial();
+  if (!isOpen) return null;
+  return (
+    <Suspense fallback={null}>
+      <TutorialModal />
+    </Suspense>
   );
 }
 
