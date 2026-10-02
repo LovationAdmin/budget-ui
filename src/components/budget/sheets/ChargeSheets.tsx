@@ -25,6 +25,7 @@ import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import { budgetAPI } from '@/services/api';
 import { useBudget } from '@/contexts/BudgetContext';
+import { useAuth } from '@/contexts/AuthContext';
 import type { Charge, Frequency, YM } from '@/lib/budget/types';
 import {
   chargeBaseAmount,
@@ -32,6 +33,7 @@ import {
   chargeStatus,
   customMonthsText,
   describeChargeSchedule,
+  personStatus,
   resolveCharge,
   sortSteps,
   windowOf,
@@ -318,6 +320,12 @@ export function ChargeDetailSheet({ sheet, onClose }: SheetProps<'chargeDetail'>
         {statusPill}
       </div>
       <p className="text-[15px] font-semibold">{describeChargeSchedule(c, today)}</p>
+      {c.ownerId && (
+        <p className="-mt-3 flex items-center gap-1.5 text-sm text-muted-foreground">
+          {c.private && <Lock className="h-3.5 w-3.5" aria-hidden="true" />}
+          Charge perso de {model.people.find((p) => p.id === c.ownerId)?.name ?? 'un ancien membre'} : déduite de son argent de poche{c.private ? ', nom visible par vous uniquement' : ''}.
+        </p>
+      )}
       {c.description && <p className="-mt-3 text-sm text-muted-foreground">{c.description}</p>}
 
       <div>
@@ -501,7 +509,8 @@ export function computeEnd(start: YM, endMode: EndMode, count: string, end: YM):
 }
 
 export function ChargeEditorSheet({ sheet, onClose }: SheetProps<'chargeEditor'>) {
-  const { fmt, commit, today, currencySymbol } = useBudget();
+  const { fmt, commit, today, currencySymbol, model } = useBudget();
+  const { user } = useAuth();
   const existing = useCharge(sheet.id ?? '');
   const editing = !!existing;
   const w = existing ? windowOf(existing) : {};
@@ -521,6 +530,14 @@ export function ChargeEditorSheet({ sheet, onClose }: SheetProps<'chargeEditor'>
   const [smooth, setSmooth] = useState(existing ? !!existing.smooth : true);
   const [error, setError] = useState('');
   const [detecting, setDetecting] = useState(false);
+  // Who pays: the household pot, or one member out of their pocket money.
+  const members = model.people.filter((p) => personStatus(p, today) !== 'ended');
+  const guessMe = members.find((p) => user?.name && p.name.trim().toLowerCase() === user.name.trim().split(/\s+/)[0].toLowerCase());
+  const [payer, setPayer] = useState<'household' | 'personal'>(existing?.ownerId || sheet.ownerId ? 'personal' : 'household');
+  const [ownerId, setOwnerId] = useState<string>(existing?.ownerId ?? sheet.ownerId ?? guessMe?.id ?? members[0]?.id ?? '');
+  const [isPrivate, setIsPrivate] = useState<boolean>(!!existing?.private);
+  const personal = payer === 'personal' && !!ownerId;
+  const ownerName = model.people.find((p) => p.id === ownerId)?.name ?? '';
 
   const value = parseAmount(amount);
   const endYm = freq === 'once' ? undefined : computeEnd(start, endMode, count, end);
@@ -557,7 +574,9 @@ export function ChargeEditorSheet({ sheet, onClose }: SheetProps<'chargeEditor'>
   const impact = editing
     ? 'Les mois clôturés ne changent pas ; les mois ouverts suivent les nouveaux réglages.'
     : inCtx && Number.isFinite(value) && value > 0
-      ? `Effet sur ${formatMonthLong(ctx)} : ${moneySigned(inCtx.amount, currencySymbol)} de charges.`
+      ? personal
+        ? `Effet sur ${formatMonthLong(ctx)} : ${fmt(inCtx.amount)} de moins dans l’argent de poche de ${ownerName}. Le pot commun ne change pas.`
+        : `Effet sur ${formatMonthLong(ctx)} : ${moneySigned(inCtx.amount, currencySymbol)} de charges.`
       : firstOcc
         ? `Rien en ${formatMonthLong(ctx)} : première fois en ${formatMonthLong(firstOcc)}.`
         : 'Aucun mois concerné avec ces réglages.';
@@ -591,13 +610,18 @@ export function ChargeEditorSheet({ sheet, onClose }: SheetProps<'chargeEditor'>
       frequency: freq !== 'monthly' ? freq : undefined,
       months: freq === 'custom' ? months.slice().sort((a, b) => a - b) : undefined,
       smooth: freq === 'yearly' && smooth ? true : undefined,
+      ownerId: personal ? ownerId : undefined,
+      private: personal && isPrivate ? true : undefined,
+      createdBy: personal ? existing?.createdBy ?? user?.id : undefined,
     };
     if (editing) {
       commit((m) => updateCharge(m, existing!.id, settings), { message: `« ${label.trim()} » mise à jour.` });
     } else {
       const charge: Charge = { id: newId('c'), amount: value, ignoreSuggestions: false, ...settings, label: label.trim() } as Charge;
       for (const k of Object.keys(charge) as Array<keyof Charge>) if (charge[k] === undefined) delete charge[k];
-      commit((m) => upsertCharge(m, charge), { message: `« ${label.trim()} » ajoutée à vos charges.` });
+      commit((m) => upsertCharge(m, charge), {
+        message: personal ? `« ${label.trim()} » ajoutée aux charges perso de ${ownerName}.` : `« ${label.trim()} » ajoutée à vos charges.`,
+      });
     }
     onClose();
   };
@@ -610,12 +634,55 @@ export function ChargeEditorSheet({ sheet, onClose }: SheetProps<'chargeEditor'>
   ];
 
   return (
-    <ResponsiveSheet open onOpenChange={(o) => !o && onClose()} title={editing ? `Réglages de « ${existing!.label} »` : 'Nouvelle charge'}>
+    <ResponsiveSheet open onOpenChange={(o) => !o && onClose()} title={editing ? `Réglages de « ${existing!.label} »` : personal ? 'Nouvelle charge perso' : 'Nouvelle charge'}>
       <form onSubmit={submit} className="flex flex-col gap-5">
         <div>
           <FieldLabel htmlFor="ch-label">Nom</FieldLabel>
-          <Input id="ch-label" autoComplete="off" value={label} onChange={(e) => { setLabel(e.target.value); setError(''); }} onBlur={detectCategory} placeholder="Ex. : Loyer, Cantine, Taxe foncière…" className="h-12 rounded-xl text-base" />
+          <Input id="ch-label" autoComplete="off" value={label} onChange={(e) => { setLabel(e.target.value); setError(''); }} onBlur={detectCategory} placeholder={personal ? 'Ex. : Impôt, Envoi d’argent, Crédit perso…' : 'Ex. : Loyer, Cantine, Taxe foncière…'} className="h-12 rounded-xl text-base" />
         </div>
+
+        {members.length > 0 && (
+          <div className="flex flex-col gap-3">
+            <div>
+              <span className="mb-2 block text-sm font-semibold">Qui la paie ?</span>
+              <Segmented
+                label="Qui paie cette charge"
+                value={payer}
+                onChange={setPayer}
+                options={[
+                  { value: 'household', label: 'Le pot commun' },
+                  { value: 'personal', label: 'Un membre (perso)' },
+                ]}
+              />
+            </div>
+            {payer === 'personal' && (
+              <>
+                <div role="group" aria-label="Membre concerné" className="flex flex-wrap gap-2">
+                  {members.map((p) => (
+                    <ChipToggle key={p.id} pressed={ownerId === p.id} onClick={() => setOwnerId(p.id)}>
+                      {p.name}
+                    </ChipToggle>
+                  ))}
+                </div>
+                <Segmented
+                  label="Visibilité"
+                  value={isPrivate ? 'private' : 'shared'}
+                  onChange={(v) => setIsPrivate(v === 'private')}
+                  options={[
+                    { value: 'shared', label: 'Visible par le foyer' },
+                    { value: 'private', label: 'Privée' },
+                  ]}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Elle se déduit de l’argent de poche {ownerName ? `de ${ownerName}` : 'du membre'} et ne touche pas au pot commun ni à la répartition.{' '}
+                  {isPrivate
+                    ? 'Privée : son nom et sa catégorie ne sont visibles que par vous ; le montant reste visible de tous dans le Foyer.'
+                    : 'Tout le foyer voit son nom et son montant.'}
+                </p>
+              </>
+            )}
+          </div>
+        )}
 
         <div>
           <span className="mb-2 block text-sm font-semibold">Quand revient-elle ?</span>

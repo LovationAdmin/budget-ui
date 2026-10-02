@@ -68,7 +68,7 @@ export function IncomeCard({ month }: { month: ResolvedMonth }) {
                 <span className="block h-full rounded-full bg-emerald-500" style={{ width: `${share}%` }} />
               </span>
               <span className="text-xs text-muted-foreground">
-                Salaire {fmt(p.salary)} · argent de poche {fmt(p.keep)} ·{' '}
+                Salaire {fmt(p.salary)} · argent de poche {fmt(p.keep)}{p.personalCharges > 0 ? ` (dont ${fmt(p.personalCharges)} perso)` : ''} ·{' '}
                 {p.contributionAdjusted || p.salaryAdjusted ? 'ajusté ce mois-ci' : contributionRuleText(p.mode, p.value)}
                 {p.deleted ? ' · ne fait plus partie du foyer' : ''}
               </span>

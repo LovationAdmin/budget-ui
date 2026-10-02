@@ -8,7 +8,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
-import { ChevronRight, Info, Loader2, Plus, Sparkles, Wand2 } from 'lucide-react';
+import { ChevronRight, Info, Loader2, Lock, Plus, Sparkles, Wand2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
@@ -22,6 +22,7 @@ import {
   chargeFrequency,
   chargeStatus,
   chargesEndingBetween,
+  isPersonalCharge,
   describeChargeSchedule,
   windowOf,
   type ItemStatus,
@@ -30,7 +31,7 @@ import { updateCharge } from '@/lib/budget/mutations';
 import { addMonths, deMonth, joinFr, monthNameLower } from '@/lib/budget/months';
 import { roundCents } from '@/lib/budget/format';
 import { CategoryIcon, ChipToggle } from '@/components/budget/shared/primitives';
-import { useFirstOpenMonth, useHashScroll } from '@/components/budget/shared/hooks';
+import { useChargePrivacy, useFirstOpenMonth, useHashScroll } from '@/components/budget/shared/hooks';
 
 const FILTERS: Array<{ id: ItemStatus; label: string }> = [
   { id: 'active', label: 'En cours' },
@@ -53,6 +54,7 @@ export default function ChargesTab() {
   const { id } = useParams<{ id: string }>();
   const { model, engine, today, fmt, openSheet, commit, mappedTotalsByChargeId, householdSize, budgetLocation, budgetCurrency, markSuggestionsRun } = useBudget();
   const { toast } = useToast();
+  const privacy = useChargePrivacy();
   const [params, setParams] = useSearchParams();
   const filter: ItemStatus = isFilter(params.get('filtre')) ? (params.get('filtre') as ItemStatus) : 'active';
   const firstOpen = useFirstOpenMonth();
@@ -70,7 +72,13 @@ export default function ChargesTab() {
   const counts = { active: 0, upcoming: 0, ended: 0 } as Record<ItemStatus, number>;
   statuses.forEach((s) => (counts[s] += 1));
 
-  const list = model.charges.filter((c) => statuses.get(c.id) === filter);
+  const household = model.charges.filter((c) => !isPersonalCharge(c));
+  const list = household.filter((c) => statuses.get(c.id) === filter);
+  // Members' personal charges (out of their pocket money), grouped by member.
+  const personalList = model.charges.filter((c) => isPersonalCharge(c) && statuses.get(c.id) === filter);
+  const personalGroups = model.people
+    .map((p) => ({ person: p, items: personalList.filter((c) => c.ownerId === p.id) }))
+    .filter((g) => g.items.length > 0);
   const refMonth = (c: Charge): YM => {
     const w = windowOf(c);
     if (filter === 'ended') return w.end ?? w.start ?? today;
@@ -97,7 +105,7 @@ export default function ChargesTab() {
   const suggestionCharges = useMemo(
     () =>
       model.charges
-        .filter((c) => chargeStatus(c, today) === 'active' && chargeFrequency(c) !== 'once')
+        .filter((c) => !isPersonalCharge(c) && chargeStatus(c, today) === 'active' && chargeFrequency(c) !== 'once')
         .map((c) => {
           const base = chargeBaseAmount(c, today);
           const monthly = chargeFrequency(c) === 'yearly' ? roundCents(base / 12) : base;
@@ -112,7 +120,7 @@ export default function ChargesTab() {
 
   useHashScroll('suggestions');
 
-  const uncategorized = model.charges.filter((c) => chargeStatus(c, today) !== 'ended' && (!c.category || c.category === 'OTHER'));
+  const uncategorized = household.filter((c) => chargeStatus(c, today) !== 'ended' && (!c.category || c.category === 'OTHER'));
   const categorizeAll = async () => {
     setCategorizing(true);
     const found: Record<string, string> = {};
@@ -258,7 +266,7 @@ export default function ChargesTab() {
       {groups.length === 0 && (
         <div className="flex flex-col items-center gap-3 rounded-2xl border-[1.5px] border-dashed border-border px-5 py-10 text-center">
           <p className="text-sm text-muted-foreground">
-            {model.charges.length === 0
+            {household.length === 0
               ? 'Aucune charge pour l’instant. Commencez par le loyer, l’énergie, les assurances…'
               : filter === 'ended'
                 ? 'Aucune charge terminée.'
@@ -266,7 +274,7 @@ export default function ChargesTab() {
                   ? 'Aucune charge programmée pour plus tard.'
                   : 'Aucune charge en cours.'}
           </p>
-          {model.charges.length === 0 && (
+          {household.length === 0 && (
             <div className="flex flex-wrap justify-center gap-2">
               <Button className="min-h-[44px]" onClick={() => openSheet({ kind: 'chargeEditor', ym: firstOpen })}>
                 <Plus className="h-4 w-4" /> Ajouter une charge
@@ -279,6 +287,74 @@ export default function ChargesTab() {
             </div>
           )}
         </div>
+      )}
+
+      {model.people.length > 0 && (personalGroups.length > 0 || filter === 'active') && (
+        <section aria-labelledby="perso-title" className="flex flex-col gap-2">
+          <div className="flex flex-wrap items-end justify-between gap-2 px-1">
+            <div>
+              <h2 id="perso-title" className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Charges perso</h2>
+              <p className="text-xs text-muted-foreground">Payées par un membre sur son argent de poche : elles ne comptent ni dans le pot commun, ni dans la répartition.</p>
+            </div>
+            <Button variant="ghost" className="min-h-[40px] text-primary" onClick={() => openSheet({ kind: 'chargeEditor', ym: firstOpen, ownerId: model.people[0]?.id })}>
+              <Plus className="h-4 w-4" /> Charge perso
+            </Button>
+          </div>
+          {personalGroups.map(({ person, items }) => (
+            <div key={person.id} className="flex flex-col gap-0.5 rounded-2xl border border-border/70 bg-card p-1.5 shadow-soft">
+              <p className="px-2.5 pb-1 pt-1.5 text-sm font-semibold">
+                {person.name}{' '}
+                <span className="font-normal text-muted-foreground">
+                  · {fmt(thisMonth.people.find((p) => p.id === person.id)?.personalCharges ?? 0)} en {monthNameLower(today)}
+                </span>
+              </p>
+              {items.map((c) => {
+                const amount = chargeBaseAmount(c, refMonth(c));
+                if (!privacy.canSee(c)) {
+                  return (
+                    <div key={c.id} className="flex min-h-[56px] items-center gap-3 rounded-xl px-2.5 py-2">
+                      <span aria-hidden="true" className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-muted text-muted-foreground">
+                        <Lock className="h-4 w-4" />
+                      </span>
+                      <span className="flex min-w-0 flex-1 flex-col">
+                        <span className="text-[15px] font-semibold text-muted-foreground">Charge privée</span>
+                        <span className="text-[13px] text-muted-foreground">{describeChargeSchedule(c, today)}</span>
+                      </span>
+                      <span className="whitespace-nowrap text-[15px] font-bold tabular-nums">{fmt(amount)}</span>
+                    </div>
+                  );
+                }
+                return (
+                  <button
+                    key={c.id}
+                    type="button"
+                    onClick={() => openSheet({ kind: 'chargeDetail', id: c.id })}
+                    className="flex min-h-[56px] w-full items-center gap-3 rounded-xl px-2.5 py-2 text-left transition-colors hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  >
+                    <CategoryIcon category={c.category} tone={filter === 'ended' ? 'muted' : 'charge'} />
+                    <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+                      <span className="flex items-center gap-1.5 truncate text-[15px] font-semibold">
+                        {c.label}
+                        {c.private && <Lock className="h-3.5 w-3.5 shrink-0 text-muted-foreground" aria-label="privée" />}
+                      </span>
+                      <span className="text-[13px] text-muted-foreground">{describeChargeSchedule(c, today)}</span>
+                    </span>
+                    <span className="flex flex-col items-end">
+                      <span className="whitespace-nowrap text-[15px] font-bold tabular-nums">{fmt(amount)}</span>
+                      <span className="text-xs text-muted-foreground">{perText(c)}</span>
+                    </span>
+                    <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground/70" aria-hidden="true" />
+                  </button>
+                );
+              })}
+            </div>
+          ))}
+          {personalGroups.length === 0 && (
+            <p className="rounded-2xl border-[1.5px] border-dashed border-border px-4 py-4 text-center text-sm text-muted-foreground">
+              Impôt, envoi d’argent, crédit perso… Ajoutez ici ce qu’un membre paie seul : son argent de poche baissera d’autant dans le Foyer.
+            </p>
+          )}
+        </section>
       )}
 
       {suggestionCharges.length > 0 && id && (

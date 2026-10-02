@@ -525,7 +525,10 @@ export function MemberDetailSheet({ sheet, onClose }: SheetProps<'memberDetail'>
                     </th>
                     <td className="px-3 py-2 text-right tabular-nums">{fmt(r!.salary)}</td>
                     <td className="px-3 py-2 text-right font-semibold tabular-nums text-emerald-700">{fmt(r!.contribution)}</td>
-                    <td className="px-3 py-2 text-right tabular-nums">{fmt(r!.keep)}</td>
+                    <td className="px-3 py-2 text-right tabular-nums">
+                      {fmt(r!.keep)}
+                      {r!.personalCharges > 0 && <span className="block text-xs text-muted-foreground">dont {fmt(r!.personalCharges)} perso</span>}
+                    </td>
                   </tr>
                 ))}
               </tbody>

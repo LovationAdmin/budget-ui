@@ -97,6 +97,13 @@ function MemberCard({ person, index, refYm }: { person: Person; index: number; r
         <div className="flex flex-col gap-0.5">
           <dt className="text-xs font-bold text-muted-foreground">Argent de poche</dt>
           <dd className="font-display text-lg font-extrabold tabular-nums">{fmt(r.keep)}</dd>
+          {r.personalCharges > 0 && (
+            <dd className={cn('text-xs', r.available < 0 ? 'font-semibold text-red-700' : 'text-muted-foreground')}>
+              {r.available < 0
+                ? `${fmt(r.personalCharges)} de charges perso : il manque ${fmt(-r.available)}`
+                : `dont ${fmt(r.personalCharges)} de charges perso`}
+            </dd>
+          )}
         </div>
       </dl>
       <div className="flex flex-col gap-1.5">
@@ -113,6 +120,14 @@ function MemberCard({ person, index, refYm }: { person: Person; index: number; r
           {contributionHint && <span>Contribution : {contributionHint}</span>}
           {!salaryHint && !contributionHint && <span>Aucun changement de salaire ni de contribution.</span>}
         </div>
+        <div className="flex shrink-0 flex-wrap gap-1 self-start sm:self-auto">
+        <button
+          type="button"
+          onClick={() => openSheet({ kind: 'chargeEditor', ym: maxYM(ref, firstOpen), ownerId: person.id })}
+          className="inline-flex min-h-[40px] shrink-0 items-center gap-1.5 rounded-lg px-1 text-sm font-semibold text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        >
+          <Plus className="h-4 w-4" aria-hidden="true" /> Charge perso
+        </button>
         <button
           type="button"
           onClick={() => openSheet({ kind: 'memberDetail', id: person.id })}
@@ -120,6 +135,7 @@ function MemberCard({ person, index, refYm }: { person: Person; index: number; r
         >
           <History className="h-4 w-4" aria-hidden="true" /> Historique
         </button>
+        </div>
       </div>
     </article>
   );
@@ -216,6 +232,8 @@ function SplitAssistant() {
   const withMargin = (v: number) => Math.round(v * (1 + margin / 100));
   const need = withMargin(needC + needS);
   const ending = chargesEndingBetween(model, from, addMonths(from, 11));
+  // Personal charges are not rebalanced: they are only shown inside each pocket money.
+  const personalAt = (personId: string) => engine.month(from).people.find((p) => p.id === personId)?.personalCharges ?? 0;
   const salaries = members.map((m) => m.r.salary);
   const proposal = splitContributions(method, salaries, need);
   const totalSalaries = salaries.reduce((a, b) => a + b, 0);
@@ -320,7 +338,8 @@ function SplitAssistant() {
                   </span>
                   <span className="text-right font-display text-lg font-extrabold tabular-nums">{fmt(proposal[i])}</span>
                   <span className="text-xs text-muted-foreground">
-                    Salaire {fmt(m.r.salary)} · argent de poche {fmt(m.r.salary - proposal[i])} · {m.r.salary > 0 ? `${percent((proposal[i] / m.r.salary) * 100)} du salaire` : '—'}
+                    Salaire {fmt(m.r.salary)} · argent de poche {fmt(m.r.salary - proposal[i])}
+                    {personalAt(m.person.id) > 0 ? ` (dont ${fmt(personalAt(m.person.id))} de charges perso)` : ''} · {m.r.salary > 0 ? `${percent((proposal[i] / m.r.salary) * 100)} du salaire` : '—'}
                   </span>
                   <span className="text-right text-xs font-bold tabular-nums text-muted-foreground">
                     {delta === 0 ? 'comme aujourd’hui' : `${moneySigned(delta, currencySymbol)} vs aujourd’hui`}

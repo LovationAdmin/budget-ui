@@ -162,7 +162,8 @@ export default function AIBudgetProposal() {
 
   // What the proposal works from: the household and rules in force today.
   const people: Person[] = model.people.filter((p) => personStatus(p, today) !== 'ended');
-  const charges: Charge[] = model.charges.filter((c) => chargeStatus(c, today) === 'active' && chargeFrequency(c) !== 'once');
+  // Household charges only: personal ones come out of each member's pocket money.
+  const charges: Charge[] = model.charges.filter((c) => !c.ownerId && chargeStatus(c, today) === 'active' && chargeFrequency(c) !== 'once');
   const projects: Project[] = model.projects.filter((p) => p.id !== GENERAL_SAVINGS_ID && projectStatus(p, today) !== 'ended');
 
   const [view, setView] = useState<View>('intake');
@@ -217,6 +218,10 @@ export default function AIBudgetProposal() {
       id: p.id,
       label: p.name || 'Membre',
       netIncome: resolvePerson(p, start)?.salary ?? p.salary ?? 0,
+      // Personal charges (tax, money sent abroad…) the member pays from their pocket money.
+      ...((engine.month(start).people.find((x) => x.id === p.id)?.personalCharges ?? 0) > 0
+        ? { personalSpendingMonthly: engine.month(start).people.find((x) => x.id === p.id)!.personalCharges }
+        : {}),
     })),
     charges: charges.map((c) => {
       const base = chargeBaseAmount(c, today);

@@ -8,7 +8,7 @@ export type SheetState =
   | { kind: 'chargeAmount'; id: string; ym: YM; fromCatalog?: boolean }
   | { kind: 'chargeStop'; id: string; ym: YM }
   | { kind: 'chargeDetail'; id: string }
-  | { kind: 'chargeEditor'; id?: string; ym: YM }
+  | { kind: 'chargeEditor'; id?: string; ym: YM; ownerId?: string }
   | { kind: 'chargeDelete'; id: string }
   | { kind: 'saving'; id: string; ym: YM }
   | { kind: 'savingAmount'; id: string; ym: YM; fromCatalog?: boolean }
