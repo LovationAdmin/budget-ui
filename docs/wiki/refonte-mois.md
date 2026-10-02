@@ -1,6 +1,6 @@
 # Refonte « Mois » — salaire ≠ contribution, règles datées, mois clôturés
 
-> Statut : implémenté sur la branche `claude/refonte-mois` (budget-ui). Recap backend v3 à faire (voir `docs/HANDOFF-refonte-mois.md`).
+> Statut : en production — budget-ui (LovationAdmin/budget-ui#25) et recap backend v3 (LovationAdmin/budget-api#16, parité vérifiée contre ce moteur via `services/testdata/v3_parity.json`). Les onglets autres que Mois sont chargés à la demande (`React.lazy`).
 
 ## Pourquoi
 
