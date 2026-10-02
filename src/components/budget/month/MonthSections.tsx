@@ -44,7 +44,7 @@ export function IncomeCard({ month }: { month: ResolvedMonth }) {
       title="Entrées du pot commun"
       subtitle={
         month.people.length
-          ? `Ce que chacun verse. Salaires : ${fmt(t.salaries)} · gardé pour soi : ${fmt(t.salaries - t.contributions)}`
+          ? `Ce que chacun verse. Salaires : ${fmt(t.salaries)} · argent de poche : ${fmt(t.salaries - t.contributions)}`
           : 'Ajoutez les membres du foyer pour commencer.'
       }
       amount={fmt(t.entrees)}
@@ -68,7 +68,7 @@ export function IncomeCard({ month }: { month: ResolvedMonth }) {
                 <span className="block h-full rounded-full bg-emerald-500" style={{ width: `${share}%` }} />
               </span>
               <span className="text-xs text-muted-foreground">
-                Salaire {fmt(p.salary)} · garde {fmt(p.keep)} ·{' '}
+                Salaire {fmt(p.salary)} · argent de poche {fmt(p.keep)} ·{' '}
                 {p.contributionAdjusted || p.salaryAdjusted ? 'ajusté ce mois-ci' : contributionRuleText(p.mode, p.value)}
                 {p.deleted ? ' · ne fait plus partie du foyer' : ''}
               </span>

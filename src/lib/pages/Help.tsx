@@ -133,7 +133,7 @@ export default function Help() {
     {
       category: 'features',
       question: 'Salaire et contribution au pot commun, quelle différence ?',
-      answer: 'Chaque membre du foyer a un salaire net ET une contribution : ce qu\'il verse au pot commun (tout son salaire, un montant fixe ou un pourcentage). Seules les contributions paient les charges et l\'épargne du foyer. Dans l\'onglet « Foyer », l\'assistant « Répartir le pot commun » calcule une contribution juste (au prorata, à parts égales ou avec le même reste pour chacun).'
+      answer: 'Chaque membre du foyer a un salaire net ET une contribution : ce qu\'il verse au pot commun (tout son salaire, un montant fixe ou un pourcentage). Seules les contributions paient les charges et l\'épargne du foyer. Dans l\'onglet « Foyer », l\'assistant « Répartir le pot commun » calcule une contribution juste (au prorata, à parts égales ou avec le même argent de poche pour chacun).'
     },
     {
       category: 'features',

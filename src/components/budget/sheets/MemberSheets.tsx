@@ -111,7 +111,7 @@ function MoneyFields({
       </div>
       <div className="rounded-xl border border-teal-100 bg-teal-50 px-4 py-3">
         <p className="text-[15px] font-semibold text-teal-950">
-          Verse {fmt(contribution)} au pot commun · garde {fmt(keep)} pour soi
+          Verse {fmt(contribution)} au pot commun · {fmt(keep)} d’argent de poche
         </p>
         {sOk && contribution > s && <p className="mt-1 text-sm text-orange-900">La contribution dépasse le salaire.</p>}
       </div>
@@ -510,7 +510,7 @@ export function MemberDetailSheet({ sheet, onClose }: SheetProps<'memberDetail'>
                   <th scope="col" className="px-3 py-2 font-semibold">Mois</th>
                   <th scope="col" className="px-3 py-2 text-right font-semibold">Salaire</th>
                   <th scope="col" className="px-3 py-2 text-right font-semibold">Verse</th>
-                  <th scope="col" className="px-3 py-2 text-right font-semibold">Garde</th>
+                  <th scope="col" className="px-3 py-2 text-right font-semibold">Argent de poche</th>
                 </tr>
               </thead>
               <tbody>

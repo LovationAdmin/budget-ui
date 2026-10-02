@@ -226,7 +226,7 @@ const HELP_ARTICLES: HelpArticle[] = [
           <StepGuide steps={[
             { title: "Onglet « Foyer » → « Ajouter un membre »", description: "Ou depuis le bouton « Ajouter » de la vue Mois." },
             { title: "Prénom et salaire net", description: "Le montant qui arrive réellement sur son compte chaque mois." },
-            { title: "Ce qu’il/elle verse au pot commun", description: "Tout le salaire, un montant fixe (ex. 1 200 €) ou un pourcentage (ex. 40 %). L’écran affiche aussitôt ce qu’il/elle garde pour soi." },
+            { title: "Ce qu’il/elle verse au pot commun", description: "Tout le salaire, un montant fixe (ex. 1 200 €) ou un pourcentage (ex. 40 %). L’écran affiche aussitôt son argent de poche." },
             { title: "(Optionnel) Arrivée dans le foyer", description: "Pour un membre qui arrive plus tard (colocataire, reprise d’emploi…)." }
           ]} />
         </div>
@@ -245,8 +245,8 @@ const HELP_ARTICLES: HelpArticle[] = [
           <FeatureBox icon={Calculator} title="Répartir le pot commun" color="blue">
             <p>
               Dans « Foyer », l’assistant calcule une contribution juste pour chacun : <strong>au prorata</strong> des salaires,
-              <strong> à parts égales</strong> ou pour que chacun garde <strong>le même reste</strong>. Il part du besoin moyen des 12 prochains mois
-              (charges + épargne, avec une marge si vous voulez) et s’applique à partir du mois choisi.
+              <strong> à parts égales</strong> ou pour que chacun garde <strong>le même argent de poche</strong> (ce qui reste une fois les charges et l’épargne payées). Il part du besoin du mois en cours
+              (charges + épargne, avec une marge si vous voulez), ou de la moyenne sur 12 mois, et s’applique à partir du mois choisi.
             </p>
           </FeatureBox>
 

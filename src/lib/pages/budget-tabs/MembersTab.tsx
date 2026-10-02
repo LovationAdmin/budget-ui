@@ -37,10 +37,10 @@ import { useFirstOpenMonth, useHashScroll } from '@/components/budget/shared/hoo
 const AVATAR_TONES = ['bg-teal-50 text-teal-800', 'bg-violet-50 text-violet-800', 'bg-amber-50 text-amber-800', 'bg-sky-50 text-sky-800', 'bg-rose-50 text-rose-800'];
 
 const METHODS: Array<{ value: SplitMethod; label: string; help: string }> = [
-  { value: 'prorata', label: 'Au prorata', help: 'Chacun verse la même part de son salaire : qui gagne plus verse plus.' },
-  { value: 'equal', label: 'À parts égales', help: 'Chacun verse le même montant, quel que soit son salaire.' },
-  { value: 'reste', label: 'Même reste', help: 'Chacun garde le même montant pour lui après sa contribution.' },
-  { value: 'all', label: 'Tout le salaire', help: 'Chacun verse tout son salaire ; l’excédent part en épargne générale.' },
+  { value: 'prorata', label: 'Au prorata', help: 'Chacun verse la même part de son salaire : qui gagne plus verse plus, et garde plus d’argent de poche.' },
+  { value: 'equal', label: 'À parts égales', help: 'Chacun verse le même montant, quel que soit son salaire : l’argent de poche suit l’écart de salaires.' },
+  { value: 'reste', label: 'Même argent de poche', help: 'Une fois les charges et l’épargne payées ensemble, chacun garde exactement le même argent de poche.' },
+  { value: 'all', label: 'Tout le salaire', help: 'Chacun verse tout son salaire : pas d’argent de poche, l’excédent part en épargne générale.' },
 ];
 
 function MemberCard({ person, index, refYm }: { person: Person; index: number; refYm: YM }) {
@@ -95,7 +95,7 @@ function MemberCard({ person, index, refYm }: { person: Person; index: number; r
           <dd className="font-display text-lg font-extrabold tabular-nums text-emerald-700">{fmt(r.contribution)}</dd>
         </div>
         <div className="flex flex-col gap-0.5">
-          <dt className="text-xs font-bold text-muted-foreground">Garde pour soi</dt>
+          <dt className="text-xs font-bold text-muted-foreground">Argent de poche</dt>
           <dd className="font-display text-lg font-extrabold tabular-nums">{fmt(r.keep)}</dd>
         </div>
       </dl>
@@ -146,7 +146,7 @@ function PotPanel({ ym }: { ym: YM }) {
           { label: 'Entrées', value: t.entrees, dot: 'bg-emerald-500', hint: t.oneOff ? `dont ${fmt(t.oneOff)} ponctuels` : `${m.people.length} contribution${m.people.length > 1 ? 's' : ''}` },
           { label: 'Charges', value: t.charges, dot: 'bg-orange-500', hint: `${m.charges.filter((c) => c.amount !== 0).length} charges` },
           { label: 'Épargne', value: t.savings, dot: 'bg-indigo-500', hint: 'mise de côté' },
-          { label: t.reste >= 0 ? 'Reste' : 'Manque', value: t.reste, dot: t.reste >= 0 ? 'bg-emerald-300' : 'bg-red-500', hint: t.reste >= 0 ? '→ épargne générale' : 'pris sur l’épargne générale' },
+          { label: t.reste >= 0 ? 'Reste du pot' : 'Manque', value: t.reste, dot: t.reste >= 0 ? 'bg-emerald-300' : 'bg-red-500', hint: t.reste >= 0 ? '→ épargne générale' : 'pris sur l’épargne générale' },
         ].map((k) => (
           <div key={k.label} className="flex flex-col gap-0.5">
             <dt className="flex items-center gap-1.5 text-xs font-bold text-muted-foreground">
@@ -184,7 +184,8 @@ function SplitAssistant() {
   const [method, setMethod] = useState<SplitMethod>('prorata');
   const [margin, setMargin] = useState(5);
   const [basis, setBasis] = useState<'month' | 'average' | 'peak'>('month');
-  const [from, setFrom] = useState<YM>(maxYM(addMonths(today, 1), firstOpen));
+  // Starts with the current (first open) month: what the household needs now.
+  const [from, setFrom] = useState<YM>(firstOpen);
 
   const members = useMemo(
     () =>
@@ -226,7 +227,7 @@ function SplitAssistant() {
   if (method === 'prorata') {
     explain = members.map((m) => `${m.person.name} gagne ${percent(totalSalaries ? (m.r.salary / totalSalaries) * 100 : 0)} des revenus du foyer`).join(', ') + ' : chacun verse cette part du besoin.';
   } else if (method === 'equal') explain = `Le besoin est coupé en ${members.length} parts égales.`;
-  else if (method === 'reste') explain = `Après contribution, chacun garde environ ${fmt(members.length ? (totalSalaries - totalProposal) / members.length : 0)} pour lui.`;
+  else if (method === 'reste') explain = `Une fois les charges et l’épargne payées, chacun garde environ ${fmt(members.length ? (totalSalaries - totalProposal) / members.length : 0)} d’argent de poche.`;
   else explain = 'Chacun verse tout son salaire.';
 
   const apply = () => {
@@ -257,7 +258,10 @@ function SplitAssistant() {
         <div className="mt-5 grid gap-6 lg:grid-cols-2">
           <div className="flex flex-col gap-5">
             <div>
-              <span className="mb-2 block text-sm font-semibold">1. Méthode</span>
+              <span className="mb-1 block text-sm font-semibold">1. Méthode</span>
+              <p className="mb-2 text-xs text-muted-foreground">
+                Rien à saisir : le calcul part du salaire net de chacun et du besoin du mois (charges + épargne, ci-dessous). Ce qu’il reste à chacun après sa contribution, c’est son argent de poche.
+              </p>
               <Segmented label="Méthode de répartition" value={method} options={METHODS.map(({ value, label }) => ({ value, label }))} onChange={setMethod} />
               <p className="mt-2 text-sm text-muted-foreground">{METHODS.find((m) => m.value === method)!.help}</p>
             </div>
@@ -316,7 +320,7 @@ function SplitAssistant() {
                   </span>
                   <span className="text-right font-display text-lg font-extrabold tabular-nums">{fmt(proposal[i])}</span>
                   <span className="text-xs text-muted-foreground">
-                    Salaire {fmt(m.r.salary)} · garde {fmt(m.r.salary - proposal[i])} · {m.r.salary > 0 ? `${percent((proposal[i] / m.r.salary) * 100)} du salaire` : '—'}
+                    Salaire {fmt(m.r.salary)} · argent de poche {fmt(m.r.salary - proposal[i])} · {m.r.salary > 0 ? `${percent((proposal[i] / m.r.salary) * 100)} du salaire` : '—'}
                   </span>
                   <span className="text-right text-xs font-bold tabular-nums text-muted-foreground">
                     {delta === 0 ? 'comme aujourd’hui' : `${moneySigned(delta, currencySymbol)} vs aujourd’hui`}
