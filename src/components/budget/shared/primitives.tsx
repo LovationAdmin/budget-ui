@@ -242,6 +242,20 @@ export function FieldLabel({ htmlFor, children, hint }: { htmlFor?: string; chil
   );
 }
 
+/**
+ * Reports a validation error and moves focus to the field at fault (text
+ * selected), so keyboard and screen-reader users land where the fix is.
+ */
+export function failOn(fieldId: string, setError: (message: string) => void, message: string): void {
+  setError(message);
+  requestAnimationFrame(() => {
+    const el = document.getElementById(fieldId);
+    if (!(el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement)) return;
+    el.focus();
+    el.select();
+  });
+}
+
 export function ErrorText({ children }: { children?: ReactNode }) {
   if (!children) return null;
   return (

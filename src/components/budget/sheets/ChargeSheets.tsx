@@ -73,7 +73,7 @@ import {
   CategoryIcon,
   ChipToggle,
   ChoiceCard,
-  ErrorText,
+  ErrorText, failOn,
   FieldLabel,
   MoneyInput,
   Pill,
@@ -177,7 +177,7 @@ export function ChargeAmountSheet({ sheet, onClose }: SheetProps<'chargeAmount'>
   const prevAmount = start && compareYM(start, fromYm) >= 0 ? null : chargeBaseAmount(c, addMonths(fromYm, -1));
 
   const apply = (scope: 'month' | 'forward' | 'all') => {
-    if (!valid) return setError('Indiquez un montant valide (0 ou plus).');
+    if (!valid) return failOn('ca-amount', setError, 'Indiquez un montant valide (0 ou plus).');
     if (scope === 'month') {
       commit((m) => setChargeMonthAmount(m, c.id, fromYm, v), { message: `« ${c.label} » : ${fmt(v)} en ${monthLabel} seulement.` });
     } else if (scope === 'forward') {
@@ -481,7 +481,7 @@ export function EndFields({
       {endMode === 'count' && (
         <div className="mt-3 flex items-center gap-2.5">
           <label htmlFor="end-count" className="text-sm">Pendant</label>
-          <Input id="end-count" inputMode="numeric" value={count} onChange={(e) => setCount(e.target.value.replace(/[^\d]/g, '').slice(0, 3))} className="h-12 w-24 rounded-xl text-center text-base tabular-nums" />
+          <Input id="end-count" autoComplete="off" inputMode="numeric" value={count} onChange={(e) => setCount(e.target.value.replace(/[^\d]/g, '').slice(0, 3))} className="h-12 w-24 rounded-xl text-center text-base tabular-nums" />
           <span className="text-sm">mois</span>
         </div>
       )}
@@ -578,8 +578,8 @@ export function ChargeEditorSheet({ sheet, onClose }: SheetProps<'chargeEditor'>
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!label.trim()) return setError('Donnez un nom (ex. : Loyer, Cantine, Taxe foncière…).');
-    if (!editing && (!Number.isFinite(value) || value <= 0)) return setError('Indiquez un montant supérieur à 0.');
+    if (!label.trim()) return failOn('ch-label', setError, 'Donnez un nom (ex. : Loyer, Cantine, Taxe foncière…).');
+    if (!editing && (!Number.isFinite(value) || value <= 0)) return failOn('ch-amount', setError, 'Indiquez un montant supérieur à 0.');
     if (freq === 'custom' && months.length === 0) return setError('Choisissez au moins un mois.');
     if (endYm && compareYM(endYm, start) < 0) return setError('La fin doit venir après le début.');
     const settings: Partial<Charge> = {
@@ -614,7 +614,7 @@ export function ChargeEditorSheet({ sheet, onClose }: SheetProps<'chargeEditor'>
       <form onSubmit={submit} className="flex flex-col gap-5">
         <div>
           <FieldLabel htmlFor="ch-label">Nom</FieldLabel>
-          <Input id="ch-label" value={label} onChange={(e) => { setLabel(e.target.value); setError(''); }} onBlur={detectCategory} placeholder="Ex. : Loyer, Cantine, Taxe foncière…" className="h-12 rounded-xl text-base" />
+          <Input id="ch-label" autoComplete="off" value={label} onChange={(e) => { setLabel(e.target.value); setError(''); }} onBlur={detectCategory} placeholder="Ex. : Loyer, Cantine, Taxe foncière…" className="h-12 rounded-xl text-base" />
         </div>
 
         <div>
@@ -706,7 +706,7 @@ export function ChargeEditorSheet({ sheet, onClose }: SheetProps<'chargeEditor'>
 
         <div>
           <FieldLabel htmlFor="ch-desc" hint="(optionnel)">Détails</FieldLabel>
-          <Input id="ch-desc" value={description} maxLength={50} onChange={(e) => setDescription(e.target.value)} placeholder="Ex. : 45 m², tous risques… aide l’IA à comparer" className="h-12 rounded-xl text-base" />
+          <Input id="ch-desc" autoComplete="off" value={description} maxLength={50} onChange={(e) => setDescription(e.target.value)} placeholder="Ex. : 45 m², tous risques… aide l’IA à comparer" className="h-12 rounded-xl text-base" />
         </div>
 
         <div className="rounded-xl border border-sky-100 bg-sky-50 px-4 py-3">

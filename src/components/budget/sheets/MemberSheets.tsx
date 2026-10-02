@@ -35,7 +35,7 @@ import {
 import { parseAmount, roundCents } from '@/lib/budget/format';
 import { ResponsiveSheet } from '../shared/ResponsiveSheet';
 import { MonthPicker } from '../shared/MonthPicker';
-import { ChipToggle, ChoiceCard, ErrorText, FieldLabel, MoneyInput, Segmented } from '../shared/primitives';
+import { ChipToggle, ChoiceCard, ErrorText, failOn, FieldLabel, MoneyInput, Segmented } from '../shared/primitives';
 import type { SheetProps } from './BudgetSheets';
 
 const MODE_OPTIONS: Array<{ value: ContributionMode; label: string }> = [
@@ -148,7 +148,7 @@ function NewMember({ ym, onClose }: { ym: YM; onClose: () => void }) {
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name.trim()) return setError('Indiquez un prénom.');
+    if (!name.trim()) return failOn('nm-name', setError, 'Indiquez un prénom.');
     const check = validate(salary, mode, value);
     if (check.error) return setError(check.error);
     const person: Person = { id: newId('m'), name: name.trim(), salary: roundCents(check.s) };
@@ -300,7 +300,7 @@ function MemberSettings({ person, onDone }: { person: Person; onDone: () => void
   const [error, setError] = useState('');
 
   const save = () => {
-    if (!name.trim()) return setError('Le prénom ne peut pas être vide.');
+    if (!name.trim()) return failOn('ms-name', setError, 'Le prénom ne peut pas être vide.');
     if (hasStart && hasEnd && compareYM(end, start) < 0) return setError('Le départ doit venir après l’arrivée.');
     commit(
       (m) =>

@@ -11,7 +11,7 @@ import { addOneOff, reopenMonth } from '@/lib/budget/mutations';
 import { formatMonthLong, deMonth } from '@/lib/budget/months';
 import { parseAmount } from '@/lib/budget/format';
 import { ResponsiveSheet } from '../shared/ResponsiveSheet';
-import { ErrorText, FieldLabel, IconTile, MoneyInput } from '../shared/primitives';
+import { ErrorText, failOn, FieldLabel, IconTile, MoneyInput } from '../shared/primitives';
 import type { SheetProps } from './BudgetSheets';
 
 function MenuItem({ icon, title, sub, onClick, tileClass }: { icon: React.ReactNode; title: string; sub: string; onClick: () => void; tileClass: string }) {
@@ -53,8 +53,8 @@ export function OneOffSheet({ sheet, onClose }: SheetProps<'oneOff'>) {
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
     const v = parseAmount(amount);
-    if (!label.trim()) return setError('Donnez un nom à ce revenu (prime, remboursement…).');
-    if (!Number.isFinite(v) || v <= 0) return setError('Indiquez un montant supérieur à 0.');
+    if (!label.trim()) return failOn('oo-label', setError, 'Donnez un nom à ce revenu (prime, remboursement…).');
+    if (!Number.isFinite(v) || v <= 0) return failOn('oo-amount', setError, 'Indiquez un montant supérieur à 0.');
     commit((m) => addOneOff(m, sheet.ym, { label: label.trim(), amount: v }), {
       message: `« ${label.trim()} » ajouté à ${formatMonthLong(sheet.ym)}.`,
     });
@@ -65,7 +65,7 @@ export function OneOffSheet({ sheet, onClose }: SheetProps<'oneOff'>) {
       <form onSubmit={submit} className="flex flex-col gap-4">
         <div>
           <FieldLabel htmlFor="oo-label">Nom</FieldLabel>
-          <Input id="oo-label" value={label} onChange={(e) => { setLabel(e.target.value); setError(''); }} placeholder="Ex. : prime, remboursement mutuelle…" className="h-12 rounded-xl text-base" />
+          <Input id="oo-label" autoComplete="off" value={label} onChange={(e) => { setLabel(e.target.value); setError(''); }} placeholder="Ex. : prime, remboursement mutuelle…" className="h-12 rounded-xl text-base" />
         </div>
         <div>
           <FieldLabel htmlFor="oo-amount">Montant</FieldLabel>

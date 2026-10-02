@@ -47,7 +47,7 @@ import {
 import { parseAmount, roundCents } from '@/lib/budget/format';
 import { ResponsiveSheet } from '../shared/ResponsiveSheet';
 import { MonthPicker } from '../shared/MonthPicker';
-import { ChoiceCard, ErrorText, FieldLabel, MoneyInput, Segmented } from '../shared/primitives';
+import { ChoiceCard, ErrorText, failOn, FieldLabel, MoneyInput, Segmented } from '../shared/primitives';
 import { computeEnd, EndFields } from './ChargeSheets';
 import { useFirstOpenMonth } from '../shared/hooks';
 import type { SheetProps } from './BudgetSheets';
@@ -183,7 +183,7 @@ export function SavingAmountSheet({ sheet, onClose }: SheetProps<'savingAmount'>
   if (!recurring) {
     const submit = (e: React.FormEvent) => {
       e.preventDefault();
-      if (!valid) return setError('Indiquez un montant valide (0 ou plus).');
+      if (!valid) return failOn('sa-amount', setError, 'Indiquez un montant valide (0 ou plus).');
       if (closed) return setError(`${formatMonthTitle(fromYm)} est clôturé : choisissez un mois ouvert.`);
       commit((m) => setSavingMonthAmount(m, p.id, fromYm, v), {
         message: v > 0 ? `${fmt(v)} mis de côté dans « ${p.label} » en ${monthLabel}.` : `Rien dans « ${p.label} » en ${monthLabel}.`,
@@ -191,7 +191,7 @@ export function SavingAmountSheet({ sheet, onClose }: SheetProps<'savingAmount'>
       onClose();
     };
     const convert = () => {
-      if (!valid || v <= 0) return setError('Indiquez un montant supérieur à 0.');
+      if (!valid || v <= 0) return failOn('sa-amount', setError, 'Indiquez un montant supérieur à 0.');
       commit((m) => convertSavingToMonthly(m, p.id, fromYm, v, today, (ym) => engine.isClosed(ym)), {
         message: `« ${p.label} » : ${fmt(v)} chaque mois à partir ${deMonth(monthLabel)}.`,
       });
@@ -227,7 +227,7 @@ export function SavingAmountSheet({ sheet, onClose }: SheetProps<'savingAmount'>
   const canMonthOnly = !sheet.fromCatalog && !!r && r.active && !closed;
   const prevAmount = start && compareYM(start, fromYm) >= 0 ? null : projectPlanned(p, addMonths(fromYm, -1));
   const apply = (scope: 'month' | 'forward' | 'all') => {
-    if (!valid) return setError('Indiquez un montant valide (0 ou plus).');
+    if (!valid) return failOn('sa-amount', setError, 'Indiquez un montant valide (0 ou plus).');
     if (scope === 'month') {
       commit((m) => setSavingMonthAmount(m, p.id, fromYm, v), { message: `« ${p.label} » : ${fmt(v)} en ${monthLabel} seulement.` });
     } else if (scope === 'forward') {
@@ -302,7 +302,7 @@ export function SpendSheet({ sheet, onClose }: SheetProps<'spend'>) {
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!Number.isFinite(v) || v <= 0) return setError('Indiquez un montant supérieur à 0.');
+    if (!Number.isFinite(v) || v <= 0) return failOn('sp-amount', setError, 'Indiquez un montant supérieur à 0.');
     if (closed) return setError(`${formatMonthTitle(ym)} est clôturé : choisissez un mois ouvert ou rouvrez-le.`);
     const total = roundCents(existing + v);
     const comment = [existingComment, label.trim()].filter(Boolean).join(' · ');
@@ -354,7 +354,7 @@ export function SpendSheet({ sheet, onClose }: SheetProps<'spend'>) {
         </div>
         <div>
           <FieldLabel htmlFor="sp-label" hint="(optionnel)">Pour quoi ?</FieldLabel>
-          <Input id="sp-label" value={label} maxLength={80} onChange={(e) => setLabel(e.target.value)} placeholder="Ex. : location de vacances, réparation…" className="h-12 rounded-xl text-base" />
+          <Input id="sp-label" autoComplete="off" value={label} maxLength={80} onChange={(e) => setLabel(e.target.value)} placeholder="Ex. : location de vacances, réparation…" className="h-12 rounded-xl text-base" />
         </div>
         {existing > 0 && (
           <div className="flex items-center gap-2 rounded-xl bg-muted/60 px-3.5 py-3 text-sm">
@@ -440,8 +440,8 @@ export function SavingEditorSheet({ sheet, onClose }: SheetProps<'savingEditor'>
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!label.trim()) return setError('Donnez un nom (ex. : Vacances, Voiture, Coup dur…).');
-    if (target.trim() && !hasTarget) return setError('L’objectif doit être un montant supérieur à 0.');
+    if (!label.trim()) return failOn('sv-label', setError, 'Donnez un nom (ex. : Vacances, Voiture, Coup dur…).');
+    if (target.trim() && !hasTarget) return failOn('sv-target', setError, 'L’objectif doit être un montant supérieur à 0.');
     if (kind === 'monthly' && !editing && !amountOk) return setError('Indiquez le montant mis de côté chaque mois.');
     if (endYm && compareYM(endYm, start) < 0) return setError('La fin doit venir après le début.');
     const name = label.trim();
@@ -470,7 +470,7 @@ export function SavingEditorSheet({ sheet, onClose }: SheetProps<'savingEditor'>
       <form onSubmit={submit} className="flex flex-col gap-5">
         <div>
           <FieldLabel htmlFor="sv-label">Nom</FieldLabel>
-          <Input id="sv-label" value={label} onChange={(e) => { setLabel(e.target.value); setError(''); }} placeholder="Ex. : Vacances, Voiture, Coup dur…" className="h-12 rounded-xl text-base" />
+          <Input id="sv-label" autoComplete="off" value={label} onChange={(e) => { setLabel(e.target.value); setError(''); }} placeholder="Ex. : Vacances, Voiture, Coup dur…" className="h-12 rounded-xl text-base" />
         </div>
 
         {editing ? (
