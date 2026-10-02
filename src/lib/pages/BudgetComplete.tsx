@@ -11,7 +11,7 @@
 // Past months are closed automatically on load and keep a frozen snapshot.
 // ============================================================================
 
-import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import { useState, useEffect, useRef, useMemo, useCallback, Suspense } from 'react';
 import { useParams, useNavigate, useLocation, Outlet } from 'react-router-dom';
 import api, { budgetAPI } from '../../services/api';
 import { useAuth } from '../../contexts/AuthContext';
@@ -490,7 +490,9 @@ export default function BudgetCompleteLayout() {
         )}
 
         <main id="contenu" tabIndex={-1} className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-5 sm:py-8 pb-32 lg:pb-16 focus:outline-none">
-          <Outlet />
+          <Suspense fallback={<TabFallback />}>
+            <Outlet />
+          </Suspense>
         </main>
 
         <BudgetTabBar items={MAIN_TABS} currentSection={currentSection} onSectionChange={handleSectionChange} />
@@ -560,5 +562,15 @@ export default function BudgetCompleteLayout() {
         )}
       </div>
     </BudgetProvider>
+  );
+}
+
+// Placeholder while a lazily-loaded tab downloads; keeps the layout steady.
+function TabFallback() {
+  return (
+    <div role="status" aria-live="polite" className="flex min-h-[40vh] items-center justify-center">
+      <span aria-hidden="true" className="h-6 w-6 animate-spin rounded-full border-2 border-primary/30 border-t-primary motion-reduce:animate-none" />
+      <span className="sr-only">Chargement de l’onglet…</span>
+    </div>
   );
 }
