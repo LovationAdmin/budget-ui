@@ -12,7 +12,7 @@ import {
   ChargeStopSheet,
 } from './ChargeSheets';
 import { SavingActionsSheet, SavingAmountSheet, SavingDeleteSheet, SavingEditorSheet, SpendSheet } from './SavingSheets';
-import { MemberDeleteSheet, MemberSheet } from './MemberSheets';
+import { MemberDeleteSheet, MemberDetailSheet, MemberSheet } from './MemberSheets';
 
 export function BudgetSheets({ sheet, onClose }: { sheet: SheetState | null; onClose: () => void }) {
   if (!sheet) return null;
@@ -47,6 +47,8 @@ export function BudgetSheets({ sheet, onClose }: { sheet: SheetState | null; onC
       return <SpendSheet sheet={sheet} onClose={onClose} />;
     case 'member':
       return <MemberSheet sheet={sheet} onClose={onClose} />;
+    case 'memberDetail':
+      return <MemberDetailSheet sheet={sheet} onClose={onClose} />;
     case 'memberDelete':
       return <MemberDeleteSheet sheet={sheet} onClose={onClose} />;
     default:

@@ -33,6 +33,7 @@ import {
   convertSavingToMonthly,
   stopProject,
   restartProject,
+  clearPersonMonthException,
 } from '../mutations';
 import { makeYM, MONTH_NAMES, addMonths } from '../months';
 import type { Charge } from '../types';
@@ -545,4 +546,12 @@ test('charges: this month vs 12-month average with charges ending soon', () => {
   near(e.month('2026-11').totals.charges, 2781, 'heaviest month from November');
   eq(chargesEndingBetween(model, '2026-10', '2027-09').map((x) => `${x.charge.label}:${x.last}`), ['versmnt CLIM 3x:2026-10', 'massage drainage:2026-11']);
   eq(chargesEndingBetween(model, '2026-11', '2027-10').map((x) => x.charge.id), ['massage']);
+});
+
+test('members: clearing a month-only exception restores the rules', () => {
+  const model = decodeBudget({ people: [{ id: 'a', name: 'A', salary: 2000, salaryOverrides: { '2026-10': 2500 }, contributionOverrides: { '2026-10': 900 } }] }, '2026-10');
+  near(new BudgetEngine(model, '2026-10').month('2026-10').totals.contributions, 900, 'exception');
+  const cleared = clearPersonMonthException(model, 'a', '2026-10');
+  near(new BudgetEngine(cleared, '2026-10').month('2026-10').totals.contributions, 2000, 'rules again');
+  eq(cleared.people[0].salaryOverrides, undefined);
 });

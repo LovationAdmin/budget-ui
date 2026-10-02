@@ -116,15 +116,20 @@ export function Segmented<T extends string>({
   onChange,
   label,
   className,
+  stackOnMobile = false,
 }: {
   value: T;
   options: Array<{ value: T; label: string }>;
   onChange: (v: T) => void;
   label: string;
   className?: string;
+  /** Long labels: one per row on phones, side by side from `sm`. */
+  stackOnMobile?: boolean;
 }) {
   // Four options or more go 2 × 2: four labels never fit one row in a phone sheet.
-  const columns = options.length === 3 ? 'grid-cols-3' : 'grid-cols-2';
+  const columns = stackOnMobile
+    ? options.length === 3 ? 'grid-cols-1 sm:grid-cols-3' : 'grid-cols-1 sm:grid-cols-2'
+    : options.length === 3 ? 'grid-cols-3' : 'grid-cols-2';
   return (
     <div role="group" aria-label={label} className={cn('grid gap-1 rounded-xl bg-muted p-1', columns, className)}>
       {options.map((o) => {
