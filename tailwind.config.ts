@@ -20,6 +20,26 @@ export default {
       },
     },
     extend: {
+      // Blog prose follows the theme tokens so articles read well in light and dark mode.
+      typography: {
+        DEFAULT: {
+          css: {
+            "--tw-prose-body": "hsl(var(--foreground))",
+            "--tw-prose-headings": "hsl(var(--foreground))",
+            "--tw-prose-lead": "hsl(var(--muted-foreground))",
+            "--tw-prose-links": "hsl(var(--primary))",
+            "--tw-prose-bold": "hsl(var(--foreground))",
+            "--tw-prose-counters": "hsl(var(--muted-foreground))",
+            "--tw-prose-bullets": "hsl(var(--muted-foreground))",
+            "--tw-prose-hr": "hsl(var(--border))",
+            "--tw-prose-quotes": "hsl(var(--foreground))",
+            "--tw-prose-quote-borders": "hsl(var(--border))",
+            "--tw-prose-captions": "hsl(var(--muted-foreground))",
+            "--tw-prose-th-borders": "hsl(var(--border))",
+            "--tw-prose-td-borders": "hsl(var(--border))",
+          },
+        },
+      },
       fontFamily: {
         sans: ['DM Sans', 'system-ui', 'sans-serif'],
         display: ['Plus Jakarta Sans', 'system-ui', 'sans-serif'],
@@ -153,5 +173,5 @@ export default {
       },
     },
   },
-  plugins: [require("tailwindcss-animate"), plugin(({ addBase }) => addBase(paletteVars()))],
+  plugins: [require("tailwindcss-animate"), require("@tailwindcss/typography"), plugin(({ addBase }) => addBase(paletteVars()))],
 } satisfies Config;

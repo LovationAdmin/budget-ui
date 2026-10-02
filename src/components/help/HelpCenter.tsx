@@ -158,6 +158,15 @@ const HELP_ARTICLES: HelpArticle[] = [
             <p>Vos données budgétaires sont stockées chiffrées en base avec AES-256-GCM. Elles ne sont déchiffrées que pour vous être servies. Notre équipe technique n'y a accès que dans le cadre d'opérations de support, qui sont journalisées.</p>
           </FeatureBox>
 
+          <FeatureBox icon={EyeOff} title="Charges perso privées : visibles par vous seul" color="orange">
+            <p>
+              Une charge perso marquée <strong>privée</strong> (impôt, envoi d’argent, crédit perso…) n’est jamais écrite dans les données
+              partagées du budget : son nom, sa catégorie et sa note sont chiffrés à part et rattachés à votre seul compte.
+              Les autres membres, même avec un accès complet au budget, ne voient que « Charge privée » et son montant
+              (qui baisse votre argent de poche dans le Foyer).
+            </p>
+          </FeatureBox>
+
           <FeatureBox icon={Building2} title="Hébergement Européen (RGPD)" color="purple">
             <p>Toutes nos données sont hébergées en Europe (Frankfurt, Allemagne) conformément au RGPD. Aucun transfert de données hors UE.</p>
           </FeatureBox>
@@ -226,7 +235,7 @@ const HELP_ARTICLES: HelpArticle[] = [
           <StepGuide steps={[
             { title: "Onglet « Foyer » → « Ajouter un membre »", description: "Ou depuis le bouton « Ajouter » de la vue Mois." },
             { title: "Prénom et salaire net", description: "Le montant qui arrive réellement sur son compte chaque mois." },
-            { title: "Ce qu’il/elle verse au pot commun", description: "Tout le salaire, un montant fixe (ex. 1 200 €) ou un pourcentage (ex. 40 %). L’écran affiche aussitôt son argent de poche." },
+            { title: "Ce que chaque membre verse au pot commun", description: "Tout le salaire, un montant fixe (ex. 1 200 €) ou un pourcentage (ex. 40 %). L’écran affiche aussitôt son argent de poche : ce qui lui reste une fois les charges et l’épargne du foyer payées." },
             { title: "(Optionnel) Arrivée dans le foyer", description: "Pour un membre qui arrive plus tard (colocataire, reprise d’emploi…)." }
           ]} />
         </div>
@@ -242,11 +251,30 @@ const HELP_ARTICLES: HelpArticle[] = [
             </p>
           </FeatureBox>
 
+          <FeatureBox icon={Calendar} title="Le Foyer, mois par mois" color="purple">
+            <p>
+              Les flèches ‹ › font défiler les mois : chaque carte montre le salaire, le versement au pot et l’argent de poche
+              <strong> du mois choisi</strong> (figés pour un mois clôturé), et le panneau « Le pot commun en … » compare les entrées
+              aux charges et à l’épargne du mois. Le lien <strong>« Historique »</strong> d’un membre retrace ses salaires et contributions successifs,
+              ses exceptions et un tableau mois par mois.
+            </p>
+          </FeatureBox>
+
           <FeatureBox icon={Calculator} title="Répartir le pot commun" color="blue">
             <p>
-              Dans « Foyer », l’assistant calcule une contribution juste pour chacun : <strong>au prorata</strong> des salaires,
-              <strong> à parts égales</strong> ou pour que chacun garde <strong>le même argent de poche</strong> (ce qui reste une fois les charges et l’épargne payées). Il part du besoin du mois en cours
-              (charges + épargne, avec une marge si vous voulez), ou de la moyenne sur 12 mois, et s’applique à partir du mois choisi.
+              Rien à saisir : l’assistant part du salaire net de chacun et du <strong>besoin du mois</strong> (charges + épargne, avec une marge si vous voulez).
+              Méthodes : <strong>au prorata</strong> des salaires, <strong>à parts égales</strong>, <strong>même argent de poche</strong> pour chacun,
+              ou <strong>tout le salaire</strong>. Le besoin se calcule sur le mois où la répartition commence (par défaut le mois en cours),
+              lissé sur 12 mois, ou sur le mois le plus chargé.
+            </p>
+          </FeatureBox>
+
+          <FeatureBox icon={Wallet} title="Charges perso (déduites de l’argent de poche)" color="orange">
+            <p>
+              Impôt, envoi d’argent à la famille, crédit perso : ajoutez-les avec <strong>« + Charge perso »</strong> sur la carte du membre
+              (ou « Qui la paie ? → Un membre » dans une nouvelle charge). Elles ne touchent ni au pot commun ni à la répartition :
+              le Foyer affiche simplement « argent de poche 1 100 €, dont 20 € de charges perso ». Visibles par le foyer, ou
+              <strong> privées</strong> : nom chiffré et visible par vous seul, montant visible de tous.
             </p>
           </FeatureBox>
 
@@ -293,6 +321,7 @@ const HELP_ARTICLES: HelpArticle[] = [
           </h4>
           <StepGuide steps={[
             { title: "« Nouvelle charge » (onglet Charges) ou « Ajouter » (vue Mois)", description: "Le formulaire s’ouvre dans un panneau, sans quitter l’écran." },
+            { title: "Qui la paie ?", description: "Le pot commun (charge du foyer) ou un membre sur son argent de poche (charge perso, éventuellement privée)." },
             { title: "Nom et fréquence", description: "Chaque mois, certains mois (ex. cantine), chaque année (ex. taxe foncière, avec l’option de la lisser sur 12 mois) ou une seule fois." },
             { title: "Montant et mois de début", description: "Optionnel : une fin (« pendant 12 mois » ou « jusqu’à juin 2027 »). L’encadré « En clair » résume la règle et son effet sur le mois." },
             { title: "L’IA détecte la catégorie", description: "En quittant le champ du nom (Énergie, Mobile, Assurance…)." }
@@ -464,8 +493,10 @@ const HELP_ARTICLES: HelpArticle[] = [
           </h4>
           <StepGuide steps={[
             { title: "Onglet « Épargne » → « Nouvelle épargne »", description: "Ou depuis le bouton « Ajouter » de la vue Mois." },
-            { title: "Nom et montant mensuel", description: "Ex. « Vacances » : 200 € chaque mois, à partir d’octobre. Ou « Montant libre » pour décider mois par mois." },
-            { title: "(Optionnel) Objectif et fin", description: "L’écran indique quand l’objectif sera atteint, ou ce qui manquera à l’échéance." }
+            { title: "Nom et objectif", description: "Ex. « Apport » : 15 000 €. Ou sans objectif, juste un montant mensuel." },
+            { title: "Dates", description: "« À partir de » et, si vous avez une échéance, « Pendant… » ou « Jusqu’à… »." },
+            { title: "Montant mensuel calculé", description: "Avec un objectif et une échéance, l’app calcule ce qu’il faut mettre de côté chaque mois (15 000 € en 10 mois → 1 500 €). Vous pouvez le modifier." },
+            { title: "Faisabilité", description: "L’app vérifie si le pot commun peut suivre chaque mois. Sinon : « Créer et ajuster les contributions » (Foyer) ou « Créer et demander un plan au Budget IA »." }
           ]} />
         </div>
 
@@ -786,45 +817,30 @@ const HELP_ARTICLES: HelpArticle[] = [
           Découvrez les astuces pour utiliser Budget Famille plus efficacement.
         </p>
 
-        <div>
-          <h4 className="font-semibold text-sm mb-3">Raccourcis Clavier</h4>
-          <div className="space-y-2">
-            <div className="flex items-center justify-between p-2 bg-gray-50 rounded">
-              <span className="text-sm">Sauvegarder le budget</span>
-              <div className="flex gap-1"><KBD>Ctrl</KBD> + <KBD>S</KBD></div>
-            </div>
-            <div className="flex items-center justify-between p-2 bg-gray-50 rounded">
-              <span className="text-sm">Naviguer entre les cellules</span>
-              <div className="flex gap-1"><KBD>Tab</KBD> ou <KBD>↵ Enter</KBD></div>
-            </div>
-            <div className="flex items-center justify-between p-2 bg-gray-50 rounded">
-              <span className="text-sm">Annuler une saisie</span>
-              <div className="flex gap-1"><KBD>Échap</KBD></div>
-            </div>
+        <div className="space-y-3 text-sm text-gray-600">
+          <div className="flex items-start gap-2">
+            <CheckCircle2 className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
+            <span><strong>Sauvegarde automatique :</strong> chaque modification est enregistrée en 1 à 2 secondes ; l’indicateur en bas de l’écran le confirme.</span>
           </div>
-        </div>
-
-        <Separator />
-
-        <div>
-          <h4 className="font-semibold text-sm mb-3">Astuces Pro</h4>
-          <div className="space-y-3 text-sm text-gray-600">
-            <div className="flex items-start gap-2">
-              <CheckCircle2 className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
-              <span><strong>Sauvegarde automatique :</strong> Vos données sont sauvegardées automatiquement toutes les 30 secondes.</span>
-            </div>
-            <div className="flex items-start gap-2">
-              <CheckCircle2 className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
-              <span><strong>Clic direct :</strong> Cliquez directement sur n'importe quel chiffre pour le modifier.</span>
-            </div>
-            <div className="flex items-start gap-2">
-              <CheckCircle2 className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
-              <span><strong>Notification objectif :</strong> Vous recevez une alerte quand un projet atteint son objectif.</span>
-            </div>
-            <div className="flex items-start gap-2">
-              <CheckCircle2 className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
-              <span><strong>Multi-années :</strong> Naviguez entre les années pour voir l'historique ou planifier l'avenir.</span>
-            </div>
+          <div className="flex items-start gap-2">
+            <CheckCircle2 className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
+            <span><strong>Annuler :</strong> après une modification, le message de confirmation propose « Annuler » pendant quelques secondes.</span>
+          </div>
+          <div className="flex items-start gap-2">
+            <CheckCircle2 className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
+            <span><strong>Mode sombre :</strong> menu du compte (en haut à droite) › Apparence : Automatique, Clair ou Sombre.</span>
+          </div>
+          <div className="flex items-start gap-2">
+            <CheckCircle2 className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
+            <span><strong>Lien vers un mois :</strong> l’adresse de la vue Mois contient le mois (?m=2026-10) : partagez-la ou ajoutez-la en favori.</span>
+          </div>
+          <div className="flex items-start gap-2">
+            <CheckCircle2 className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
+            <span><strong>Clavier :</strong> <KBD>Échap</KBD> ferme un panneau ; <KBD>Tab</KBD> parcourt les champs ; dans un formulaire incomplet, le curseur va directement au champ à corriger.</span>
+          </div>
+          <div className="flex items-start gap-2">
+            <CheckCircle2 className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
+            <span><strong>Mois clôturés :</strong> un mois passé se fige tout seul ; pour le corriger, touchez-le puis « Rouvrir » : l’écran montre ce qui va changer.</span>
           </div>
         </div>
       </div>
@@ -845,8 +861,9 @@ const HELP_ARTICLES: HelpArticle[] = [
           <div className="border rounded-lg p-4">
             <h4 className="font-semibold text-sm mb-2">🤔 Mes données sont-elles vraiment sécurisées ?</h4>
             <p className="text-xs text-gray-600">
-              Oui. Nous utilisons un chiffrement AES-256 de bout en bout. Même nos ingénieurs ne peuvent pas lire vos données.
-              Consultez notre article "Confidentialité" pour plus de détails.
+              Oui. Vos données sont chiffrées en AES-256-GCM avant d’être stockées, hébergées en Europe, et ne sont déchiffrées que pour
+              les membres du budget. Les charges perso privées vont plus loin : leur nom est chiffré à part et lisible par vous seul,
+              même les autres membres du budget n’y ont pas accès. Détails dans « Confidentialité & Protection des Données ».
             </p>
           </div>
 
@@ -885,8 +902,24 @@ const HELP_ARTICLES: HelpArticle[] = [
           <div className="border rounded-lg p-4">
             <h4 className="font-semibold text-sm mb-2">🔄 Comment annuler une modification ?</h4>
             <p className="text-xs text-gray-600">
-              Il n'y a pas de bouton "Annuler" intégré. Cependant, la sauvegarde automatique se fait toutes les 30 secondes.
-              Si vous faites une erreur, rechargez la page rapidement (F5) avant la prochaine sauvegarde.
+              Après chaque modification, le message de confirmation propose « Annuler » pendant quelques secondes.
+              Au-delà, refaites simplement le changement inverse : les mois clôturés, eux, ne bougent jamais sans votre accord.
+            </p>
+          </div>
+          <div className="border rounded-lg p-4">
+            <h4 className="font-semibold text-sm mb-2">🙈 Les autres membres voient-ils mes charges perso ?</h4>
+            <p className="text-xs text-gray-600">
+              Une charge perso « visible par le foyer » est vue de tous. Une charge perso <strong>privée</strong> n’apparaît chez les autres
+              que comme « Charge privée » avec son montant (il réduit votre argent de poche dans le Foyer) : son nom, sa catégorie et sa note
+              ne sont lisibles que par vous.
+            </p>
+          </div>
+          <div className="border rounded-lg p-4">
+            <h4 className="font-semibold text-sm mb-2">📊 Pourquoi le total des charges du mois diffère de la moyenne ?</h4>
+            <p className="text-xs text-gray-600">
+              L’onglet Charges affiche le total du mois en cours et, à côté, la moyenne sur 12 mois. Une charge qui s’arrête bientôt
+              (un crédit qui se termine, un paiement en 3 fois) pèse sur le mois mais peu sur la moyenne : l’écran les nomme.
+              Dans le Foyer, vous choisissez la base du besoin à couvrir : le mois de départ, la moyenne lissée ou le mois le plus chargé.
             </p>
           </div>
         </div>
