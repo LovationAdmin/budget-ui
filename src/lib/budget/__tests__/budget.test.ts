@@ -555,3 +555,42 @@ test('members: clearing a month-only exception restores the rules', () => {
   near(new BudgetEngine(cleared, '2026-10').month('2026-10').totals.contributions, 2000, 'rules again');
   eq(cleared.people[0].salaryOverrides, undefined);
 });
+
+test('personal charges: out of pocket money, never out of the pot', () => {
+  const raw = {
+    people: [
+      { id: 'a', name: 'A', salary: 3000, contributions: [{ from: '2026-01', mode: 'fixed', value: 2000 }] },
+      { id: 'b', name: 'B', salary: 2000, contributions: [{ from: '2026-01', mode: 'fixed', value: 1500 }] },
+    ],
+    charges: [{ id: 'rent', label: 'Loyer', amount: 1200 }],
+    personalCharges: [
+      { id: 'tax', label: 'Impôt', amount: 20, ownerId: 'a', startDate: '2026-10-01', endDate: '2027-02-28', private: true, createdBy: 'user-a' },
+      { id: 'send', label: 'Envoi famille', amount: 150, ownerId: 'b' },
+    ],
+  };
+  const model = decodeBudget(raw, '2026-10');
+  const e = new BudgetEngine(model, '2026-10');
+  const oct = e.month('2026-10');
+  near(oct.totals.charges, 1200, 'pot charges exclude personal');
+  near(oct.totals.reste, 3500 - 1200, 'pot leftover unchanged');
+  near(oct.totals.personal, 170, 'personal total');
+  const a = oct.people.find((p) => p.id === 'a')!;
+  near(a.keep, 1000, 'pocket money stays 1000');
+  near(a.personalCharges, 20, 'of which 20 personal');
+  near(a.available, 980, 'available after personal');
+  near(e.month('2027-03').people.find((p) => p.id === 'a')!.personalCharges, 0, 'tax over after February');
+  eq(oct.charges.map((c) => c.id), ['rent']);
+  eq(oct.personal.map((c) => c.id).sort(), ['send', 'tax']);
+  // Split methods ignore personal charges: same pocket money for both.
+  const proposal = splitContributions('reste', [3000, 2000], 1200);
+  near(3000 - proposal[0], 2000 - proposal[1], 'same pocket money despite the tax');
+  // Stored apart: pot readers (recap, mobile) never see them in `charges`.
+  const enc = encodeBudget(model, '2026-10', 'now') as any;
+  eq(enc.charges.map((c: any) => c.id), ['rent']);
+  eq(enc.personalCharges.map((c: any) => c.id).sort(), ['send', 'tax']);
+  eq(enc.personalCharges.find((c: any) => c.id === 'tax').private, true);
+  // Closing a month freezes personal charges with it.
+  const closed = autoCloseMonths(decodeBudget(enc, '2026-11'), '2026-11', 'now').model;
+  const changed = { ...closed, charges: closed.charges.map((c) => (c.id === 'tax' ? { ...c, amount: 999 } : c)) };
+  near(new BudgetEngine(changed, '2026-11').month('2026-10').people.find((p) => p.id === 'a')!.personalCharges, 20, 'frozen in October');
+});

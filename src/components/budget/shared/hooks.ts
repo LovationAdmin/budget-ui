@@ -4,6 +4,7 @@
 import { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useBudget } from '@/contexts/BudgetContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { addMonths } from '@/lib/budget/months';
 import type { YM } from '@/lib/budget/types';
 
@@ -24,4 +25,14 @@ export function useHashScroll(hash: string) {
     const t = setTimeout(() => document.getElementById(hash)?.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' }), 150);
     return () => clearTimeout(t);
   }, [location.hash, hash]);
+}
+
+/**
+ * Private personal charges: only their creator sees the label and category;
+ * everyone sees the amount (it shows in the member's pocket money).
+ */
+export function useChargePrivacy() {
+  const { user } = useAuth();
+  const canSee = (c: { private?: boolean; createdBy?: string }) => !c.private || (!!user?.id && c.createdBy === user.id);
+  return { canSee, label: (c: { label: string; private?: boolean; createdBy?: string }) => (canSee(c) ? c.label : 'Charge privée') };
 }

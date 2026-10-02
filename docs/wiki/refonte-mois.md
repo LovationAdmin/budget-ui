@@ -88,3 +88,13 @@ Le budget reste **un seul blob JSON** (`PUT /budgets/:id/data` avec `{ data }`).
 | Primitives | `src/components/budget/shared/*` (ResponsiveSheet, MonthPicker, primitives, hooks) |
 
 Routes : `/budget/:id/complete/{month,charges,projects,members,year,ai,reality}` ; `?m=YYYY-MM` sur Mois, `?y=YYYY` sur Année ; `/overview` → `/month`, `/calendar` → `/year`.
+
+## Charges perso (argent de poche)
+
+Une charge perso est une charge payée par un membre sur son argent de poche (impôt, envoi d'argent, crédit perso…).
+
+- **Stockage** : elle est rangée à part dans le blob, sous `personalCharges`, avec `ownerId` (id du membre), `private` éventuel et `createdBy` (id de l'utilisateur). Les lecteurs du pot commun (recap backend, app mobile, anciennes versions) ne la voient donc jamais dans `charges`.
+- **En mémoire** : elle vit dans `model.charges`, avec `ownerId`. Toutes les mutations des charges (montant daté, exception, arrêt, suppression) s'appliquent à l'identique.
+- **Moteur** : `month.personal` donne les charges perso du mois. Pour chaque membre, `people[].personalCharges` en donne la somme et `available` vaut `keep − personalCharges`. `totals.personal` donne le total du foyer. Les charges perso n'entrent jamais dans `reste`. Elles sont figées avec le mois clôturé (`snapshot.personal`).
+- **Répartition** : elle les ignore. Les montants sont simplement indiqués dans l'argent de poche de chacun (« dont X € de charges perso »).
+- **Privée** : seul le créateur voit le nom et la catégorie ; les montants restent visibles de tous. C'est un masquage dans l'interface : le blob est commun au foyer, il ne s'agit donc pas d'un chiffrement.

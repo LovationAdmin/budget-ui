@@ -76,6 +76,16 @@ export interface Charge {
   amountHistory?: AmountStep[];
   /** Month-only amounts. `0` = removed from that month. */
   overrides?: Record<YM, number>;
+  // ---- personal charges (stored under `personalCharges`, never in the pot) ----
+  /**
+   * Set = a member's personal charge (tax, money sent abroad…): it comes out
+   * of that member's pocket money, not out of the household pot.
+   */
+  ownerId?: string;
+  /** Personal charge whose label/category only its creator sees (amounts stay visible). */
+  private?: boolean;
+  /** User id of the creator (decides who sees a private charge). */
+  createdBy?: string;
 }
 
 export interface Project {
@@ -112,6 +122,8 @@ export interface MonthSnapshot {
   }>;
   projects: Array<{ id: string; label: string; allocation: number }>;
   oneOffs: OneOffItem[];
+  /** Personal charges of the month (out of pocket money, not of the pot). */
+  personal?: Array<{ id: string; label: string; amount: number; ownerId: string; category?: string; private?: boolean; createdBy?: string }>;
 }
 
 /** Everything the budget stores for one calendar month. */
