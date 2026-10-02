@@ -20,7 +20,8 @@ export function useHashScroll(hash: string) {
   const location = useLocation();
   useEffect(() => {
     if (location.hash !== `#${hash}`) return;
-    const t = setTimeout(() => document.getElementById(hash)?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 150);
+    const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    const t = setTimeout(() => document.getElementById(hash)?.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' }), 150);
     return () => clearTimeout(t);
   }, [location.hash, hash]);
 }

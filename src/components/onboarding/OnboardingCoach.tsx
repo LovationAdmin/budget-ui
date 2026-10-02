@@ -85,7 +85,7 @@ export function OnboardingCoach({
       className={cn(
         'fixed bottom-4 left-4 z-30 w-[min(360px,calc(100vw-2rem))]',
         'rounded-2xl border border-border/60 bg-card/95 shadow-floating backdrop-blur-md',
-        'transition-all duration-300',
+        'transition-[width] duration-300',
         collapsed && 'w-auto',
         className
       )}

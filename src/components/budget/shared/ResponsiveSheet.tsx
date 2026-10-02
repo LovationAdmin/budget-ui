@@ -24,7 +24,7 @@ export function ResponsiveSheet({ open, onOpenChange, title, description, childr
         <DialogPrimitive.Overlay className="fixed inset-0 z-50 bg-black/40 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />
         <DialogPrimitive.Content
           className={cn(
-            'fixed z-50 flex flex-col gap-5 overflow-y-auto bg-background shadow-floating outline-none',
+            'fixed z-50 flex flex-col gap-5 overflow-y-auto overscroll-contain bg-background shadow-floating outline-none',
             'data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:duration-200 data-[state=open]:duration-300',
             isMobile
               ? 'inset-x-0 bottom-0 max-h-[92dvh] rounded-t-3xl px-5 pt-3 pb-[max(1.5rem,env(safe-area-inset-bottom))] data-[state=closed]:slide-out-to-bottom data-[state=open]:slide-in-from-bottom'

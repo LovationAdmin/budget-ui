@@ -5,18 +5,52 @@
 // the « Mois » screen. The year lives in the URL (?y=2026).
 // ============================================================================
 
-import { useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { ChevronLeft, ChevronRight, Lock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { useBudget } from '@/contexts/BudgetContext';
+import type { MonthTotals } from '@/lib/budget/engine';
 import { makeYM, MONTH_NAMES, MONTHS_SHORT, MONTHS_LETTER, yearOf } from '@/lib/budget/months';
 import { moneySigned, roundCents } from '@/lib/budget/format';
 import { Pill } from '@/components/budget/shared/primitives';
 import { monthStatus } from '@/components/budget/month/MonthHeader';
 
+const SERIES = [
+  { key: 'charges', label: 'Charges', swatch: 'bg-orange-500' },
+  { key: 'savings', label: 'Épargne', swatch: 'bg-indigo-500' },
+  { key: 'reste', label: 'Reste', swatch: 'bg-emerald-500' },
+] as const;
+
+/** Hover / focus details of one month (values in text ink, identity on the swatch). */
+function MonthTooltip({ title, t, fmt, align }: { title: string; t: MonthTotals; fmt: (n: number) => string; align: 'left' | 'center' | 'right' }) {
+  return (
+    <span
+      aria-hidden="true"
+      className={cn(
+        'pointer-events-none absolute bottom-full z-20 mb-2 hidden w-48 rounded-xl border border-border/70 bg-popover p-3 text-left shadow-elevated group-hover:block group-focus-visible:block',
+        align === 'left' && 'left-0',
+        align === 'center' && 'left-1/2 -translate-x-1/2',
+        align === 'right' && 'right-0',
+      )}
+    >
+      <span className="mb-1.5 block text-xs font-bold text-foreground">{title}</span>
+      <span className="flex items-center justify-between gap-2 text-xs tabular-nums text-muted-foreground">
+        <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-sm bg-emerald-700" />Entrées</span>
+        <span className="font-semibold text-foreground">{fmt(t.entrees)}</span>
+      </span>
+      {SERIES.map((s) => (
+        <span key={s.key} className="mt-1 flex items-center justify-between gap-2 text-xs tabular-nums text-muted-foreground">
+          <span className="flex items-center gap-1.5"><span className={cn('h-2 w-2 rounded-sm', s.key === 'reste' && t.reste < 0 ? 'bg-red-600' : s.swatch)} />{s.label}</span>
+          <span className={cn('font-semibold', s.key === 'reste' && t.reste < 0 ? 'text-red-700' : 'text-foreground')}>{fmt(t[s.key])}</span>
+        </span>
+      ))}
+    </span>
+  );
+}
+
 export default function YearTab() {
-  const { engine, today, fmt, goToMonth, currencySymbol } = useBudget();
+  const { engine, today, fmt, budgetId, currencySymbol } = useBudget();
   const [params, setParams] = useSearchParams();
   const thisYear = yearOf(today);
   const minYear = Math.min(yearOf(engine.firstMonth), thisYear);
@@ -30,6 +64,7 @@ export default function YearTab() {
       else copy.set('y', String(y));
       return copy;
     });
+  const monthUrl = (ym: string) => `/budget/${budgetId}/complete/month?m=${ym}`;
 
   const rows = MONTH_NAMES.map((name, i) => {
     const ym = makeYM(year, i);
@@ -49,10 +84,10 @@ export default function YearTab() {
   const H = 160;
 
   const kpis = [
-    { label: 'Entrées', value: fmt(roundCents(tot.entrees)), cls: 'text-emerald-700' },
-    { label: 'Charges', value: fmt(roundCents(tot.charges)), cls: 'text-orange-700' },
-    { label: 'Épargne', value: fmt(roundCents(tot.savings)), cls: 'text-indigo-700' },
-    { label: 'Reste cumulé', value: moneySigned(roundCents(tot.reste), currencySymbol), cls: tot.reste < 0 ? 'text-red-700' : 'text-foreground' },
+    { label: 'Entrées', value: fmt(roundCents(tot.entrees)), swatch: 'bg-emerald-700', negative: false },
+    { label: 'Charges', value: fmt(roundCents(tot.charges)), swatch: 'bg-orange-500', negative: false },
+    { label: 'Épargne', value: fmt(roundCents(tot.savings)), swatch: 'bg-indigo-500', negative: false },
+    { label: 'Reste cumulé', value: moneySigned(roundCents(tot.reste), currencySymbol), swatch: tot.reste < 0 ? 'bg-red-600' : 'bg-emerald-500', negative: tot.reste < 0 },
   ];
 
   return (
@@ -78,8 +113,11 @@ export default function YearTab() {
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         {kpis.map((k) => (
           <div key={k.label} className="flex flex-col gap-0.5 rounded-2xl border border-border/70 bg-card p-4 shadow-soft">
-            <span className="text-xs font-bold text-muted-foreground">{k.label}</span>
-            <span className={cn('font-display text-xl sm:text-2xl font-extrabold tabular-nums', k.cls)}>{k.value}</span>
+            <span className="flex items-center gap-1.5 text-xs font-bold text-muted-foreground">
+              <span aria-hidden="true" className={cn('h-2.5 w-2.5 rounded-sm', k.swatch)} />
+              {k.label}
+            </span>
+            <span className={cn('font-display text-xl sm:text-2xl font-extrabold tabular-nums', k.negative ? 'text-red-700' : 'text-foreground')}>{k.value}</span>
           </div>
         ))}
       </div>
@@ -87,38 +125,41 @@ export default function YearTab() {
       <section aria-label="Répartition mois par mois" className="rounded-2xl border border-border/70 bg-card p-4 shadow-soft sm:p-5">
         <div className="grid grid-cols-12 items-end gap-0.5 sm:gap-1.5" style={{ height: H + 30 }}>
           {rows.map((r) => {
-            const hC = Math.round((r.t.charges / maxIn) * H);
-            const hS = Math.round((r.t.savings / maxIn) * H);
-            const hR = Math.round((Math.max(0, r.t.reste) / maxIn) * H);
+            // Bottom → top; the top segment carries the 4px rounded data-end.
+            const segments = [
+              { h: Math.round((r.t.charges / maxIn) * H), cls: 'bg-orange-500' },
+              { h: Math.round((r.t.savings / maxIn) * H), cls: 'bg-indigo-500' },
+              r.t.reste < 0 ? { h: 4, cls: 'bg-red-600' } : { h: Math.round((r.t.reste / maxIn) * H), cls: 'bg-emerald-500' },
+            ].filter((s) => s.h > 0);
             const isToday = r.ym === today;
             return (
-              <button
+              <Link
                 key={r.ym}
-                type="button"
-                onClick={() => goToMonth(r.ym)}
+                to={monthUrl(r.ym)}
                 aria-label={`Ouvrir ${r.name.toLowerCase()} ${year} : entrées ${fmt(r.t.entrees)}, charges ${fmt(r.t.charges)}, épargne ${fmt(r.t.savings)}, reste ${fmt(r.t.reste)}`}
                 className={cn(
-                  'flex h-full flex-col items-center justify-end gap-1 rounded-lg pb-0.5 transition-colors hover:bg-muted/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+                  'group relative flex h-full min-w-0 flex-col items-center justify-end gap-1 rounded-lg pb-0.5 transition-colors hover:bg-muted/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
                   isToday && 'bg-sky-50/70',
                 )}
               >
-                <span className="flex w-3/5 max-w-[34px] flex-col-reverse">
-                  <span className="block rounded-b bg-orange-500" style={{ height: hC }} />
-                  <span className="block bg-indigo-500" style={{ height: hS }} />
-                  <span className={cn('block rounded-t', r.t.reste < 0 ? 'bg-red-600' : 'bg-emerald-500')} style={{ height: r.t.reste < 0 ? 4 : hR }} />
+                <span className="flex w-3/5 max-w-[24px] flex-col-reverse gap-[2px]">
+                  {segments.map((s, k) => (
+                    <span key={s.cls} className={cn('block', s.cls, k === segments.length - 1 && 'rounded-t-[4px]')} style={{ height: s.h }} />
+                  ))}
                 </span>
                 <span className={cn('text-[11px] font-semibold', isToday ? 'text-primary' : 'text-muted-foreground')}>
                   <span className="sm:hidden">{MONTHS_LETTER[r.i]}</span>
                   <span className="hidden sm:inline">{MONTHS_SHORT[r.i]}</span>
                 </span>
-              </button>
+                <MonthTooltip title={`${r.name} ${year}`} t={r.t} fmt={fmt} align={r.i < 2 ? 'left' : r.i > 9 ? 'right' : 'center'} />
+              </Link>
             );
           })}
         </div>
         <div aria-hidden="true" className="mt-3 flex flex-wrap gap-4 text-xs text-muted-foreground">
-          <span className="inline-flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-sm bg-orange-500" />Charges</span>
-          <span className="inline-flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-sm bg-indigo-500" />Épargne</span>
-          <span className="inline-flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-sm bg-emerald-500" />Reste</span>
+          {SERIES.map((s) => (
+            <span key={s.key} className="inline-flex items-center gap-1.5"><span className={cn('h-2.5 w-2.5 rounded-sm', s.swatch)} />{s.label}</span>
+          ))}
           <span className="inline-flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-sm bg-red-600" />Déficit</span>
         </div>
       </section>
@@ -143,9 +184,9 @@ export default function YearTab() {
               return (
                 <tr key={r.ym} className={cn('border-t border-border/60', r.ym === today && 'bg-sky-50/60')}>
                   <td className="px-3 py-2">
-                    <button type="button" className="min-h-[36px] font-bold hover:text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" onClick={() => goToMonth(r.ym)}>
+                    <Link to={monthUrl(r.ym)} className="inline-flex min-h-[36px] items-center rounded font-bold hover:text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
                       {r.name}
-                    </button>
+                    </Link>
                   </td>
                   <td className="px-3 py-2 text-right">{fmt(r.t.entrees)}</td>
                   <td className="px-3 py-2 text-right">{fmt(r.t.charges)}</td>
@@ -170,10 +211,9 @@ export default function YearTab() {
         {rows.map((r) => {
           const st = monthStatus(r.closed, r.ym, today);
           return (
-            <button
+            <Link
               key={r.ym}
-              type="button"
-              onClick={() => goToMonth(r.ym)}
+              to={monthUrl(r.ym)}
               className={cn('flex min-h-[60px] w-full items-center gap-3 rounded-xl px-3 py-2 text-left hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring', r.ym === today && 'bg-sky-50/60')}
             >
               <span className="flex min-w-0 flex-1 flex-col">
@@ -186,7 +226,7 @@ export default function YearTab() {
                 <span className={cn('font-extrabold tabular-nums', r.t.reste < 0 ? 'text-red-700' : 'text-emerald-700')}>{moneySigned(r.t.reste, currencySymbol)}</span>
                 <Pill tone={st.tone} className="h-5 text-[11px]">{st.label}</Pill>
               </span>
-            </button>
+            </Link>
           );
         })}
       </section>

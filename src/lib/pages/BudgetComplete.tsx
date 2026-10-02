@@ -466,6 +466,12 @@ export default function BudgetCompleteLayout() {
   return (
     <BudgetProvider value={contextValue}>
       <div className="min-h-screen bg-background">
+        <a
+          href="#contenu"
+          className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[60] focus:rounded-xl focus:bg-card focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:shadow-floating focus:outline-none focus:ring-2 focus:ring-ring"
+        >
+          Aller au contenu
+        </a>
         <BudgetNavbar
           budgetTitle={budget?.name}
           userName={user?.name}
@@ -483,14 +489,15 @@ export default function BudgetCompleteLayout() {
           </div>
         )}
 
-        <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-5 sm:py-8 pb-32 lg:pb-16">
+        <main id="contenu" tabIndex={-1} className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-5 sm:py-8 pb-32 lg:pb-16 focus:outline-none">
           <Outlet />
         </main>
 
         <BudgetTabBar items={MAIN_TABS} currentSection={currentSection} onSectionChange={handleSectionChange} />
 
+        {/* Bottom centre: toasts live bottom-right, the setup coach bottom-left. */}
         <SaveStatusIndicator
-          className="top-[4.5rem] right-3 bottom-auto lg:top-auto lg:bottom-4 lg:right-4"
+          className="left-0 right-0 mx-auto w-fit bottom-[calc(5rem+env(safe-area-inset-bottom))] lg:bottom-4"
           status={saveStateMachine.status}
           errorMessage={saveStateMachine.errorMessage}
           lastSavedAt={saveStateMachine.lastSavedAt}
@@ -500,7 +507,7 @@ export default function BudgetCompleteLayout() {
         {!coachDismissed && (
           <OnboardingCoach
             steps={onboardingSteps}
-            className="bottom-24 lg:bottom-4"
+            className="bottom-[calc(9rem+env(safe-area-inset-bottom))] lg:bottom-4"
             onDismiss={() => {
               setCoachDismissed(true);
               try {

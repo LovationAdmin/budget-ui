@@ -564,13 +564,26 @@ export function describeChargeSchedule(c: Charge, today: YM): string {
   return base;
 }
 
+/**
+ * First month a saving is put aside monthly. A saving converted from a free
+ * one starts with a 0 step (the months it was free): it starts at the first
+ * non-zero step.
+ */
+function monthlyStart(p: Project): YM | undefined {
+  const start = windowOf(p).start;
+  const steps = p.amountHistory ? sortSteps(p.amountHistory) : [];
+  if (steps.length > 1 && roundCents(steps[0].amount) === 0) return steps.find((s) => roundCents(s.amount) !== 0)?.from ?? start;
+  return start;
+}
+
 /** Plain-language description of a recurring saving. */
 export function describeProjectSchedule(p: Project, today: YM): string {
   const w = windowOf(p);
   if (!isRecurringProject(p)) return 'Montant libre, choisi mois par mois';
-  if (w.start && w.end) return `${formatMonthShort(w.start)} → ${formatMonthShort(w.end)}`;
+  const start = monthlyStart(p);
+  if (start && w.end) return `${formatMonthShort(start)} → ${formatMonthShort(w.end)}`;
   if (w.end) return `Jusqu’à ${formatMonthShort(w.end)}`;
-  if (w.start) return compareYM(w.start, today) > 0 ? `À partir ${deMonth(formatMonthShort(w.start))}` : `Depuis ${formatMonthShort(w.start)}`;
+  if (start) return compareYM(start, today) > 0 ? `À partir ${deMonth(formatMonthShort(start))}` : `Depuis ${formatMonthShort(start)}`;
   return 'Chaque mois, sans échéance';
 }
 
@@ -585,14 +598,16 @@ export function amountHistoryHint(
   const cur = stepAt(sorted, ref)!;
   const i = sorted.indexOf(cur);
   const next = sorted[i + 1];
+  // A leading 0 step is not a pause: it is the time before the amount existed
+  // (e.g. a free saving turned into a monthly one).
   if (next) {
     if (roundCents(next.amount) === 0) return `En pause à partir ${deMonth(formatMonthShort(next.from))}`;
-    if (roundCents(cur.amount) === 0) return `Reprend en ${formatMonthShort(next.from)} : ${fmt(next.amount)}`;
+    if (roundCents(cur.amount) === 0 && i > 0) return `Reprend en ${formatMonthShort(next.from)} : ${fmt(next.amount)}`;
     return `${fmt(next.amount)} à partir ${deMonth(formatMonthShort(next.from))}`;
   }
   if (i > 0) {
     const before = sorted[i - 1];
-    if (roundCents(before.amount) === 0) return `Reprise en ${formatMonthShort(cur.from)}`;
+    if (roundCents(before.amount) === 0) return i - 1 === 0 ? '' : `Reprise en ${formatMonthShort(cur.from)}`;
     return `Depuis ${formatMonthShort(cur.from)} · avant ${fmt(before.amount)}`;
   }
   return '';

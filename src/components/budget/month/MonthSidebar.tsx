@@ -30,10 +30,18 @@ export function SummaryCard({ month }: { month: ResolvedMonth }) {
       <p className="mt-1 text-sm text-foreground/75">
         {deficit ? 'manquent pour couvrir les charges et l’épargne prévues' : 'restent dans le pot : ils vont à l’épargne générale'}
       </p>
-      <div aria-hidden="true" className="mt-4 flex h-3 overflow-hidden rounded-full bg-muted">
-        <span className="block bg-orange-500" style={{ width: w(t.charges) }} />
-        <span className="block bg-indigo-500" style={{ width: w(t.savings) }} />
-        <span className="block bg-emerald-500" style={{ width: w(Math.max(0, t.reste)) }} />
+      {/* Stacked bar: segments separated by a 2px surface gap, never by a stroke. */}
+      <div aria-hidden="true" className="mt-4 flex h-3 gap-[2px] overflow-hidden rounded-full">
+        {[
+          { v: t.charges, cls: 'bg-orange-500' },
+          { v: t.savings, cls: 'bg-indigo-500' },
+          { v: Math.max(0, t.reste), cls: 'bg-emerald-500' },
+        ]
+          .filter((s) => s.v > 0)
+          .map((s) => (
+            <span key={s.cls} className={cn('block min-w-[3px]', s.cls)} style={{ width: w(s.v) }} />
+          ))}
+        {t.charges + t.savings + Math.max(0, t.reste) <= 0 && <span className="block flex-1 bg-muted" />}
       </div>
       <dl className="mt-4 flex flex-col gap-2 text-sm tabular-nums">
         <div className="flex items-center justify-between gap-3">

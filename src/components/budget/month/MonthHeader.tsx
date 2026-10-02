@@ -97,14 +97,15 @@ export function MonthHeader({ ym, onChange }: MonthHeaderProps) {
               title={label}
               aria-current={selected ? 'date' : undefined}
               className={cn(
-                'flex min-h-[64px] flex-col items-center justify-end gap-1 rounded-xl border-[1.5px] pb-1 pt-1.5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+                // min-w-0: twelve cells must fit a phone (overrides the global 44px touch min-width).
+                'flex min-h-[64px] min-w-0 flex-col items-center justify-end gap-1 rounded-xl border-[1.5px] pb-1 pt-1.5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
                 selected ? 'border-primary bg-card shadow-sm' : isToday ? 'border-dashed border-primary/60' : 'border-transparent hover:bg-muted/60',
               )}
             >
               <span className="flex h-7 w-full items-end justify-center">
                 <span
                   className={cn(
-                    'block w-3/5 max-w-[22px] rounded',
+                    'block w-3/5 max-w-[22px] rounded-t-[4px]',
                     reste < 0 ? 'bg-red-600' : selected ? 'bg-primary' : closed ? 'bg-slate-300' : 'bg-emerald-400',
                   )}
                   style={{ height: h }}

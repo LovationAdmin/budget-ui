@@ -144,6 +144,26 @@
   h1, h2, h3, h4, h5, h6 {
     font-family: 'Plus Jakarta Sans', sans-serif;
     @apply font-semibold tracking-tight;
+    /* Plus Jakarta Sans has a narrow space: with tight tracking, words ran together. */
+    word-spacing: 0.08em;
+  }
+
+  /* No double-tap zoom delay on controls; states are drawn by the components. */
+  a, button, input, select, textarea, label, [role='button'] {
+    touch-action: manipulation;
+  }
+
+  html {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
   }
 }
 

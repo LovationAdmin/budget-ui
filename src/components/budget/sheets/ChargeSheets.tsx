@@ -676,7 +676,7 @@ export function ChargeEditorSheet({ sheet, onClose }: SheetProps<'chargeEditor'>
             className="flex w-full items-center gap-3.5 rounded-xl border-[1.5px] border-border bg-card px-4 py-3 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
             <span aria-hidden="true" className={cn('relative h-6 w-11 shrink-0 rounded-full transition-colors', smooth ? 'bg-primary' : 'bg-muted-foreground/30')}>
-              <span className={cn('absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-all', smooth ? 'left-[22px]' : 'left-0.5')} />
+              <span className={cn('absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform', smooth && 'translate-x-5')} />
             </span>
             <span className="flex flex-col">
               <span className="text-[15px] font-semibold">

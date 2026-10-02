@@ -6,7 +6,8 @@
 // ============================================================================
 
 import { useState } from 'react';
-import { ChevronDown, Pencil, PiggyBank, Plus, RotateCcw, Settings2, ShoppingBag, Sprout, Trash2 } from 'lucide-react';
+import { ChevronDown, MoreHorizontal, Pencil, PiggyBank, Plus, RotateCcw, Settings2, ShoppingBag, Sprout, Trash2 } from 'lucide-react';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { useBudget } from '@/contexts/BudgetContext';
@@ -57,6 +58,21 @@ function SavingCard({ p }: { p: Project }) {
         </span>
         <h2 className="min-w-0 flex-1 truncate font-display text-lg font-extrabold">{p.label}</h2>
         <Pill tone={pill.tone}>{pill.label}</Pill>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="icon" className="-mr-2 h-11 w-11 shrink-0" aria-label={`Plus d’actions pour « ${p.label} »`}>
+              <MoreHorizontal className="h-5 w-5" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-48">
+            <DropdownMenuItem className="min-h-[44px] gap-2" onSelect={() => openSheet({ kind: 'savingEditor', id: p.id, ym: firstOpen })}>
+              <Settings2 className="h-4 w-4" aria-hidden="true" /> Réglages
+            </DropdownMenuItem>
+            <DropdownMenuItem className="min-h-[44px] gap-2 text-destructive focus:text-destructive" onSelect={() => openSheet({ kind: 'savingDelete', id: p.id })}>
+              <Trash2 className="h-4 w-4" aria-hidden="true" /> Supprimer
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
       <div>
         <p className="text-sm text-muted-foreground">{schedule}</p>
@@ -95,14 +111,6 @@ function SavingCard({ p }: { p: Project }) {
         <Button variant="ghost" className="min-h-[44px]" onClick={() => openSheet({ kind: 'spend', ym: firstOpen, potId: p.id })}>
           <ShoppingBag className="h-4 w-4" /> Payer une dépense
         </Button>
-        <span className="ml-auto flex gap-1">
-          <Button variant="ghost" size="icon" className="h-11 w-11" aria-label={`Réglages de « ${p.label} »`} onClick={() => openSheet({ kind: 'savingEditor', id: p.id, ym: firstOpen })}>
-            <Settings2 className="h-4 w-4" />
-          </Button>
-          <Button variant="ghost" size="icon" className="h-11 w-11 text-muted-foreground hover:text-destructive" aria-label={`Supprimer « ${p.label} »`} onClick={() => openSheet({ kind: 'savingDelete', id: p.id })}>
-            <Trash2 className="h-4 w-4" />
-          </Button>
-        </span>
       </div>
     </article>
   );

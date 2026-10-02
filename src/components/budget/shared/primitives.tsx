@@ -123,8 +123,10 @@ export function Segmented<T extends string>({
   label: string;
   className?: string;
 }) {
+  // Four options or more go 2 × 2: four labels never fit one row in a phone sheet.
+  const columns = options.length === 3 ? 'grid-cols-3' : 'grid-cols-2';
   return (
-    <div role="group" aria-label={label} className={cn('flex flex-wrap gap-1 rounded-xl bg-muted p-1', className)}>
+    <div role="group" aria-label={label} className={cn('grid gap-1 rounded-xl bg-muted p-1', columns, className)}>
       {options.map((o) => {
         const active = o.value === value;
         return (
@@ -134,7 +136,7 @@ export function Segmented<T extends string>({
             aria-pressed={active}
             onClick={() => onChange(o.value)}
             className={cn(
-              'min-h-[40px] flex-1 whitespace-nowrap rounded-lg px-3 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+              'min-h-[40px] min-w-0 rounded-lg px-2 py-1.5 text-center text-sm font-semibold leading-tight transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
               active ? 'bg-card text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground',
             )}
           >
