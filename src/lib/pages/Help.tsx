@@ -89,12 +89,12 @@ export default function Help() {
     {
       category: 'security',
       question: 'Mes données sont-elles sécurisées ?',
-      answer: 'Oui ! Vos données budget sont chiffrées avec AES-256 (niveau bancaire). Vos mots de passe sont hashés avec bcrypt. Toutes les communications utilisent HTTPS. Nous ne vendons jamais vos données à des tiers.'
+      answer: 'Oui. Vos données de budget sont chiffrées en AES-256-GCM avant d\'être stockées et hébergées en Europe (RGPD). Vos mots de passe sont hashés avec bcrypt, toutes les communications passent en HTTPS, et la double authentification (2FA) est disponible. Nous ne vendons jamais vos données.'
     },
     {
       category: 'security',
       question: 'Qui peut voir mes données de budget ?',
-      answer: 'Uniquement vous et les membres que vous avez explicitement invités à un budget spécifique. Même notre équipe technique ne peut pas voir vos données chiffrées sans votre clé de déchiffrement.'
+      answer: 'Uniquement vous et les membres que vous avez invités sur ce budget. Et à l\'intérieur d\'un budget partagé, vos charges perso privées (impôt, envoi d\'argent, crédit perso…) restent à vous : leur nom est chiffré à part et lisible par vous seul ; les autres membres ne voient que « Charge privée » et son montant. Notre équipe technique n\'accède aux données qu\'en cas d\'opération de support, et ces accès sont journalisés.'
     },
     {
       category: 'security',
@@ -132,6 +132,21 @@ export default function Help() {
     },
     {
       category: 'features',
+      question: 'J\'ai un objectif et une date : combien mettre de côté chaque mois ?',
+      answer: 'Créez une épargne avec l\'objectif (ex : 15 000 €) et une fin (« Pendant 10 mois » ou « Jusqu\'à juillet 2027 ») : le montant mensuel se calcule tout seul (1 500 €). L\'app vérifie ensuite si le pot commun peut suivre chaque mois ; sinon, elle propose d\'ajuster les contributions du foyer ou de demander un plan au Budget IA, qui respecte l\'échéance.'
+    },
+    {
+      category: 'features',
+      question: 'C\'est quoi l\'argent de poche ?',
+      answer: 'C\'est ce qui reste à chaque membre une fois sa contribution au pot commun versée, c\'est-à-dire une fois les charges et l\'épargne du foyer payées. L\'onglet « Foyer » l\'affiche pour chacun, mois par mois, avec l\'historique.'
+    },
+    {
+      category: 'features',
+      question: 'Comment déclarer une charge personnelle (impôt, envoi d\'argent…) ?',
+      answer: 'Dans « Foyer », touchez « + Charge perso » sur la carte du membre (ou, dans une nouvelle charge, « Qui la paie ? → Un membre »). Elle se déduit de son argent de poche, sans toucher au pot commun ni à la répartition. Choisissez « Visible par le foyer » ou « Privée » : une charge privée n\'est lisible que par vous, les autres ne voient que son montant.'
+    },
+    {
+      category: 'features',
       question: 'Salaire et contribution au pot commun, quelle différence ?',
       answer: 'Chaque membre du foyer a un salaire net ET une contribution : ce qu\'il verse au pot commun (tout son salaire, un montant fixe ou un pourcentage). Seules les contributions paient les charges et l\'épargne du foyer. Dans l\'onglet « Foyer », l\'assistant « Répartir le pot commun » calcule une contribution juste (au prorata, à parts égales ou avec le même argent de poche pour chacun).'
     },
@@ -149,6 +164,11 @@ export default function Help() {
       category: 'features',
       question: 'Comment clôturer (verrouiller) un mois ?',
       answer: 'Les mois passés se clôturent tout seuls le 1er du mois suivant : leurs montants sont figés. Vous pouvez aussi clôturer le mois en cours depuis la vue Mois (« Clôturer »). Pour corriger un mois clôturé, touchez « Rouvrir » : l\'écran montre d\'abord ce qui va changer.'
+    },
+    {
+      category: 'features',
+      question: 'Y a-t-il un mode sombre ?',
+      answer: 'Oui : menu du compte (en haut à droite) › Apparence › Automatique, Clair ou Sombre. « Automatique » suit le réglage de votre téléphone ou ordinateur.'
     },
     {
       category: 'features',

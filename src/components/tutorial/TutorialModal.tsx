@@ -114,7 +114,7 @@ const STEPS = [
       <div className="space-y-4 text-sm text-muted-foreground">
         <p>
           L'onglet <strong className="text-green-700">« Foyer »</strong> distingue le <strong>salaire</strong> de chacun et sa <strong>contribution au pot commun</strong> :
-          chacun garde le reste pour lui.
+          ce qui reste après les charges et l'épargne devient l'<strong>argent de poche</strong> de chacun.
         </p>
 
         <div className="bg-green-50 border border-green-200 rounded-lg p-4">
@@ -151,6 +151,10 @@ const STEPS = [
             <div className="flex items-center gap-2 p-2 bg-gray-50 rounded">
               <Calendar className="h-3 w-3 text-orange-600" />
               <span>L'assistant <strong>« Répartir le pot commun »</strong> propose une contribution juste pour chacun.</span>
+            </div>
+            <div className="flex items-center gap-2 p-2 bg-gray-50 rounded">
+              <Info className="h-3 w-3 text-purple-600" />
+              <span>Une <strong>charge perso</strong> (impôt, envoi d'argent…) se déduit de l'argent de poche de son titulaire. Privée, son nom n'est visible <strong>que par vous</strong>.</span>
             </div>
           </div>
         </div>
@@ -193,10 +197,14 @@ const STEPS = [
             </li>
             <li className="flex items-start gap-2">
               <span className="bg-orange-600 text-white rounded-full w-4 h-4 flex items-center justify-center text-[10px] flex-shrink-0">3</span>
-              <span>Choisissez <strong>quand elle revient</strong> et son <strong>montant</strong>.</span>
+              <span><strong>« Qui la paie ? »</strong> : le foyer (pot commun) ou un membre (charge perso, publique ou privée).</span>
             </li>
             <li className="flex items-start gap-2">
               <span className="bg-orange-600 text-white rounded-full w-4 h-4 flex items-center justify-center text-[10px] flex-shrink-0">4</span>
+              <span>Choisissez <strong>quand elle revient</strong> et son <strong>montant</strong>.</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="bg-orange-600 text-white rounded-full w-4 h-4 flex items-center justify-center text-[10px] flex-shrink-0">5</span>
               <span>Indiquez le <strong>mois de début</strong> et, si besoin, une fin.</span>
             </li>
           </ol>
@@ -348,7 +356,7 @@ const STEPS = [
 
         <div className="bg-green-50 border border-green-200 rounded-lg p-3">
           <p className="text-xs text-green-800">
-            <strong>🎉 Bonus :</strong> Définissez un objectif : l'écran indique quand il sera atteint.
+            <strong>🎉 Bonus :</strong> Indiquez un <strong>objectif</strong> et une <strong>date</strong> : le montant mensuel est calculé, vous voyez s'il est tenable, et le <strong>Budget IA</strong> peut proposer un plan.
           </p>
         </div>
       </div>

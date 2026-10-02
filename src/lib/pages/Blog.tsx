@@ -36,6 +36,30 @@ interface BlogPost {
 
 const blogPosts: BlogPost[] = [
   {
+    id: '10',
+    title: "Compte Commun en Couple (Marié ou Non) : Pot Commun, Argent de Poche et Charges Perso",
+    slug: "compte-commun-couple-argent-de-poche",
+    excerpt: "Combien verser sur le compte commun, combien garder pour soi, et comment gérer les dépenses personnelles (impôts, envois d'argent) sans tout dévoiler ? La méthode complète, mariés ou non.",
+    category: "Couple",
+    author: "Équipe Budget Famille",
+    publishedAt: "2026-10-02",
+    readTime: "8 min",
+    tags: ["Couple", "Compte commun", "Argent de poche", "Confidentialité"],
+    featured: true
+  },
+  {
+    id: '11',
+    title: "Combien Épargner par Mois pour Atteindre un Objectif à une Date Précise ?",
+    slug: "combien-epargner-par-mois-objectif-date",
+    excerpt: "15 000 € pour juillet 2027 ? Le calcul du montant à mettre de côté chaque mois, comment vérifier qu'il est tenable, et quoi faire s'il ne l'est pas.",
+    category: "Épargne",
+    author: "Équipe Budget Famille",
+    publishedAt: "2026-10-02",
+    readTime: "6 min",
+    tags: ["Épargne", "Objectif", "Calcul", "Simulateur"],
+    featured: true
+  },
+  {
     id: '1',
     title: "Les 5 Étapes Essentielles pour Gérer son Budget Familial en 2025",
     slug: "5-etapes-gerer-budget-familial-2025",

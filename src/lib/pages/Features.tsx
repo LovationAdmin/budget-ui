@@ -51,10 +51,10 @@ export default function Features() {
       icon: Shield,
       title: "Privacy Forte",
       subtitle: "Chiffrement AES-256-GCM at-rest",
-      description: "Toutes vos données budgétaires sont stockées chiffrées en base. L'accès est restreint, journalisé, et conforme RGPD.",
+      description: "Toutes vos données budgétaires sont stockées chiffrées en base. Et dans un budget partagé, vos charges perso privées restent à vous : leur nom n'est lisible que par vous.",
       highlights: [
         "Chiffrement AES-256-GCM at-rest",
-        "Stockage en base toujours chiffré",
+        "Charges perso privées : lisibles par vous seul",
         "Hébergement UE (Frankfurt) — RGPD"
       ],
       color: "bg-emerald-500"
@@ -74,7 +74,7 @@ export default function Features() {
     {
       icon: Brain,
       title: "IA Market Suggestions",
-      subtitle: "Powered by Claude Sonnet 4",
+      subtitle: "Propulsé par Claude (Anthropic)",
       description: "Notre IA analyse vos charges et trouve automatiquement des alternatives moins chères sur le marché.",
       highlights: [
         "Analyse de marché en temps réel",
@@ -91,7 +91,8 @@ export default function Features() {
   const comparisonTable = [
     { feature: "Gestion multi-budgets", budgetFamille: true, others: true, highlight: false },
     { feature: "Collaboration temps réel", budgetFamille: true, others: false, highlight: true },
-    { feature: "Chiffrement Zero-Knowledge", budgetFamille: true, others: false, highlight: true },
+    { feature: "Charges perso privées dans un budget partagé", budgetFamille: true, others: false, highlight: true },
+    { feature: "Pot commun + argent de poche par membre", budgetFamille: true, others: false, highlight: true },
     { feature: "Connexion bancaire (2500+ banques)", budgetFamille: true, others: true, highlight: false },
     { feature: "IA Market Suggestions", budgetFamille: true, others: false, highlight: true },
     { feature: "Reality Check (Budget vs Réel)", budgetFamille: true, others: false, highlight: true },
@@ -109,8 +110,8 @@ export default function Features() {
       description: "Invitez votre famille et gérez ensemble vos budgets en temps réel.",
       features: [
         "Invitations par email",
-        "Rôles et permissions",
-        "Historique des modifications",
+        "Pot commun et argent de poche de chacun",
+        "Répartition juste (prorata, parts égales, même argent de poche)",
         "Notifications en direct"
       ],
       color: "bg-blue-500"
@@ -120,10 +121,10 @@ export default function Features() {
       title: "Suivi Complet",
       description: "Visualisez vos finances avec des graphiques clairs et intuitifs.",
       features: [
-        "Tableaux mensuels",
-        "Graphiques de tendance",
-        "Comparaison année/année",
-        "Export des données"
+        "Vue Mois : entrées, charges, épargne, reste",
+        "Vue Année et historique de chaque membre",
+        "Mois clôturés figés automatiquement",
+        "Mode sombre et export des données"
       ],
       color: "bg-green-500"
     },
@@ -132,10 +133,10 @@ export default function Features() {
       title: "Projets d'Épargne",
       description: "Définissez des objectifs et suivez votre progression.",
       features: [
-        "Objectifs personnalisés",
-        "Suivi automatique",
-        "Alertes de progression",
-        "Priorisation intelligente"
+        "Objectif + échéance → montant mensuel calculé",
+        "Vérification : le pot commun peut-il suivre ?",
+        "Plan proposé par le Budget IA",
+        "Cagnottes, épargne générale automatique"
       ],
       color: "bg-purple-500"
     },
@@ -144,10 +145,10 @@ export default function Features() {
       title: "Gestion des Charges",
       description: "Catégorisez et analysez toutes vos dépenses récurrentes.",
       features: [
-        "Catégories personnalisées",
-        "Charges mensuelles/annuelles",
-        "Rappels d'échéances",
-        "Analyse par catégorie"
+        "Charges du foyer ou charges perso (sur l'argent de poche)",
+        "Mensuelles, certains mois, annuelles lissées, ponctuelles",
+        "Montants datés : le passé ne bouge jamais",
+        "Total du mois et moyenne sur 12 mois"
       ],
       color: "bg-orange-500"
     }

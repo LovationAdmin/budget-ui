@@ -514,12 +514,16 @@ export const blogArticles: BlogArticleContent[] = [
 
       <p><strong>Fonctionnalités spéciales couples :</strong></p>
       <ul>
-        <li><strong>Budget Partagé :</strong> Les deux voient les mêmes données en temps réel</li>
-        <li><strong>Multi-Comptes :</strong> Suivez compte commun ET comptes persos dans une seule app</li>
-        <li><strong>Notifications Configurables :</strong> "Paul vient de dépenser 80€ en courses" → transparence automatique</li>
-        <li><strong>Catégories Personnalisables :</strong> "Dépenses Julie" / "Dépenses Marc" / "Dépenses Communes"</li>
-        <li><strong>Enveloppes d'Épargne Commune :</strong> Objectifs visuels pour rester motivés ensemble</li>
+        <li><strong>Budget partagé :</strong> les deux voient les mêmes chiffres, mis à jour en temps réel</li>
+        <li><strong>Pot commun et argent de poche :</strong> chacun voit ce qu'il verse au pot commun et ce qu'il lui reste pour lui</li>
+        <li><strong>Répartition assistée :</strong> 50/50, au prorata des revenus ou « même argent de poche », calculée sur le mois choisi</li>
+        <li><strong>Charges perso, publiques ou privées :</strong> un impôt ou un envoi d'argent se déduit de votre argent de poche ; en privé, son nom n'est visible que par vous</li>
+        <li><strong>Cagnottes d'épargne communes :</strong> objectif, date, montant mensuel calculé automatiquement</li>
       </ul>
+
+      <p>
+        👉 Pour aller plus loin : <a href="/blog/compte-commun-couple-argent-de-poche">compte commun en couple : pot commun, argent de poche et charges perso</a>.
+      </p>
 
       <h2>💑 Témoignage : Laura & Kevin</h2>
 
@@ -2546,4 +2550,225 @@ export const blogArticles: BlogArticleContent[] = [
     </div>
   )
 }
+,
+  {
+    id: '10',
+    title: "Compte Commun en Couple (Marié ou Non) : Pot Commun, Argent de Poche et Charges Perso",
+    slug: "compte-commun-couple-argent-de-poche",
+    excerpt: "Combien verser sur le compte commun, combien garder pour soi, et comment gérer les dépenses personnelles (impôts, envois d'argent) sans tout dévoiler ? La méthode complète, mariés ou non.",
+    category: "Couple",
+    author: "Équipe Budget Famille",
+    authorBio: "Experts en gestion budgétaire et développeurs de Budget Famille",
+    publishedAt: "2026-10-02",
+    readTime: "8 min",
+    tags: ["Couple", "Compte commun", "Argent de poche", "Confidentialité"],
+    featured: true,
+    content: (
+      <div className="prose prose-lg max-w-none">
+        <p className="lead">
+          Le compte commun est la solution la plus simple pour payer le loyer, les courses et les factures à deux.
+          Mais il laisse souvent trois questions sans réponse : combien chacun doit-il verser, combien lui reste-t-il
+          vraiment, et que faire des dépenses qui ne regardent que lui ?
+        </p>
+
+        <h2>🏦 Compte commun en couple non marié : ce qu'il faut savoir</h2>
+        <p>
+          Marié, pacsé ou en concubinage, tout le monde peut ouvrir un <strong>compte joint</strong>. Les règles sont les mêmes :
+        </p>
+        <ul>
+          <li><strong>Chaque co-titulaire peut l'utiliser seul</strong> (paiements, retraits, virements) avec la signature « M. ou Mme ».</li>
+          <li><strong>Solidarité en cas de découvert</strong> : chacun est responsable de la totalité du solde débiteur, même s'il n'a pas fait la dépense.</li>
+          <li><strong>Désolidarisation possible à tout moment</strong> par lettre recommandée à la banque ; le compte est alors bloqué et il faut s'entendre pour le clôturer.</li>
+          <li><strong>En concubinage</strong>, les sommes déposées sont présumées appartenir à moitié à chacun : gardez une trace de qui verse quoi si vos apports sont inégaux.</li>
+        </ul>
+        <p>
+          Ces règles bancaires générales peuvent varier selon votre établissement : lisez la convention de compte avant de signer.
+        </p>
+
+        <h2>💡 Le bon modèle : pot commun + argent de poche</h2>
+        <p>
+          Plutôt que de tout mettre en commun ou de tout séparer, la plupart des couples apaisés font ainsi :
+        </p>
+        <ol>
+          <li><strong>On liste les charges du foyer</strong> pour le mois : loyer, énergie, courses, assurances, crèche…</li>
+          <li><strong>On ajoute l'épargne commune</strong> (vacances, fonds d'urgence, apport immobilier).</li>
+          <li><strong>Chacun verse sa part au pot commun</strong> (le compte joint) pour couvrir ce total.</li>
+          <li><strong>Ce qui reste sur le compte de chacun est son argent de poche</strong> : il en fait ce qu'il veut, sans avoir à se justifier.</li>
+        </ol>
+
+        <h3>Trois façons de répartir</h3>
+        <div className="overflow-x-auto">
+          <table>
+            <thead>
+              <tr><th>Méthode</th><th>Principe</th><th>Exemple (besoins : 2 400 €, salaires 2 800 € et 1 800 €)</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><strong>50/50</strong></td><td>Chacun verse la même somme</td><td>1 200 € chacun → argent de poche : 1 600 € et 600 €</td></tr>
+              <tr><td><strong>Au prorata</strong></td><td>Chacun verse le même % de son salaire</td><td>≈ 1 461 € et 939 € → argent de poche : ≈ 1 339 € et 861 €</td></tr>
+              <tr><td><strong>Même argent de poche</strong></td><td>Chacun garde la même somme pour lui</td><td>1 700 € et 700 € → argent de poche : 1 100 € chacun</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>
+          Aucune n'est « la bonne » : le 50/50 convient aux revenus proches, le prorata est le plus courant quand les écarts sont importants,
+          et le « même argent de poche » privilégie l'égalité de niveau de vie.
+        </p>
+
+        <h3>Calculez sur le mois réel, pas sur une moyenne</h3>
+        <p>
+          Les besoins changent d'un mois à l'autre : taxe foncière en octobre, assurance auto en janvier, rentrée en septembre.
+          Répartir sur une moyenne annuelle lisse tout, mais laisse le compte joint à découvert les mois chargés.
+          Mieux vaut <strong>calculer la répartition sur le mois en cours</strong>, et regarder le mois le plus chargé pour anticiper.
+        </p>
+
+        <h2>🧾 Les charges perso : déduites de son argent de poche</h2>
+        <p>
+          Certaines dépenses ne concernent qu'un seul membre du couple : un <strong>impôt</strong> personnel, un <strong>envoi d'argent à la famille à l'étranger</strong>,
+          un crédit contracté avant la vie commune, une pension alimentaire. Elles ne doivent pas peser sur le pot commun, mais elles réduisent bien
+          ce qu'il reste à la personne pour vivre.
+        </p>
+        <p>
+          La règle la plus juste : <strong>la répartition du pot commun ne change pas</strong>, et l'on indique simplement que l'argent de poche de la personne
+          comprend cette charge. Exemple : avec la méthode « même argent de poche » à 1 100 € chacun, si Awa règle 200 € d'impôt par mois pendant
+          5 mois, on n'augmente pas sa part au détriment de son conjoint : on affiche « 1 100 € d'argent de poche, dont 200 € de charge perso ».
+        </p>
+
+        <h2>🔒 Transparence oui, exposition non</h2>
+        <p>
+          La transparence sur les <strong>montants</strong> évite les mauvaises surprises : chacun sait ce dont l'autre dispose vraiment.
+          Mais le <strong>détail</strong> d'une dépense personnelle (à qui l'on envoie de l'argent, quelle dette on rembourse) peut légitimement rester privé.
+        </p>
+        <p>
+          C'est pour cela que Budget Famille propose des <strong>charges perso privées</strong> : le montant reste visible par tout le foyer, mais le nom de la
+          charge est stocké à part sur nos serveurs, chiffré, et <strong>n'est accessible qu'à la personne qui l'a créée</strong>. Les autres membres voient simplement
+          « Charge privée ». Si vous quittez un budget, ces informations sont supprimées.
+        </p>
+
+        <h2>📱 Comment faire dans Budget Famille</h2>
+        <ol>
+          <li>Dans l'onglet <strong>Foyer</strong>, ajoutez chaque membre avec son salaire net.</li>
+          <li>Dans <strong>Charges</strong>, ajoutez les dépenses : à l'étape <strong>« Qui la paie ? »</strong>, choisissez le foyer ou un membre (charge perso, publique ou privée).</li>
+          <li>Ouvrez <strong>« Répartir le pot commun »</strong> : choisissez 50/50, prorata ou même argent de poche, et le mois de référence.</li>
+          <li>Chaque membre voit son <strong>argent de poche</strong> du mois, dont ses charges perso, et peut consulter son historique mois par mois.</li>
+        </ol>
+
+        <div className="bg-gradient-to-r from-primary to-purple-600 text-white rounded-xl p-8 text-center my-8">
+          <h3 className="text-2xl font-bold mb-4">Votre pot commun, calculé au mois près</h3>
+          <p className="text-lg mb-6 opacity-90">
+            Gratuit. Vos charges perso privées restent privées.
+          </p>
+          <a
+            href="/signup"
+            className="inline-block bg-white text-primary font-semibold px-8 py-3 rounded-lg hover:bg-gray-100 transition-colors"
+          >
+            Créer notre budget de couple →
+          </a>
+        </div>
+
+        <h2>❓ Questions fréquentes</h2>
+        <h3>Faut-il être marié pour ouvrir un compte commun ?</h3>
+        <p>Non. Un couple non marié (pacsé ou en concubinage) peut ouvrir un compte joint, avec les mêmes règles de solidarité.</p>
+        <h3>Combien verser sur le compte commun ?</h3>
+        <p>De quoi couvrir les charges du foyer et l'épargne commune du mois, réparties selon la méthode choisie (50/50, prorata ou même argent de poche).</p>
+        <h3>Mon conjoint doit-il voir toutes mes dépenses ?</h3>
+        <p>Les montants qui touchent au budget commun, oui. Le détail d'une dépense personnelle peut rester privé : seul son montant compte pour le budget.</p>
+      </div>
+    )
+  },
+
+  {
+    id: '11',
+    title: "Combien Épargner par Mois pour Atteindre un Objectif à une Date Précise ?",
+    slug: "combien-epargner-par-mois-objectif-date",
+    excerpt: "15 000 € pour juillet 2027 ? Le calcul du montant à mettre de côté chaque mois, comment vérifier qu'il est tenable, et quoi faire s'il ne l'est pas.",
+    category: "Épargne",
+    author: "Équipe Budget Famille",
+    authorBio: "Experts en gestion budgétaire et développeurs de Budget Famille",
+    publishedAt: "2026-10-02",
+    readTime: "6 min",
+    tags: ["Épargne", "Objectif", "Calcul", "Simulateur"],
+    featured: true,
+    content: (
+      <div className="prose prose-lg max-w-none">
+        <p className="lead">
+          Apport immobilier, mariage, voiture, voyage : quand on connaît la somme à réunir et la date à laquelle il la faut,
+          la question devient simple : <strong>combien mettre de côté chaque mois ?</strong>
+        </p>
+
+        <h2>🧮 La formule de base</h2>
+        <div className="bg-blue-50 border-l-4 border-blue-500 p-6 my-6">
+          <p className="font-semibold">Montant mensuel = (objectif − déjà épargné) ÷ nombre de mois restants</p>
+        </div>
+        <p>
+          On compte les mois <strong>en incluant</strong> le premier et le dernier versement. Arrondissez toujours à l'euro supérieur :
+          mieux vaut finir avec quelques euros d'avance qu'avec quelques euros de retard.
+        </p>
+
+        <h3>Exemples concrets</h3>
+        <div className="overflow-x-auto">
+          <table>
+            <thead>
+              <tr><th>Objectif</th><th>Déjà épargné</th><th>Période</th><th>Mois</th><th>Par mois</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>15 000 € (apport)</td><td>0 €</td><td>octobre 2026 → juillet 2027</td><td>10</td><td><strong>1 500 €</strong></td></tr>
+              <tr><td>3 000 € (vacances)</td><td>600 €</td><td>novembre 2026 → juin 2027</td><td>8</td><td><strong>300 €</strong></td></tr>
+              <tr><td>1 200 € (Noël)</td><td>0 €</td><td>janvier → décembre</td><td>12</td><td><strong>100 €</strong></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>
+          Sur des horizons courts, les intérêts d'un livret réglementé changent peu le résultat : mieux vaut les ignorer dans le calcul
+          et les considérer comme une marge de sécurité.
+        </p>
+
+        <h2>✅ Est-ce tenable ? Le test du mois le plus serré</h2>
+        <p>
+          Un montant peut sembler raisonnable en moyenne et devenir impossible certains mois. Avant de vous engager :
+        </p>
+        <ol>
+          <li><strong>Repérez le mois le plus chargé</strong> sur la période (taxe foncière, rentrée, assurance annuelle…).</li>
+          <li><strong>Calculez ce qui reste ce mois-là</strong> après les charges et l'épargne déjà prévue.</li>
+          <li><strong>Comparez</strong> : si le montant mensuel dépasse ce reste, l'objectif n'est pas tenable en l'état.</li>
+        </ol>
+
+        <h2>🔧 Si le montant est trop élevé</h2>
+        <ul>
+          <li><strong>Repoussez la date</strong> : passer de 10 à 15 mois fait tomber 1 500 € à 1 000 € par mois.</li>
+          <li><strong>Revoyez l'objectif</strong> : un apport de 12 000 € au lieu de 15 000 € suffit peut-être.</li>
+          <li><strong>Réduisez une charge</strong> : énergie, assurances et abonnements sont les postes où l'on récupère le plus vite (voir <a href="/blog/economiser-500-euros-abonnements">notre guide des abonnements</a>).</li>
+          <li><strong>Ajustez les contributions</strong> au pot commun si l'objectif est commun, en veillant à laisser à chacun un argent de poche raisonnable.</li>
+        </ul>
+
+        <h2>📱 Le simulateur intégré à Budget Famille</h2>
+        <p>Dans l'onglet <strong>Épargne</strong>, créez une cagnotte avec :</p>
+        <ol>
+          <li>votre <strong>objectif</strong> (ex. 15 000 €) ;</li>
+          <li>le <strong>mois de début</strong> et le <strong>mois de fin</strong> ;</li>
+          <li>le montant mensuel est <strong>calculé automatiquement</strong>, et l'écran vous dit s'il <strong>tient dans votre budget</strong>, en vérifiant le mois le plus serré.</li>
+        </ol>
+        <p>
+          Si ce n'est pas tenable, deux boutons : <strong>« Créer et ajuster les contributions »</strong> pour revoir la répartition du pot commun,
+          ou <strong>« Créer et demander un plan au Budget IA »</strong> : l'IA propose des économies et une répartition qui respectent votre date limite.
+        </p>
+
+        <div className="bg-gradient-to-r from-primary to-purple-600 text-white rounded-xl p-8 text-center my-8">
+          <h3 className="text-2xl font-bold mb-4">Calculez votre épargne mensuelle en 1 minute</h3>
+          <p className="text-lg mb-6 opacity-90">Objectif, date, et c'est tout. Gratuit.</p>
+          <a
+            href="/signup"
+            className="inline-block bg-white text-primary font-semibold px-8 py-3 rounded-lg hover:bg-gray-100 transition-colors"
+          >
+            Créer ma cagnotte →
+          </a>
+        </div>
+
+        <h2>❓ Questions fréquentes</h2>
+        <h3>Combien épargner par mois en fonction de son salaire ?</h3>
+        <p>La règle 50/30/20 suggère 20 % du revenu net, mais l'important est de partir de vos objectifs datés, puis de vérifier que le total reste tenable.</p>
+        <h3>Vaut-il mieux une seule épargne ou plusieurs cagnottes ?</h3>
+        <p>Plusieurs cagnottes, une par objectif : on voit l'avancement de chacun et on évite de « piocher » dans l'apport pour les vacances.</p>
+      </div>
+    )
+  }
 ];
