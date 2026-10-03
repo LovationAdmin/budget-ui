@@ -56,6 +56,12 @@ function StaticPage({ page, extra }: { page: PageSEO; extra?: React.ReactNode })
           ))}
         </ul>
       )}
+      {page.sections?.map((sec) => (
+        <section key={sec.h2} className="mt-10">
+          <h2 className="font-display text-2xl font-bold text-foreground">{sec.h2}</h2>
+          <p className="mt-2 text-muted-foreground">{sec.text}</p>
+        </section>
+      ))}
       {extra}
     </Shell>
   );
