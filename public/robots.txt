@@ -1,5 +1,5 @@
 # Budget Famille - robots.txt
-# https://budgetfamille.com
+# https://www.budgetfamille.com
 
 # Autoriser tous les robots sur les pages publiques
 User-agent: *
@@ -16,6 +16,8 @@ Allow: /help
 Allow: /about
 Allow: /login
 Allow: /signup
+Allow: /tableau-budget-familial-gratuit
+Allow: /telechargements/
 Allow: /forgot-password
 Allow: /privacy
 Allow: /terms
@@ -60,7 +62,7 @@ Disallow: /profile
 Disallow: /api/
 
 # Sitemap
-Sitemap: https://budgetfamille.com/sitemap.xml
+Sitemap: https://www.budgetfamille.com/sitemap.xml
 
 # Crawl-delay pour ne pas surcharger le serveur
 Crawl-delay: 1

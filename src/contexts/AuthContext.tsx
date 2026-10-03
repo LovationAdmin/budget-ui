@@ -34,8 +34,10 @@ interface AuthContextType {
     password: string,
     country?: string,
     postal_code?: string,
-  ) => Promise<{ success: boolean; error?: string }>;
-  login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
+  ) => Promise<{ success: boolean; error?: string; code?: string }>;
+  login: (email: string, password: string) => Promise<{ success: boolean; error?: string; code?: string }>;
+  /** Opens the session returned by another flow (e.g. email verification). */
+  startSession: (accessToken: string, userData: User, refreshToken?: string) => void;
   logout: () => Promise<void>;
   logoutAll: () => Promise<{ success: boolean; error?: string }>;
   updateUser: (updates: Partial<User>) => void;
@@ -150,8 +152,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       const errorMessage =
         rateLimitMsg ??
         error.response?.data?.error ??
-        "Erreur lors de l'inscription";
-      return { success: false, error: errorMessage };
+        "La création du compte a échoué. Vérifiez votre connexion et réessayez.";
+      return { success: false, error: errorMessage, code: error.response?.data?.code as string | undefined };
     }
   };
 
@@ -173,11 +175,10 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       console.error('Login failed:', err);
       // Si rate-limited (429), message FR clair plutôt que "mot de passe incorrect"
       const rateLimitMsg = extractRateLimitError(err);
-      const errorMessage =
-        rateLimitMsg ??
-        err.response?.data?.error ??
-        'Email ou mot de passe incorrect';
-      return { success: false, error: errorMessage };
+      const data = err.response?.data;
+      const errorMessage = rateLimitMsg ?? data?.error ?? 'E-mail ou mot de passe incorrect.';
+      const code = (data?.code as string | undefined) ?? (data?.email_not_verified ? 'email_not_verified' : undefined);
+      return { success: false, error: errorMessage, code };
     }
   };
 
@@ -222,6 +223,12 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     return { success: true };
   };
 
+  const startSession = (accessToken: string, userData: User, refreshToken?: string) => {
+    persistAuth(accessToken, refreshToken, userData);
+    setUser(userData);
+    setSentryUser(userData.id);
+  };
+
   const updateUser = (updates: Partial<User>) => {
     if (user) {
       const updatedUser = { ...user, ...updates };
@@ -232,7 +239,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
   return (
     <AuthContext.Provider
-      value={{ user, signup, login, logout, logoutAll, loading, updateUser }}
+      value={{ user, signup, login, logout, logoutAll, loading, updateUser, startSession }}
     >
       {children}
     </AuthContext.Provider>

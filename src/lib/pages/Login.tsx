@@ -47,18 +47,9 @@ export default function Login() {
     if (result.success) {
       navigate(from, { replace: true });
     } else {
-      const errMsg = result.error || 'Erreur de connexion';
+      const errMsg = result.error || 'La connexion a échoué.';
       setError(errMsg);
-      // Heuristic: show resend button if message hints at unverified email
-      const lower = errMsg.toLowerCase();
-      const isVerificationIssue = 
-        lower.includes('vérifi') || 
-        lower.includes('verif') || 
-        lower.includes('not verified') ||
-        lower.includes('non vérifié');
-      if (isVerificationIssue) {
-        setShowResend(true);
-      }
+      if (result.code === 'email_not_verified') setShowResend(true);
     }
   };
 
@@ -68,8 +59,8 @@ export default function Login() {
     try {
       await authAPI.resendVerification?.(email);
       toast({
-        title: 'Email envoyé',
-        description: 'Vérifie ta boîte de réception.',
+        title: 'E-mail envoyé',
+        description: 'Cliquez sur le lien reçu pour confirmer votre adresse (pensez aux spams).',
       });
     } catch (err: any) {
       toast({
@@ -93,23 +84,25 @@ export default function Login() {
               <Wallet className="h-8 w-8 text-primary" />
             </div>
             <h1 className="text-3xl font-display font-bold text-gray-900">
-              Bon retour !
+              Content de vous revoir
             </h1>
             <p className="text-muted-foreground mt-2">
-              Connecte-toi pour accéder à tes budgets
+              Connectez-vous pour retrouver vos budgets
             </p>
           </div>
 
           <div className="glass-card-elevated p-6 sm:p-8 animate-scale-in">
             <form onSubmit={handleSubmit} className="space-y-5">
               <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="email">Adresse e-mail</Label>
                 <Input
                   id="email"
                   type="email"
                   value={email}
                   onChange={(e: ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)}
-                  placeholder="votre@email.com"
+                  placeholder="marie@exemple.fr"
+                  inputMode="email"
+                  spellCheck={false}
                   required
                   autoComplete="email"
                   className="h-11"
@@ -124,7 +117,7 @@ export default function Login() {
                     to="/forgot-password"
                     className="text-xs text-primary hover:underline"
                   >
-                    Oublié ?
+                    Mot de passe oublié ?
                   </Link>
                 </div>
                 <PasswordInput

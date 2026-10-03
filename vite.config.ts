@@ -68,6 +68,8 @@ export default defineConfig(({ mode }) => ({
       },
       workbox: {
         cleanupOutdatedCaches: true,
+        // Offline navigations get the neutral shell, never the home content.
+        navigateFallback: 'app.html',
         clientsClaim: true,
         skipWaiting: true,
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff,woff2}'],
@@ -152,6 +154,12 @@ export default defineConfig(({ mode }) => ({
     sourcemap: mode === 'development',
     target: 'es2020',
     rollupOptions: {
+      // index.html becomes the prerendered home page (scripts/prerender.mjs);
+      // app.html is the neutral shell every other route falls back to.
+      input: {
+        main: path.resolve(__dirname, 'index.html'),
+        app: path.resolve(__dirname, 'app.html'),
+      },
       output: {
         manualChunks: {
           // Split heavy deps for better caching

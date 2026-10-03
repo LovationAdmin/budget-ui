@@ -1,238 +1,264 @@
-import { useNavigate } from 'react-router-dom';
+// src/lib/pages/LandingPage.tsx
+// ============================================================================
+// Home page. Says what the app does with real screenshots (fictional demo
+// household), how to start, and answers the usual questions. No invented
+// figures or testimonials. The FAQ is shared with the structured data
+// published by the prerender (src/seo/faq.ts).
+// ============================================================================
+
+import { Link } from 'react-router-dom';
+import {
+  ArrowRight, CheckCircle2, Lock, Moon, PiggyBank, Scale, Sparkles, Target, Users, Wallet,
+} from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
 import { Button } from '@/components/ui/button';
-import { 
-  Rocket, Shield, Users, ArrowRight, CheckCircle2, 
-  TrendingUp, Calendar, Target, Brain, CreditCard
-} from 'lucide-react';
 import SmartToolsWidget from '@/components/SmartToolsWidget';
-import { SocialProof } from '@/components/SocialProof'; // Added SocialProof integration
+import { HOME_FAQ } from '@/seo/faq';
+
+const STEPS = [
+  { icon: Users, title: 'Ajoutez votre foyer', text: 'Le salaire de chacun, et ce qu’il verse au pot commun. Seul ou à plusieurs.' },
+  { icon: Wallet, title: 'Notez vos charges une fois', text: 'Loyer, énergie, cantine, taxe foncière : chaque mois se remplit tout seul.' },
+  { icon: Scale, title: 'Répartissez, épargnez', text: 'Une contribution juste pour chacun, l’argent de poche qui reste, et des cagnottes avec une date.' },
+];
+
+const FEATURES: Array<{ icon: typeof Users; kicker: string; title: string; text: string; points: string[]; img: string; alt: string }> = [
+  {
+    icon: Scale,
+    kicker: 'Couple et famille',
+    title: 'Pot commun et argent de poche, enfin clairs',
+    text: 'Pour chacun : son salaire, ce qu’il verse au pot commun et ce qui lui reste vraiment. L’assistant calcule une répartition juste sur le mois réel.',
+    points: ['50/50, au prorata des salaires ou même argent de poche', 'Calculé sur le mois en cours, pas sur une moyenne', 'Historique de chaque membre, mois par mois'],
+    img: '/images/app/foyer.jpg',
+    alt: 'Onglet Foyer : salaire, versement au pot commun et argent de poche de Camille et Mehdi',
+  },
+  {
+    icon: Lock,
+    kicker: 'Confidentialité',
+    title: 'Les dépenses perso, sans tout dévoiler',
+    text: 'Un impôt, un envoi d’argent à la famille, un crédit perso : il se déduit de votre argent de poche, jamais du pot commun.',
+    points: ['Charge perso publique ou privée', 'En privé, son nom est chiffré et visible par vous seul', 'Le montant reste juste pour tout le foyer'],
+    img: '/images/app/charge-sheet.jpg',
+    alt: 'Nouvelle charge perso « Impôt sur le revenu », payée par Mehdi, en mode privé',
+  },
+  {
+    icon: Target,
+    kicker: 'Épargne',
+    title: 'Un objectif, une date : le montant se calcule',
+    text: 'Vacances, apport, voiture : indiquez combien il vous faut et pour quand. Budget Famille calcule la somme à mettre de côté chaque mois et vérifie qu’elle tient.',
+    points: ['Cagnottes avec objectif et progression', 'Dépenses payées avec l’épargne suivies', 'Bilan de l’année, net de ce qui a été dépensé'],
+    img: '/images/app/saving.jpg',
+    alt: 'Cagnotte « Vacances été 2027 » : 500 € en caisse, 17 % de l’objectif',
+  },
+];
+
+const LATEST = [
+  { title: 'Compte commun en couple : pot commun, argent de poche et charges perso', slug: 'compte-commun-couple-argent-de-poche', readTime: '8 min' },
+  { title: 'Combien épargner par mois pour atteindre un objectif à une date ?', slug: 'combien-epargner-par-mois-objectif-date', readTime: '6 min' },
+  { title: 'Budget couple : 7 règles d’or pour gérer l’argent à deux', slug: 'budget-couple-regles-gerer-argent', readTime: '8 min' },
+];
+
+function Screenshot({ src, alt, className }: { src: string; alt: string; className?: string }) {
+  return (
+    <img
+      src={src}
+      alt={alt}
+      width={390}
+      height={640}
+      loading="lazy"
+      decoding="async"
+      className={`h-auto w-full max-w-[300px] rounded-[28px] border border-border/70 shadow-elevated ${className ?? ''}`}
+    />
+  );
+}
 
 export default function LandingPage() {
-  const navigate = useNavigate();
-
-  const features = [
-    {
-      icon: Users,
-      title: "Collaboration Familiale",
-      description: "Gérez votre budget à plusieurs en temps réel. Fini les fichiers Excel partagés.",
-      color: "bg-blue-100 text-blue-600"
-    },
-    {
-      icon: Shield,
-      title: "100% Sécurisé & Privé",
-      description: "Chiffrement AES-256 de bout en bout. Vos données bancaires ne sont jamais stockées.",
-      color: "bg-green-100 text-green-600"
-    },
-    {
-      icon: TrendingUp,
-      title: "Connexion Bancaire (Beta)",
-      description: "Synchronisez vos comptes automatiquement avec plus de 2500 banques européennes.",
-      color: "bg-purple-100 text-purple-600"
-    }
-  ];
-
-  const latestArticles = [
-    {
-      title: "5 Étapes pour Gérer son Budget en 2025",
-      excerpt: "Découvrez notre méthode éprouvée pour reprendre le contrôle.",
-      slug: "5-etapes-gerer-budget-familial-2025",
-      readTime: "7 min"
-    },
-    {
-      title: "Économiser sur vos Abonnements",
-      excerpt: "Comment l'IA peut vous faire gagner 500€/an.",
-      slug: "economiser-500-euros-abonnements",
-      readTime: "6 min"
-    },
-    {
-      title: "Budget Couple : 7 Règles d'Or",
-      excerpt: "Gérer l'argent à deux sans conflits.",
-      slug: "budget-couple-regles-gerer-argent",
-      readTime: "8 min"
-    }
-  ];
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary-50 to-purple-50 flex flex-col">
       <Navbar />
-      
+
       <main className="flex-1">
-        
-        {/* ==================== 1. HERO SECTION ==================== */}
-        <section className="px-4 py-20 text-center sm:px-6 lg:px-8">
-          <div className="max-w-4xl mx-auto">
-            <div className="inline-flex items-center gap-2 bg-gradient-to-r from-primary to-purple-600 text-white px-6 py-2 rounded-full text-sm font-medium mb-8 animate-fade-in">
-              <Rocket className="h-4 w-4" />
-              A venir : Support Enable Banking (PSD2)
-            </div>
-            
-            <h1 className="text-5xl md:text-6xl font-display font-bold text-gray-900 mb-6 tracking-tight">
-              Reprenez le contrôle de<br />
-              <span className="bg-gradient-to-r from-primary to-purple-600 bg-clip-text text-transparent">
-                votre budget familial
-              </span>
-            </h1>
-            
-            <p className="text-xl text-gray-600 mb-10 max-w-2xl mx-auto leading-relaxed">
-              L'application collaborative qui réunit votre famille autour de projets communs. 
-              Sécurisée, intelligente et gratuite.
-            </p>
-            
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button 
-                size="lg" 
-                onClick={() => navigate('/signup')}
-                className="bg-primary hover:bg-primary/90 text-white px-8 h-14 text-lg shadow-lg hover:shadow-xl transition-all"
-              >
-                Commencer gratuitement <ArrowRight className="ml-2 h-5 w-5" />
-              </Button>
-              <Button 
-                size="lg" 
-                variant="outline"
-                onClick={() => document.getElementById('demo-tool')?.scrollIntoView({ behavior: 'smooth' })}
-                className="border-2 px-8 h-14 text-lg"
-              >
-                Tester l'outil IA
-              </Button>
-            </div>
-            
-            <div className="mt-10 flex flex-wrap justify-center gap-6 text-sm text-gray-500">
-              <div className="flex items-center gap-2">
-                <CheckCircle2 className="h-4 w-4 text-green-500" /> Pas de carte requise
-              </div>
-              <div className="flex items-center gap-2">
-                <CheckCircle2 className="h-4 w-4 text-green-500" /> Données chiffrées
-              </div>
-              <div className="flex items-center gap-2">
-                <CheckCircle2 className="h-4 w-4 text-green-500" /> 100% Gratuit
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* ==================== 2. SMART TOOL EMBED ==================== */}
-        <section id="demo-tool" className="py-20 px-4 bg-white/50 backdrop-blur-sm">
-          <div className="max-w-5xl mx-auto">
-            <div className="text-center mb-12">
-              <div className="inline-flex h-12 w-12 items-center justify-center rounded-xl bg-purple-100 text-purple-600 mb-4">
-                <Brain className="h-6 w-6" />
-              </div>
-              <h2 className="text-3xl font-bold font-display text-gray-900 mb-4">
-                Testez notre Intelligence Artificielle
-              </h2>
-              <p className="text-lg text-gray-600">
-                Estimez vos économies potentielles en 30 secondes, sans créer de compte.
+        {/* Hero */}
+        <section className="px-4 pt-14 pb-16 sm:px-6 lg:px-8 lg:pt-20">
+          <div className="mx-auto grid max-w-6xl items-center gap-12 lg:grid-cols-[1.1fr_0.9fr]">
+            <div className="text-center lg:text-left">
+              <Link to="/blog/compte-commun-couple-argent-de-poche" className="mb-6 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-card/70 px-4 py-1.5 text-sm font-medium text-primary hover:bg-card">
+                <Sparkles className="h-4 w-4" aria-hidden="true" /> Nouveau : Budget IA, charges perso privées, mode sombre
+              </Link>
+              <h1 className="font-display text-4xl font-bold tracking-tight text-foreground sm:text-5xl lg:text-6xl [text-wrap:balance]">
+                L’application de budget familial gratuite,{' '}
+                <span className="bg-gradient-to-r from-primary to-purple-600 bg-clip-text text-transparent">pensée pour le couple et la famille</span>
+              </h1>
+              <p className="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-muted-foreground lg:mx-0">
+                Pot commun, argent de poche de chacun, charges et épargne : tout le mois en un coup d’œil.
+                Sans connexion bancaire obligatoire, sans publicité, à plusieurs en temps réel.
               </p>
-            </div>
-            
-            <div className="transform hover:scale-[1.01] transition-transform duration-500">
-                <SmartToolsWidget />
-            </div>
-          </div>
-        </section>
-
-        {/* ==================== 3. FEATURES ==================== */}
-        <section className="py-20 bg-white">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="text-center mb-16">
-              <h2 className="text-3xl font-bold font-display text-gray-900 mb-4">
-                Tout ce dont vous avez besoin
-              </h2>
-              <p className="text-gray-600 max-w-2xl mx-auto">
-                Une suite complète d'outils pour gérer le quotidien et préparer l'avenir.
-              </p>
-            </div>
-
-            <div className="grid md:grid-cols-3 gap-8">
-              {features.map((feature, idx) => {
-                const Icon = feature.icon;
-                return (
-                  <div key={idx} className="p-8 rounded-2xl bg-gray-50 border border-gray-100 hover:shadow-lg transition-all">
-                    <div className={`h-12 w-12 ${feature.color} rounded-xl flex items-center justify-center mb-6`}>
-                      <Icon className="h-6 w-6" />
-                    </div>
-                    <h3 className="text-xl font-bold text-gray-900 mb-3">{feature.title}</h3>
-                    <p className="text-gray-600 leading-relaxed">{feature.description}</p>
-                  </div>
-                );
-              })}
-            </div>
-            
-            <div className="text-center mt-12">
-              <Button variant="link" onClick={() => navigate('/features')} className="text-primary text-lg">
-                Voir toutes les fonctionnalités →
-              </Button>
-            </div>
-          </div>
-        </section>
-
-        {/* ==================== 4. SOCIAL PROOF ==================== */}
-        <SocialProof />
-
-        {/* ==================== 5. BLOG TEASER ==================== */}
-        <section className="py-20 bg-gray-50">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex justify-between items-end mb-10">
-              <div>
-                <h2 className="text-3xl font-bold font-display text-gray-900">Derniers Articles</h2>
-                <p className="text-gray-600 mt-2">Conseils d'experts pour vos finances</p>
+              <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row lg:justify-start">
+                <Button asChild size="lg" className="h-14 px-8 text-lg shadow-lg">
+                  <Link to="/signup">Créer mon budget gratuit <ArrowRight className="ml-2 h-5 w-5" aria-hidden="true" /></Link>
+                </Button>
+                <Button asChild size="lg" variant="outline" className="h-14 border-2 px-8 text-lg">
+                  <a href="#comment-ca-marche">Comment ça marche</a>
+                </Button>
               </div>
-              <Button variant="outline" onClick={() => navigate('/blog')} className="hidden sm:flex">
-                Voir le blog
-              </Button>
+              <ul className="mt-8 flex flex-wrap justify-center gap-x-6 gap-y-2 text-sm text-muted-foreground lg:justify-start">
+                {['Gratuit, sans carte bancaire', 'Données hébergées en Europe', 'Jamais revendues'].map((t) => (
+                  <li key={t} className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-success" aria-hidden="true" /> {t}</li>
+                ))}
+              </ul>
             </div>
+            <div className="relative mx-auto flex justify-center">
+              <img
+                src="/images/app/month-light.jpg"
+                alt="Vue du mois dans Budget Famille : pot commun d’octobre, entrées, charges, épargne et reste du mois"
+                width={390}
+                height={640}
+                fetchPriority="high"
+                className="h-auto w-full max-w-[320px] rounded-[32px] border border-border/70 shadow-elevated"
+              />
+              <img
+                src="/images/app/month-dark.jpg"
+                alt=""
+                aria-hidden="true"
+                width={390}
+                height={640}
+                loading="lazy"
+                className="absolute -right-6 top-16 hidden h-auto w-[220px] rounded-[28px] border border-white/10 shadow-elevated xl:block"
+              />
+            </div>
+          </div>
+        </section>
 
-            <div className="grid md:grid-cols-3 gap-6">
-              {latestArticles.map((post, idx) => (
-                <div 
-                  key={idx} 
-                  className="bg-white p-6 rounded-xl border hover:shadow-md transition-all cursor-pointer group"
-                  onClick={() => navigate(`/blog/${post.slug}`)}
-                >
-                  <div className="text-xs text-primary font-semibold mb-2 uppercase tracking-wide">Article</div>
-                  <h3 className="font-bold text-lg text-gray-900 mb-2 group-hover:text-primary transition-colors">
-                    {post.title}
-                  </h3>
-                  <p className="text-sm text-gray-600 mb-4">{post.excerpt}</p>
-                  <div className="text-xs text-gray-400 flex items-center gap-1">
-                    <Calendar className="h-3 w-3" /> {post.readTime} de lecture
+        {/* How it works */}
+        <section id="comment-ca-marche" className="scroll-mt-20 bg-card px-4 py-20 sm:px-6 lg:px-8">
+          <div className="mx-auto max-w-6xl">
+            <h2 className="text-center font-display text-3xl font-bold text-foreground">Votre budget prêt en 3 étapes</h2>
+            <p className="mx-auto mt-3 max-w-2xl text-center text-muted-foreground">Quelques minutes au départ, puis chaque mois se remplit tout seul.</p>
+            <ol className="mt-12 grid gap-6 md:grid-cols-3">
+              {STEPS.map((s, i) => (
+                <li key={s.title} className="rounded-2xl border border-border/70 bg-background p-6">
+                  <span className="flex items-center gap-3">
+                    <span className="flex h-10 w-10 items-center justify-center rounded-full bg-primary font-bold text-primary-foreground">{i + 1}</span>
+                    <s.icon className="h-5 w-5 text-primary" aria-hidden="true" />
+                  </span>
+                  <h3 className="mt-4 text-lg font-bold text-foreground">{s.title}</h3>
+                  <p className="mt-2 text-muted-foreground">{s.text}</p>
+                </li>
+              ))}
+            </ol>
+          </div>
+        </section>
+
+        {/* Features */}
+        <section className="px-4 py-20 sm:px-6 lg:px-8" aria-labelledby="features-title">
+          <div className="mx-auto max-w-6xl">
+            <h2 id="features-title" className="text-center font-display text-3xl font-bold text-foreground">Tout ce qu’un tableau Excel ne fait pas</h2>
+            <div className="mt-14 flex flex-col gap-20">
+              {FEATURES.map((f, i) => (
+                <article key={f.title} className="grid items-center gap-10 md:grid-cols-2">
+                  <div className={i % 2 ? 'md:order-2' : ''}>
+                    <p className="flex items-center gap-2 text-sm font-bold uppercase tracking-wider text-primary"><f.icon className="h-4 w-4" aria-hidden="true" /> {f.kicker}</p>
+                    <h3 className="mt-3 font-display text-2xl font-bold text-foreground sm:text-3xl">{f.title}</h3>
+                    <p className="mt-4 text-lg text-muted-foreground">{f.text}</p>
+                    <ul className="mt-5 space-y-2">
+                      {f.points.map((p) => (
+                        <li key={p} className="flex items-start gap-2 text-foreground"><CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-success" aria-hidden="true" /> {p}</li>
+                      ))}
+                    </ul>
                   </div>
-                </div>
+                  <div className={`flex justify-center ${i % 2 ? 'md:order-1' : ''}`}>
+                    <Screenshot src={f.img} alt={f.alt} />
+                  </div>
+                </article>
               ))}
             </div>
-            
-            <div className="mt-8 text-center sm:hidden">
-              <Button variant="outline" onClick={() => navigate('/blog')}>Voir le blog</Button>
+
+            <div className="mt-20 grid gap-6 md:grid-cols-2">
+              <div className="rounded-2xl bg-gradient-to-br from-slate-900 to-sky-900 p-8 text-white">
+                <p className="flex items-center gap-2 text-sm font-bold uppercase tracking-wider text-sky-200"><Sparkles className="h-4 w-4" aria-hidden="true" /> Budget IA</p>
+                <h3 className="mt-3 font-display text-2xl font-bold">Votre budget, proposé par l’IA</h3>
+                <p className="mt-3 text-slate-200">Décrivez votre foyer et vos projets : l’IA propose une répartition juste, des pistes d’économies et un plan pour tenir vos objectifs. Rien ne change tant que vous ne validez pas.</p>
+              </div>
+              <div className="rounded-2xl border border-border/70 bg-card p-8">
+                <p className="flex items-center gap-2 text-sm font-bold uppercase tracking-wider text-primary"><Moon className="h-4 w-4" aria-hidden="true" /> Partout, à plusieurs</p>
+                <h3 className="mt-3 font-display text-2xl font-bold text-foreground">Sur téléphone, en clair ou en sombre</h3>
+                <p className="mt-3 text-muted-foreground">Invitez votre conjoint : chacun voit les mêmes chiffres, en temps réel. Chaque changement s’enregistre en une seconde et s’annule aussi vite.</p>
+              </div>
+            </div>
+
+            <div className="mt-12 text-center">
+              <Button asChild size="lg" className="h-14 px-8 text-lg">
+                <Link to="/signup">Commencer gratuitement <ArrowRight className="ml-2 h-5 w-5" aria-hidden="true" /></Link>
+              </Button>
+              <p className="mt-3 text-sm text-muted-foreground">
+                Vous préférez un tableur ? <Link to="/tableau-budget-familial-gratuit" className="font-medium text-primary hover:underline">Téléchargez notre tableau de budget familial gratuit</Link>.
+              </p>
             </div>
           </div>
         </section>
 
-        {/* ==================== 6. CTA FINAL ==================== */}
-        <section className="py-24 bg-primary text-white">
-          <div className="max-w-4xl mx-auto px-4 text-center">
-            <h2 className="text-4xl font-display font-bold mb-6">
-              Prêt à changer votre avenir financier ?
-            </h2>
-            <p className="text-xl text-primary-100 mb-10">
-              Rejoignez les familles qui ont déjà repris le contrôle. 
-              C'est gratuit, sécurisé et sans engagement.
-            </p>
-            <Button 
-              size="lg" 
-              variant="secondary" 
-              className="bg-white text-primary hover:bg-gray-100 h-14 px-10 text-lg shadow-xl"
-              onClick={() => navigate('/signup')}
-            >
-              Créer mon compte maintenant
-            </Button>
-            <p className="mt-6 text-sm text-primary-200 opacity-80 flex items-center justify-center gap-2">
-              <CreditCard className="h-4 w-4" /> Pas de carte de crédit requise pour l'inscription
-            </p>
+        {/* AI tool without account */}
+        <section id="demo-tool" className="bg-card/60 px-4 py-20 sm:px-6 lg:px-8">
+          <div className="mx-auto max-w-5xl">
+            <div className="mb-10 text-center">
+              <h2 className="font-display text-3xl font-bold text-foreground">Combien pourriez-vous économiser ?</h2>
+              <p className="mt-3 text-lg text-muted-foreground">Estimez vos économies sur l’énergie, internet ou l’assurance en 30 secondes, sans créer de compte.</p>
+            </div>
+            <SmartToolsWidget />
           </div>
         </section>
 
+        {/* FAQ */}
+        <section className="px-4 py-20 sm:px-6 lg:px-8" aria-labelledby="faq-title">
+          <div className="mx-auto max-w-3xl">
+            <h2 id="faq-title" className="text-center font-display text-3xl font-bold text-foreground">Questions fréquentes</h2>
+            <div className="mt-10 divide-y divide-border rounded-2xl border border-border/70 bg-card">
+              {HOME_FAQ.map((f) => (
+                <details key={f.q} className="group p-5 [&_summary::-webkit-details-marker]:hidden">
+                  <summary className="flex cursor-pointer list-none items-center justify-between gap-4 font-semibold text-foreground">
+                    {f.q}
+                    <span aria-hidden="true" className="text-xl text-primary transition-transform group-open:rotate-45">+</span>
+                  </summary>
+                  <p className="mt-3 leading-relaxed text-muted-foreground">{f.a}</p>
+                </details>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* Blog */}
+        <section className="bg-card px-4 py-20 sm:px-6 lg:px-8">
+          <div className="mx-auto max-w-6xl">
+            <div className="flex items-end justify-between gap-4">
+              <div>
+                <h2 className="font-display text-3xl font-bold text-foreground">Conseils budget</h2>
+                <p className="mt-2 text-muted-foreground">Couple, épargne, compte commun : nos guides pratiques.</p>
+              </div>
+              <Link to="/blog" className="hidden font-medium text-primary hover:underline sm:block">Tous les articles →</Link>
+            </div>
+            <div className="mt-8 grid gap-6 md:grid-cols-3">
+              {LATEST.map((post) => (
+                <Link key={post.slug} to={`/blog/${post.slug}`} className="group rounded-xl border border-border/70 bg-background p-6 transition-shadow hover:shadow-md">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-primary">Guide · {post.readTime}</p>
+                  <h3 className="mt-2 text-lg font-bold text-foreground group-hover:text-primary">{post.title}</h3>
+                </Link>
+              ))}
+            </div>
+            <Link to="/blog" className="mt-6 block text-center font-medium text-primary hover:underline sm:hidden">Tous les articles →</Link>
+          </div>
+        </section>
+
+        {/* Final CTA */}
+        <section className="bg-primary px-4 py-20 text-primary-foreground">
+          <div className="mx-auto max-w-3xl text-center">
+            <PiggyBank className="mx-auto h-10 w-10 opacity-90" aria-hidden="true" />
+            <h2 className="mt-4 font-display text-3xl font-bold sm:text-4xl">Votre budget de famille, enfin simple</h2>
+            <p className="mt-4 text-lg opacity-90">Gratuit, sans carte bancaire. Vous pourrez inviter votre conjoint ensuite.</p>
+            <Button asChild size="lg" variant="secondary" className="mt-8 h-14 bg-white px-10 text-lg text-primary hover:bg-gray-100">
+              <Link to="/signup">Créer mon budget gratuit</Link>
+            </Button>
+          </div>
+        </section>
       </main>
       <Footer />
     </div>
