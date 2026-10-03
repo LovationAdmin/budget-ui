@@ -1,18 +1,20 @@
 // src/lib/pages/BudgetTemplate.tsx
 // ============================================================================
 // « Tableau de budget familial gratuit » — a free Excel template (monthly
-// budget, couple's shared pot, year) and the case for letting the app do it.
-// Targets the "tableau budget familial excel gratuit" family of searches.
+// budget, couple's shared pot, year), the same sheets as a PDF to print, and
+// the case for letting the app do it. Targets the "tableau budget familial
+// excel / pdf gratuit" family of searches.
 // ============================================================================
 
 import { Link } from 'react-router-dom';
-import { ArrowRight, CalendarRange, CheckCircle2, Download, FileSpreadsheet, Scale, Wallet } from 'lucide-react';
+import { ArrowRight, CalendarRange, CheckCircle2, Download, FileSpreadsheet, Printer, Scale, Wallet } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
 import { Button } from '@/components/ui/button';
 import { TEMPLATE_FAQ as FAQ } from '@/seo/faq';
 
 export const TEMPLATE_URL = '/telechargements/tableau-budget-familial-budgetfamille.xlsx';
+export const TEMPLATE_PDF_URL = '/telechargements/tableau-budget-familial-a-imprimer.pdf';
 
 const TABS = [
   { icon: Wallet, title: 'Budget du mois', text: 'Revenus, 13 postes de charges (logement, énergie, courses, enfants…), épargne, et le reste du mois calculé tout seul.' },
@@ -22,9 +24,9 @@ const TABS = [
 
 
 
-function trackDownload() {
+function trackDownload(fileName: string) {
   try {
-    (window as unknown as { gtag?: (...a: unknown[]) => void }).gtag?.('event', 'file_download', { file_name: 'tableau-budget-familial.xlsx' });
+    (window as unknown as { gtag?: (...a: unknown[]) => void }).gtag?.('event', 'file_download', { file_name: fileName });
   } catch {
     // Analytics is optional.
   }
@@ -38,26 +40,31 @@ export default function BudgetTemplate() {
         <section className="px-4 pt-14 pb-12 sm:px-6 lg:px-8">
           <div className="mx-auto max-w-4xl text-center">
             <span className="inline-flex items-center gap-2 rounded-full bg-success/10 px-4 py-1.5 text-sm font-semibold text-success">
-              <FileSpreadsheet className="h-4 w-4" aria-hidden="true" /> Excel · Google Sheets · LibreOffice
+              <FileSpreadsheet className="h-4 w-4" aria-hidden="true" /> Excel · Google Sheets · PDF à imprimer
             </span>
             <h1 className="mt-6 font-display text-4xl font-bold tracking-tight text-foreground sm:text-5xl [text-wrap:balance]">
               Tableau de budget familial gratuit
             </h1>
             <p className="mx-auto mt-5 max-w-2xl text-lg text-muted-foreground">
-              Un modèle Excel simple pour suivre le budget mensuel du foyer : revenus, dépenses, épargne, et la répartition du compte commun dans un couple.
-              Les calculs sont déjà faits, il suffit de remplir les cases jaunes.
+              Un modèle simple pour suivre le budget mensuel du foyer : revenus, dépenses, épargne, et la répartition du compte commun dans un couple.
+              En Excel, les calculs sont déjà faits ; en PDF, il s’imprime et se remplit au stylo.
             </p>
-            <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
+            <div className="mt-8 flex flex-col items-stretch justify-center gap-3 sm:flex-row sm:items-center">
               <Button asChild size="lg" className="h-14 px-8 text-lg">
-                <a href={TEMPLATE_URL} download onClick={trackDownload}>
-                  <Download className="mr-2 h-5 w-5" aria-hidden="true" /> Télécharger le tableau (.xlsx)
+                <a href={TEMPLATE_URL} download onClick={() => trackDownload('tableau-budget-familial.xlsx')}>
+                  <Download className="mr-2 h-5 w-5" aria-hidden="true" /> Tableau Excel (.xlsx)
                 </a>
               </Button>
               <Button asChild size="lg" variant="outline" className="h-14 border-2 px-8 text-lg">
-                <Link to="/signup">Ou laisser l’app calculer</Link>
+                <a href={TEMPLATE_PDF_URL} download onClick={() => trackDownload('tableau-budget-familial-a-imprimer.pdf')}>
+                  <Printer className="mr-2 h-5 w-5" aria-hidden="true" /> PDF à imprimer
+                </a>
               </Button>
             </div>
-            <p className="mt-3 text-sm text-muted-foreground">Gratuit, sans inscription. 17 Ko.</p>
+            <p className="mt-3 text-sm text-muted-foreground">
+              Gratuit, sans inscription. Excel 17 Ko · PDF A4, 3 pages, 120 Ko.{' '}
+              <Link to="/signup" className="font-medium text-primary hover:underline">Ou laisser l’app calculer</Link>
+            </p>
           </div>
         </section>
 
@@ -86,7 +93,9 @@ export default function BudgetTemplate() {
               <li><strong className="text-foreground">4. Regardez le reste du mois</strong> : positif, vous pouvez épargner davantage ; négatif, une dépense ou la répartition est à revoir.</li>
             </ol>
             <p className="mt-6 text-muted-foreground">
-              Pour aller plus loin : <Link to="/blog/combien-epargner-par-mois-objectif-date" className="font-medium text-primary hover:underline">combien épargner par mois pour un objectif</Link> et{' '}
+              Pour aller plus loin : <Link to="/blog/5-etapes-gerer-budget-familial-2025" className="font-medium text-primary hover:underline">établir un budget familial en 5 étapes</Link>,{' '}
+              <Link to="/blog/budget-famille-4-personnes-exemple" className="font-medium text-primary hover:underline">un exemple de budget pour une famille de 4</Link>,{' '}
+              <Link to="/blog/combien-epargner-par-mois-objectif-date" className="font-medium text-primary hover:underline">combien épargner par mois pour un objectif</Link> et{' '}
               <Link to="/blog/compte-commun-couple-argent-de-poche" className="font-medium text-primary hover:underline">comment répartir le compte commun en couple</Link>.
             </p>
           </div>

@@ -13,82 +13,137 @@ export interface BlogArticleContent {
   author: string;
   authorBio: string;
   publishedAt: string;
+  /** Last significant rewrite (BlogPosting dateModified, sitemap). */
+  updatedAt?: string;
   readTime: string;
   tags: string[];
   featured?: boolean;
+  /** Slugs shown first under « À lire aussi » (then by shared tags). */
+  related?: string[];
 }
 
 export const blogArticles: BlogArticleContent[] = [
   {
     id: '1',
-    title: "Les 5 Étapes Essentielles pour Gérer son Budget Familial en 2025",
+    title: "Établir un budget familial en 5 étapes (méthode 2026)",
     slug: "5-etapes-gerer-budget-familial-2025",
-    excerpt: "Découvrez notre méthode éprouvée pour reprendre le contrôle de vos finances familiales.",
+    excerpt: "Revenus, charges fixes, dépenses annuelles, épargne, bilan du mois : la méthode simple pour établir le budget de votre famille, avec un tableau gratuit.",
     category: "Méthodes",
     author: "Équipe Budget Famille",
     authorBio: "Experts en gestion budgétaire et développeurs de Budget Famille",
     publishedAt: "2025-01-02",
-    readTime: "7 min",
+    updatedAt: "2026-10-03",
+    readTime: "8 min",
     tags: ["Budget", "Famille", "Méthode", "Débutant"],
     featured: true,
+    related: ["budget-famille-4-personnes-exemple", "compte-commun-couple-argent-de-poche", "combien-epargner-par-mois-objectif-date"],
     content: (
       <div className="prose prose-lg max-w-none">
         <p className="lead">
-          Gérer un budget familial peut sembler intimidant, mais avec la bonne méthode, 
-          c'est plus simple qu'il n'y paraît. Voici nos 5 étapes essentielles pour 2025.
+          Établir un budget familial, c'est décider à l'avance où va l'argent du foyer chaque mois,
+          plutôt que de constater à la fin qu'il manque. Pas besoin d'être comptable : cinq étapes suffisent,
+          et une heure pour la première fois.
         </p>
 
-        <h2>1. Faire l'État des Lieux de vos Finances</h2>
+        <h2>1. Lister les revenus nets du foyer</h2>
         <p>
-          Avant de planifier, il faut savoir d'où vous partez. Prenez le temps de lister 
-          toutes vos sources de revenus et toutes vos dépenses fixes et variables.
+          Partez de ce qui arrive réellement sur les comptes, <strong>après impôt prélevé à la source</strong> :
+          salaires, allocations familiales, aides au logement, pensions, revenus d'appoint.
         </p>
         <ul>
-          <li><strong>Revenus:</strong> Salaires, allocations, revenus complémentaires</li>
-          <li><strong>Dépenses fixes:</strong> Loyer, assurances, abonnements</li>
-          <li><strong>Dépenses variables:</strong> Alimentation, loisirs, imprévus</li>
+          <li><strong>Revenus réguliers</strong> : le montant habituel du mois.</li>
+          <li><strong>Revenus variables</strong> (primes, indépendants, intérim) : prenez le mois le plus bas des douze derniers, pas la moyenne. Le surplus des bons mois ira à l'épargne.</li>
+          <li><strong>En couple</strong> : une ligne par personne, pour pouvoir répartir ensuite le pot commun.</li>
         </ul>
 
-        <h2>2. Définir vos Objectifs Financiers</h2>
+        <h2>2. Lister les dépenses : fixes d'abord, courantes ensuite</h2>
         <p>
-          Sans objectifs clairs, difficile de rester motivé. Que voulez-vous accomplir ? 
-          Des vacances ? Un fonds d'urgence ? L'achat d'une maison ?
+          Reprenez vos <strong>trois derniers relevés bancaires</strong> : c'est la seule façon d'avoir des montants réalistes.
         </p>
-        <blockquote>
-          "Un objectif sans plan n'est qu'un souhait." - Antoine de Saint-Exupéry
-        </blockquote>
-
-        <h2>3. Créer des Catégories de Dépenses Réalistes</h2>
-        <p>
-          Ne vous fixez pas des limites intenables. Basez-vous sur vos dépenses réelles 
-          des 3 derniers mois et ajustez progressivement.
-        </p>
-
-        <h2>4. Suivre vos Dépenses en Temps Réel</h2>
-        <p>
-          Avec Budget Famille, connectez votre banque pour un suivi automatique. 
-          Plus besoin de tout noter manuellement !
-        </p>
-
-        <h2>5. Faire un Bilan Mensuel</h2>
-        <p>
-          Chaque fin de mois, prenez 15 minutes pour analyser vos dépenses. 
-          Qu'avez-vous bien fait ? Où pouvez-vous vous améliorer ?
-        </p>
-
-        <div className="bg-primary-50 border-l-4 border-primary p-6 my-8">
-          <h3 className="text-lg font-bold mb-2">💡 Astuce Pro</h3>
-          <p className="mb-0">
-            Instaurez un "rendez-vous budget" hebdomadaire en famille. 
-            15 minutes suffisent pour garder le cap et impliquer tout le monde.
-          </p>
+        <div className="overflow-x-auto">
+          <table>
+            <thead>
+              <tr><th>Type</th><th>Exemples</th><th>Comment l'estimer</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><strong>Charges fixes</strong></td><td>Loyer ou crédit, énergie, assurances, téléphone et internet, abonnements, crédit auto</td><td>Le montant du prélèvement</td></tr>
+              <tr><td><strong>Dépenses courantes</strong></td><td>Courses, carburant, santé, vêtements, loisirs</td><td>La moyenne des 3 derniers mois</td></tr>
+              <tr><td><strong>Enfants</strong></td><td>Cantine, garde, activités, argent de poche</td><td>Le montant du mois, certains mois seulement</td></tr>
+            </tbody>
+          </table>
         </div>
 
-        <h2>Conclusion</h2>
+        <h2>3. Mensualiser les dépenses qui ne tombent pas tous les mois</h2>
         <p>
-          La gestion d'un budget familial n'est pas une course de vitesse, 
-          c'est un marathon. Soyez patient, régulier, et les résultats viendront.
+          C'est l'étape que la plupart des budgets oublient, et celle qui crée les « mauvais mois » :
+          rentrée scolaire, cadeaux de Noël, assurance auto payée à l'année, taxe foncière, vacances.
         </p>
+        <div className="bg-blue-50 border-l-4 border-blue-500 p-6 my-6">
+          <p className="font-semibold mb-0">Provision mensuelle = total des dépenses annuelles ÷ 12</p>
+        </div>
+        <p>
+          Exemple : rentrée 300 €, Noël 400 €, anniversaires 200 €, vacances 1 500 €, soit 2 400 € par an :
+          mettez <strong>200 € de côté chaque mois</strong>, et ces dépenses ne déséquilibreront plus aucun mois.
+        </p>
+
+        <h2>4. Décider de l'épargne avant de dépenser</h2>
+        <p>
+          L'épargne qui « reste à la fin du mois » n'arrive presque jamais. Programmez-la comme une charge :
+        </p>
+        <ul>
+          <li><strong>Un fonds d'urgence</strong> d'abord : l'équivalent de trois mois de dépenses est un repère courant.</li>
+          <li><strong>Puis des objectifs datés</strong> : un montant et une date (vacances en juillet, apport dans deux ans). Le calcul est détaillé dans <a href="/blog/combien-epargner-par-mois-objectif-date">combien épargner par mois pour un objectif</a>.</li>
+        </ul>
+        <p>
+          Repère connu, la <strong>règle 50/30/20</strong> : 50 % des revenus pour les besoins, 30 % pour les envies, 20 % pour l'épargne.
+          Sur 3 000 € : 1 500 €, 900 € et 600 €. C'est un point de départ ; avec un loyer élevé, viser 10 % d'épargne est déjà bien.
+        </p>
+
+        <h2>5. Vérifier le reste du mois, et ajuster</h2>
+        <p>
+          <strong>Revenus − dépenses − provisions − épargne = reste du mois.</strong>
+        </p>
+        <ul>
+          <li><strong>Reste positif</strong> : gardez une marge pour les imprévus, augmentez l'épargne avec le surplus.</li>
+          <li><strong>Reste négatif</strong> : commencez par les charges fixes (énergie, assurances, abonnements), qui se renégocient une fois pour toutes ; voir <a href="/blog/economiser-500-euros-abonnements">où économiser sur les abonnements</a>.</li>
+        </ul>
+        <p>
+          Puis prenez <strong>15 minutes en fin de mois</strong> pour comparer le prévu et le réel. Trois mois de suite suffisent
+          pour avoir un budget qui tient.
+        </p>
+
+        <h2>En couple : qui paie quoi ?</h2>
+        <p>
+          Le plus simple est un <strong>pot commun</strong> (compte joint) pour les charges du foyer, alimenté par chacun selon une règle
+          (50/50, au prorata des salaires ou même argent de poche), et ce qui reste à chacun pour lui. La méthode complète :
+          <a href="/blog/compte-commun-couple-argent-de-poche"> compte commun, argent de poche et charges perso</a>.
+          Pour un exemple chiffré complet, voir <a href="/blog/budget-famille-4-personnes-exemple">le budget d'une famille de 4 personnes</a>.
+        </p>
+
+        <h2>Quel outil choisir ?</h2>
+        <ul>
+          <li><strong>Un tableau</strong> : notre <a href="/tableau-budget-familial-gratuit">tableau de budget familial gratuit</a> existe en Excel (calculs automatiques) et en PDF à imprimer.</li>
+          <li><strong>Une application</strong> : Budget Famille reprend ces cinq étapes, remplit chaque mois à partir de vos règles (loyer mensuel, taxe annuelle, cantine certains mois) et se partage en temps réel à deux. Gratuit, sans connexion bancaire obligatoire.</li>
+        </ul>
+
+        <div className="bg-gradient-to-r from-primary to-purple-600 text-white rounded-xl p-8 text-center my-8">
+          <h3 className="text-2xl font-bold mb-4">Votre budget familial en 15 minutes</h3>
+          <p className="text-lg mb-6 opacity-90">Gratuit, sans carte bancaire, à plusieurs en temps réel.</p>
+          <a
+            href="/signup"
+            className="inline-block bg-white text-primary font-semibold px-8 py-3 rounded-lg hover:bg-gray-100 transition-colors"
+          >
+            Établir mon budget →
+          </a>
+        </div>
+
+        <h2>❓ Questions fréquentes</h2>
+        <h3>Comment établir un budget familial simplement ?</h3>
+        <p>Listez les revenus nets, puis les charges fixes et les dépenses courantes à partir de vos relevés, mettez de côté chaque mois 1/12 des dépenses annuelles, programmez l'épargne, et vérifiez le reste.</p>
+        <h3>Quel pourcentage des revenus épargner ?</h3>
+        <p>La règle 50/30/20 propose 20 %. L'essentiel est de commencer, même à 5 ou 10 %, puis d'augmenter au fil des mois.</p>
+        <h3>Existe-t-il une application gratuite pour gérer le budget familial ?</h3>
+        <p>Oui : Budget Famille est gratuit pour le budget, le foyer, l'épargne et le partage. Seule la synchronisation bancaire automatique est une option payante.</p>
       </div>
     )
   },
@@ -2047,9 +2102,9 @@ export const blogArticles: BlogArticleContent[] = [
 
 {
   id: '9',
-  title: "Budget Familial au Maroc : Guide Complet pour Gérer 8000 MAD à Casablanca et Rabat",
+  title: "Budget familial au Maroc : combien pour vivre en famille ?",
   slug: "budget-familial-maroc-casablanca-rabat",
-  excerpt: "De Casa à Rabat, découvrez comment optimiser votre budget familial au Maroc. Gestion en Dirhams, souk vs grande surface, CNSS, RAM, et toutes les astuces pour vivre confortablement.",
+  excerpt: "Budget d'une famille de 4 à Casablanca et Rabat, en dirhams : loyer, courses (souk ou grande surface), école, transport et épargne, avec un exemple chiffré.",
   category: "International",
   author: "Fatima El Amrani",
   authorBio: "Consultante financière basée à Casablanca, experte budget familles marocaines",
@@ -2057,6 +2112,7 @@ export const blogArticles: BlogArticleContent[] = [
   readTime: "14 min",
   tags: ["Maroc", "Casablanca", "Rabat", "MAD", "Budget", "Famille", "Maghreb"],
   featured: true,
+  related: ["budget-famille-4-personnes-exemple", "gerer-budget-familial-senegal-dakar", "budget-familial-abidjan-cote-ivoire"],
   content: (
     <div className="prose prose-lg max-w-none">
       <p className="lead">
@@ -2768,6 +2824,137 @@ export const blogArticles: BlogArticleContent[] = [
         <p>La règle 50/30/20 suggère 20 % du revenu net, mais l'important est de partir de vos objectifs datés, puis de vérifier que le total reste tenable.</p>
         <h3>Vaut-il mieux une seule épargne ou plusieurs cagnottes ?</h3>
         <p>Plusieurs cagnottes, une par objectif : on voit l'avancement de chacun et on évite de « piocher » dans l'apport pour les vacances.</p>
+      </div>
+    )
+  },
+  {
+    id: '12',
+    title: "Budget d'une famille de 4 personnes : exemple chiffré (2026)",
+    slug: "budget-famille-4-personnes-exemple",
+    excerpt: "Combien prévoir par mois pour une famille de 4 ? Un exemple de budget poste par poste (logement, courses, enfants, épargne) et la méthode pour adapter le vôtre.",
+    category: "Méthodes",
+    author: "Équipe Budget Famille",
+    authorBio: "Experts en gestion budgétaire et développeurs de Budget Famille",
+    publishedAt: "2026-10-03",
+    readTime: "9 min",
+    tags: ["Budget", "Famille", "Enfants", "Courses", "Exemple"],
+    featured: true,
+    related: ["5-etapes-gerer-budget-familial-2025", "compte-commun-couple-argent-de-poche", "economiser-500-euros-abonnements"],
+    content: (
+      <div className="prose prose-lg max-w-none">
+        <p className="lead">
+          « Combien faut-il pour faire vivre une famille de 4 ? » Il n'existe pas de montant unique : tout dépend du loyer,
+          de la ville et de l'âge des enfants. Mais un <strong>exemple complet, poste par poste</strong>, aide à situer son propre budget
+          et à repérer les postes qui dérapent.
+        </p>
+
+        <h2>📋 Exemple de budget mensuel d'une famille de 4 personnes</h2>
+        <p>
+          <strong>Le foyer de l'exemple</strong> : un couple avec deux enfants de 4 et 9 ans, locataire d'un T4 dans une ville moyenne,
+          une voiture. Revenus nets : 2 300 € et 1 900 €, plus 150 € d'allocations familiales (le montant réel dépend de vos revenus).
+          Ces chiffres sont une illustration, pas une moyenne nationale.
+        </p>
+        <div className="overflow-x-auto">
+          <table>
+            <thead>
+              <tr><th>Poste</th><th>Par mois</th><th>Part des revenus</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><strong>Revenus du foyer</strong></td><td><strong>4 350 €</strong></td><td>100 %</td></tr>
+              <tr><td>Loyer et charges locatives</td><td>1 100 €</td><td>25 %</td></tr>
+              <tr><td>Énergie et eau</td><td>180 €</td><td>4 %</td></tr>
+              <tr><td>Courses (alimentation, hygiène, entretien)</td><td>800 €</td><td>18 %</td></tr>
+              <tr><td>Transport (carburant, entretien, abonnement)</td><td>300 €</td><td>7 %</td></tr>
+              <tr><td>Assurances (habitation, auto)</td><td>110 €</td><td>3 %</td></tr>
+              <tr><td>Santé (mutuelle, reste à charge)</td><td>110 €</td><td>3 %</td></tr>
+              <tr><td>Téléphone et internet</td><td>70 €</td><td>2 %</td></tr>
+              <tr><td>Enfants (cantine, périscolaire, activités)</td><td>280 €</td><td>6 %</td></tr>
+              <tr><td>Vêtements</td><td>100 €</td><td>2 %</td></tr>
+              <tr><td>Loisirs et sorties</td><td>200 €</td><td>5 %</td></tr>
+              <tr><td>Provision dépenses annuelles</td><td>200 €</td><td>5 %</td></tr>
+              <tr><td>Épargne</td><td>400 €</td><td>9 %</td></tr>
+              <tr><td><strong>Reste (marge pour les imprévus)</strong></td><td><strong>500 €</strong></td><td>11 %</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>
+          Total des dépenses : 3 450 €, épargne : 400 €. La <strong>marge de 500 €</strong> n'est pas de l'argent « en trop » :
+          c'est elle qui absorbe une réparation, une facture plus lourde ou une sortie imprévue sans toucher à l'épargne.
+        </p>
+
+        <h2>🛒 Le budget courses d'une famille de 4</h2>
+        <p>
+          C'est le premier poste variable, et le plus difficile à estimer de tête. La méthode la plus fiable :
+        </p>
+        <ol>
+          <li><strong>Additionnez vos tickets</strong> (ou les paiements en supermarché sur vos relevés) sur 4 semaines.</li>
+          <li><strong>Passez à la semaine</strong>, puis au mois réel : <em>montant par semaine × 52 ÷ 12</em>. 185 € par semaine font environ 800 € par mois, et non 740 €.</li>
+          <li><strong>Séparez l'alimentation du reste</strong> (hygiène, entretien, couches) : c'est souvent là que l'écart se cache.</li>
+        </ol>
+        <p>Pour faire baisser ce poste sans se priver :</p>
+        <ul>
+          <li>planifier les menus de la semaine et faire une liste ;</li>
+          <li>comparer le prix au kilo, et préférer les marques distributeur sur les produits de base ;</li>
+          <li>acheter les fruits et légumes de saison, au marché en fin de matinée ;</li>
+          <li>limiter les « petits passages » en semaine, qui font les achats imprévus.</li>
+        </ul>
+
+        <h2>📅 Les dépenses qui ne tombent pas tous les mois</h2>
+        <p>
+          Dans l'exemple, 200 € par mois sont mis de côté pour : la <strong>rentrée scolaire</strong> (300 €), <strong>Noël</strong> (400 €),
+          les <strong>anniversaires</strong> (200 €) et les <strong>vacances</strong> (1 500 €), soit 2 400 € par an ÷ 12.
+          Propriétaire ? Ajoutez la taxe foncière. Assurance auto payée à l'année ? Ajoutez-la aussi.
+        </p>
+        <p>
+          Sans cette provision, septembre et décembre deviennent des mois à découvert, même avec un budget « équilibré » le reste de l'année.
+        </p>
+
+        <h2>👨‍👩‍👧‍👦 Avec 2 enfants, 3 enfants : ce qui change</h2>
+        <ul>
+          <li><strong>Courses, cantine et activités</strong> augmentent avec chaque enfant, et avec l'âge : un adolescent mange autant qu'un adulte.</li>
+          <li><strong>Le logement</strong> est le saut le plus lourd : une chambre de plus, c'est souvent 100 à 300 € de loyer en plus selon la ville.</li>
+          <li><strong>Les aides</strong> évoluent : allocations familiales majorées au 3e enfant, complément familial sous conditions de ressources. Faites une simulation sur caf.fr.</li>
+          <li><strong>La garde</strong> des tout-petits (crèche, assistante maternelle) peut dépasser le loyer : le crédit d'impôt pour frais de garde et le complément de libre choix du mode de garde la réduisent.</li>
+        </ul>
+
+        <h2>⚖️ Répartir entre les deux parents</h2>
+        <p>
+          Dans l'exemple, les charges du foyer et l'épargne commune font 3 850 €. Allocations déduites, il reste 3 700 € à verser au pot commun.
+          Au <strong>prorata des salaires</strong> (2 300 € et 1 900 €), cela fait environ 2 026 € et 1 674 € : il reste à chacun 274 € et 226 €,
+          soit la marge de 500 € du tableau, partagée au même pourcentage du salaire.
+          Les trois méthodes (50/50, prorata, même argent de poche) sont comparées dans
+          <a href="/blog/compte-commun-couple-argent-de-poche"> notre guide du compte commun</a>.
+        </p>
+
+        <h2>✏️ Faire le vôtre en 15 minutes</h2>
+        <ol>
+          <li>Recopiez ce tableau avec <strong>vos</strong> montants, à partir de vos trois derniers relevés.</li>
+          <li>Ajoutez la <strong>provision</strong> pour vos dépenses annuelles.</li>
+          <li>Fixez l'<strong>épargne</strong>, puis regardez le reste : la méthode pas à pas est dans <a href="/blog/5-etapes-gerer-budget-familial-2025">établir un budget familial en 5 étapes</a>.</li>
+        </ol>
+        <p>
+          Pour aller vite : notre <a href="/tableau-budget-familial-gratuit">tableau de budget familial gratuit</a> (Excel avec calculs, ou PDF à imprimer),
+          ou l'application Budget Famille, qui remplit chaque mois à partir de vos règles et calcule le pot commun de chacun.
+        </p>
+
+        <div className="bg-gradient-to-r from-primary to-purple-600 text-white rounded-xl p-8 text-center my-8">
+          <h3 className="text-2xl font-bold mb-4">Le budget de votre famille, calculé chaque mois</h3>
+          <p className="text-lg mb-6 opacity-90">Gratuit, sans connexion bancaire obligatoire, partagé en temps réel.</p>
+          <a
+            href="/signup"
+            className="inline-block bg-white text-primary font-semibold px-8 py-3 rounded-lg hover:bg-gray-100 transition-colors"
+          >
+            Créer notre budget familial →
+          </a>
+        </div>
+
+        <h2>❓ Questions fréquentes</h2>
+        <h3>Quel budget pour une famille de 4 personnes par mois ?</h3>
+        <p>Il dépend surtout du logement et de la ville. Dans notre exemple de ville moyenne, les dépenses atteignent 3 450 € par mois, plus 400 € d'épargne, pour 4 350 € de revenus.</p>
+        <h3>Combien dépenser en courses pour 4 personnes ?</h3>
+        <p>Dans l'exemple, 800 € par mois en comptant l'hygiène et l'entretien. Partez de vos tickets sur 4 semaines, et comptez le mois réel (× 52 ÷ 12), pas 4 semaines.</p>
+        <h3>Quel salaire pour vivre correctement à 4 ?</h3>
+        <p>Le bon repère n'est pas le salaire mais le reste après charges fixes et provisions : s'il couvre les courses, les enfants et un peu d'épargne, le budget tient.</p>
       </div>
     )
   }

@@ -314,6 +314,9 @@
 .dark .bg-white\/60 { background-color: hsl(var(--card) / 0.6); }
 .dark .bg-white\/50 { background-color: hsl(var(--card) / 0.5); }
 .dark .from-white { --tw-gradient-from: hsl(var(--card)) var(--tw-gradient-from-position); --tw-gradient-to: hsl(var(--card) / 0) var(--tw-gradient-to-position); --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to); }
+/* Brand gradients carry white text: keep the light theme's primary (4.8:1
+   with white) instead of the lighter dark-theme one. */
+.dark .from-primary { --tw-gradient-from: hsl(200 75% 38%) var(--tw-gradient-from-position); --tw-gradient-to: hsl(200 75% 38% / 0) var(--tw-gradient-to-position); --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to); }
 
 /* Admin charts: validated categorical slots (dataviz palette), per theme. */
 .viz-root {

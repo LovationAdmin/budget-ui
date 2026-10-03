@@ -255,7 +255,7 @@ export default function Help() {
               className={cn(
                 "px-6 py-3 rounded-xl font-medium transition-all",
                 selectedCategory === null
-                  ? "bg-primary text-white shadow-lg"
+                  ? "bg-primary text-primary-foreground shadow-lg"
                   : "bg-white text-gray-700 hover:bg-gray-50"
               )}
             >
@@ -270,7 +270,7 @@ export default function Help() {
                   className={cn(
                     "flex items-center gap-2 px-6 py-3 rounded-xl font-medium transition-all",
                     selectedCategory === category.id
-                      ? "bg-primary text-white shadow-lg"
+                      ? "bg-primary text-primary-foreground shadow-lg"
                       : "bg-white text-gray-700 hover:bg-gray-50"
                   )}
                 >

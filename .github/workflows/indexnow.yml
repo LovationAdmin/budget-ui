@@ -1,0 +1,38 @@
+# Announces the pages changed by each production deploy to IndexNow (Bing,
+# Copilot / ChatGPT search, Yandex…). Vercel deploys main on push; the script
+# waits until that commit is live, then submits the URLs the build saw change
+# (`changed` in /seo-manifest.json). See scripts/indexnow.mjs.
+name: IndexNow
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      all:
+        description: Submit every sitemap URL instead of the changed ones
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: indexnow
+  cancel-in-progress: false
+
+jobs:
+  submit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Submit changed URLs
+        if: github.event_name == 'push'
+        run: node scripts/indexnow.mjs --expect-commit "${{ github.sha }}"
+      - name: Submit (manual run)
+        if: github.event_name == 'workflow_dispatch'
+        run: node scripts/indexnow.mjs ${{ inputs.all && '--all' || '' }}

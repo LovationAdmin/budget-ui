@@ -25,6 +25,10 @@ export const HOME_FAQ: FaqItem[] = [
     a: 'Vous choisissez. Une charge perso peut être publique ou privée : en privé, son nom est chiffré sur nos serveurs et visible par vous seul ; seul son montant compte dans le budget du foyer.',
   },
   {
+    q: 'Existe-t-il un logiciel de budget familial gratuit ?',
+    a: 'Oui. Budget Famille est un logiciel de budget familial gratuit qui fonctionne dans le navigateur, sur ordinateur comme sur téléphone, sans rien installer. Vous pouvez aussi l’installer comme une application sur l’écran d’accueil.',
+  },
+  {
     q: 'Est-ce mieux qu’un tableau Excel ?',
     a: 'Le tableau Excel demande de tout recopier chaque mois. Budget Famille part de règles (loyer chaque mois, taxe foncière une fois par an, cantine certains mois), se partage en temps réel à plusieurs et fonctionne sur téléphone.',
   },
@@ -37,6 +41,7 @@ export const HOME_FAQ: FaqItem[] = [
 /** FAQ of the free spreadsheet page (/tableau-budget-familial-gratuit). */
 export const TEMPLATE_FAQ: FaqItem[] = [
   { q: 'Le tableau est-il vraiment gratuit ?', a: 'Oui, sans inscription ni adresse e-mail. Téléchargez-le, modifiez-le, partagez-le.' },
+  { q: 'Existe-t-il une version PDF à imprimer ?', a: 'Oui : le même tableau en PDF A4 de 3 pages (budget du mois prévu et réel, dépenses annuelles et pot commun, suivi de l’année), à remplir au stylo. Gratuit, sans inscription.' },
   { q: 'Fonctionne-t-il avec Google Sheets, LibreOffice ou Numbers ?', a: 'Oui. C’est un fichier .xlsx standard : il s’ouvre dans Excel, Google Sheets (Fichier › Importer), LibreOffice Calc et Numbers, formules comprises.' },
   { q: 'Comment répartir les dépenses dans un couple ?', a: 'L’onglet « Pot commun » compare les trois méthodes les plus utilisées et montre l’argent de poche qui reste à chacun. Le prorata des salaires est la plus courante quand les revenus sont différents.' },
   { q: 'Pourquoi passer du tableau à l’application ?', a: 'Le tableau demande de tout recopier chaque mois et de se l’envoyer à deux. Budget Famille part des mêmes règles, remplit chaque mois tout seul, se partage en temps réel et fonctionne sur téléphone, gratuitement.' },

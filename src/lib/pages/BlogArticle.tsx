@@ -2,19 +2,18 @@
 // Page dynamique pour afficher un article de blog
 
 import { useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { Link, useParams, useNavigate } from 'react-router-dom';
 import { applyHead } from '@/seo/head';
 import { blogArticles } from '@/data/blog-articles';
+import { relatedArticles } from '@/data/blog-related';
 import Navbar from '@/components/Navbar';
-import { useAuth } from '@/contexts/AuthContext';
 import { Footer } from '@/components/Footer';
-import { ArrowLeft, Calendar, Clock, Tag, User } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Calendar, Clock, FileSpreadsheet, Tag, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 export default function BlogArticle() {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
-  const { user } = useAuth();
 
   // Trouver l'article correspondant au slug
   const article = blogArticles.find(a => a.slug === slug);
@@ -95,7 +94,8 @@ export default function BlogArticle() {
 
             <div className="flex items-center gap-2 text-sm text-gray-500">
               <Calendar className="h-4 w-4" />
-              {new Date(article.publishedAt).toLocaleDateString('fr-FR', {
+              {article.updatedAt ? 'Mis à jour le ' : ''}
+              {new Date(article.updatedAt ?? article.publishedAt).toLocaleDateString('fr-FR', {
                 day: 'numeric',
                 month: 'long',
                 year: 'numeric'
@@ -125,20 +125,46 @@ export default function BlogArticle() {
           </div>
         </div>
 
+        {/* Related reading: internal links for readers and crawlers */}
+        <section className="mb-12" aria-labelledby="related-title">
+          <h2 id="related-title" className="text-2xl font-display font-bold text-gray-900 mb-6">À lire aussi</h2>
+          <div className="grid gap-4 md:grid-cols-2">
+            {relatedArticles(article).map((a) => (
+              <Link
+                key={a.slug}
+                to={`/blog/${a.slug}`}
+                className="group block rounded-xl border border-gray-200 bg-white p-5 transition hover:border-primary/40 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                <span className="text-xs font-semibold uppercase tracking-wide text-primary">{a.category}</span>
+                <h3 className="mt-1 font-bold text-gray-900 group-hover:text-primary">{a.title}</h3>
+                <p className="mt-1 text-sm text-gray-600 line-clamp-2">{a.excerpt}</p>
+              </Link>
+            ))}
+            <Link
+              to="/tableau-budget-familial-gratuit"
+              className="group flex items-start gap-3 rounded-xl border border-gray-200 bg-white p-5 transition hover:border-primary/40 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              <FileSpreadsheet className="mt-0.5 h-6 w-6 shrink-0 text-success" aria-hidden="true" />
+              <span>
+                <span className="block font-bold text-gray-900 group-hover:text-primary">Tableau de budget familial gratuit</span>
+                <span className="mt-1 block text-sm text-gray-600">Excel avec calculs automatiques, ou PDF à imprimer. Sans inscription.</span>
+              </span>
+            </Link>
+          </div>
+        </section>
+
         {/* CTA */}
         <div className="bg-gradient-to-r from-primary to-purple-600 rounded-2xl p-8 text-center text-white">
           <h2 className="text-2xl font-bold mb-4">
-            Prêt à gérer votre budget comme un pro ?
+            Votre budget familial, calculé chaque mois
           </h2>
           <p className="text-lg mb-6 opacity-90">
-            Rejoignez des milliers de familles qui ont repris le contrôle de leurs finances
+            Gratuit, sans carte bancaire, à plusieurs en temps réel.
           </p>
-          <Button 
-            size="lg"
-            className="bg-white text-primary hover:bg-gray-100 font-semibold"
-            onClick={() => navigate('/signup')}
-          >
-            Créer mon compte gratuitement
+          <Button asChild size="lg" className="bg-white text-primary hover:bg-gray-100 font-semibold">
+            <Link to="/signup">
+              Créer mon budget gratuit <ArrowRight className="ml-2 h-4 w-4" aria-hidden="true" />
+            </Link>
           </Button>
         </div>
       </article>

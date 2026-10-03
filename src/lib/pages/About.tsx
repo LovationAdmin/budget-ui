@@ -56,7 +56,7 @@ export default function About() {
         {/* Hero */}
         <div className="text-center mb-20">
           <div className="inline-flex h-20 w-20 items-center justify-center bg-primary rounded-2xl mb-6">
-            <span className="text-4xl font-bold text-white">B</span>
+            <span className="text-4xl font-bold text-primary-foreground">B</span>
           </div>
           <h1 className="text-4xl md:text-5xl font-display font-bold text-gray-900 mb-6">
             Notre Mission
@@ -229,7 +229,7 @@ export default function About() {
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <a 
               href="mailto:lovation.pro@gmail.com"
-              className="inline-flex items-center gap-2 bg-primary text-white px-6 py-3 rounded-lg hover:bg-primary/90 font-medium transition"
+              className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-6 py-3 rounded-lg hover:bg-primary/90 font-medium transition"
             >
               <Mail className="h-5 w-5" />
               lovation.pro@gmail.com

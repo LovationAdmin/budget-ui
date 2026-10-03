@@ -8,7 +8,9 @@
     "build": "tsc && vite build && node scripts/prerender.mjs",
     "preview": "vite preview",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
-    "test": "node scripts/test-budget-engine.mjs"
+    "test": "node scripts/test-budget-engine.mjs",
+    "seo:index": "node scripts/seo-index-check.mjs",
+    "seo:indexnow": "node scripts/indexnow.mjs"
   },
   "dependencies": {
     "@fontsource/dm-sans": "^5.1.0",

@@ -9,6 +9,7 @@
 
 import { renderToStaticMarkup } from 'react-dom/server';
 import { blogArticles } from '@/data/blog-articles';
+import { articlesByDate, relatedArticles } from '@/data/blog-related';
 import { HOME_FAQ, TEMPLATE_FAQ } from './faq';
 import {
   ORGANIZATION_LD, PAGES, SITE_NAME, SOFTWARE_LD, absolute, breadcrumbLD, faqLD, type PageSEO,
@@ -83,13 +84,11 @@ function FaqBlock({ items }: { items: Array<{ q: string; a: string }> }) {
   );
 }
 
-const sortedArticles = () => [...blogArticles].sort((a, b) => b.publishedAt.localeCompare(a.publishedAt));
-
 function BlogIndex() {
   return (
     <section className="mt-10">
       <ul className="space-y-6">
-        {sortedArticles().map((a) => (
+        {articlesByDate().map((a) => (
           <li key={a.slug}>
             <h2 className="text-xl font-bold"><a href={`/blog/${a.slug}`} className="text-foreground underline">{a.title}</a></h2>
             <p className="mt-1 text-muted-foreground">{a.excerpt}</p>
@@ -145,6 +144,7 @@ export function buildPages(): BuiltPage[] {
           headline: a.title,
           description: a.excerpt,
           datePublished: a.publishedAt,
+          dateModified: a.updatedAt ?? a.publishedAt,
           inLanguage: 'fr',
           author: { '@type': 'Organization', name: SITE_NAME },
           publisher: ORGANIZATION_LD,
@@ -155,14 +155,23 @@ export function buildPages(): BuiltPage[] {
       ],
       body: renderToStaticMarkup(
         <Shell>
-          <p className="text-sm text-muted-foreground"><a href="/blog" className="underline">Blog</a> · {a.category} · {a.readTime}</p>
+          <p className="text-sm text-muted-foreground"><a href="/blog" className="underline">Blog</a> · {a.category} · {a.readTime}{a.updatedAt ? ` · mis à jour le ${new Date(a.updatedAt).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}` : ''}</p>
           <h1 className="mt-2 font-display text-4xl font-bold text-foreground">{a.title}</h1>
           <p className="mt-3 text-lg text-muted-foreground">{a.excerpt}</p>
           <article className="mt-8">{a.content}</article>
+          <section className="mt-12">
+            <h2 className="font-display text-2xl font-bold text-foreground">À lire aussi</h2>
+            <ul className="mt-4 space-y-2">
+              {relatedArticles(a).map((r) => (
+                <li key={r.slug}><a href={`/blog/${r.slug}`} className="text-primary underline">{r.title}</a></li>
+              ))}
+              <li><a href="/tableau-budget-familial-gratuit" className="text-primary underline">Tableau de budget familial gratuit (Excel et PDF)</a></li>
+            </ul>
+          </section>
           <p className="mt-10"><a href="/signup" className="font-semibold text-primary underline">Créer mon budget familial gratuit</a></p>
         </Shell>,
       ),
-      sitemap: { priority: 0.7, changefreq: 'monthly', lastmod: a.publishedAt },
+      sitemap: { priority: 0.7, changefreq: 'monthly', lastmod: a.updatedAt ?? a.publishedAt },
     });
   }
   return out;

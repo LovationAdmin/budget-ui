@@ -117,7 +117,7 @@ function StepGuide({ steps }: { steps: { title: string; description: string }[] 
     <ol className="space-y-3">
       {steps.map((step, index) => (
         <li key={index} className="flex gap-3">
-          <div className="flex-shrink-0 w-6 h-6 rounded-full bg-primary text-white text-xs font-bold flex items-center justify-center">
+          <div className="flex-shrink-0 w-6 h-6 rounded-full bg-primary text-primary-foreground text-xs font-bold flex items-center justify-center">
             {index + 1}
           </div>
           <div className="flex-1">

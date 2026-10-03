@@ -1,8 +1,15 @@
 // scripts/prerender.mjs
 // Runs after `vite build`: writes one HTML file per public page (from
-// src/seo/prerender.tsx) and the sitemap. dist/index.html becomes the home
-// page; dist/app.html stays the neutral shell for every other route.
+// src/seo/prerender.tsx), the sitemap and seo-manifest.json. dist/index.html
+// becomes the home page; dist/app.html stays the neutral shell for every
+// other route.
+//
+// seo-manifest.json holds a hash of each page's content and the date it last
+// changed. A production build (Vercel) compares with the manifest currently
+// online, so the sitemap's <lastmod> only moves when a page really changes,
+// and `changed` lists the URLs to announce (scripts/indexnow.mjs).
 import { build } from 'esbuild';
+import { createHash } from 'node:crypto';
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
@@ -44,6 +51,26 @@ function render(template, page) {
   return html;
 }
 
+/** Content fingerprint: what a crawler reads, not the build's asset hashes. */
+const contentHash = (page) => createHash('sha256')
+  .update(JSON.stringify([page.title, page.description, page.canonical, page.noindex, page.jsonLd, page.body]))
+  .digest('hex')
+  .slice(0, 16);
+
+/** The manifest of the live site, on production builds only (null otherwise or on failure). */
+async function liveManifest() {
+  const url = process.env.SEO_PREVIOUS_MANIFEST_URL
+    ?? (process.env.VERCEL_ENV === 'production' ? `${SITE}/seo-manifest.json` : null);
+  if (!url) return null;
+  try {
+    const res = await fetch(url, { signal: AbortSignal.timeout(8000), headers: { 'Cache-Control': 'no-cache' } });
+    const json = res.ok ? await res.json() : null;
+    return json && typeof json.pages === 'object' ? json : null;
+  } catch {
+    return null;
+  }
+}
+
 try {
   const outfile = join(tmp, 'prerender.mjs');
   await build({
@@ -70,11 +97,32 @@ try {
     writeFileSync(file, render(template, page));
   }
   const today = new Date().toISOString().slice(0, 10);
+  const previous = await liveManifest();
+  const manifest = {};
+  const changed = [];
+  for (const p of pages.filter((pg) => pg.sitemap)) {
+    const hash = contentHash(p);
+    const before = previous?.pages[p.path];
+    const same = before?.hash === hash;
+    // Unchanged: keep the date. New or changed: the page's own date the first
+    // time (article publication/update), today after that.
+    manifest[p.path] = { hash, lastmod: same ? before.lastmod : (before ? today : (p.sitemap.lastmod ?? today)) };
+    if (!same) changed.push(abs(p.path));
+  }
+  // Pages gone from the sitemap are announced too (search engines then see the 404).
+  for (const path of Object.keys(previous?.pages ?? {})) if (!manifest[path]) changed.push(abs(path));
   const urls = pages
     .filter((p) => p.sitemap)
-    .map((p) => `  <url>\n    <loc>${abs(p.path)}</loc>\n    <lastmod>${p.sitemap.lastmod ?? today}</lastmod>\n    <changefreq>${p.sitemap.changefreq}</changefreq>\n    <priority>${p.sitemap.priority}</priority>\n  </url>`);
+    .map((p) => `  <url>\n    <loc>${abs(p.path)}</loc>\n    <lastmod>${manifest[p.path].lastmod}</lastmod>\n    <changefreq>${p.sitemap.changefreq}</changefreq>\n    <priority>${p.sitemap.priority}</priority>\n  </url>`);
   writeFileSync(join(dist, 'sitemap.xml'), `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.join('\n')}\n</urlset>\n`);
-  console.log(`prerender: ${pages.length} pages, ${urls.length} sitemap URLs`);
+  writeFileSync(join(dist, 'seo-manifest.json'), `${JSON.stringify({
+    generatedAt: new Date().toISOString(),
+    commit: process.env.VERCEL_GIT_COMMIT_SHA ?? null,
+    comparedWithLive: !!previous,
+    changed,
+    pages: manifest,
+  }, null, 1)}\n`);
+  console.log(`prerender: ${pages.length} pages, ${urls.length} sitemap URLs, ${changed.length} changed${previous ? '' : ' (no live manifest to compare with)'}`);
 } finally {
   rmSync(tmp, { recursive: true, force: true });
 }
