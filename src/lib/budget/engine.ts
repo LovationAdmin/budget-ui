@@ -739,6 +739,58 @@ export function personStatus(p: Person, today: YM): ItemStatus {
 // Engine (memoised view over one model)
 // ---------------------------------------------------------------------------
 
+/** Money paid this month out of savings: savings pots and the general savings. */
+export function monthSpent(m: ResolvedMonth): number {
+  return roundCents(m.savings.reduce((s, x) => s + x.spent, 0) + m.generalSpent);
+}
+
+export interface YearSummary {
+  entrees: number;
+  charges: number;
+  savings: number;
+  /** Sum of the monthly leftovers (they feed the general savings). */
+  reste: number;
+  /** Paid with savings during the year (pots + general savings). */
+  spent: number;
+  /** What the year really adds to the household savings: savings + reste − spent. */
+  net: number;
+  /** Savings available at the end of December (pots + general savings, all years). */
+  endBalance: number;
+  endPots: number;
+  endGeneral: number;
+}
+
+/** The year at a glance, net of what was (or is planned to be) spent from savings. */
+export function yearSummary(engine: BudgetEngine, year: number): YearSummary {
+  let entrees = 0;
+  let charges = 0;
+  let savings = 0;
+  let reste = 0;
+  let spent = 0;
+  for (let i = 0; i < 12; i++) {
+    const m = engine.month(makeYM(year, i));
+    entrees += m.totals.entrees;
+    charges += m.totals.charges;
+    savings += m.totals.savings;
+    reste += m.totals.reste;
+    spent += monthSpent(m);
+  }
+  const dec = makeYM(year, 11);
+  const endPots = engine.projectsBalance(dec);
+  const endGeneral = engine.generalBalance(dec);
+  return {
+    entrees: roundCents(entrees),
+    charges: roundCents(charges),
+    savings: roundCents(savings),
+    reste: roundCents(reste),
+    spent: roundCents(spent),
+    net: roundCents(savings + reste - spent),
+    endBalance: roundCents(endPots + endGeneral),
+    endPots,
+    endGeneral,
+  };
+}
+
 export class BudgetEngine {
   readonly model: BudgetModel;
   readonly today: YM;

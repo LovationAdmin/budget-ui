@@ -1,8 +1,9 @@
 // src/lib/pages/budget-tabs/YearTab.tsx
 // ============================================================================
 // « Année » — the twelve months side by side: what came in, the charges, the
-// savings, what was left and the general savings balance. Every month opens
-// the « Mois » screen. The year lives in the URL (?y=2026).
+// savings, what was left, what was paid with savings and the general savings
+// balance. The forecast of the year is net of those expenses. Every month
+// opens the « Mois » screen. The year lives in the URL (?y=2026).
 // ============================================================================
 
 import { Link, useSearchParams } from 'react-router-dom';
@@ -10,9 +11,9 @@ import { ChevronLeft, ChevronRight, Lock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { useBudget } from '@/contexts/BudgetContext';
-import type { MonthTotals } from '@/lib/budget/engine';
+import { monthSpent, yearSummary, type MonthTotals } from '@/lib/budget/engine';
 import { makeYM, MONTH_NAMES, MONTHS_SHORT, MONTHS_LETTER, yearOf } from '@/lib/budget/months';
-import { moneySigned, roundCents } from '@/lib/budget/format';
+import { moneySigned } from '@/lib/budget/format';
 import { Pill } from '@/components/budget/shared/primitives';
 import { monthStatus } from '@/components/budget/month/MonthHeader';
 
@@ -23,7 +24,7 @@ const SERIES = [
 ] as const;
 
 /** Hover / focus details of one month (values in text ink, identity on the swatch). */
-function MonthTooltip({ title, t, fmt, align }: { title: string; t: MonthTotals; fmt: (n: number) => string; align: 'left' | 'center' | 'right' }) {
+function MonthTooltip({ title, t, spent, fmt, align }: { title: string; t: MonthTotals; spent: number; fmt: (n: number) => string; align: 'left' | 'center' | 'right' }) {
   return (
     <span
       aria-hidden="true"
@@ -45,6 +46,12 @@ function MonthTooltip({ title, t, fmt, align }: { title: string; t: MonthTotals;
           <span className={cn('font-semibold', s.key === 'reste' && t.reste < 0 ? 'text-red-700' : 'text-foreground')}>{fmt(t[s.key])}</span>
         </span>
       ))}
+      {spent > 0 && (
+        <span className="mt-1 flex items-center justify-between gap-2 border-t border-border/60 pt-1 text-xs tabular-nums text-muted-foreground">
+          <span>Dépensé avec l’épargne</span>
+          <span className="font-semibold text-foreground">−{fmt(spent)}</span>
+        </span>
+      )}
     </span>
   );
 }
@@ -69,25 +76,18 @@ export default function YearTab() {
   const rows = MONTH_NAMES.map((name, i) => {
     const ym = makeYM(year, i);
     const month = engine.month(ym);
-    return { ym, name, i, t: month.totals, closed: month.closed, general: engine.generalBalance(ym) };
+    return { ym, name, i, t: month.totals, spent: monthSpent(month), closed: month.closed, general: engine.generalBalance(ym) };
   });
-  const tot = rows.reduce(
-    (acc, r) => ({
-      entrees: acc.entrees + r.t.entrees,
-      charges: acc.charges + r.t.charges,
-      savings: acc.savings + r.t.savings,
-      reste: acc.reste + r.t.reste,
-    }),
-    { entrees: 0, charges: 0, savings: 0, reste: 0 },
-  );
+  const sum = yearSummary(engine, year);
+  const hasFuture = year >= thisYear;
   const maxIn = Math.max(1, ...rows.map((r) => Math.max(r.t.entrees, r.t.charges + r.t.savings + Math.max(0, r.t.reste))));
   const H = 160;
 
   const kpis = [
-    { label: 'Entrées', value: fmt(roundCents(tot.entrees)), swatch: 'bg-emerald-700', negative: false },
-    { label: 'Charges', value: fmt(roundCents(tot.charges)), swatch: 'bg-orange-500', negative: false },
-    { label: 'Épargne', value: fmt(roundCents(tot.savings)), swatch: 'bg-indigo-500', negative: false },
-    { label: 'Reste cumulé', value: moneySigned(roundCents(tot.reste), currencySymbol), swatch: tot.reste < 0 ? 'bg-red-600' : 'bg-emerald-500', negative: tot.reste < 0 },
+    { label: 'Entrées', value: fmt(sum.entrees), swatch: 'bg-emerald-700' },
+    { label: 'Charges', value: fmt(sum.charges), swatch: 'bg-orange-500' },
+    { label: 'Épargne', value: fmt(sum.savings), swatch: 'bg-indigo-500' },
+    { label: 'Dépensé avec l’épargne', value: sum.spent ? `−${fmt(sum.spent)}` : fmt(0), swatch: 'bg-rose-500' },
   ];
 
   return (
@@ -117,10 +117,33 @@ export default function YearTab() {
               <span aria-hidden="true" className={cn('h-2.5 w-2.5 rounded-sm', k.swatch)} />
               {k.label}
             </span>
-            <span className={cn('font-display text-xl sm:text-2xl font-extrabold tabular-nums', k.negative ? 'text-red-700' : 'text-foreground')}>{k.value}</span>
+            <span className="font-display text-xl sm:text-2xl font-extrabold tabular-nums text-foreground">{k.value}</span>
           </div>
         ))}
       </div>
+
+      <section aria-labelledby="year-net-title" className={cn('grid gap-4 rounded-2xl border p-5 shadow-soft sm:grid-cols-[1fr_auto] sm:items-end sm:p-6', sum.net < 0 ? 'border-red-200 bg-red-50/70' : 'border-emerald-200 bg-emerald-50/70')}>
+        <div className="min-w-0">
+          <h2 id="year-net-title" className="text-xs font-bold uppercase tracking-wider text-muted-foreground">{hasFuture ? `Bilan prévisionnel ${year}` : `Bilan ${year}`}</h2>
+          <p className={cn('mt-1 font-display text-3xl sm:text-4xl font-extrabold tabular-nums', sum.net < 0 ? 'text-red-700' : 'text-emerald-700')}>{moneySigned(sum.net, currencySymbol)}</p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {sum.net >= 0
+              ? `mis de côté sur l’année, une fois payées les dépenses faites avec l’épargne.`
+              : `sur l’épargne à la fin de l’année : les dépenses dépassent ce qui est mis de côté.`}
+            {hasFuture && ' Les mois à venir sont comptés tels que prévus.'}
+          </p>
+          <p className="mt-2 text-sm tabular-nums text-foreground">
+            Épargne {fmt(sum.savings)} <span className="text-muted-foreground">+</span> reste cumulé {moneySigned(sum.reste, currencySymbol)} <span className="text-muted-foreground">−</span> dépensé {fmt(sum.spent)}
+          </p>
+        </div>
+        {sum.endBalance !== sum.net && (
+        <div className="rounded-xl bg-card/80 px-4 py-3 sm:text-right">
+          <p className="text-xs font-bold text-muted-foreground">Épargne disponible fin décembre</p>
+          <p className={cn('font-display text-xl font-extrabold tabular-nums', sum.endBalance < 0 ? 'text-red-700' : 'text-foreground')}>{fmt(sum.endBalance)}</p>
+          <p className="text-xs tabular-nums text-muted-foreground">cagnottes {fmt(sum.endPots)} · épargne générale {fmt(sum.endGeneral)}</p>
+        </div>
+        )}
+      </section>
 
       <section aria-label="Répartition mois par mois" className="rounded-2xl border border-border/70 bg-card p-4 shadow-soft sm:p-5">
         <div className="grid grid-cols-12 items-end gap-0.5 sm:gap-1.5" style={{ height: H + 30 }}>
@@ -136,7 +159,7 @@ export default function YearTab() {
               <Link
                 key={r.ym}
                 to={monthUrl(r.ym)}
-                aria-label={`Ouvrir ${r.name.toLowerCase()} ${year} : entrées ${fmt(r.t.entrees)}, charges ${fmt(r.t.charges)}, épargne ${fmt(r.t.savings)}, reste ${fmt(r.t.reste)}`}
+                aria-label={`Ouvrir ${r.name.toLowerCase()} ${year} : entrées ${fmt(r.t.entrees)}, charges ${fmt(r.t.charges)}, épargne ${fmt(r.t.savings)}, reste ${fmt(r.t.reste)}${r.spent ? `, dépensé avec l’épargne ${fmt(r.spent)}` : ''}`}
                 className={cn(
                   'group relative flex h-full min-w-0 flex-col items-center justify-end gap-1 rounded-lg pb-0.5 transition-colors hover:bg-muted/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
                   isToday && 'bg-sky-50/70',
@@ -151,7 +174,7 @@ export default function YearTab() {
                   <span className="sm:hidden">{MONTHS_LETTER[r.i]}</span>
                   <span className="hidden sm:inline">{MONTHS_SHORT[r.i]}</span>
                 </span>
-                <MonthTooltip title={`${r.name} ${year}`} t={r.t} fmt={fmt} align={r.i < 2 ? 'left' : r.i > 9 ? 'right' : 'center'} />
+                <MonthTooltip title={`${r.name} ${year}`} t={r.t} spent={r.spent} fmt={fmt} align={r.i < 2 ? 'left' : r.i > 9 ? 'right' : 'center'} />
               </Link>
             );
           })}
@@ -174,6 +197,7 @@ export default function YearTab() {
               <th scope="col" className="px-3 py-2 text-right font-bold">Charges</th>
               <th scope="col" className="px-3 py-2 text-right font-bold">Épargne</th>
               <th scope="col" className="px-3 py-2 text-right font-bold">Reste</th>
+              <th scope="col" className="px-3 py-2 text-right font-bold">Dépensé</th>
               <th scope="col" className="px-3 py-2 text-right font-bold">Épargne générale</th>
               <th scope="col" className="px-3 py-2 font-bold">État</th>
             </tr>
@@ -192,6 +216,7 @@ export default function YearTab() {
                   <td className="px-3 py-2 text-right">{fmt(r.t.charges)}</td>
                   <td className="px-3 py-2 text-right">{fmt(r.t.savings)}</td>
                   <td className={cn('px-3 py-2 text-right font-bold', r.t.reste < 0 ? 'text-red-700' : 'text-emerald-700')}>{moneySigned(r.t.reste, currencySymbol)}</td>
+                  <td className="px-3 py-2 text-right text-muted-foreground">{r.spent ? `−${fmt(r.spent)}` : '—'}</td>
                   <td className={cn('px-3 py-2 text-right', r.general < 0 && 'text-red-700')}>{fmt(r.general)}</td>
                   <td className="px-3 py-2">
                     <Pill tone={st.tone}>
@@ -220,6 +245,7 @@ export default function YearTab() {
                 <span className="font-bold">{r.name}</span>
                 <span className="text-xs tabular-nums text-muted-foreground">
                   Entrées {fmt(r.t.entrees)} · charges {fmt(r.t.charges)}
+                  {r.spent > 0 && <> · dépensé {fmt(r.spent)}</>}
                 </span>
               </span>
               <span className="flex flex-col items-end gap-1">
