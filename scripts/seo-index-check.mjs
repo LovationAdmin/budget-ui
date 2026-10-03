@@ -171,11 +171,13 @@ const short = (u) => (u ? u.replace(/^https:\/\/www\.budgetfamille\.com/, '').re
 const cell = (s) => String(s ?? '').replace(/\|/g, '\\|');
 
 function markdown(results, sitemaps) {
-  const indexed = results.filter((r) => r.verdict === 'PASS').length;
+  // Counts cover the sitemap only; extra --url entries are listed but not counted.
+  const own = results.filter((r) => !r.extra);
+  const indexed = own.filter((r) => r.verdict === 'PASS').length;
   const lines = [
     `# Indexation Google — ${PROPERTY}`,
     '',
-    `${new Date().toLocaleString('fr-FR', { timeZone: 'Europe/Paris' })} · ${indexed}/${results.length} URL indexées · sitemap ${SITEMAP}`,
+    `${new Date().toLocaleString('fr-FR', { timeZone: 'Europe/Paris' })} · ${indexed}/${own.length} URL du sitemap indexées · sitemap ${SITEMAP}`,
     '',
     '## Sitemaps',
     '',
