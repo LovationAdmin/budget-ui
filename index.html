@@ -36,16 +36,14 @@
   <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
   <link rel="manifest" href="/site.webmanifest" />
   <meta name="theme-color" content="#FCFAF8" />
-  <!-- Theme before first paint (signed-in routes only; see AppThemeProvider). -->
+  <!-- Theme before first paint, on every page (see AppThemeProvider). -->
   <script>
     try {
-      if (/^\/(dashboard|budget|profile|admin|beta2)(\/|$)/.test(location.pathname)) {
-        var t = localStorage.getItem('theme');
-        if (t === 'dark' || ((!t || t === 'system') && matchMedia('(prefers-color-scheme: dark)').matches)) {
-          document.documentElement.classList.add('dark');
-          document.documentElement.style.colorScheme = 'dark';
-          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#121317');
-        }
+      var t = localStorage.getItem('theme');
+      if (t === 'dark' || ((!t || t === 'system') && matchMedia('(prefers-color-scheme: dark)').matches)) {
+        document.documentElement.classList.add('dark');
+        document.documentElement.style.colorScheme = 'dark';
+        document.querySelector('meta[name="theme-color"]').setAttribute('content', '#121317');
       }
     } catch (e) {}
   </script>
@@ -99,28 +97,6 @@
       min-height: 100vh;
     }
   </style>
-  
-  <script type="application/ld+json">
-  {
-    "@context": "https://schema.org",
-    "@type": "WebApplication",
-    "name": "Budget Famille",
-    "url": "https://budgetfamille.com",
-    "description": "Application gratuite de gestion de budget familial",
-    "applicationCategory": "FinanceApplication",
-    "operatingSystem": "Web, iOS, Android",
-    "offers": {
-      "@type": "Offer",
-      "price": "0",
-      "priceCurrency": "EUR"
-    },
-    "aggregateRating": {
-      "@type": "AggregateRating",
-      "ratingValue": "4.8",
-      "ratingCount": "150"
-    }
-  }
-  </script>
   
   <!-- Google Analytics (GA4) -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-85R8CTX8S3"></script>

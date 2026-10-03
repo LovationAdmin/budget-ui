@@ -70,6 +70,9 @@ export default defineConfig(({ mode }) => ({
         cleanupOutdatedCaches: true,
         // Offline navigations get the neutral shell, never the home content.
         navigateFallback: 'app.html',
+        // API, websocket, and files opened in a tab (PDF/Excel templates,
+        // sitemap, IndexNow key) always come from the network.
+        navigateFallbackDenylist: [/^\/api/, /^\/ws/, /\/[^/]+\.[a-z0-9]+$/i],
         clientsClaim: true,
         skipWaiting: true,
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff,woff2}'],
@@ -140,8 +143,6 @@ export default defineConfig(({ mode }) => ({
             },
           },
         ],
-        navigateFallback: '/index.html',
-        navigateFallbackDenylist: [/^\/api/, /^\/ws/],
       },
     }),
   ],

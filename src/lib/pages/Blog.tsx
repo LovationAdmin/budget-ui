@@ -1,138 +1,54 @@
 // src/pages/Blog.tsx
-// 📝 Blog Budget Famille - 5 Articles SEO Optimisés
+// Blog index: every article of src/data/blog-articles.tsx (one source of
+// truth with the article pages and the prerender), each card a real link so
+// readers and search engines reach all articles.
 
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import Navbar from '@/components/Navbar';
-import { useAuth } from '@/contexts/AuthContext';
 import { Footer } from '@/components/Footer';
-import { 
-  ArrowLeft, 
-  Search, 
-  Calendar, 
-  Clock, 
+import {
+  ArrowLeft,
+  ArrowRight,
+  Search,
+  Calendar,
+  Clock,
   Tag,
   TrendingUp,
   Users,
   PiggyBank,
   Target,
-  Lightbulb
+  Lightbulb,
+  Globe2,
+  GraduationCap,
+  FileSpreadsheet,
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { articlesByDate } from '@/data/blog-related';
 
-interface BlogPost {
-  id: string;
-  title: string;
-  slug: string;
-  excerpt: string;
-  category: string;
-  author: string;
-  publishedAt: string;
-  readTime: string;
-  tags: string[];
-  featured?: boolean;
-}
+const blogPosts = articlesByDate();
 
-const blogPosts: BlogPost[] = [
-  {
-    id: '10',
-    title: "Compte Commun en Couple (Marié ou Non) : Pot Commun, Argent de Poche et Charges Perso",
-    slug: "compte-commun-couple-argent-de-poche",
-    excerpt: "Combien verser sur le compte commun, combien garder pour soi, et comment gérer les dépenses personnelles (impôts, envois d'argent) sans tout dévoiler ? La méthode complète, mariés ou non.",
-    category: "Couple",
-    author: "Équipe Budget Famille",
-    publishedAt: "2026-10-02",
-    readTime: "8 min",
-    tags: ["Couple", "Compte commun", "Argent de poche", "Confidentialité"],
-    featured: true
-  },
-  {
-    id: '11',
-    title: "Combien Épargner par Mois pour Atteindre un Objectif à une Date Précise ?",
-    slug: "combien-epargner-par-mois-objectif-date",
-    excerpt: "15 000 € pour juillet 2027 ? Le calcul du montant à mettre de côté chaque mois, comment vérifier qu'il est tenable, et quoi faire s'il ne l'est pas.",
-    category: "Épargne",
-    author: "Équipe Budget Famille",
-    publishedAt: "2026-10-02",
-    readTime: "6 min",
-    tags: ["Épargne", "Objectif", "Calcul", "Simulateur"],
-    featured: true
-  },
-  {
-    id: '1',
-    title: "Les 5 Étapes Essentielles pour Gérer son Budget Familial en 2025",
-    slug: "5-etapes-gerer-budget-familial-2025",
-    excerpt: "Découvrez notre méthode éprouvée pour reprendre le contrôle de vos finances familiales. De la définition des objectifs à la mise en place d'un rituel mensuel, tout ce qu'il faut savoir pour réussir.",
-    category: "Méthodes",
-    author: "Équipe Budget Famille",
-    publishedAt: "2025-01-02",
-    readTime: "7 min",
-    tags: ["Budget", "Famille", "Méthode", "Débutant"],
-    featured: true
-  },
-  {
-    id: '2',
-    title: "Comment Économiser 500€ par an sur vos Abonnements (Énergie, Internet, Assurances)",
-    slug: "economiser-500-euros-abonnements",
-    excerpt: "Notre IA a analysé des milliers de budgets et identifié les postes de dépenses où les familles peuvent économiser le plus. Voici comment réduire vos charges fixes sans sacrifier votre confort.",
-    category: "Économies",
-    author: "Sophie Martin",
-    publishedAt: "2025-12-28",
-    readTime: "6 min",
-    tags: ["Économies", "Abonnements", "IA", "Optimisation"],
-    featured: true
-  },
-  {
-    id: '3',
-    title: "Budget Couple : 7 Règles d'Or pour Gérer l'Argent à Deux sans Conflits",
-    slug: "budget-couple-regles-gerer-argent",
-    excerpt: "L'argent est la première cause de disputes dans les couples. Découvrez nos 7 règles d'or pour une gestion financière harmonieuse à deux, avec transparence et respect.",
-    category: "Couple",
-    author: "Thomas Dubois",
-    publishedAt: "2025-12-20",
-    readTime: "8 min",
-    tags: ["Couple", "Communication", "Collaboration", "Budget"],
-    featured: true
-  },
-  {
-    id: '4',
-    title: "Épargne Enfants : Comment Construire un Capital pour vos Enfants dès Aujourd'hui",
-    slug: "epargne-enfants-construire-capital",
-    excerpt: "Livret A, assurance-vie, PEA... Quel placement choisir pour préparer l'avenir de vos enfants ? Comparatif complet des solutions d'épargne adaptées aux familles en 2025.",
-    category: "Épargne",
-    author: "Laurent Bernard",
-    publishedAt: "2025-12-15",
-    readTime: "10 min",
-    tags: ["Épargne", "Enfants", "Placements", "Avenir"],
-    featured: false
-  },
-  {
-    id: '5',
-    title: "Connexion Bancaire PSD2 : Tout Comprendre en 5 Minutes (Sécurité & Avantages)",
-    slug: "connexion-bancaire-psd2-securite",
-    excerpt: "PSD2, Open Banking, agrégation de comptes... Ces termes vous semblent flous ? Découvrez comment connecter votre banque en toute sécurité et les avantages concrets pour votre budget.",
-    category: "Technologie",
-    author: "Marie Leroy",
-    publishedAt: "2025-12-10",
-    readTime: "5 min",
-    tags: ["PSD2", "Sécurité", "Banking", "Technologie"],
-    featured: false
-  }
-];
+const CATEGORY_ICONS: Record<string, typeof TrendingUp> = {
+  Méthodes: Target,
+  Économies: PiggyBank,
+  Couple: Users,
+  Épargne: TrendingUp,
+  Technologie: Lightbulb,
+  International: Globe2,
+  Étudiants: GraduationCap,
+};
 
 const categories = [
-  { name: "Tous", icon: TrendingUp },
-  { name: "Méthodes", icon: Target },
-  { name: "Économies", icon: PiggyBank },
-  { name: "Couple", icon: Users },
-  { name: "Épargne", icon: TrendingUp },
-  { name: "Technologie", icon: Lightbulb }
+  { name: 'Tous', icon: TrendingUp },
+  ...[...new Set(blogPosts.map((p) => p.category))].map((name) => ({ name, icon: CATEGORY_ICONS[name] ?? Tag })),
 ];
+
+const formatDate = (iso: string, month: 'long' | 'short') =>
+  new Date(iso).toLocaleDateString('fr-FR', { day: 'numeric', month, year: 'numeric' });
 
 export default function Blog() {
   const navigate = useNavigate();
-  const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('Tous');
 
@@ -148,7 +64,7 @@ export default function Blog() {
     return matchesSearch && matchesCategory;
   });
 
-  const featuredPosts = blogPosts.filter(post => post.featured);
+  const featuredPosts = blogPosts.filter((post) => post.featured).slice(0, 3);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary-50 to-purple-50 flex flex-col">
@@ -174,8 +90,8 @@ export default function Blog() {
             Blog Budget Famille
           </h1>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-            Guides pratiques, astuces et conseils pour gérer votre budget familial 
-            comme un pro. Mis à jour régulièrement par notre équipe d'experts.
+            Guides pratiques pour gérer le budget de la famille et du couple :
+            méthode, compte commun, épargne, économies.
           </p>
         </div>
 
@@ -205,7 +121,7 @@ export default function Blog() {
                   onClick={() => setSelectedCategory(category.name)}
                   className={`flex items-center gap-2 px-4 py-2 rounded-full font-medium transition-all ${
                     isActive 
-                      ? 'bg-primary text-white shadow-md' 
+                      ? 'bg-primary text-primary-foreground shadow-md' 
                       : 'bg-white text-gray-700 hover:bg-gray-50 shadow-sm'
                   }`}
                 >
@@ -225,14 +141,14 @@ export default function Blog() {
             </h2>
             <div className="grid md:grid-cols-3 gap-8">
               {featuredPosts.map((post) => (
-                <article 
+                <Link
                   key={post.id}
-                  className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition-all hover:-translate-y-1 cursor-pointer"
-                  onClick={() => navigate(`/blog/${post.slug}`)}
+                  to={`/blog/${post.slug}`}
+                  className="block bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition-all hover:-translate-y-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 >
                   <div className="h-48 bg-gradient-to-br from-primary to-purple-600 flex items-center justify-center">
-                    <div className="text-white text-6xl font-bold opacity-20">
-                      {post.id}
+                    <div className="text-white text-6xl font-bold opacity-20" aria-hidden="true">
+                      {post.category.charAt(0)}
                     </div>
                   </div>
                   <div className="p-6">
@@ -245,7 +161,7 @@ export default function Blog() {
                         {post.readTime}
                       </span>
                     </div>
-                    <h3 className="text-xl font-bold text-gray-900 mb-3 line-clamp-2">
+                    <h3 className="text-xl font-bold text-gray-900 mb-3 line-clamp-3">
                       {post.title}
                     </h3>
                     <p className="text-gray-600 mb-4 line-clamp-3">
@@ -254,18 +170,12 @@ export default function Blog() {
                     <div className="flex items-center justify-between pt-4 border-t border-gray-100">
                       <div className="flex items-center gap-2 text-sm text-gray-500">
                         <Calendar className="h-4 w-4" />
-                        {new Date(post.publishedAt).toLocaleDateString('fr-FR', {
-                          day: 'numeric',
-                          month: 'long',
-                          year: 'numeric'
-                        })}
+                        {formatDate(post.updatedAt ?? post.publishedAt, 'long')}
                       </div>
-                      <Button variant="ghost" size="sm" className="text-primary">
-                        Lire →
-                      </Button>
+                      <span className="text-sm font-semibold text-primary">Lire →</span>
                     </div>
                   </div>
-                </article>
+                </Link>
               ))}
             </div>
           </section>
@@ -278,10 +188,10 @@ export default function Blog() {
           </h2>
           <div className="grid md:grid-cols-2 gap-8">
             {filteredPosts.map((post) => (
-              <article 
+              <Link
                 key={post.id}
-                className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition-all hover:-translate-y-1 cursor-pointer"
-                onClick={() => navigate(`/blog/${post.slug}`)}
+                to={`/blog/${post.slug}`}
+                className="block bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition-all hover:-translate-y-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
                 <div className="flex items-start justify-between mb-4">
                   <span className="px-3 py-1 bg-primary/10 text-primary text-xs font-semibold rounded-full">
@@ -315,39 +225,34 @@ export default function Blog() {
                   </div>
                   <div className="flex items-center gap-2 text-sm text-gray-500">
                     <Calendar className="h-4 w-4" />
-                    {new Date(post.publishedAt).toLocaleDateString('fr-FR', {
-                      day: 'numeric',
-                      month: 'short',
-                      year: 'numeric'
-                    })}
+                    {formatDate(post.updatedAt ?? post.publishedAt, 'short')}
                   </div>
                 </div>
-              </article>
+              </Link>
             ))}
           </div>
         </section>
 
-        {/* Newsletter CTA */}
-        <section className="mt-20 bg-gradient-to-r from-primary to-purple-600 rounded-3xl p-12 text-center text-white">
+        {/* Next steps */}
+        <section className="mt-20 bg-gradient-to-r from-primary to-purple-600 rounded-3xl p-8 sm:p-12 text-center text-white">
           <h2 className="text-3xl font-display font-bold mb-4">
-            Ne manquez aucun conseil
+            Passez de la lecture à votre budget
           </h2>
           <p className="text-xl mb-8 opacity-90 max-w-2xl mx-auto">
-            Recevez nos meilleurs articles et astuces directement dans votre boîte mail
+            Un tableau gratuit à télécharger, ou l’application qui calcule chaque mois pour vous.
           </p>
-          <div className="max-w-md mx-auto flex gap-3">
-            <Input
-              type="email"
-              placeholder="Votre email"
-              className="bg-white text-gray-900 h-12"
-            />
-            <Button size="lg" className="bg-white text-primary hover:bg-gray-100 font-semibold">
-              S'abonner
+          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            <Button asChild size="lg" className="bg-white text-primary hover:bg-gray-100 font-semibold">
+              <Link to="/tableau-budget-familial-gratuit">
+                <FileSpreadsheet className="mr-2 h-5 w-5" aria-hidden="true" /> Tableau budget familial gratuit
+              </Link>
+            </Button>
+            <Button asChild size="lg" variant="outline" className="border-2 border-white bg-transparent text-white hover:bg-white/10 font-semibold">
+              <Link to="/signup">
+                Créer mon budget gratuit <ArrowRight className="ml-2 h-5 w-5" aria-hidden="true" />
+              </Link>
             </Button>
           </div>
-          <p className="text-sm mt-4 opacity-75">
-            Pas de spam, désinscription possible à tout moment
-          </p>
         </section>
       </div>
 
