@@ -25,6 +25,7 @@ import { useAuth } from './contexts/AuthContext';
 import { useTutorial } from './contexts/TutorialContext';
 import PrivateRoute from './components/PrivateRoute';
 import { Toaster } from '@/components/ui/toaster';
+import { RouteSEO } from '@/components/RouteSEO';
 
 // ===== Public pages =====
 import Login from './lib/pages/Login';
@@ -52,6 +53,7 @@ const PremiumPage = lazy(() => import('./lib/pages/PremiumPage'));
 const SmartTools = lazy(() => import('./lib/pages/SmartTools'));
 const Blog = lazy(() => import('./lib/pages/Blog'));
 const BlogArticle = lazy(() => import('./lib/pages/BlogArticle'));
+const BudgetTemplate = lazy(() => import('./lib/pages/BudgetTemplate'));
 const Profile = lazy(() => import('./lib/pages/Profile'));
 const AcceptInvitation = lazy(() => import('./lib/pages/AcceptInvitation'));
 const EnableBankingCallbackPage = lazy(() => import('./lib/pages/EnableBankingCallbackPage'));
@@ -94,6 +96,7 @@ export default function App() {
           <Route path="/verify-email" element={<VerifyEmail />} />
           <Route path="/terms" element={<Terms />} />
           <Route path="/features" element={<Features />} />
+          <Route path="/tableau-budget-familial-gratuit" element={<BudgetTemplate />} />
           <Route path="/about" element={<About />} />
           <Route path="/help" element={<Help />} />
           <Route path="/premium" element={<PremiumPage />} />
@@ -173,6 +176,7 @@ export default function App() {
         </Routes>
       </Suspense>
 
+      <RouteSEO />
       <TutorialHost />
       <Toaster />
     </>

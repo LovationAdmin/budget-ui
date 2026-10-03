@@ -1,0 +1,156 @@
+// src/seo/site.ts
+// ============================================================================
+// One source of truth for the search metadata of public pages: used in the
+// browser by <RouteSEO /> (title/description/canonical on navigation) and at
+// build time by scripts/prerender.mjs, which writes one HTML file per page
+// with its own head, structured data and readable content.
+// ============================================================================
+
+/** Canonical host: the bare domain redirects here. */
+export const SITE = 'https://www.budgetfamille.com';
+export const SITE_NAME = 'Budget Famille';
+export const DEFAULT_IMAGE = `${SITE}/og-image.png`;
+
+export interface PageSEO {
+  path: string;
+  title: string;
+  description: string;
+  /** Canonical path when several URLs show the same page. */
+  canonical?: string;
+  noindex?: boolean;
+  /** Prerendered body: a heading, a short text and the useful links. */
+  h1?: string;
+  intro?: string;
+  links?: Array<{ href: string; label: string }>;
+  priority?: number;
+  changefreq?: 'weekly' | 'monthly' | 'yearly';
+}
+
+const CTA = { href: '/signup', label: 'Créer mon budget gratuit' };
+
+export const PAGES: PageSEO[] = [
+  {
+    path: '/',
+    title: 'Application de budget familial gratuite – Budget Famille',
+    description: 'Gérez le budget de votre famille ou de votre couple : pot commun, argent de poche, charges et épargne. Gratuit, sans connexion bancaire obligatoire.',
+    h1: 'L’application de budget familial gratuite, pensée pour le couple et la famille',
+    intro: 'Pot commun, argent de poche de chacun, charges et épargne : tout le mois en un coup d’œil. Sans connexion bancaire obligatoire, sans publicité, à plusieurs en temps réel.',
+    links: [CTA, { href: '/tableau-budget-familial-gratuit', label: 'Tableau de budget familial gratuit (Excel)' }, { href: '/features', label: 'Toutes les fonctionnalités' }, { href: '/blog', label: 'Conseils budget' }],
+    priority: 1,
+    changefreq: 'weekly',
+  },
+  {
+    path: '/tableau-budget-familial-gratuit',
+    title: 'Tableau budget familial gratuit (Excel) à télécharger',
+    description: 'Téléchargez gratuitement notre tableau Excel de budget familial : budget mensuel, dépenses, épargne et répartition du compte commun en couple. Compatible Google Sheets.',
+    h1: 'Tableau de budget familial gratuit',
+    intro: 'Un modèle Excel simple pour suivre le budget mensuel du foyer : revenus, dépenses, épargne, et la répartition du compte commun dans un couple. Les calculs sont déjà faits.',
+    links: [{ href: '/telechargements/tableau-budget-familial-budgetfamille.xlsx', label: 'Télécharger le tableau (.xlsx)' }, CTA],
+    priority: 0.9,
+    changefreq: 'monthly',
+  },
+  {
+    path: '/features',
+    title: 'Fonctionnalités : pot commun, argent de poche, Budget IA – Budget Famille',
+    description: 'Vue du mois, répartition du pot commun, argent de poche, charges perso privées, objectifs d’épargne datés, Budget IA et mode sombre : tout ce que fait Budget Famille.',
+    h1: 'Les fonctionnalités de Budget Famille',
+    intro: 'Tout ce qu’il faut pour gérer le budget d’un foyer à plusieurs : le mois en un coup d’œil, une répartition juste, des dépenses perso confidentielles et une épargne qui avance.',
+    links: [CTA],
+    priority: 0.8,
+    changefreq: 'monthly',
+  },
+  {
+    path: '/blog',
+    title: 'Conseils budget familial et couple – Le blog Budget Famille',
+    description: 'Guides pratiques pour gérer le budget de la famille et du couple : compte commun, argent de poche, épargne par objectif, économies sur les abonnements.',
+    h1: 'Conseils budget pour la famille et le couple',
+    priority: 0.8,
+    changefreq: 'weekly',
+  },
+  {
+    path: '/help',
+    title: 'Aide et questions fréquentes – Budget Famille',
+    description: 'Comment créer votre budget, ajouter votre foyer, répartir le pot commun, gérer les charges perso et l’épargne : toutes les réponses.',
+    h1: 'Centre d’aide',
+    links: [CTA],
+    priority: 0.6,
+    changefreq: 'monthly',
+  },
+  {
+    path: '/outils-ia',
+    title: 'Outils IA gratuits pour réduire vos factures – Budget Famille',
+    description: 'Estimez en 30 secondes ce que vous pourriez économiser sur l’énergie, internet, le mobile ou l’assurance, sans créer de compte.',
+    h1: 'Outils IA pour réduire vos factures',
+    links: [CTA],
+    priority: 0.6,
+    changefreq: 'monthly',
+  },
+  { path: '/smart-tools', canonical: '/outils-ia', title: 'Outils IA gratuits pour réduire vos factures – Budget Famille', description: 'Estimez en 30 secondes ce que vous pourriez économiser sur l’énergie, internet, le mobile ou l’assurance, sans créer de compte.' },
+  {
+    path: '/premium',
+    title: 'Premium : synchronisation bancaire automatique – Budget Famille',
+    description: 'L’option Premium à 2 € par mois synchronise automatiquement vos comptes bancaires pour comparer budget prévu et dépenses réelles.',
+    h1: 'Budget Famille Premium',
+    priority: 0.5,
+    changefreq: 'monthly',
+  },
+  {
+    path: '/about',
+    title: 'À propos – Budget Famille',
+    description: 'Budget Famille est une application française indépendante pour gérer le budget du foyer à plusieurs, simplement et en confidentialité.',
+    h1: 'À propos de Budget Famille',
+    priority: 0.4,
+    changefreq: 'yearly',
+  },
+  { path: '/signup', title: 'Créer un compte gratuit – Budget Famille', description: 'Créez votre budget familial gratuit en 1 minute : sans carte bancaire, sans connexion à votre banque.', priority: 0.7, changefreq: 'yearly', h1: 'Créez votre budget gratuit' },
+  { path: '/privacy', title: 'Politique de confidentialité – Budget Famille', description: 'Comment Budget Famille protège vos données : hébergement en Europe, chiffrement, aucune revente.', priority: 0.3, changefreq: 'yearly' },
+  { path: '/terms', title: 'Conditions d’utilisation – Budget Famille', description: 'Les conditions générales d’utilisation de Budget Famille.', priority: 0.2, changefreq: 'yearly' },
+  { path: '/login', title: 'Connexion – Budget Famille', description: 'Connectez-vous à votre budget familial.', noindex: true },
+  { path: '/forgot-password', title: 'Mot de passe oublié – Budget Famille', description: 'Réinitialisez votre mot de passe Budget Famille.', noindex: true },
+];
+
+const BY_PATH = new Map(PAGES.map((p) => [p.path, p]));
+
+export function pageSEO(pathname: string): PageSEO | undefined {
+  const path = pathname.length > 1 ? pathname.replace(/\/+$/, '') : pathname;
+  return BY_PATH.get(path);
+}
+
+export const absolute = (path: string) => (path.startsWith('http') ? path : `${SITE}${path === '/' ? '/' : path}`);
+
+/** Organization + WebSite, published on every page. */
+export const ORGANIZATION_LD = {
+  '@context': 'https://schema.org',
+  '@type': 'Organization',
+  name: SITE_NAME,
+  url: `${SITE}/`,
+  logo: `${SITE}/icon-512.png`,
+};
+
+export const SOFTWARE_LD = {
+  '@context': 'https://schema.org',
+  '@type': 'SoftwareApplication',
+  name: SITE_NAME,
+  applicationCategory: 'FinanceApplication',
+  operatingSystem: 'Web, iOS, Android (navigateur)',
+  url: `${SITE}/`,
+  description: 'Application gratuite de budget familial et de couple : pot commun, argent de poche, charges, épargne et Budget IA.',
+  inLanguage: 'fr',
+  offers: { '@type': 'Offer', price: '0', priceCurrency: 'EUR' },
+};
+
+export function faqLD(items: Array<{ q: string; a: string }>) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: items.map((f) => ({ '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: f.a } })),
+  };
+}
+
+export function breadcrumbLD(items: Array<{ name: string; path: string }>) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: items.map((it, i) => ({ '@type': 'ListItem', position: i + 1, name: it.name, item: absolute(it.path) })),
+  };
+}

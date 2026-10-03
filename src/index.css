@@ -314,3 +314,13 @@
 .dark .bg-white\/60 { background-color: hsl(var(--card) / 0.6); }
 .dark .bg-white\/50 { background-color: hsl(var(--card) / 0.5); }
 .dark .from-white { --tw-gradient-from: hsl(var(--card)) var(--tw-gradient-from-position); --tw-gradient-to: hsl(var(--card) / 0) var(--tw-gradient-to-position); --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to); }
+
+/* Admin charts: validated categorical slots (dataviz palette), per theme. */
+.viz-root {
+  --series-1: #2a78d6;
+  --series-2: #eb6834;
+}
+.dark .viz-root {
+  --series-1: #3987e5;
+  --series-2: #d95926;
+}

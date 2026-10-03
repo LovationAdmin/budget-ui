@@ -1,7 +1,8 @@
 // src/pages/VerifyEmail.tsx
 // ✅ VERSION CORRIGÉE avec gestion token expiré + option renvoi
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import api, { authAPI } from '../../services/api';
 import { Button } from '@/components/ui/button';
@@ -18,6 +19,10 @@ export default function VerifyEmail() {
   const [message, setMessage] = useState('Vérification en cours...');
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [resending, setResending] = useState(false);
+  const [signedIn, setSignedIn] = useState(false);
+  const { startSession } = useAuth();
+  // The token is single-use: never send it twice (StrictMode, re-renders).
+  const verifiedRef = useRef(false);
 
   useEffect(() => {
     const token = searchParams.get('token');
@@ -27,11 +32,20 @@ export default function VerifyEmail() {
       return;
     }
 
-    // ✅ FIX: Route correcte avec /verify-email
-    api.get(`/auth/verify-email?token=${token}`)
+    if (verifiedRef.current) return;
+    verifiedRef.current = true;
+    api.get(`/auth/verify-email?token=${encodeURIComponent(token)}`)
       .then((response) => {
         setStatus('success');
-        setMessage(response.data.message || 'Email vérifié avec succès !');
+        setMessage(response.data.message || 'Adresse e-mail confirmée.');
+        // The API opens the session on first verification: go straight to
+        // creating the first budget.
+        const { token: accessToken, user, refresh_token } = response.data ?? {};
+        if (accessToken && user) {
+          startSession(accessToken, user, refresh_token);
+          setSignedIn(true);
+          setTimeout(() => navigate('/dashboard?bienvenue=1', { replace: true }), 1500);
+        }
       })
       .catch((err) => {
         const errorMsg = err.response?.data?.error || 'Erreur lors de la vérification.';
@@ -91,15 +105,21 @@ export default function VerifyEmail() {
         {status === 'success' && (
           <>
             <CheckCircle className="h-12 w-12 text-green-500 mx-auto mb-4" />
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">Email Vérifié !</h2>
-            <p className="text-gray-600 mb-6">
-              {message}
-              <br />
-              Votre compte est maintenant activé. Vous pouvez vous connecter.
+            <h1 className="text-2xl font-bold text-foreground mb-2">Adresse confirmée !</h1>
+            <p className="text-muted-foreground mb-6">
+              {signedIn
+                ? 'Bienvenue sur Budget Famille. On vous emmène créer votre premier budget…'
+                : 'Votre compte est activé. Connectez-vous pour commencer.'}
             </p>
-            <Button onClick={() => navigate('/login')} className="w-full">
-              Se connecter
-            </Button>
+            {signedIn ? (
+              <Button onClick={() => navigate('/dashboard?bienvenue=1', { replace: true })} className="w-full">
+                Continuer
+              </Button>
+            ) : (
+              <Button onClick={() => navigate('/login')} className="w-full">
+                Se connecter
+              </Button>
+            )}
           </>
         )}
 

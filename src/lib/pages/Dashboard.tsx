@@ -3,7 +3,7 @@
 
 import { EmptyState } from '@/components/budget/EmptyState';
 import { useState, useEffect, useCallback, memo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { PiggyBank, Plus, ArrowRight, Trash2, MapPin, DollarSign, Pencil, Sparkles, Check } from "lucide-react";
 import { budgetAPI } from '../../services/api';
 import { useAuth } from '../../contexts/AuthContext';
@@ -217,6 +217,8 @@ export default function Dashboard() {
   // Create Modal States
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [newBudgetName, setNewBudgetName] = useState('');
+  const [params, setParams] = useSearchParams();
+  const welcome = params.get('bienvenue') === '1';
   const [newBudgetLocation, setNewBudgetLocation] = useState('FR');
   const [newBudgetCurrency, setNewBudgetCurrency] = useState('EUR');
   const [startWithAI, setStartWithAI] = useState(false);
@@ -357,6 +359,26 @@ export default function Dashboard() {
   // ============================================================================
   // RENDER
   // ============================================================================
+  // A newcomer (just confirmed their email) lands on the creation form,
+  // pre-filled so one tap creates the first budget.
+  useEffect(() => {
+    if (!welcome || loading) return;
+    if (budgets.length === 0) {
+      setNewBudgetName((n) => n || 'Budget famille');
+      setShowCreateModal(true);
+    }
+    setParams((p) => {
+      const copy = new URLSearchParams(p);
+      copy.delete('bienvenue');
+      return copy;
+    }, { replace: true });
+  }, [welcome, loading, budgets.length, setParams]);
+
+  const openCreate = () => {
+    if (budgets.length === 0) setNewBudgetName((n) => n || 'Budget famille');
+    setShowCreateModal(true);
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary-50 to-purple-50 flex flex-col">
       <Navbar />
@@ -377,7 +399,7 @@ export default function Dashboard() {
             </div>
             <Button 
               variant="default" 
-              onClick={() => setShowCreateModal(true)} 
+              onClick={openCreate} 
               className="gap-2 shadow-lg bg-primary hover:bg-primary/90 min-h-[44px]"
             >
               <Plus className="h-4 w-4" />
@@ -392,10 +414,10 @@ export default function Dashboard() {
         ) : budgets.length === 0 ? (
           <EmptyState
             icon={PiggyBank}
-            title="Aucun budget pour le moment"
-            description="Créez votre premier budget pour commencer à gérer vos finances."
-            actionLabel="Créer un budget"
-            onAction={() => setShowCreateModal(true)}
+            title="Bienvenue ! Créons votre premier budget"
+            description="Un nom, votre pays, et c’est parti : vous ajouterez ensuite votre foyer et vos charges en quelques minutes."
+            actionLabel="Créer mon budget"
+            onAction={openCreate}
           />
         ) : (
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
@@ -431,7 +453,7 @@ export default function Dashboard() {
                   id="budget-name"
                   value={newBudgetName} 
                   onChange={(e) => setNewBudgetName(e.target.value)} 
-                  placeholder="Ex: Budget Famille 2025"
+                  placeholder="Ex. : Budget famille, Coloc…"
                   autoFocus 
                   className="min-h-[44px]"
                 />

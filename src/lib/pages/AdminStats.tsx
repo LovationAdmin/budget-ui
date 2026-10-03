@@ -44,6 +44,7 @@ import { AdminCampaignSender } from '@/components/admin/AdminCampaignSender';
 import { AdminMonthlyRecapSender } from '@/components/admin/AdminMonthlyRecapSender';
 import { AdminUnverifiedReminderSender } from '@/components/admin/AdminUnverifiedReminderSender';
 import { AdminLocksBackfill } from '@/components/admin/AdminLocksBackfill';
+import { AdminGrowth } from '@/components/admin/AdminGrowth';
 
 // ============================================================================
 // HELPERS
@@ -239,6 +240,7 @@ export default function AdminStats() {
             )}
 
             {/* DATA */}
+            {data?.growth && <AdminGrowth growth={data.growth} />}
             {data && <StatsGrid data={data} />}
 
             {/* CAMPAIGNS — only render once stats are loaded so the layout is stable */}

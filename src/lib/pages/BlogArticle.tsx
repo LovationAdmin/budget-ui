@@ -1,7 +1,9 @@
 // src/pages/BlogArticle.tsx
 // Page dynamique pour afficher un article de blog
 
+import { useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { applyHead } from '@/seo/head';
 import { blogArticles } from '@/data/blog-articles';
 import Navbar from '@/components/Navbar';
 import { useAuth } from '@/contexts/AuthContext';
@@ -16,6 +18,14 @@ export default function BlogArticle() {
 
   // Trouver l'article correspondant au slug
   const article = blogArticles.find(a => a.slug === slug);
+
+  useEffect(() => {
+    if (article) {
+      applyHead({ title: article.title, description: article.excerpt, canonical: `/blog/${article.slug}`, type: 'article' });
+    } else {
+      applyHead({ title: 'Article introuvable', description: 'Cet article n’existe pas.', canonical: `/blog/${slug ?? ''}`, noindex: true });
+    }
+  }, [article, slug]);
 
   // Si l'article n'existe pas, afficher une erreur
   if (!article) {

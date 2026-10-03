@@ -45,6 +45,18 @@ export interface AdminStatsData {
     total: number;
     not_expired: number;
   };
+  /** Absent on older API versions. */
+  growth?: GrowthData;
+}
+
+export interface GrowthData {
+  funnel: { signed_up: number; verified: number; with_budget: number; active_30_days: number; collaborating: number };
+  weekly: Array<{ week: string; signups: number; verified: number }>;
+  active_users_7_days: number;
+  active_users_30_days: number;
+  unverified_over_7_days: number;
+  locations: Array<{ code: string; count: number }>;
+  campaigns: Array<{ id: string; sent: number; failed: number; last_at: string }>;
 }
 
 interface UseAdminStatsReturn {
