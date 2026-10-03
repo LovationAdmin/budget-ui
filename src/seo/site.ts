@@ -22,6 +22,8 @@ export interface PageSEO {
   h1?: string;
   intro?: string;
   links?: Array<{ href: string; label: string }>;
+  /** Extra prerendered sections (substance for crawlers without JS). */
+  sections?: Array<{ h2: string; text: string }>;
   priority?: number;
   changefreq?: 'weekly' | 'monthly' | 'yearly';
 }
@@ -51,11 +53,19 @@ export const PAGES: PageSEO[] = [
   },
   {
     path: '/features',
-    title: 'Fonctionnalités : pot commun, argent de poche, Budget IA – Budget Famille',
+    title: 'Fonctionnalités : pot commun, Budget IA – Budget Famille',
     description: 'Vue du mois, répartition du pot commun, argent de poche, charges perso privées, objectifs d’épargne datés, Budget IA et mode sombre : tout ce que fait Budget Famille.',
     h1: 'Les fonctionnalités de Budget Famille',
     intro: 'Tout ce qu’il faut pour gérer le budget d’un foyer à plusieurs : le mois en un coup d’œil, une répartition juste, des dépenses perso confidentielles et une épargne qui avance.',
     links: [CTA],
+    sections: [
+      { h2: 'Le mois en un coup d’œil', text: 'Chaque mois affiche ce qui entre dans le pot commun, les charges, l’épargne et le reste. Les charges se répètent toutes seules : chaque mois, certains mois (cantine), chaque année (taxe foncière) ou une seule fois. Un mois terminé est clôturé et figé : modifier un montant n’abîme jamais le passé.' },
+      { h2: 'Pot commun et argent de poche', text: 'Pour chaque membre du foyer : son salaire, ce qu’il verse au pot commun et l’argent de poche qui lui reste. L’assistant « Répartir le pot commun » calcule une contribution juste à 50/50, au prorata des salaires ou pour garder le même argent de poche, sur le mois réel.' },
+      { h2: 'Charges perso, publiques ou privées', text: 'Un impôt, un envoi d’argent à la famille, un crédit personnel se déduisent de l’argent de poche de son titulaire, jamais du pot commun. En privé, le nom de la charge est chiffré sur nos serveurs et visible par son seul créateur ; le montant reste juste pour le foyer.' },
+      { h2: 'Épargne par objectif', text: 'Créez une cagnotte avec un objectif et une date : le montant mensuel est calculé et l’application vérifie qu’il tient dans votre budget, en regardant le mois le plus serré. Les dépenses payées avec l’épargne sont suivies, et le bilan de l’année en tient compte.' },
+      { h2: 'Budget IA', text: 'Décrivez votre foyer et vos objectifs : l’IA propose une répartition, des pistes d’économies et un plan pour tenir vos objectifs dans les temps. Rien ne change tant que vous ne validez pas.' },
+      { h2: 'À plusieurs, sur tous les écrans', text: 'Invitez votre conjoint : chacun voit les mêmes chiffres en temps réel. L’application fonctionne sur téléphone et ordinateur, en mode clair ou sombre, et chaque modification peut être annulée.' },
+    ],
     priority: 0.8,
     changefreq: 'monthly',
   },
@@ -73,6 +83,13 @@ export const PAGES: PageSEO[] = [
     description: 'Comment créer votre budget, ajouter votre foyer, répartir le pot commun, gérer les charges perso et l’épargne : toutes les réponses.',
     h1: 'Centre d’aide',
     links: [CTA],
+    sections: [
+      { h2: 'Créer son budget', text: 'Créez un compte gratuit, confirmez votre adresse e-mail puis créez votre budget : un nom et votre pays suffisent. Ajoutez ensuite les membres du foyer avec leur salaire net, puis vos charges.' },
+      { h2: 'Répartir le pot commun', text: 'Dans l’onglet Foyer, l’assistant « Répartir le pot commun » propose ce que chacun verse : à parts égales, au prorata des salaires ou pour garder le même argent de poche. Rien ne change tant que vous n’appliquez pas.' },
+      { h2: 'Charges du foyer et charges perso', text: 'À la création d’une charge, « Qui la paie ? » distingue le pot commun d’un membre. Une charge perso se déduit de l’argent de poche de son titulaire ; elle peut être privée.' },
+      { h2: 'Épargne et objectifs', text: 'Une cagnotte peut recevoir un montant chaque mois ou un montant libre. Avec un objectif et une date, le montant mensuel est calculé et sa faisabilité vérifiée.' },
+      { h2: 'Mois clôturés', text: 'À la fin d’un mois, ses montants sont figés : changer une charge ou un salaire ensuite ne modifie que l’avenir. Vous pouvez rouvrir un mois si besoin.' },
+    ],
     priority: 0.6,
     changefreq: 'monthly',
   },
@@ -82,6 +99,10 @@ export const PAGES: PageSEO[] = [
     description: 'Estimez en 30 secondes ce que vous pourriez économiser sur l’énergie, internet, le mobile ou l’assurance, sans créer de compte.',
     h1: 'Outils IA pour réduire vos factures',
     links: [CTA],
+    sections: [
+      { h2: 'Énergie, internet, mobile, assurance', text: 'Choisissez une dépense, indiquez votre montant actuel et la taille du foyer : l’outil estime en 30 secondes ce que vous pourriez économiser et propose des alternatives, sans créer de compte.' },
+      { h2: 'Dans votre budget', text: 'Une fois votre budget créé, l’analyse se fait charge par charge et les économies possibles s’affichent à côté de chaque dépense.' },
+    ],
     priority: 0.6,
     changefreq: 'monthly',
   },
@@ -91,6 +112,10 @@ export const PAGES: PageSEO[] = [
     title: 'Premium : synchronisation bancaire automatique – Budget Famille',
     description: 'L’option Premium à 2 € par mois synchronise automatiquement vos comptes bancaires pour comparer budget prévu et dépenses réelles.',
     h1: 'Budget Famille Premium',
+    sections: [
+      { h2: 'Ce qui reste gratuit', text: 'Le budget, le foyer, les charges, l’épargne, le Budget IA et le partage en famille restent gratuits.' },
+      { h2: 'Ce qu’ajoute Premium', text: 'La synchronisation bancaire automatique compare chaque mois le budget prévu aux dépenses réelles de vos comptes, pour 2 € par mois.' },
+    ],
     priority: 0.5,
     changefreq: 'monthly',
   },
@@ -99,6 +124,10 @@ export const PAGES: PageSEO[] = [
     title: 'À propos – Budget Famille',
     description: 'Budget Famille est une application française indépendante pour gérer le budget du foyer à plusieurs, simplement et en confidentialité.',
     h1: 'À propos de Budget Famille',
+    sections: [
+      { h2: 'Pourquoi Budget Famille', text: 'Gérer l’argent d’un foyer à plusieurs, c’est concilier un pot commun, l’argent de chacun et des projets d’épargne. Les tableurs le font mal et les applications bancaires ne connaissent pas le foyer : Budget Famille est né pour ça.' },
+      { h2: 'Nos engagements', text: 'Une application simple, gratuite pour l’essentiel, sans publicité. Des données hébergées en Europe, chiffrées, jamais revendues, et la confidentialité au centre : les dépenses perso peuvent rester privées.' },
+    ],
     priority: 0.4,
     changefreq: 'yearly',
   },

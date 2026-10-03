@@ -24,7 +24,8 @@ function setMeta(attr: 'name' | 'property', key: string, content: string) {
 }
 
 export function applyHead(m: HeadMeta) {
-  const title = m.title.includes(SITE_NAME) ? m.title : `${m.title} – ${SITE_NAME}`;
+  // Long titles keep their words rather than the brand (results cut at ~60).
+  const title = m.title.includes(SITE_NAME) || m.title.length > 50 ? m.title : `${m.title} – ${SITE_NAME}`;
   document.title = title;
   const url = absolute(m.canonical);
   setMeta('name', 'description', m.description);

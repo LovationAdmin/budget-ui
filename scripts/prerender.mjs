@@ -22,7 +22,7 @@ function setTag(html, re, tag) {
 }
 
 function render(template, page) {
-  const title = page.title.includes('Budget Famille') ? page.title : `${page.title} – Budget Famille`;
+  const title = page.title.includes('Budget Famille') || page.title.length > 50 ? page.title : `${page.title} – Budget Famille`;
   let html = template;
   html = setTag(html, /<title>[\s\S]*?<\/title>/, `<title>${esc(title)}</title>`);
   html = setTag(html, /<meta name="description"[^>]*>/, `<meta name="description" content="${esc(page.description)}" />`);
