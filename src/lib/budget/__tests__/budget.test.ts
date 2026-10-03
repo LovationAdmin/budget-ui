@@ -12,6 +12,8 @@ import {
   describeChargeSchedule,
   customMonthsText,
   chargesEndingBetween,
+  monthSpent,
+  yearSummary,
 } from '../engine';
 import { autoCloseMonths, decodeBudget, encodeBudget } from '../codec';
 import {
@@ -554,6 +556,32 @@ test('members: clearing a month-only exception restores the rules', () => {
   const cleared = clearPersonMonthException(model, 'a', '2026-10');
   near(new BudgetEngine(cleared, '2026-10').month('2026-10').totals.contributions, 2000, 'rules again');
   eq(cleared.people[0].salaryOverrides, undefined);
+});
+
+test('year summary: the net counts what was spent from savings', () => {
+  const raw = {
+    people: [{ id: 'a', name: 'A', salary: 3000 }],
+    charges: [{ id: 'rent', label: 'Loyer', amount: 2000 }],
+    projects: [{ id: 'trip', label: 'Voyage', monthlyAmount: 300, startDate: '2026-01-01' }],
+    yearlyData: {
+      '2026': {
+        months: Array.from({ length: 12 }, () => ({})),
+        expenses: [{}, {}, {}, {}, {}, {}, { trip: 1200 }, { epargne: 400 }, {}, {}, {}, {}],
+      },
+    },
+  };
+  const e = new BudgetEngine(decodeBudget(raw, '2026-10'), '2026-10');
+  const y = yearSummary(e, 2026);
+  near(y.entrees, 36000, 'inflows');
+  near(y.charges, 24000, 'charges');
+  near(y.savings, 3600, 'savings');
+  near(y.reste, 8400, 'leftovers (700 × 12)');
+  near(y.spent, 1600, 'trip paid in July + 400 from general savings in August');
+  near(y.net, 3600 + 8400 - 1600, 'net = savings + leftovers − spent');
+  near(y.endPots, 3600 - 1200, 'pot balance after the trip');
+  near(y.endGeneral, 8400 - 400, 'general savings after the withdrawal');
+  near(y.endBalance, y.net, 'first year: end balance equals the net');
+  near(monthSpent(e.month('2026-07')), 1200, 'July spent');
 });
 
 test('personal charges: out of pocket money, never out of the pot', () => {
