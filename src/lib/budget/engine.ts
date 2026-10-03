@@ -739,9 +739,17 @@ export function personStatus(p: Person, today: YM): ItemStatus {
 // Engine (memoised view over one model)
 // ---------------------------------------------------------------------------
 
-/** Money paid this month out of savings: savings pots and the general savings. */
+/**
+ * Money paid this month out of savings: existing pots and the general
+ * savings. Pots deleted since are left out, like their balance.
+ */
 export function monthSpent(m: ResolvedMonth): number {
-  return roundCents(m.savings.reduce((s, x) => s + x.spent, 0) + m.generalSpent);
+  return roundCents(m.savings.reduce((s, x) => s + (x.deleted ? 0 : x.spent), 0) + m.generalSpent);
+}
+
+/** Money once paid from pots that have been deleted since. */
+function deletedPotsSpent(m: ResolvedMonth): number {
+  return m.savings.reduce((s, x) => s + (x.deleted ? x.spent : 0), 0);
 }
 
 export interface YearSummary {
@@ -750,8 +758,10 @@ export interface YearSummary {
   savings: number;
   /** Sum of the monthly leftovers (they feed the general savings). */
   reste: number;
-  /** Paid with savings during the year (pots + general savings). */
+  /** Paid with savings during the year (existing pots + general savings). */
   spent: number;
+  /** Paid from pots deleted since: not counted, like their balance. */
+  deletedSpent: number;
   /** What the year really adds to the household savings: savings + reste − spent. */
   net: number;
   /** Savings available at the end of December (pots + general savings, all years). */
@@ -767,13 +777,15 @@ export function yearSummary(engine: BudgetEngine, year: number): YearSummary {
   let savings = 0;
   let reste = 0;
   let spent = 0;
+  let deletedSpent = 0;
   for (let i = 0; i < 12; i++) {
     const m = engine.month(makeYM(year, i));
     entrees += m.totals.entrees;
     charges += m.totals.charges;
-    savings += m.totals.savings;
+    savings += m.savings.reduce((s, x) => s + (x.deleted ? 0 : x.allocation), 0);
     reste += m.totals.reste;
     spent += monthSpent(m);
+    deletedSpent += deletedPotsSpent(m);
   }
   const dec = makeYM(year, 11);
   const endPots = engine.projectsBalance(dec);
@@ -784,6 +796,7 @@ export function yearSummary(engine: BudgetEngine, year: number): YearSummary {
     savings: roundCents(savings),
     reste: roundCents(reste),
     spent: roundCents(spent),
+    deletedSpent: roundCents(deletedSpent),
     net: roundCents(savings + reste - spent),
     endBalance: roundCents(endPots + endGeneral),
     endPots,

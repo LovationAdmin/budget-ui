@@ -584,6 +584,30 @@ test('year summary: the net counts what was spent from savings', () => {
   near(monthSpent(e.month('2026-07')), 1200, 'July spent');
 });
 
+test('year summary: a deleted pot counts neither in the net nor in the balance', () => {
+  const raw = {
+    people: [{ id: 'a', name: 'A', salary: 3000 }],
+    charges: [{ id: 'rent', label: 'Loyer', amount: 2000 }],
+    projects: [{ id: 'old', label: 'Ancienne cagnotte' }],
+    yearlyData: {
+      '2026': {
+        months: Array.from({ length: 12 }, () => ({})),
+        expenses: [{}, {}, { old: 700 }, { old: 700 }, { old: 500 }, {}, {}, { epargne: 400 }, {}, {}, {}, {}],
+      },
+    },
+  };
+  // Months up to September get closed, then the pot is deleted.
+  const closed = autoCloseMonths(decodeBudget(raw, '2026-10'), '2026-10', 'now').model;
+  const model = { ...closed, projects: closed.projects.filter((p) => p.id !== 'old') };
+  const e = new BudgetEngine(model, '2026-10');
+  const y = yearSummary(e, 2026);
+  near(y.spent, 400, 'only the general savings withdrawal counts');
+  near(y.deletedSpent, 1900, 'deleted pot spending reported apart');
+  near(y.net, 12000 - 400, 'net = leftovers − counted spending');
+  near(y.endBalance, y.net, 'net and available savings agree');
+  near(monthSpent(e.month('2026-03')), 0, 'March: nothing counted');
+});
+
 test('personal charges: out of pocket money, never out of the pot', () => {
   const raw = {
     people: [

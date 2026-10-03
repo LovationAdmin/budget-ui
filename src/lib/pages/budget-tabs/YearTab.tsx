@@ -135,6 +135,11 @@ export default function YearTab() {
           <p className="mt-2 text-sm tabular-nums text-foreground">
             Épargne {fmt(sum.savings)} <span className="text-muted-foreground">+</span> reste cumulé {moneySigned(sum.reste, currencySymbol)} <span className="text-muted-foreground">−</span> dépensé {fmt(sum.spent)}
           </p>
+          {sum.deletedSpent > 0 && (
+            <p className="mt-1 text-xs text-muted-foreground">
+              Non compté : {fmt(sum.deletedSpent)} payés avec une cagnotte supprimée depuis (son solde n’est plus compté non plus).
+            </p>
+          )}
         </div>
         {sum.endBalance !== sum.net && (
         <div className="rounded-xl bg-card/80 px-4 py-3 sm:text-right">
