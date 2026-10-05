@@ -1,0 +1,125 @@
+<!doctype html>
+<!--
+  Carte visuelle 1080×1350 (format 4:5 : Instagram, Facebook, LinkedIn, X).
+  Paramètres d'URL : kicker, title, stat, statLabel, footer (tous optionnels
+  sauf title). Rendu : scripts/render-card.mjs (voir SKILL.md, « Visuel »).
+-->
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=1080">
+<title>Carte Budget Famille</title>
+<style>
+  @font-face { font-family: 'Jakarta'; font-weight: 800; src: url('fonts/plus-jakarta-sans-latin-800-normal.woff2') format('woff2'); }
+  @font-face { font-family: 'Jakarta'; font-weight: 600; src: url('fonts/plus-jakarta-sans-latin-600-normal.woff2') format('woff2'); }
+  @font-face { font-family: 'DMSans'; font-weight: 500; src: url('fonts/dm-sans-latin-500-normal.woff2') format('woff2'); }
+  :root {
+    --primary: hsl(200 75% 38%);
+    --violet: #9333ea;
+    --ink: #0f1720;
+  }
+  * { box-sizing: border-box; margin: 0; }
+  html, body { width: 1080px; height: 1350px; overflow: hidden; }
+  body {
+    font-family: 'DMSans', system-ui, sans-serif;
+    background: linear-gradient(150deg, var(--primary) 0%, #3b5fd1 55%, var(--violet) 100%);
+    color: #fff;
+    display: flex;
+    flex-direction: column;
+    padding: 96px 88px 80px;
+  }
+  .kicker {
+    align-self: flex-start;
+    font: 600 30px/1 'Jakarta', system-ui, sans-serif;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    background: rgba(255,255,255,.16);
+    border: 2px solid rgba(255,255,255,.35);
+    padding: 16px 28px;
+    border-radius: 999px;
+  }
+  h1 {
+    margin-top: 64px;
+    font: 800 84px/1.08 'Jakarta', system-ui, sans-serif;
+    letter-spacing: -0.02em;
+    text-wrap: balance;
+  }
+  .stat {
+    margin-top: auto;
+    background: #fff;
+    color: var(--ink);
+    border-radius: 36px;
+    padding: 48px 56px;
+    box-shadow: 0 30px 60px rgba(15, 23, 32, .25);
+  }
+  .stat strong {
+    display: block;
+    white-space: nowrap;
+    font: 800 120px/1 'Jakarta', system-ui, sans-serif;
+    color: var(--primary);
+    letter-spacing: -0.03em;
+  }
+  .stat span { display: block; margin-top: 16px; font-size: 38px; line-height: 1.3; color: #3b4450; }
+  footer {
+    margin-top: 56px;
+    display: flex;
+    align-items: center;
+    gap: 22px;
+    font: 600 36px/1 'Jakarta', system-ui, sans-serif;
+  }
+  footer img { width: 72px; height: 72px; border-radius: 18px; background: #fff; }
+  .hidden { display: none; }
+  /* Sans chiffre clé : titre plus grand, centré verticalement, logo en bas. */
+  body.no-stat h1 { margin: auto 0; font-size: 104px; }
+</style>
+</head>
+<body>
+  <div class="kicker" id="kicker"></div>
+  <h1 id="title"></h1>
+  <div class="stat" id="statBox"><strong id="stat"></strong><span id="statLabel"></span></div>
+  <footer><img src="../../../../public/icon-192.png" alt=""><span id="footer">budgetfamille.com</span></footer>
+<script>
+  const q = new URLSearchParams(location.search);
+  // French typography: no line break inside numbers (« 2 000 € ») nor before
+  // « : ; ? ! » € % » or after « « ».
+  const nbsp = (s) => s
+    .replace(/(\d) (?=\d{3}(?!\d))/g, '$1\u00a0')
+    .replace(/(\d) (?=\p{L})/gu, '$1\u00a0')
+    .replace(/ ([:;?!»€%])/g, '\u00a0$1')
+    .replace(/« /g, '«\u00a0');
+  const set = (id, key) => {
+    const v = q.get(key);
+    if (v) document.getElementById(id).textContent = nbsp(v);
+    return !!v;
+  };
+  if (!set('kicker', 'kicker')) document.getElementById('kicker').classList.add('hidden');
+  set('title', 'title');
+  const hasStat = set('stat', 'stat');
+  set('statLabel', 'statLabel');
+  if (!hasStat) {
+    document.getElementById('statBox').classList.add('hidden');
+    document.body.classList.add('no-stat');
+  }
+  set('footer', 'footer');
+  // Fit once the fonts are loaded (measurements depend on them), then flag
+  // the page as ready for the screenshot (render-card.mjs waits for it).
+  Promise.all(['800 84px Jakarta', '600 30px Jakarta', '500 38px DMSans'].map((f) => document.fonts.load(f))).then(() => {
+    // Long stat: shrink until it fits on one line.
+    const stat = document.getElementById('stat');
+    let statSize = 120;
+    while (hasStat && stat.scrollWidth > stat.clientWidth && statSize > 64) {
+      statSize -= 6;
+      stat.style.fontSize = statSize + 'px';
+    }
+    // Long title: shrink until the card fits.
+    const h1 = document.getElementById('title');
+    let size = parseInt(getComputedStyle(h1).fontSize, 10);
+    while (document.body.scrollHeight > 1350 && size > 52) {
+      size -= 4;
+      h1.style.fontSize = size + 'px';
+    }
+    document.body.dataset.ready = '1';
+  });
+</script>
+</body>
+</html>
