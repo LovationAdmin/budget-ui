@@ -77,6 +77,10 @@ avant que l'article et les visuels soient en ligne.
      programmés plus tard (étape 1 de la semaine suivante). Noter le lien de
      connexion renvoyé par Metricool pour le compte rendu.
    - Fuseau par défaut si Metricool ne le donne pas : `Europe/Paris`.
+   - Si les outils Metricool (`mcp__Metricool…`) ou OpenRush (`mcp__OpenRush…`)
+     n'existent pas dans la session (connecteurs non attachés à la routine),
+     faire de même : produire la semaine, et écrire en tête de la PR et du compte
+     rendu qu'il faut ajouter ces connecteurs à la routine sur claude.ai.
 
 ### 1. Rattraper les semaines précédentes
 
