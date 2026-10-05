@@ -133,3 +133,37 @@ export const SAVINGS_ALLOCATION_TYPES: AllocationType[] = [
   'savings_projects',
   'vacations',
 ];
+
+// ---------------------------------------------------------------------------
+// Génération en streaming — étapes réelles remontées par le serveur
+// ---------------------------------------------------------------------------
+
+export type AdvisorStage =
+  | 'analyzing'
+  | 'method'
+  | 'allocation'
+  | 'members'
+  | 'savings'
+  | 'feasibility'
+  | 'summary'
+  | 'retry';
+
+export interface AdvisorProgress {
+  stage: AdvisorStage;
+  /** Méthode retenue, dès qu'elle est écrite. */
+  method?: Method;
+  /** 2 lors de la seconde tentative. */
+  attempt?: number;
+}
+
+/** Codes d'erreur renvoyés par le serveur (et côté client). */
+export type AdvisorErrorCode =
+  | 'ai_timeout'
+  | 'ai_busy'
+  | 'ai_unavailable'
+  | 'ai_invalid_output'
+  | 'ai_refused'
+  | 'ai_canceled'
+  | 'connection_lost'
+  | 'unauthorized'
+  | 'http_error';

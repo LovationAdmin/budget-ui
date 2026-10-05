@@ -22,6 +22,8 @@ interface NotificationContextType {
   isConnected: boolean;
   // 🔥 NEW: Subscribe to specific message types
   onSuggestionsReady: (callback: MessageCallback) => () => void;
+  /** One charge of a market analysis is done (partial result + progress). */
+  onSuggestionsProgress: (callback: MessageCallback) => () => void;
   /** Called when ANOTHER member saved the budget currently connected. */
   onBudgetUpdated: (callback: (info: { budgetId: string; user: string }) => void) => () => void;
 }
@@ -46,6 +48,7 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
   
   // 🔥 NEW: Pub/Sub system for message types
   const suggestionsCallbacksRef = useRef<Set<MessageCallback>>(new Set());
+  const suggestionsProgressCallbacksRef = useRef<Set<MessageCallback>>(new Set());
   const budgetUpdatedCallbacksRef = useRef<Set<(info: { budgetId: string; user: string }) => void>>(new Set());
 
   const connectToBudget = useCallback((budgetId: string, budgetName: string) => {
@@ -128,6 +131,15 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
               return [newNotification, ...prev];
             });
           } 
+          else if (message.type === 'suggestions_progress') {
+            suggestionsProgressCallbacksRef.current.forEach(callback => {
+              try {
+                callback(message.data);
+              } catch (err) {
+                console.error('❌ [Notifications] Callback error:', err);
+              }
+            });
+          }
           else if (message.type === 'suggestions_ready') {
             console.log('📊 [Notifications] Market suggestions ready:', message.data);
             // Notify all subscribers
@@ -184,6 +196,13 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
     };
   }, []);
 
+  const onSuggestionsProgress = useCallback((callback: MessageCallback) => {
+    suggestionsProgressCallbacksRef.current.add(callback);
+    return () => {
+      suggestionsProgressCallbacksRef.current.delete(callback);
+    };
+  }, []);
+
   const onBudgetUpdated = useCallback((callback: (info: { budgetId: string; user: string }) => void) => {
     budgetUpdatedCallbacksRef.current.add(callback);
     return () => {
@@ -220,6 +239,7 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
       disconnectFromBudget,
       isConnected,
       onSuggestionsReady, // 🔥 NEW
+      onSuggestionsProgress,
       onBudgetUpdated,
     }}>
       {children}

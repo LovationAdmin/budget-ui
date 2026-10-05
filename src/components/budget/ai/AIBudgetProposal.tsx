@@ -10,7 +10,7 @@
 // household pot is set from the proposal (salary ≠ contribution).
 // ============================================================================
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -41,9 +41,9 @@ import {
   CalendarDays,
   Plus,
   Trash2,
+  X,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { budgetAPI } from '@/services/api';
 import { useBudget } from '@/contexts/BudgetContext';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import type { BudgetModel, Charge, Person, Project, YM } from '@/lib/budget/types';
@@ -74,12 +74,14 @@ import { compareYM, formatMonthLong, monthsBetween, startDateOf, deMonth } from 
 import { roundCents } from '@/lib/budget/format';
 import { useFirstOpenMonth } from '@/components/budget/shared/hooks';
 import {
+  AdvisorStage,
   HouseholdInput,
   HouseholdType,
   Method,
   BudgetProposal,
   Feasibility,
 } from '@/types/aiBudget';
+import { clearAdvisorJob, retryAdvisorJob, startAdvisorJob, useAdvisorJob } from '@/lib/ai/advisorJob';
 
 function currencySymbol(code?: string): string {
   switch (code) {
@@ -140,17 +142,53 @@ function mergeProposal(
   return next;
 }
 
-// Cosmetic step labels shown while the LLM works, to make the wait less dull.
-const LOADING_STEPS = [
-  { at: 0, label: 'Analyse de votre situation et de vos revenus' },
-  { at: 8, label: 'Choix de la méthode de répartition la plus juste' },
-  { at: 18, label: 'Répartition des charges, poste par poste' },
-  { at: 30, label: "Calcul des enveloppes d'épargne (sécurité, projets, vacances)" },
-  { at: 42, label: 'Vérification de la faisabilité pour chaque membre' },
-  { at: 54, label: 'Rédaction du résumé et finalisation' },
+// Generation steps. The server reports the real one as the answer is written;
+// `at` (seconds) is only used when it cannot (older API without streaming).
+const LOADING_STEPS: { key: AdvisorStage; at: number; label: string }[] = [
+  { key: 'analyzing', at: 0, label: 'Analyse de votre situation et de vos revenus' },
+  { key: 'method', at: 8, label: 'Choix de la méthode de répartition la plus juste' },
+  { key: 'allocation', at: 16, label: 'Répartition des charges, poste par poste' },
+  { key: 'members', at: 24, label: 'Contribution et reste à vivre de chaque membre' },
+  { key: 'savings', at: 32, label: "Calcul des enveloppes d'épargne (sécurité, projets, vacances)" },
+  { key: 'feasibility', at: 40, label: 'Vérification de la faisabilité pour chaque membre' },
+  { key: 'summary', at: 48, label: 'Rédaction du résumé et finalisation' },
 ];
 
+const METHOD_LABELS: Record<Method, string> = {
+  prorata: 'Au prorata des revenus',
+  equal: 'Parts égales (50/50)',
+  equalized_reste: 'Reste-à-vivre égal',
+  all_common: 'Tout commun',
+};
+
+const ERROR_TITLES: Partial<Record<string, string>> = {
+  ai_timeout: "L'IA a mis trop de temps",
+  ai_busy: 'Service IA très sollicité',
+  ai_refused: 'Demande non traitée',
+  unauthorized: 'Session expirée',
+  connection_lost: 'Connexion interrompue',
+};
+
 type View = 'intake' | 'loading' | 'result' | 'error' | 'applied';
+
+interface IntakeDraft {
+  householdType: HouseholdType;
+  wantsPersonalSavings: boolean;
+  allowInterMemberTopUp: boolean;
+  preferredMethod: Method | 'auto';
+  freeText: string;
+}
+
+const draftKey = (budgetId?: string) => `ai-advisor-draft:${budgetId ?? ''}`;
+
+/** The intake typed by the user, kept for the session (tab switches, retries). */
+function loadDraft(budgetId?: string): Partial<IntakeDraft> {
+  try {
+    return JSON.parse(sessionStorage.getItem(draftKey(budgetId)) || '{}') as Partial<IntakeDraft>;
+  } catch {
+    return {};
+  }
+}
 
 export default function AIBudgetProposal() {
   const { model, engine, today, commit, budgetCurrency, budgetLocation, goToMonth } = useBudget();
@@ -166,24 +204,52 @@ export default function AIBudgetProposal() {
   const charges: Charge[] = model.charges.filter((c) => !c.ownerId && chargeStatus(c, today) === 'active' && chargeFrequency(c) !== 'once');
   const projects: Project[] = model.projects.filter((p) => p.id !== GENERAL_SAVINGS_ID && projectStatus(p, today) !== 'ended');
 
-  const [view, setView] = useState<View>('intake');
-  const [proposal, setProposal] = useState<BudgetProposal | null>(null);
+  // Generation runs in the background (survives tab switches); `applied` is
+  // the only view owned by this component.
+  const job = useAdvisorJob(budgetId);
+  const [applied, setApplied] = useState(false);
+  const view: View = applied
+    ? 'applied'
+    : job?.status === 'running'
+      ? 'loading'
+      : job?.status === 'error'
+        ? 'error'
+        : job?.status === 'done'
+          ? 'result'
+          : 'intake';
+  const proposal: BudgetProposal | null = job?.status === 'done' ? job.proposal : null;
   const [simulating, setSimulating] = useState(false);
   const [undoModel, setUndoModel] = useState<BudgetModel | null>(null);
   const [appliedSummary, setAppliedSummary] = useState<
     { projects: number; charges: number; isFresh: boolean; contributions: boolean } | null
   >(null);
-  const [errorMsg, setErrorMsg] = useState<string>('');
   const [elapsed, setElapsed] = useState(0);
+  const startedAt = job?.status === 'running' ? job.startedAt : null;
+  useEffect(() => {
+    if (startedAt === null) return;
+    const tick = () => setElapsed(Math.floor((Date.now() - startedAt) / 1000));
+    tick();
+    const ticker = window.setInterval(tick, 1000);
+    return () => window.clearInterval(ticker);
+  }, [startedAt]);
 
-  // ---- Intake state (prefilled from the budget) ----
-  const [householdType, setHouseholdType] = useState<HouseholdType>('couple');
-  const [wantsPersonalSavings, setWantsPersonalSavings] = useState(false);
-  const [allowInterMemberTopUp, setAllowInterMemberTopUp] = useState(true);
-  const [preferredMethod, setPreferredMethod] = useState<Method | 'auto'>('auto');
+  // ---- Intake state (prefilled from the budget, then from the session draft) ----
+  const [draft] = useState(() => loadDraft(budgetId));
+  const [householdType, setHouseholdType] = useState<HouseholdType>(draft.householdType ?? 'couple');
+  const [wantsPersonalSavings, setWantsPersonalSavings] = useState(draft.wantsPersonalSavings ?? false);
+  const [allowInterMemberTopUp, setAllowInterMemberTopUp] = useState(draft.allowInterMemberTopUp ?? true);
+  const [preferredMethod, setPreferredMethod] = useState<Method | 'auto'>(draft.preferredMethod ?? 'auto');
   // Prefilled when coming from a saving goal (« Demander un plan à Budget IA »).
   const [searchParams] = useSearchParams();
-  const [freeText, setFreeText] = useState(() => searchParams.get('objectif') ?? '');
+  const [freeText, setFreeText] = useState(() => searchParams.get('objectif') ?? draft.freeText ?? '');
+  useEffect(() => {
+    try {
+      const next: IntakeDraft = { householdType, wantsPersonalSavings, allowInterMemberTopUp, preferredMethod, freeText };
+      sessionStorage.setItem(draftKey(budgetId), JSON.stringify(next));
+    } catch {
+      /* stockage indisponible : le brouillon reste à l'écran */
+    }
+  }, [budgetId, householdType, wantsPersonalSavings, allowInterMemberTopUp, preferredMethod, freeText]);
 
   // When the budget has no members yet (typical for the "create + IA" flow),
   // let the user add them right here instead of bouncing to the Members tab.
@@ -251,7 +317,8 @@ export default function AIBudgetProposal() {
     freeText: freeText.trim(),
   });
 
-  const generate = async () => {
+  const generate = () => {
+    if (!budgetId) return;
     if (people.length === 0) {
       toast({
         title: 'Aucun membre',
@@ -269,32 +336,15 @@ export default function AIBudgetProposal() {
       return;
     }
 
-    setErrorMsg('');
     setElapsed(0);
-    setView('loading');
-    const started = Date.now();
-    const ticker = window.setInterval(() => setElapsed(Math.floor((Date.now() - started) / 1000)), 1000);
-    try {
-      // Generous client timeout: a full Sonnet-5 proposal (~5-6k tokens) can
-      // take ~60s; leave headroom above that so we don't cut off a valid call.
-      const res = await budgetAPI.generateAIProposal(buildInput(), { timeout: 150000 });
-      setProposal(res.data);
-      setEnvOverrides({});
-      setSimulating(false);
-      setView('result');
-    } catch (err: unknown) {
-      const anyErr = err as { code?: string; response?: { data?: { error?: string } } };
-      const timedOut = anyErr?.code === 'ECONNABORTED';
-      setErrorMsg(
-        timedOut
-          ? "L'IA met trop de temps à répondre. Réessayez dans un instant."
-          : anyErr?.response?.data?.error || "L'IA n'a pas pu proposer de budget. Réessayez dans un instant.",
-      );
-      setView('error');
-    } finally {
-      window.clearInterval(ticker);
-    }
+    startAdvisorJob(budgetId, buildInput());
   };
+
+  // A new proposal starts with the simulator closed and untouched.
+  useEffect(() => {
+    setEnvOverrides({});
+    setSimulating(false);
+  }, [proposal]);
 
   // ---- Simulator helpers ----
   const envContribution = (name: string, fallback: number) =>
@@ -392,7 +442,8 @@ export default function AIBudgetProposal() {
       { saveNow: true, undoable: false },
     );
     setAppliedSummary({ charges: chargeLines.length, projects: savingLines.length, isFresh, contributions: !!rules });
-    setView('applied');
+    setApplied(true);
+    if (budgetId) clearAdvisorJob(budgetId);
   };
 
   const undoApply = () => {
@@ -404,8 +455,7 @@ export default function AIBudgetProposal() {
   };
 
   const reject = () => {
-    setProposal(null);
-    setView('intake');
+    if (budgetId) clearAdvisorJob(budgetId);
     toast({ title: 'Proposition rejetée', description: 'Aucune modification apportée à votre budget.' });
   };
 
@@ -415,59 +465,93 @@ export default function AIBudgetProposal() {
   // =====================================================================
   // RENDER
   // =====================================================================
-  if (view === 'loading') {
+  if (view === 'loading' && job?.status === 'running') {
+    const timeIndex = LOADING_STEPS.reduce((acc, step, i) => (elapsed >= step.at ? i : acc), 0);
+    const currentIndex = job.live ? Math.max(0, LOADING_STEPS.findIndex((st) => st.key === job.stage)) : timeIndex;
+    const progress = Math.round(((currentIndex + 0.5) / LOADING_STEPS.length) * 100);
     return (
       <Card className="border-primary/20">
-        <CardContent className="flex flex-col items-center py-14 gap-5">
+        <CardContent className="flex flex-col items-center py-12 gap-5">
           <div className="flex flex-col items-center gap-2 text-center">
-            <Loader2 className="h-9 w-9 animate-spin text-primary" />
+            <Loader2 className="h-9 w-9 animate-spin text-primary" aria-hidden="true" />
             <p className="text-sm font-medium">L'IA construit votre budget…</p>
-            <p className="text-xs text-muted-foreground/70">{elapsed}s · généralement 30 à 60 secondes</p>
+            <p className="text-xs text-muted-foreground tabular-nums">{elapsed} s · généralement 20 à 60 secondes</p>
+            {job.attempt > 1 && (
+              <p className="text-xs text-amber-700 dark:text-amber-400">
+                La première réponse était incomplète : nouvelle tentative en cours.
+              </p>
+            )}
           </div>
-          <div className="w-full max-w-sm space-y-2.5">
+          <div
+            className="h-1.5 w-full max-w-sm overflow-hidden rounded-full bg-muted"
+            role="progressbar"
+            aria-label="Progression de la génération"
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-valuenow={progress}
+          >
+            <div
+              className="h-full w-full origin-left rounded-full bg-primary transition-transform duration-700 ease-out motion-reduce:transition-none"
+              style={{ transform: `scaleX(${progress / 100})` }}
+            />
+          </div>
+          <ol className="w-full max-w-sm space-y-2.5" aria-live="polite">
             {LOADING_STEPS.map((step, i) => {
-              const next = LOADING_STEPS[i + 1];
-              const done = next ? elapsed >= next.at : false;
-              const current = elapsed >= step.at && !done;
+              const done = i < currentIndex;
+              const current = i === currentIndex;
               return (
-                <div
-                  key={i}
-                  className={`flex items-center gap-2.5 text-sm transition-colors ${
-                    done || current ? 'text-foreground' : 'text-muted-foreground/40'
+                <li
+                  key={step.key}
+                  className={`flex items-start gap-2.5 text-sm transition-colors ${
+                    done || current ? 'text-foreground' : 'text-muted-foreground/50'
                   }`}
+                  aria-current={current ? 'step' : undefined}
                 >
                   {done ? (
-                    <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-500" />
+                    <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-500" aria-hidden="true" />
                   ) : current ? (
-                    <Loader2 className="h-4 w-4 shrink-0 animate-spin text-primary" />
+                    <Loader2 className="mt-0.5 h-4 w-4 shrink-0 animate-spin text-primary" aria-hidden="true" />
                   ) : (
-                    <div className="h-4 w-4 shrink-0 rounded-full border border-muted-foreground/30" />
+                    <span className="mt-0.5 h-4 w-4 shrink-0 rounded-full border border-muted-foreground/30" aria-hidden="true" />
                   )}
-                  <span>{step.label}</span>
-                </div>
+                  <span>
+                    {step.label}
+                    {step.key === 'method' && job.method && (
+                      <span className="block text-xs font-medium text-primary">→ {METHOD_LABELS[job.method]}</span>
+                    )}
+                  </span>
+                </li>
               );
             })}
-          </div>
+          </ol>
+          <p className="max-w-sm text-center text-xs text-muted-foreground">
+            Vous pouvez changer d'onglet : la proposition vous attendra ici.
+          </p>
+          <Button variant="ghost" size="sm" onClick={() => budgetId && clearAdvisorJob(budgetId)}>
+            <X className="h-4 w-4 mr-1" aria-hidden="true" /> Annuler
+          </Button>
         </CardContent>
       </Card>
     );
   }
 
-  if (view === 'error') {
+  if (view === 'error' && job?.status === 'error') {
+    const retry = () => budgetId && retryAdvisorJob(budgetId);
+    const edit = () => budgetId && clearAdvisorJob(budgetId);
     return (
       <Card className="border-red-200">
         <CardContent className="flex flex-col items-center justify-center py-16 gap-4 text-center">
           <div className="flex h-12 w-12 items-center justify-center rounded-full bg-red-100 text-red-600">
-            <AlertTriangle className="h-6 w-6" />
+            <AlertTriangle className="h-6 w-6" aria-hidden="true" />
           </div>
-          <div>
-            <p className="font-medium">La génération a échoué</p>
-            <p className="text-sm text-muted-foreground max-w-sm mt-1">{errorMsg}</p>
+          <div role="alert">
+            <p className="font-medium">{ERROR_TITLES[job.code] ?? 'La génération a échoué'}</p>
+            <p className="text-sm text-muted-foreground max-w-sm mt-1">{job.message}</p>
           </div>
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={() => setView('intake')}>Modifier ma demande</Button>
-            <Button onClick={generate}>
-              <RotateCcw className="h-4 w-4 mr-1" /> Réessayer
+          <div className="flex flex-col-reverse sm:flex-row gap-2">
+            <Button variant={job.retryable ? 'outline' : 'default'} onClick={edit}>Modifier ma demande</Button>
+            <Button variant={job.retryable ? 'default' : 'outline'} onClick={retry}>
+              <RotateCcw className="h-4 w-4 mr-1" aria-hidden="true" /> Réessayer
             </Button>
           </div>
         </CardContent>
@@ -498,7 +582,7 @@ export default function AIBudgetProposal() {
             <Button variant="outline" onClick={() => budgetId && navigate(`/budget/${budgetId}/complete/projects`)}>
               <PiggyBank className="h-4 w-4 mr-1" /> Voir l'épargne
             </Button>
-            <Button variant="ghost" onClick={() => { undoApply(); setAppliedSummary(null); setView('intake'); }}>
+            <Button variant="ghost" onClick={() => { undoApply(); setAppliedSummary(null); setApplied(false); }}>
               <RotateCcw className="h-4 w-4 mr-1" /> Annuler
             </Button>
           </div>
@@ -509,8 +593,21 @@ export default function AIBudgetProposal() {
 
   if (view === 'result' && proposal) {
     const feas = proposal.feasibility;
+    // The proposal was built from the budget as it was then: say so if the
+    // household, incomes, charges or goals changed since.
+    const budgetPart = (i: HouseholdInput) => JSON.stringify([i.members, i.charges, i.objectives]);
+    const stale = job?.status === 'done' && budgetPart(job.input) !== budgetPart(buildInput());
     return (
       <div className="space-y-5 animate-in fade-in duration-200">
+        {stale && (
+          <div className="flex flex-col sm:flex-row sm:items-center gap-3 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900 dark:bg-amber-950/40 dark:text-amber-100" role="status">
+            <AlertTriangle className="h-4 w-4 shrink-0" aria-hidden="true" />
+            <span className="flex-1">Votre budget a changé depuis cette proposition (foyer, revenus, charges ou objectifs). Régénérez-la pour en tenir compte.</span>
+            <Button size="sm" variant="outline" onClick={generate}>
+              <RotateCcw className="h-4 w-4 mr-1" aria-hidden="true" /> Régénérer
+            </Button>
+          </div>
+        )}
         {/* Undo bar */}
         {undoModel !== null && (
           <div className="flex items-center justify-between rounded-lg border border-border bg-muted/40 px-3 py-2 text-sm">
@@ -558,7 +655,7 @@ export default function AIBudgetProposal() {
           <CardHeader className="pb-2">
             <CardTitle className="flex items-center gap-2 text-base">
               <Sparkles className="h-5 w-5 text-primary" /> Proposition de l'IA
-              <Badge variant="secondary" className="ml-auto text-[10px] uppercase">{proposal.methodChosen}</Badge>
+              <Badge variant="secondary" className="ml-auto text-[11px]">{METHOD_LABELS[proposal.methodChosen] ?? proposal.methodChosen}</Badge>
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
@@ -755,9 +852,9 @@ export default function AIBudgetProposal() {
           {/* Household type + options */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <Label className="text-xs">Type de foyer</Label>
+              <Label htmlFor="ai-household-type" className="text-xs">Type de foyer</Label>
               <Select value={householdType} onValueChange={(v) => setHouseholdType(v as HouseholdType)}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectTrigger id="ai-household-type"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="couple">Couple</SelectItem>
                   <SelectItem value="family">Famille</SelectItem>
@@ -767,9 +864,9 @@ export default function AIBudgetProposal() {
               </Select>
             </div>
             <div className="space-y-1.5">
-              <Label className="text-xs">Méthode préférée (optionnel)</Label>
+              <Label htmlFor="ai-method" className="text-xs">Méthode préférée (optionnel)</Label>
               <Select value={preferredMethod} onValueChange={(v) => setPreferredMethod(v as Method | 'auto')}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectTrigger id="ai-method"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="auto">Laisser l'IA choisir</SelectItem>
                   <SelectItem value="prorata">Au prorata des revenus</SelectItem>
@@ -814,6 +911,8 @@ export default function AIBudgetProposal() {
                 <div className="flex-1 space-y-1">
                   <Label className="text-[10px] text-muted-foreground">Nom</Label>
                   <Input
+                    name="member-name"
+                    autoComplete="off"
                     value={newMemberName}
                     onChange={(e) => setNewMemberName(e.target.value)}
                     onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addBudgetMember())}
@@ -824,7 +923,10 @@ export default function AIBudgetProposal() {
                 <div className="w-full sm:w-36 space-y-1">
                   <Label className="text-[10px] text-muted-foreground">Salaire net ({sym})</Label>
                   <Input
+                    name="member-salary"
+                    autoComplete="off"
                     type="number"
+                    inputMode="decimal"
                     value={newMemberSalary}
                     onChange={(e) => setNewMemberSalary(e.target.value)}
                     onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addBudgetMember())}
@@ -841,8 +943,10 @@ export default function AIBudgetProposal() {
 
           {/* Free text — the primary input */}
           <div className="space-y-1.5">
-            <Label className="text-sm font-medium">Décrivez votre situation, en toutes lettres</Label>
+            <Label htmlFor="ai-free-text" className="text-sm font-medium">Décrivez votre situation, en toutes lettres</Label>
             <Textarea
+              id="ai-free-text"
+              name="situation"
               value={freeText}
               onChange={(e) => setFreeText(e.target.value)}
               rows={8}

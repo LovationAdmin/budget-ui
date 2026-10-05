@@ -19,6 +19,7 @@ import { createContext, useContext, useState, useEffect, ReactNode } from 'react
 import { authAPI, User as APIUser } from '../services/api';
 import { extractRateLimitError } from '@/lib/rateLimitError';
 import { setSentryUser } from '@/lib/sentry';
+import { clearAllAdvisorJobs } from '@/lib/ai/advisorJob';
 
 export interface User extends APIUser {
   created_at?: string;
@@ -195,6 +196,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     localStorage.removeItem(STORAGE_KEY_TOKEN);
     localStorage.removeItem(STORAGE_KEY_REFRESH);
     localStorage.removeItem(STORAGE_KEY_USER);
+    clearAllAdvisorJobs();
     setUser(null);
     setSentryUser(null);
   };
@@ -217,6 +219,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     localStorage.removeItem(STORAGE_KEY_TOKEN);
     localStorage.removeItem(STORAGE_KEY_REFRESH);
     localStorage.removeItem(STORAGE_KEY_USER);
+    clearAllAdvisorJobs();
     setUser(null);
     setSentryUser(null);
 

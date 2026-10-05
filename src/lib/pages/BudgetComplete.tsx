@@ -43,6 +43,7 @@ import { currencySymbol as symbolFor, money } from '@/lib/budget/format';
 import { CalendarDays, Receipt, PiggyBank, Users, BarChart3, Sparkles, FlaskConical } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { DEMO_TRANSACTIONS, DEMO_BANK_BALANCE, DEMO_MODE_LIMITS } from '@/constants/demoData';
+import { useAdvisorJob } from '@/lib/ai/advisorJob';
 
 // ============================================================================
 // NAVIGATION
@@ -328,6 +329,31 @@ export default function BudgetCompleteLayout() {
       loadBudget(true).then(() => toast({ description: `Budget mis à jour par ${who}.` }));
     });
   }, [id, onBudgetUpdated, loadBudget, toast]);
+
+  // ============================================================================
+  // BUDGET IA: the proposal is generated in the background — tell the user
+  // when it finishes while they are on another tab.
+  // ============================================================================
+  const aiJob = useAdvisorJob(id);
+  const aiJobStatus = aiJob?.status;
+  const prevAiJob = useRef({ id, status: aiJobStatus });
+  useEffect(() => {
+    const prev = prevAiJob.current;
+    prevAiJob.current = { id, status: aiJobStatus };
+    if (prev.id !== id || prev.status !== 'running' || (aiJobStatus !== 'done' && aiJobStatus !== 'error')) return;
+    if (location.pathname.endsWith('/ai')) return; // the tab shows it
+    const ok = aiJobStatus === 'done';
+    toast({
+      title: ok ? 'Votre budget IA est prêt' : 'Budget IA : la génération a échoué',
+      description: ok ? 'Découvrez la proposition et validez-la si elle vous convient.' : 'Ouvrez l’onglet Budget IA pour réessayer.',
+      variant: ok ? undefined : 'destructive',
+      action: (
+        <ToastAction altText="Ouvrir Budget IA" onClick={() => navigate(`/budget/${id}/complete/ai`)}>
+          {ok ? 'Voir' : 'Ouvrir'}
+        </ToastAction>
+      ),
+    });
+  }, [aiJobStatus, id, location.pathname, navigate, toast]);
 
   // ============================================================================
   // BANKING

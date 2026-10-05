@@ -14,7 +14,7 @@
 // ============================================================================
 
 import axios, { AxiosError, InternalAxiosRequestConfig, AxiosResponse } from 'axios';
-import type { HouseholdInput, BudgetProposal } from '@/types/aiBudget';
+import type { HouseholdInput, BudgetProposal, AdvisorProgress, AdvisorErrorCode } from '@/types/aiBudget';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api/v1';
 
@@ -57,9 +57,21 @@ async function callRefresh(): Promise<string> {
   return access_token;
 }
 
+/** Brouillons et propositions Budget IA (salaires, situation) : jamais au-delà de la session. */
+export function clearAIAdvisorStorage() {
+  try {
+    Object.keys(sessionStorage)
+      .filter((k) => k.startsWith('ai-advisor-'))
+      .forEach((k) => sessionStorage.removeItem(k));
+  } catch {
+    /* stockage indisponible */
+  }
+}
+
 function forceLogout() {
   localStorage.removeItem('token');
   localStorage.removeItem('user');
+  clearAIAdvisorStorage();
   if (typeof window !== 'undefined' && !window.location.pathname.includes('/login')) {
     const next = encodeURIComponent(window.location.pathname + window.location.search);
     window.location.href = `/login?next=${next}`;
@@ -200,7 +212,10 @@ export interface MarketSuggestion {
   id: string;
   category: string;
   country: string;
+  currency?: string;
+  household_size?: number;
   merchant_name?: string;
+  /** Moins chères d'abord ; potential_savings = économie annuelle pour tout le foyer. */
   competitors: Competitor[];
   last_updated: string;
   expires_at: string;
@@ -221,6 +236,8 @@ export interface BulkAnalyzeRequest {
     merchant_name?: string;
   }>;
   household_size: number;
+  /** Relance même si la même analyse tourne déjà (bouton « Relancer »). */
+  force?: boolean;
 }
 
 export interface BulkAnalyzeResponse {
@@ -229,6 +246,29 @@ export interface BulkAnalyzeResponse {
   ai_calls_made: number;
   total_potential_savings: number;
   household_size: number;
+}
+
+/** Réponse immédiate (202) de bulk-analyze ; les résultats arrivent par WebSocket. */
+export interface BulkAnalyzeAccepted {
+  status: 'processing' | 'already_running';
+  /** Nombre de charges éligibles qui seront analysées. */
+  total?: number;
+}
+
+/** WebSocket `suggestions_progress` : une charge vient d'être analysée. */
+export interface SuggestionsProgress {
+  done: number;
+  total: number;
+  failed: number;
+  item: ChargeSuggestion | null;
+}
+
+/** WebSocket `suggestions_ready` : fin de l'analyse. */
+export interface SuggestionsReady extends BulkAnalyzeResponse {
+  currency?: string;
+  total?: number;
+  failed_count?: number;
+  status?: 'ok' | 'partial' | 'failed';
 }
 
 export interface LocationUpdate {
@@ -380,7 +420,7 @@ export const budgetAPI = {
   // Serveur : traitement confidentiel, ne journalise ni le texte ni les montants.
   generateAIProposal: (
     input: HouseholdInput,
-    config?: { timeout?: number },
+    config?: { timeout?: number; signal?: AbortSignal },
   ): Promise<AxiosResponse<BudgetProposal>> =>
     api.post('/budgets/ai-proposal', input, config),
 
@@ -388,10 +428,13 @@ export const budgetAPI = {
   bulkAnalyzeSuggestions: (
     budgetId: string,
     data: BulkAnalyzeRequest,
-  ): Promise<AxiosResponse<BulkAnalyzeResponse>> =>
+  ): Promise<AxiosResponse<BulkAnalyzeAccepted>> =>
     api.post(`/budgets/${budgetId}/suggestions/bulk-analyze`, data),
 
-  // Market Suggestions — single charge (sync, retour direct)
+  // Market Suggestions — single charge (sync, retour direct), utilisé par le
+  // simulateur public (page Outils IA, widget d'accueil) : toujours l'endpoint
+  // public limité, pour qu'un jeton périmé ne renvoie jamais un visiteur vers
+  // la page de connexion.
   analyzeSingleCharge: (data: {
     category: string;
     merchant_name?: string;
@@ -402,7 +445,7 @@ export const budgetAPI = {
     country?: string;
     currency?: string;
   }): Promise<AxiosResponse<MarketSuggestion>> =>
-    api.post('/suggestions/analyze', {
+    api.post('/public/suggestions/analyze', {
       // Mapper current_amount (front) → amount (backend)
       amount: data.current_amount,
       category: data.category,
@@ -468,5 +511,170 @@ export const bankingAPI = {
   getRealityCheck: (budgetId: string) =>
     api.get(`/banking/budgets/${budgetId}/reality-check`),
 };
+
+// ============================================================================
+// BUDGET IA — GÉNÉRATION EN STREAMING (SSE)
+// ============================================================================
+// fetch + ReadableStream (EventSource ne fait que du GET). Le serveur envoie
+// les étapes réelles de la génération (progress), puis result ou error.
+
+/** Délai max côté client : un peu plus que le délai serveur (115 s). */
+const AI_PROPOSAL_CLIENT_TIMEOUT_MS = 130_000;
+
+export class AIProposalError extends Error {
+  code: AdvisorErrorCode;
+  retryable: boolean;
+  constructor(message: string, code: AdvisorErrorCode, retryable: boolean) {
+    super(message);
+    this.name = 'AIProposalError';
+    this.code = code;
+    this.retryable = retryable;
+  }
+}
+
+/**
+ * Rafraîchit le jeton d'accès via le cookie httpOnly ; null si la session a
+ * expiré. Partage le verrou de l'intercepteur : le serveur fait tourner les
+ * refresh tokens et révoque toute la famille en cas de réutilisation, donc
+ * deux refresh simultanés déconnecteraient l'utilisateur.
+ */
+async function refreshAccessToken(): Promise<string | null> {
+  if (isRefreshing) {
+    return new Promise<string | null>((resolve) => {
+      pendingQueue.push({ resolve, reject: () => resolve(null) });
+    });
+  }
+  isRefreshing = true;
+  try {
+    const token = await callRefresh();
+    localStorage.setItem('token', token);
+    flushQueue(token);
+    return token;
+  } catch (err) {
+    flushQueue(null, err);
+    return null;
+  } finally {
+    isRefreshing = false;
+  }
+}
+
+function parseSSEBlock(block: string): { event: string; data: string } {
+  let event = 'message';
+  const data: string[] = [];
+  for (const line of block.split('\n')) {
+    if (line.startsWith('event:')) event = line.slice(6).trim();
+    else if (line.startsWith('data:')) data.push(line.slice(5).trimStart());
+  }
+  return { event, data: data.join('\n') };
+}
+
+/**
+ * Génère un budget IA en suivant sa progression réelle. Rejette avec une
+ * AIProposalError (message déjà en français), ou une AbortError si `signal`
+ * est annulé. Se replie sur l'endpoint JSON si le serveur n'expose pas encore
+ * le flux (déploiement front avant l'API).
+ */
+export async function streamAIProposal(
+  input: HouseholdInput,
+  opts: { signal?: AbortSignal; onProgress?: (p: AdvisorProgress) => void } = {},
+): Promise<BudgetProposal> {
+  const ctrl = new AbortController();
+  let timedOut = false;
+  const timer = window.setTimeout(() => {
+    timedOut = true;
+    ctrl.abort();
+  }, AI_PROPOSAL_CLIENT_TIMEOUT_MS);
+  const onAbort = () => ctrl.abort();
+  opts.signal?.addEventListener('abort', onAbort);
+
+  const post = (token: string | null) =>
+    fetch(`${API_URL}/budgets/ai-proposal/stream`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: 'text/event-stream',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: JSON.stringify(input),
+      credentials: 'include',
+      signal: ctrl.signal,
+    });
+
+  try {
+    let res = await post(localStorage.getItem('token'));
+    if (res.status === 401) {
+      const token = await refreshAccessToken();
+      if (!token) {
+        forceLogout();
+        throw new AIProposalError('Votre session a expiré. Reconnectez-vous.', 'unauthorized', false);
+      }
+      res = await post(token);
+    }
+
+    if (res.status === 404 || res.status === 405) {
+      const legacy = await budgetAPI.generateAIProposal(input, {
+        timeout: AI_PROPOSAL_CLIENT_TIMEOUT_MS,
+        signal: ctrl.signal,
+      });
+      return legacy.data;
+    }
+
+    if (!res.ok || !res.body) {
+      const body = (await res.json().catch(() => ({}))) as { error?: string; code?: AdvisorErrorCode; retryable?: boolean };
+      throw new AIProposalError(
+        body.error || "L'IA n'a pas pu proposer de budget. Réessayez dans un instant.",
+        body.code || 'http_error',
+        body.retryable ?? res.status >= 500,
+      );
+    }
+
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+    for (;;) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true }).replace(/\r\n/g, '\n');
+      let sep: number;
+      while ((sep = buffer.indexOf('\n\n')) >= 0) {
+        const { event, data } = parseSSEBlock(buffer.slice(0, sep));
+        buffer = buffer.slice(sep + 2);
+        if (!data) continue; // heartbeat
+        if (event === 'progress') {
+          opts.onProgress?.(JSON.parse(data) as AdvisorProgress);
+        } else if (event === 'result') {
+          return JSON.parse(data) as BudgetProposal;
+        } else if (event === 'error') {
+          const e = JSON.parse(data) as { error: string; code: AdvisorErrorCode; retryable: boolean };
+          throw new AIProposalError(e.error, e.code, e.retryable);
+        }
+      }
+    }
+    throw new AIProposalError(
+      'La connexion avec le serveur a été interrompue. Réessayez.',
+      'connection_lost',
+      true,
+    );
+  } catch (err) {
+    if (err instanceof AIProposalError) throw err;
+    if (timedOut) {
+      throw new AIProposalError("L'IA a mis trop de temps à répondre. Réessayez dans un instant.", 'ai_timeout', true);
+    }
+    if (opts.signal?.aborted) throw err; // annulation voulue par l'utilisateur
+    const axiosErr = err as AxiosError<{ error?: string; code?: AdvisorErrorCode; retryable?: boolean }>;
+    if (axiosErr?.response?.data?.error) {
+      const d = axiosErr.response.data;
+      throw new AIProposalError(d.error!, d.code || 'http_error', d.retryable ?? true);
+    }
+    throw new AIProposalError(
+      'Impossible de joindre le serveur. Vérifiez votre connexion puis réessayez.',
+      'connection_lost',
+      true,
+    );
+  } finally {
+    window.clearTimeout(timer);
+    opts.signal?.removeEventListener('abort', onAbort);
+  }
+}
 
 export default api;
