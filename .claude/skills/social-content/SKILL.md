@@ -48,10 +48,12 @@ avant que l'article et les visuels soient en ligne.
   exemples sont présentés comme des exemples.
 - **Promesses produit exactes** : Budget Famille est gratuit (budgets illimités,
   partagés en temps réel entre les membres du foyer, outils d'IA : proposition de
-  budget, suggestions d'économies), sans connexion bancaire obligatoire ; la
-  connexion bancaire et le suivi des dépenses réelles sont l'offre Premium à
-  2 €/mois. Ne rien promettre d'autre sans l'avoir vérifié dans le code
-  (`src/lib/pages/Features.tsx`, `src/lib/pages/PremiumPage.tsx`).
+  budget, suggestions d'économies), sans connexion bancaire : on saisit ses
+  montants soi-même. **L'offre Premium (connexion bancaire, suivi des dépenses
+  réelles) est en bêta fermée, pas disponible au public** : ne jamais la
+  mentionner, ni l'abonnement, ni son prix, ni la synchronisation bancaire, même
+  si la page `/premium` existe dans le code. Ne rien promettre d'autre sans
+  l'avoir vérifié dans le code (`src/lib/pages/Features.tsx`).
 - **Pas de dénigrement** de concurrents, banques ou fournisseurs nommés.
 - **Ton** : chaleureux, concret, déculpabilisant, en français, vouvoiement. Pas de
   jargon, pas de dramatisation de la précarité, pas d'humour sur les difficultés
@@ -136,7 +138,8 @@ développeurs de Budget Famille"`, `publishedAt` = date du jour, `featured: true
   courtes et actionnables ; 2 à 3 liens internes vers d'autres articles ou vers
   `/tableau-budget-familial-gratuit`, `/outils-ia`, `/features`.
 - Le bloc d'appel à l'action standard (dégradé `from-primary to-purple-600`, lien
-  `/signup`), puis `<h2>❓ Questions fréquentes</h2>` avec 3 paires `<h3>` / `<p>`
+  `/signup`, sous-titre « Gratuit, sans connexion bancaire, partagé en temps
+  réel. »), puis `<h2>❓ Questions fréquentes</h2>` avec 3 paires `<h3>` / `<p>`
   qui reprennent les questions réellement recherchées (OpenRush, « autres questions »).
 - Échapper les apostrophes dans le JSX comme les articles existants (texte entre
   balises, chaînes entre guillemets doubles).
