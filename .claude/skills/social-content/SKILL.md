@@ -227,6 +227,9 @@ Chaque réseau a son propre texte : pas de copier-coller d'un réseau à l'autre
 
 Quand la PR est fusionnée (événement GitHub, ou rattrapage de l'étape 1) :
 
+0. Si la session se réveille dans un conteneur neuf (dépôt absent), recloner
+   `LovationAdmin/budget-ui` (outil `add_repo`) et se placer sur `main` à jour :
+   le fichier de posts et les scripts y sont.
 1. `node .claude/skills/social-content/scripts/wait-live.mjs <slug> <url visuel A> <url visuel B>`
    (Bash avec un timeout de 600 000 ms ; le relancer une fois s'il échoue sur le
    délai). Ne rien programmer tant qu'il ne répond pas « live ».
