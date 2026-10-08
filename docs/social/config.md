@@ -9,6 +9,17 @@ chaque routine. Pour changer son comportement, modifier ce fichier (PR).
   - `autonome` : la routine fusionne elle-même la PR après ses vérifications,
     puis programme les posts.
 - **réseaux** : linkedin, instagram, facebook, twitter (X)
+- **metricool** : facebook, instagram
+  - Réseaux programmés automatiquement dans Metricool. Les autres réseaux sont
+    publiés à la main par l'équipe depuis le **kit à copier** de la semaine
+    (`https://www.budgetfamille.com/social/<slug>/kit.html`).
+  - Pourquoi : le forfait gratuit de Metricool ne permet pas de connecter
+    LinkedIn ni X, et plafonne à 20 posts programmés par mois. Facebook +
+    Instagram à 2 posts par semaine = 16 à 20 posts : ça tient. Avec un forfait
+    payant, ajouter `linkedin, twitter` ici suffit : la routine les programmera.
+- **page LinkedIn** : https://www.linkedin.com/feed/ (adresse ouverte par le
+  bouton « Copier et ouvrir LinkedIn » du kit ; mettre celle de la page
+  lovation.pro si les posts sont publiés au nom de la page)
 - **fuseau** : Europe/Paris (si Metricool n'en donne pas)
 - **horaires par défaut** (heure de Paris), si Metricool n'a pas encore assez
   d'historique pour proposer les meilleurs créneaux :
