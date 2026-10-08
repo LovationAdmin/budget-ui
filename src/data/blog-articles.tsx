@@ -2935,6 +2935,8 @@ export const blogArticles: BlogArticleContent[] = [
         <p>
           Pour aller vite : notre <a href="/tableau-budget-familial-gratuit">tableau de budget familial gratuit</a> (Excel avec calculs, ou PDF à imprimer),
           ou l'application Budget Famille, qui remplit chaque mois à partir de vos règles et calcule le pot commun de chacun.
+          Pour voir en une minute ce qu'il reste à votre foyer après les charges fixes, par personne et par jour : notre{' '}
+          <a href="/calcul-reste-a-vivre">simulateur de reste à vivre</a>.
         </p>
 
         <div className="bg-gradient-to-r from-primary to-purple-600 text-white rounded-xl p-8 text-center my-8">

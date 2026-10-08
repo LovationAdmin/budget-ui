@@ -54,6 +54,7 @@ const SmartTools = lazy(() => import('./lib/pages/SmartTools'));
 const Blog = lazy(() => import('./lib/pages/Blog'));
 const BlogArticle = lazy(() => import('./lib/pages/BlogArticle'));
 const BudgetTemplate = lazy(() => import('./lib/pages/BudgetTemplate'));
+const ResteAVivre = lazy(() => import('./lib/pages/ResteAVivre'));
 const Profile = lazy(() => import('./lib/pages/Profile'));
 const AcceptInvitation = lazy(() => import('./lib/pages/AcceptInvitation'));
 const EnableBankingCallbackPage = lazy(() => import('./lib/pages/EnableBankingCallbackPage'));
@@ -97,6 +98,7 @@ export default function App() {
           <Route path="/terms" element={<Terms />} />
           <Route path="/features" element={<Features />} />
           <Route path="/tableau-budget-familial-gratuit" element={<BudgetTemplate />} />
+          <Route path="/calcul-reste-a-vivre" element={<ResteAVivre />} />
           <Route path="/about" element={<About />} />
           <Route path="/help" element={<Help />} />
           <Route path="/premium" element={<PremiumPage />} />

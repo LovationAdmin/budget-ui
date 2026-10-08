@@ -192,6 +192,7 @@ export default function LandingPage() {
               </Button>
               <p className="mt-3 text-sm text-muted-foreground">
                 Vous préférez un tableur ? <Link to="/tableau-budget-familial-gratuit" className="font-medium text-primary hover:underline">Téléchargez notre tableau de budget familial gratuit</Link>.
+                {' '}Ou <Link to="/calcul-reste-a-vivre" className="font-medium text-primary hover:underline">calculez votre reste à vivre</Link> en 1 minute.
               </p>
             </div>
           </div>
