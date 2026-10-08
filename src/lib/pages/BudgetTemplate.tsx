@@ -95,7 +95,8 @@ export default function BudgetTemplate() {
             <p className="mt-6 text-muted-foreground">
               Pour aller plus loin : <Link to="/blog/5-etapes-gerer-budget-familial-2025" className="font-medium text-primary hover:underline">établir un budget familial en 5 étapes</Link>,{' '}
               <Link to="/blog/budget-famille-4-personnes-exemple" className="font-medium text-primary hover:underline">un exemple de budget pour une famille de 4</Link>,{' '}
-              <Link to="/blog/combien-epargner-par-mois-objectif-date" className="font-medium text-primary hover:underline">combien épargner par mois pour un objectif</Link> et{' '}
+              <Link to="/blog/combien-epargner-par-mois-objectif-date" className="font-medium text-primary hover:underline">combien épargner par mois pour un objectif</Link>,{' '}
+              <Link to="/calcul-reste-a-vivre" className="font-medium text-primary hover:underline">calculer son reste à vivre</Link> et{' '}
               <Link to="/blog/compte-commun-couple-argent-de-poche" className="font-medium text-primary hover:underline">comment répartir le compte commun en couple</Link>.
             </p>
           </div>

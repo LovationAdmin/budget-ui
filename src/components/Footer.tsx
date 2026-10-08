@@ -52,6 +52,14 @@ export function Footer() {
               </li>
               <li>
                 <Link
+                  to="/calcul-reste-a-vivre"
+                  className="text-sm text-muted-foreground hover:text-primary transition-colors"
+                >
+                  Calcul du reste à vivre
+                </Link>
+              </li>
+              <li>
+                <Link
                   to="/blog"
                   className="text-sm text-muted-foreground hover:text-primary transition-colors"
                 >
