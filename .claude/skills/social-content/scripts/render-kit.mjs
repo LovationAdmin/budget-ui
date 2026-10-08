@@ -18,11 +18,13 @@ if (!postsFile) {
   process.exit(2);
 }
 
+// maxTags: Instagram refuses more than 5 hashtags since late 2025; the others
+// follow the skill's rule (as many relevant hashtags as the network rewards).
 const NETWORKS = {
-  linkedin: { label: 'LinkedIn', limit: 3000 },
-  facebook: { label: 'Facebook', limit: 63206 },
-  instagram: { label: 'Instagram', limit: 2200 },
-  twitter: { label: 'X', limit: 280 },
+  linkedin: { label: 'LinkedIn', limit: 3000, maxTags: 5 },
+  facebook: { label: 'Facebook', limit: 63206, maxTags: 5 },
+  instagram: { label: 'Instagram', limit: 2200, maxTags: 5 },
+  twitter: { label: 'X', limit: 280, maxTags: 3 },
 };
 const DAYS = ['lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi', 'dimanche'];
 const SITE = 'https://www.budgetfamille.com';
@@ -116,13 +118,15 @@ const local = (url) => (url?.startsWith(SITE) ? url.slice(SITE.length) : url);
 // X counts every link as 23 characters.
 const xLength = (t) => [...t.replace(/https?:\/\/\S+/g, 'x'.repeat(23))].length;
 const count = (n, t) => (n === 'twitter' ? xLength(t) : [...t].length);
+const hashtags = (t) => (t.replace(/https?:\/\/\S+/g, '').match(/(^|\s)#[\p{L}\p{N}_]+/gu) ?? []).length;
 
 const manualTotal = posts.reduce((s, p) => s + Object.keys(p.texts).filter((n) => !auto.has(n)).length, 0);
 
 function card(p, pi, n) {
   const text = p.texts[n];
-  const { label, limit } = NETWORKS[n];
+  const { label, limit, maxTags } = NETWORKS[n];
   const len = count(n, text);
+  const tags = hashtags(text);
   const over = len > limit;
   const id = `${p.id}-${n}`;
   const hour = hours[n]?.[pi];
@@ -138,7 +142,7 @@ function card(p, pi, n) {
   actions.push(`<button type="button" class="btn" data-copy-only>Copier le texte</button>`);
   const body = `
       <p class="text" data-text>${esc(text)}</p>
-      <p class="count${over ? ' over' : ''}">${len.toLocaleString('fr-FR')} / ${limit.toLocaleString('fr-FR')} caractères${n === 'twitter' ? ' (un lien compte 23)' : ''}${n === 'instagram' ? ' · le lien de la bio mène au blog' : ''}</p>
+      <p class="count${over || tags > maxTags ? ' over' : ''}">${len.toLocaleString('fr-FR')} / ${limit.toLocaleString('fr-FR')} caractères${n === 'twitter' ? ' (un lien compte 23)' : ''} · ${tags} / ${maxTags} hashtags${n === 'instagram' ? ' · le lien de la bio mène au blog' : ''}</p>
       <div class="actions">${actions.join('')}</div>`;
   if (auto.has(n)) {
     return `
@@ -342,8 +346,10 @@ const out = path.resolve(outArg ?? path.join(root, 'public/social', slug, 'kit.h
 mkdirSync(path.dirname(out), { recursive: true });
 writeFileSync(out, html);
 const over = posts.flatMap((p) => Object.entries(p.texts).filter(([n, t]) => count(n, t) > NETWORKS[n].limit).map(([n]) => `${p.id}/${n}`));
+const tooManyTags = posts.flatMap((p) => Object.entries(p.texts).filter(([n, t]) => hashtags(t) > NETWORKS[n].maxTags).map(([n, t]) => `${p.id}/${n} (${hashtags(t)} > ${NETWORKS[n].maxTags})`));
 console.log(`${path.relative(process.cwd(), out)}: ${posts.length} post(s), ${manualTotal} à publier à la main${auto.size ? `, ${[...auto].join(' + ')} via Metricool` : ''}`);
-if (over.length) {
-  console.error(`trop long : ${over.join(', ')}`);
+if (over.length || tooManyTags.length) {
+  if (over.length) console.error(`trop long : ${over.join(', ')}`);
+  if (tooManyTags.length) console.error(`trop de hashtags : ${tooManyTags.join(', ')}`);
   process.exit(1);
 }

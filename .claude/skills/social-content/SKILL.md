@@ -14,7 +14,8 @@ Une semaine type = **1 article + 2 posts par réseau** :
 
 - **Post A « article »** (mardi) : fait découvrir l'article de la semaine.
 - **Post B « astuce »** (jeudi) : un conseil chiffré concret qui renvoie vers un
-  outil gratuit (`/outils-ia`, `/tableau-budget-familial-gratuit`) ou vers un
+  outil gratuit (`/calcul-reste-a-vivre`, `/outils-ia`,
+  `/tableau-budget-familial-gratuit`) ou vers un
   article plus ancien du blog (rotation, voir `docs/social/log.md`).
 
 Publication : les réseaux listés à la ligne `metricool` de `docs/social/config.md`
@@ -215,10 +216,25 @@ Dans les textes, chaque lien porte ses UTM, avec la source du réseau :
 
 | Réseau | Format |
 |---|---|
-| LinkedIn | 700 à 1 300 caractères. Deux premières lignes = accroche (avant « voir plus »). Paragraphes de 1 à 2 lignes, une liste à puces (•, ✅) ; ton « parents actifs ». Lien en fin de texte, 3 hashtags max (#budget #famille #finances). |
-| Facebook | 300 à 600 caractères, conversationnel, une question pour faire réagir. Lien dans le texte. 0 à 2 hashtags. |
-| Instagram | Accroche sur la première ligne, 500 à 1 000 caractères aérés, puis « 👉 L'article complet : lien en bio (budgetfamille.com/blog) ». Pas d'URL (non cliquable). 5 à 8 hashtags pertinents en fin de texte (#budgetfamilial #gestionbudget #economies #famille…). |
-| X | Un seul post (pas de fil), ≤ 260 caractères lien compris (un lien compte 23). 1 hashtag max. |
+| LinkedIn | 700 à 1 300 caractères. Deux premières lignes = accroche (avant « voir plus »). Paragraphes de 1 à 2 lignes, une liste à puces (•, ✅) ; ton « parents actifs ». Lien en fin de texte, puis **5 hashtags** sur la dernière ligne. |
+| Facebook | 300 à 600 caractères, conversationnel, une question pour faire réagir. Lien dans le texte, puis **5 hashtags** sur la dernière ligne. |
+| Instagram | Accroche sur la première ligne, 500 à 1 000 caractères aérés, puis « 👉 L'article complet : lien en bio (budgetfamille.com/blog) ». Pas d'URL (non cliquable). **Exactement 5 hashtags** en fin de texte : c'est le maximum autorisé par Instagram depuis fin 2025 (au-delà, la publication peut être refusée). |
+| X | Un seul post (pas de fil), ≤ 260 caractères lien compris (un lien compte 23). **2 à 3 hashtags**, tant que la limite tient. |
+
+Hashtags : **le maximum de hashtags pertinents** que permet chaque réseau (5 sur
+LinkedIn, Facebook et Instagram ; 2 à 3 sur X), jamais un hashtag hors sujet
+pour faire du nombre. Sans accents ni espaces, en minuscules (#budgetfamilial).
+Un ou deux hashtags larges (#budget, #famille) + des hashtags du sujet de la
+semaine. Réserve, à compléter selon le sujet :
+
+- Budget : #budget #budgetfamilial #gestionbudget #budgetmensuel #gestiondebudget #finances #financespersonnelles #argent
+- Famille et couple : #famille #parents #couple #viedefamille #papa #maman #enfants
+- Économies : #economies #economiser #astucesbudget #pouvoirdachat #consommermieux #antigaspi #bonplan
+- Épargne et objectifs : #epargne #epargner #objectifs #projetdevie
+- Outils : #budgetgratuit #applibudget #simulateur #resteavivre
+- Saisons : #rentree #noel #vacances #blackfriday #impots #taxefonciere
+
+Le script du kit refuse un post qui dépasse la limite de hashtags de son réseau.
 
 Chaque réseau a son propre texte : pas de copier-coller d'un réseau à l'autre.
 
@@ -229,7 +245,8 @@ node .claude/skills/social-content/scripts/render-kit.mjs docs/social/posts/<AAA
 ```
 
 Il écrit `public/social/<slug>/kit.html` et échoue si un texte dépasse la limite
-de son réseau (X : 280, un lien comptant 23) : raccourcir alors le texte.
+de son réseau (X : 280, un lien comptant 23) ou son nombre de hashtags (5, X : 3) :
+raccourcir alors le texte ou retirer le hashtag le moins pertinent.
 
 ### 6. Vérifier, puis ouvrir la PR
 
