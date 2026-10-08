@@ -1,6 +1,6 @@
 ---
 name: social-content
-description: Programme hebdomadaire de contenu de Budget Famille (budgetfamille.com) — un article de blog SEO, ses visuels et les posts LinkedIn, Instagram, Facebook et X de lovation.pro, programmés dans Metricool après validation. À utiliser pour la routine du lundi, ou dès qu'on demande de créer, valider ou programmer des posts réseaux sociaux pour Budget Famille.
+description: Programme hebdomadaire de contenu de Budget Famille (budgetfamille.com) — un article de blog SEO, ses visuels et les posts LinkedIn, Instagram, Facebook et X de lovation.pro, programmés dans Metricool (Facebook, Instagram) ou réunis dans un kit à copier en un geste (LinkedIn, X) après validation. À utiliser pour la routine du lundi, ou dès qu'on demande de créer, valider ou programmer des posts réseaux sociaux pour Budget Famille.
 ---
 
 # Contenu réseaux sociaux de Budget Famille
@@ -17,6 +17,14 @@ Une semaine type = **1 article + 2 posts par réseau** :
   outil gratuit (`/outils-ia`, `/tableau-budget-familial-gratuit`) ou vers un
   article plus ancien du blog (rotation, voir `docs/social/log.md`).
 
+Publication : les réseaux listés à la ligne `metricool` de `docs/social/config.md`
+(forfait gratuit : Facebook et Instagram) sont programmés dans Metricool. Les
+autres (LinkedIn, X) sont publiés à la main par l'équipe depuis le **kit** de la
+semaine, `https://www.budgetfamille.com/social/<slug>/kit.html` : une page
+mobile avec chaque texte, son visuel et des boutons « copier », « partager
+l'image » (ouvre l'appli avec le visuel) et « ouvrir X avec le texte ». Le kit
+contient aussi les textes Facebook et Instagram, en secours.
+
 Tout le travail de la semaine passe par **une pull request** sur
 `LovationAdmin/budget-ui` : la fusionner vaut validation (mode `validation`), ou la
 session la fusionne elle-même (mode `autonome`). Rien n'est publié sur un réseau
@@ -30,8 +38,10 @@ avant que l'article et les visuels soient en ligne.
 | `docs/social/log.md` | Historique : un article par ligne (sujet, mot-clé, lien du post B, PR). Évite les doublons et fait tourner les anciens articles. |
 | `docs/social/posts/<AAAA-MM-JJ>-<slug>.md` | Les posts de la semaine (format ci-dessous). C'est la source lue au moment de programmer. |
 | `public/social/<slug>/article.png`, `astuce.png` | Visuels 1080×1350, servis par le site (Metricool exige une URL publique). |
+| `public/social/<slug>/kit.html` | Le kit à copier de la semaine (noindex), généré depuis le fichier de posts. |
 | `src/data/blog-articles.tsx` | Les articles du blog (le sitemap, le prérendu et IndexNow suivent automatiquement). |
 | `assets/card.html`, `scripts/render-card.mjs` | Gabarit et rendu des visuels. |
+| `scripts/render-kit.mjs` | Génère le kit à partir du fichier de posts et de la config. |
 | `scripts/wait-live.mjs` | Attend que l'article et les visuels soient en ligne après la fusion. |
 
 ## Garde-fous (non négociables)
@@ -58,7 +68,8 @@ avant que l'article et les visuels soient en ligne.
   financières.
 - **Comptes sociaux** : ne jamais demander, manipuler ni saisir d'identifiants
   des réseaux sociaux ; ne jamais automatiser un navigateur sur LinkedIn,
-  Instagram, Facebook ou X. Tout passe par Metricool.
+  Instagram, Facebook ou X. Les réseaux de la ligne `metricool` passent par
+  Metricool ; les autres sont publiés par l'équipe elle-même, depuis le kit.
 - **Une seule PR de contenu par semaine.** Si une PR « Social : » est encore
   ouverte (non fusionnée) au moment de la routine, ne pas en ouvrir une seconde :
   le signaler dans le compte rendu et s'arrêter après l'étape 1.
@@ -72,8 +83,11 @@ avant que l'article et les visuels soient en ligne.
    `npm ci` (nécessaire au build).
 2. Lire `docs/social/config.md` et `docs/social/log.md`.
 3. Metricool : `getBrandSettings` → `blogId`, fuseau horaire, réseaux connectés.
-   - Si l'outil répond qu'aucun réseau n'est connecté (ou si un réseau actif dans
-     la config manque), **continuer quand même** l'article et les posts : ils seront
+   Seuls les réseaux de la ligne `metricool` de la config sont attendus dans
+   Metricool (LinkedIn et X ne peuvent pas y être connectés en forfait gratuit :
+   ce n'est pas une anomalie, ils passent par le kit).
+   - Si l'outil répond qu'aucun réseau n'est connecté (ou si un réseau de la ligne
+     `metricool` manque), **continuer quand même** l'article et les posts : ils seront
      programmés plus tard (étape 1 de la semaine suivante). Noter le lien de
      connexion renvoyé par Metricool pour le compte rendu.
    - Fuseau par défaut si Metricool ne le donne pas : `Europe/Paris`.
@@ -87,7 +101,8 @@ avant que l'article et les visuels soient en ligne.
 Chercher les PR fusionnées de `LovationAdmin/budget-ui` dont le titre commence par
 `Social :` (`search_pull_requests`, 6 dernières semaines). Pour chacune, si aucun
 commentaire de la PR ne contient le marqueur `<!-- social-scheduled -->` et que des
-réseaux sont maintenant connectés : programmer ses posts (section « Programmer
+réseaux de la ligne `metricool` sont maintenant connectés : programmer ses posts
+pour ces réseaux (section « Programmer
 dans Metricool ») sur des créneaux libres de la semaine en cours. Un contenu
 saisonnier dont la saison est passée (Noël après le 25 décembre…) est abandonné :
 le dire dans un commentaire de la PR, avec le marqueur.
@@ -207,18 +222,31 @@ Dans les textes, chaque lien porte ses UTM, avec la source du réseau :
 
 Chaque réseau a son propre texte : pas de copier-coller d'un réseau à l'autre.
 
+Puis générer le kit de la semaine (à refaire après chaque retouche des posts) :
+
+```bash
+node .claude/skills/social-content/scripts/render-kit.mjs docs/social/posts/<AAAA-MM-JJ>-<slug>.md
+```
+
+Il écrit `public/social/<slug>/kit.html` et échoue si un texte dépasse la limite
+de son réseau (X : 280, un lien comptant 23) : raccourcir alors le texte.
+
 ### 6. Vérifier, puis ouvrir la PR
 
 1. `npm run build` doit passer (TypeScript, Vite, prérendu, sitemap).
 2. Relire l'article et les posts contre les garde-fous ; vérifier les longueurs.
+   Ouvrir le kit (Playwright, viewport 390×844) et en faire une capture : textes
+   complets, visuels affichés, rien ne déborde.
 3. Ajouter une ligne en haut du tableau de `docs/social/log.md`.
 4. Commit, push, PR vers `main` intitulée
    `Social : <titre de l'article> (semaine du <JJ/MM>)`. Corps de la PR, en français :
    le sujet et pourquoi (requête visée, volume, saison) ; les deux visuels affichés
    (`![article](https://github.com/LovationAdmin/budget-ui/blob/<sha>/public/social/<slug>/article.png?raw=true)`) ;
-   les textes des posts ; le calendrier prévu ; la prévisualisation Vercel de
-   l'article (lien du commentaire du bot Vercel) ; et, s'il y a lieu, le lien de
-   connexion des réseaux Metricool.
+   les textes des posts ; le calendrier prévu (ce qui part dans Metricool, ce qui
+   est à publier depuis le kit) ; la prévisualisation Vercel de l'article et du
+   kit (lien du commentaire du bot Vercel, suivi de `/blog/<slug>` et
+   `/social/<slug>/kit.html`) ; le lien définitif du kit, actif dès la fusion ;
+   et, s'il y a lieu, le lien de connexion des réseaux Metricool.
 5. `subscribe_pr_activity` sur la PR.
 
 ### 7. Publier
@@ -236,15 +264,21 @@ Quand la PR est fusionnée (événement GitHub, ou rattrapage de l'étape 1) :
    le fichier de posts et les scripts y sont.
 1. `node .claude/skills/social-content/scripts/wait-live.mjs <slug> <url visuel A> <url visuel B>`
    (Bash avec un timeout de 600 000 ms ; le relancer une fois s'il échoue sur le
-   délai). Ne rien programmer tant qu'il ne répond pas « live ».
-2. Programmer (section suivante), puis commenter la PR : liste des posts
-   programmés (réseau, date, lien `plannerUrl`) et la ligne
-   `<!-- social-scheduled -->`. Si aucun réseau n'est connecté : commenter que
-   les posts seront programmés dès la connexion, **sans** le marqueur.
+   délai). Ne rien programmer tant qu'il ne répond pas « live ». Le kit fait
+   partie du même déploiement : quand les visuels sont en ligne, il l'est aussi.
+2. Programmer les réseaux de la ligne `metricool` (section suivante), puis
+   commenter la PR : liste des posts programmés (réseau, date, lien
+   `plannerUrl`) ; « À publier depuis le kit : <lien du kit> » avec, pour chaque
+   réseau manuel, le jour et l'heure conseillés (horaires de la config) ; et la
+   ligne `<!-- social-scheduled -->`. Si aucun réseau de la ligne `metricool`
+   n'est connecté : commenter que ces posts seront programmés dès la connexion
+   (ou peuvent être publiés depuis le kit), **sans** le marqueur.
 3. `unsubscribe_pr_activity`.
 
 ## Programmer dans Metricool
 
+- Uniquement les réseaux de la ligne `metricool` de la config, et parmi eux ceux
+  que `getBrandSettings` montre connectés.
 - Un appel `createScheduledPost` **par réseau et par post** (les textes diffèrent).
   `blogId` et fuseau de `getBrandSettings`.
 - Éviter les doublons : avant de programmer, `getScheduledPosts` sur les 14
@@ -283,10 +317,15 @@ Quand la PR est fusionnée (événement GitHub, ou rattrapage de l'étape 1) :
 - En cas d'erreur Metricool (texte trop long pour X, réseau déconnecté…) :
   corriger si c'est le texte (raccourcir en gardant le sens), sinon passer au
   réseau suivant et le signaler dans le commentaire de la PR et le compte rendu.
+- Quota du forfait atteint (le forfait gratuit plafonne les posts programmés
+  par mois) : ne pas réessayer ; ce post est à publier depuis le kit (il y est
+  déjà) et le dire dans le commentaire de la PR et le compte rendu.
 
 ## Compte rendu de fin de session
 
-Court, en français : sujet et requête visée, lien de la PR, ce qui est programmé
-(ou en attente de validation / de connexion Metricool, avec le lien de
-connexion), et tout blocage. Ne jamais dire qu'un post est programmé sans
-`plannerUrl` renvoyé par Metricool.
+Court, en français (il sert de notification sur le téléphone de l'équipe) :
+sujet et requête visée, lien de la PR, ce qui est programmé (ou en attente de
+validation / de connexion Metricool, avec le lien de connexion), puis, dès que
+la PR est fusionnée, une ligne « À publier : <lien du kit> » avec les réseaux
+manuels et leurs jours et heures conseillés ; et tout blocage. Ne jamais dire
+qu'un post est programmé sans `plannerUrl` renvoyé par Metricool.
