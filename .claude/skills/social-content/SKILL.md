@@ -14,8 +14,9 @@ Une semaine type = **1 article + 2 posts par réseau** :
 
 - **Post A « article »** (mardi) : fait découvrir l'article de la semaine.
 - **Post B « astuce »** (jeudi) : un conseil chiffré concret qui renvoie vers un
-  outil gratuit (`/calcul-reste-a-vivre`, `/outils-ia`,
-  `/tableau-budget-familial-gratuit`) ou vers un
+  outil gratuit (`/calcul-reste-a-vivre`, `/budget-personnel`,
+  `/budget-colocation`, `/budget-mariage`, `/outils-ia`,
+  `/tableau-budget-familial-gratuit`, en faisant tourner les publics) ou vers un
   article plus ancien du blog (rotation, voir `docs/social/log.md`).
 
 Publication : les réseaux listés à la ligne `metricool` de `docs/social/config.md`
