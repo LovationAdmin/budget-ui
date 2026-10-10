@@ -5,6 +5,7 @@ Une ligne par semaine, la plus récente en haut, ajoutée par la PR de la semain
 
 | Semaine | Article (slug) | Requête visée | Post B → lien | PR |
 |---|---|---|---|---|
+| 13/10 → 05/11 | Série de 8 posts (`serie-octobre-2026`), sans nouvel article | — (sans OpenRush) | `/calcul-reste-a-vivre`, `/outils-ia`, 4 articles | série d'automne |
 
 Post B : faire tourner les anciens articles de `src/data/blog-articles.tsx` et
 les outils gratuits (`/calcul-reste-a-vivre`, `/outils-ia`, `/tableau-budget-familial-gratuit`), en

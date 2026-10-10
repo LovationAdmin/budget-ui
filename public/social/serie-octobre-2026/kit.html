@@ -1,0 +1,776 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Kit réseaux · Série d'automne : budget, couple, épargne</title>
+<style>
+  :root { --bg:#f6f7f9; --surface:#fff; --ink:#0f1720; --muted:#5b6675; --line:#e2e6ec; --primary:hsl(200 75% 38%); --on-primary:#fff; --ok:#15803d; --ok-bg:#e7f6ec; --todo:#9a5b00; --todo-bg:#fff4e0; --warn:#b91c1c; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#0e141b; --surface:#16202a; --ink:#e8edf2; --muted:#9aa7b4; --line:#26323e; --primary:hsl(200 75% 55%); --on-primary:#0b1218; --ok:#5dd28a; --ok-bg:#143021; --todo:#f0b45a; --todo-bg:#33260f; --warn:#f87171; } }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--ink); font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; }
+  main { max-width:680px; margin:0 auto; padding:16px 16px 96px; }
+  .top { padding:8px 0 0; }
+  .eyebrow { margin:0; color:var(--muted); font-size:14px; }
+  h1 { margin:2px 0 6px; font-size:22px; line-height:1.25; }
+  .progress { position:sticky; top:0; z-index:2; display:flex; align-items:center; gap:10px; margin:0 -16px; padding:10px 16px; background:var(--bg); border-bottom:1px solid var(--line); font-size:14px; color:var(--muted); }
+  .bar { flex:1; height:6px; border-radius:3px; background:var(--line); overflow:hidden; }
+  .bar i { display:block; height:100%; width:0; background:var(--ok); transition:width .2s; }
+  .how { margin:14px 0 0; padding:12px 14px; border-radius:10px; background:var(--surface); border:1px solid var(--line); font-size:14px; color:var(--muted); }
+  .how ol { margin:4px 0 0; padding-left:20px; }
+  .post { margin-top:28px; }
+  h2 { font-size:18px; margin:0 0 10px; display:flex; align-items:center; gap:8px; }
+  .tag { display:inline-grid; place-items:center; min-width:28px; height:28px; border-radius:8px; background:var(--primary); color:var(--on-primary); font-size:14px; }
+  figure { margin:0 0 12px; }
+  figure img { display:block; width:100%; max-width:320px; height:auto; border-radius:12px; border:1px solid var(--line); }
+  figcaption { margin-top:8px; display:flex; flex-wrap:wrap; gap:8px; }
+  .card { background:var(--surface); border:1px solid var(--line); border-radius:12px; padding:14px; margin-top:10px; }
+  .card header, .card summary { display:flex; flex-wrap:wrap; align-items:center; gap:6px 10px; }
+  .card summary { cursor:pointer; list-style:none; }
+  .card summary::-webkit-details-marker { display:none; }
+  .card.auto summary .when::after { content:" ▾"; }
+  .card.auto[open] summary .when::after { content:" ▴"; }
+  .net { font-weight:700; }
+  .badge { font-size:12px; font-weight:600; padding:2px 8px; border-radius:999px; }
+  .badge.ok { color:var(--ok); background:var(--ok-bg); }
+  .badge.todo { color:var(--todo); background:var(--todo-bg); }
+  .card.is-done .badge.todo { color:var(--ok); background:var(--ok-bg); }
+  .when { color:var(--muted); font-size:14px; }
+  .text { white-space:pre-wrap; overflow-wrap:anywhere; margin:12px 0 4px; padding:12px; border-radius:8px; background:var(--bg); font-size:15px; }
+  .count { margin:0 0 10px; font-size:13px; color:var(--muted); }
+  .count.over { color:var(--warn); font-weight:600; }
+  .actions { display:flex; flex-wrap:wrap; gap:8px; }
+  .btn { display:inline-flex; align-items:center; justify-content:center; min-height:44px; padding:0 16px; border-radius:10px; border:1px solid var(--line); background:var(--surface); color:var(--ink); font-family:inherit; font-size:15px; font-weight:600; line-height:1.2; text-decoration:none; cursor:pointer; }
+  .btn.primary { background:var(--primary); border-color:var(--primary); color:var(--on-primary); }
+  .btn.ghost { border-color:transparent; color:var(--primary); padding:0 8px; }
+  .btn:focus-visible, summary:focus-visible, input:focus-visible { outline:3px solid var(--primary); outline-offset:2px; }
+  .btn[hidden] { display:none; }
+  .done { display:flex; align-items:center; gap:10px; margin-top:12px; min-height:44px; font-weight:600; cursor:pointer; }
+  .done input { width:22px; height:22px; accent-color:var(--ok); }
+  .card.is-done { border-color:var(--ok); }
+  .card.is-done .text { opacity:.6; }
+  .toast { position:fixed; left:50%; bottom:20px; transform:translate(-50%,20px); opacity:0; padding:10px 16px; border-radius:10px; background:var(--ink); color:var(--bg); font-weight:600; transition:all .2s; pointer-events:none; max-width:calc(100% - 32px); text-align:center; }
+  .toast.show { opacity:1; transform:translate(-50%,0); }
+</style>
+</head>
+<body>
+<main>
+  <div class="top">
+    <p class="eyebrow">Kit réseaux sociaux · du 13 octobre au 5 novembre</p>
+    <h1>Série d'automne : budget, couple, épargne</h1>
+  </div>
+  <div class="progress"><span class="bar"><i data-bar></i></span><span data-progress>0 / 16 publiés</span></div>
+  <div class="how">
+    <strong>En 30 secondes par post</strong>
+    <ol>
+      <li>Touchez le bouton bleu : le texte est copié (sur téléphone, l'appli s'ouvre aussi avec le visuel).</li>
+      <li>Collez le texte s'il n'est pas déjà là.</li>
+      <li>Publiez, puis cochez « Publié ».</li>
+    </ol>
+    <p style="margin:8px 0 0">Facebook et Instagram : programmés automatiquement dans Metricool, rien à faire.</p>
+  </div>
+  
+  <section class="post" data-media="/social/serie-octobre-2026/1-reste-a-vivre.png">
+    <h2><span class="tag">1</span> Simulateur · mardi 13 octobre</h2>
+    <figure>
+      <img src="/social/serie-octobre-2026/1-reste-a-vivre.png" alt="Carte bleue « Combien vous reste-t-il vraiment chaque mois ? » : 1 790 € dans notre exemple, couple avec 2 enfants et 3 800 € nets." width="1080" height="1350" loading="lazy">
+      <figcaption><a class="btn" href="/social/serie-octobre-2026/1-reste-a-vivre.png" download="serie-octobre-2026-1-reste-a-vivre.png">Enregistrer l'image</a> <a class="btn ghost" href="https://www.budgetfamille.com/calcul-reste-a-vivre" target="_blank" rel="noopener">Voir la page liée</a></figcaption>
+    </figure>
+    
+    <article class="card" data-network="linkedin" data-id="1-linkedin">
+      <header><span class="net">LinkedIn</span><span class="badge todo">À publier</span><span class="when">mardi 13 oct. · vers 8 h 30</span></header>
+      <p class="text" data-text>Combien reste-t-il vraiment à votre foyer une fois les charges fixes payées ?
+
+C'est la question que se posent beaucoup de parents en milieu de mois. Nous avons créé un simulateur gratuit pour y répondre en une minute.
+
+Vous indiquez :
+• la composition du foyer
+• les revenus nets du mois
+• les charges fixes : logement, crédits, énergie, assurances, abonnements…
+
+Et vous obtenez votre reste à vivre par mois, par personne et par jour.
+
+Dans notre exemple, un couple avec deux enfants qui perçoit 3 800 € nets et paie 2 010 € de charges fixes garde 1 790 € par mois, soit environ 60 € par jour pour tout le reste : courses, vêtements, loisirs, épargne.
+
+✅ Gratuit, sans inscription
+✅ Rien n'est envoyé : vos chiffres restent sur votre appareil
+✅ Les repères officiels expliqués : 35 % d'endettement pour un crédit immobilier, minimum légal en cas de surendettement
+
+👉 https://www.budgetfamille.com/calcul-reste-a-vivre?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=rav
+
+#budget #budgetfamilial #resteavivre #financespersonnelles #famille</p>
+      <p class="count">1 043 / 3 000 caractères · 5 / 5 hashtags</p>
+      <div class="actions"><a class="btn primary" href="https://www.linkedin.com/feed/" target="_blank" rel="noopener" data-copy>Copier et ouvrir LinkedIn</a><button type="button" class="btn" data-share hidden>Copier le texte et partager l'image</button><button type="button" class="btn" data-copy-only>Copier le texte</button></div>
+      <label class="done"><input type="checkbox" data-done> Publié</label>
+    </article>
+    <article class="card" data-network="twitter" data-id="1-twitter">
+      <header><span class="net">X</span><span class="badge todo">À publier</span><span class="when">mardi 13 oct. · vers 8 h</span></header>
+      <p class="text" data-text>Combien vous reste-t-il vraiment après loyer, crédits et factures ? Notre simulateur gratuit calcule votre reste à vivre par personne et par jour, sans inscription 👇 https://www.budgetfamille.com/calcul-reste-a-vivre?utm_source=x&amp;utm_medium=social&amp;utm_campaign=rav #budget #resteavivre</p>
+      <p class="count">210 / 280 caractères (un lien compte 23) · 2 / 3 hashtags</p>
+      <div class="actions"><a class="btn primary" href="https://x.com/intent/tweet?text=Combien%20vous%20reste-t-il%20vraiment%20apr%C3%A8s%20loyer%2C%20cr%C3%A9dits%20et%20factures%20%3F%20Notre%20simulateur%20gratuit%20calcule%20votre%20reste%20%C3%A0%20vivre%20par%20personne%20et%20par%20jour%2C%20sans%20inscription%20%F0%9F%91%87%20https%3A%2F%2Fwww.budgetfamille.com%2Fcalcul-reste-a-vivre%3Futm_source%3Dx%26utm_medium%3Dsocial%26utm_campaign%3Drav%20%23budget%20%23resteavivre" target="_blank" rel="noopener" data-copy>Ouvrir X avec le texte</a><button type="button" class="btn" data-share hidden>Copier le texte et partager l'image</button><button type="button" class="btn" data-copy-only>Copier le texte</button></div>
+      <label class="done"><input type="checkbox" data-done> Publié</label>
+    </article>
+    <details class="card auto" data-network="facebook">
+      <summary><span class="net">Facebook</span><span class="badge ok">Programmé dans Metricool</span><span class="when">Rien à faire · texte de secours</span></summary>
+      <p class="text" data-text>Une fois le loyer, les crédits et les factures payés, combien vous reste-t-il vraiment pour vivre ? 🤔
+
+Notre nouveau simulateur gratuit le calcule en une minute : par mois, par personne et par jour. Sans inscription, et vos chiffres restent sur votre téléphone.
+
+Dans notre exemple, une famille de 4 avec 3 800 € nets garde 1 790 € par mois après ses charges fixes.
+
+Et chez vous, la fin de mois, c'est plutôt serré ou confortable ?
+
+👉 https://www.budgetfamille.com/calcul-reste-a-vivre?utm_source=facebook&amp;utm_medium=social&amp;utm_campaign=rav
+
+#resteavivre #budgetfamilial #budget #famille #economies</p>
+      <p class="count">599 / 63 206 caractères · 5 / 5 hashtags</p>
+      <div class="actions"><button type="button" class="btn primary" data-share hidden>Copier le texte et partager l'image</button><button type="button" class="btn" data-copy-only>Copier le texte</button></div>
+    </details>
+    <details class="card auto" data-network="instagram">
+      <summary><span class="net">Instagram</span><span class="badge ok">Programmé dans Metricool</span><span class="when">Rien à faire · texte de secours</span></summary>
+      <p class="text" data-text>Combien vous reste-t-il vraiment chaque mois ? 💶
+
+Une fois le loyer, les crédits, l'énergie et les abonnements payés, ce qui reste s'appelle le reste à vivre. C'est lui qui paie les courses, les vêtements, les sorties… et l'épargne.
+
+Notre simulateur gratuit le calcule en une minute :
+✔️ par mois
+✔️ par personne
+✔️ par jour
+
+Dans notre exemple : un couple avec 2 enfants, 3 800 € nets, 2 010 € de charges fixes → 1 790 € de reste à vivre, soit environ 60 € par jour.
+
+Sans inscription, et rien n'est envoyé : vos chiffres restent sur votre téléphone.
+
+👉 Le simulateur : lien en bio
+
+#resteavivre #budgetfamilial #gestionbudget #famille #economies</p>
+      <p class="count">648 / 2 200 caractères · 5 / 5 hashtags · le lien de la bio mène au blog</p>
+      <div class="actions"><button type="button" class="btn primary" data-share hidden>Copier le texte et partager l'image</button><button type="button" class="btn" data-copy-only>Copier le texte</button></div>
+    </details>
+  </section>
+  <section class="post" data-media="/social/serie-octobre-2026/2-provision.png">
+    <h2><span class="tag">2</span> Astuce · jeudi 15 octobre</h2>
+    <figure>
+      <img src="/social/serie-octobre-2026/2-provision.png" alt="Carte bleue « Rentrée, Noël, taxe foncière : la provision qui évite les mauvais mois » : 200 € par mois pour 2 400 € de dépenses annuelles, dans notre exemple." width="1080" height="1350" loading="lazy">
+      <figcaption><a class="btn" href="/social/serie-octobre-2026/2-provision.png" download="serie-octobre-2026-2-provision.png">Enregistrer l'image</a> <a class="btn ghost" href="https://www.budgetfamille.com/blog/5-etapes-gerer-budget-familial-2025" target="_blank" rel="noopener">Voir la page liée</a></figcaption>
+    </figure>
+    
+    <article class="card" data-network="linkedin" data-id="2-linkedin">
+      <header><span class="net">LinkedIn</span><span class="badge todo">À publier</span><span class="when">jeudi 15 oct. · vers 12 h 15</span></header>
+      <p class="text" data-text>Octobre, c'est souvent le mois de la taxe foncière. Et pour beaucoup de foyers, un mois où le budget déraille.
+
+Le problème n'est pas la dépense elle-même : on la connaît à l'avance. Le problème, c'est de ne pas l'avoir mise de côté.
+
+La solution tient en une ligne :
+Provision mensuelle = total des dépenses annuelles ÷ 12
+
+Dans notre exemple :
+• rentrée scolaire : 300 €
+• Noël : 400 €
+• anniversaires : 200 €
+• vacances : 1 500 €
+Soit 2 400 € par an, donc 200 € à mettre de côté chaque mois.
+
+Propriétaire ? Ajoutez la taxe foncière. Assurance auto payée à l'année ? Ajoutez-la aussi.
+
+Avec cette provision, septembre et décembre ne sont plus des mois à découvert.
+
+La méthode complète en 5 étapes, avec un tableau gratuit 👇
+https://www.budgetfamille.com/blog/5-etapes-gerer-budget-familial-2025?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=provision
+
+#budget #budgetfamilial #gestionbudget #taxefonciere #epargne</p>
+      <p class="count">922 / 3 000 caractères · 5 / 5 hashtags</p>
+      <div class="actions"><a class="btn primary" href="https://www.linkedin.com/feed/" target="_blank" rel="noopener" data-copy>Copier et ouvrir LinkedIn</a><button type="button" class="btn" data-share hidden>Copier le texte et partager l'image</button><button type="button" class="btn" data-copy-only>Copier le texte</button></div>
+      <label class="done"><input type="checkbox" data-done> Publié</label>
+    </article>
+    <article class="card" data-network="twitter" data-id="2-twitter">
+      <header><span class="net">X</span><span class="badge todo">À publier</span><span class="when">jeudi 15 oct. · vers 12 h 30</span></header>
+      <p class="text" data-text>Taxe foncière, rentrée, Noël : additionnez vos dépenses annuelles et divisez par 12. Dans notre exemple, 2 400 €/an = 200 € à mettre de côté chaque mois 👇 https://www.budgetfamille.com/blog/5-etapes-gerer-budget-familial-2025?utm_source=x&amp;utm_medium=social&amp;utm_campaign=provision #budget #taxefonciere</p>
+      <p class="count">200 / 280 caractères (un lien compte 23) · 2 / 3 hashtags</p>
+      <div class="actions"><a class="btn primary" href="https://x.com/intent/tweet?text=Taxe%20fonci%C3%A8re%2C%20rentr%C3%A9e%2C%20No%C3%ABl%20%3A%20additionnez%20vos%20d%C3%A9penses%20annuelles%20et%20divisez%20par%2012.%20Dans%20notre%20exemple%2C%202%20400%20%E2%82%AC%2Fan%20%3D%20200%20%E2%82%AC%20%C3%A0%20mettre%20de%20c%C3%B4t%C3%A9%20chaque%20mois%20%F0%9F%91%87%20https%3A%2F%2Fwww.budgetfamille.com%2Fblog%2F5-etapes-gerer-budget-familial-2025%3Futm_source%3Dx%26utm_medium%3Dsocial%26utm_campaign%3Dprovision%20%23budget%20%23taxefonciere" target="_blank" rel="noopener" data-copy>Ouvrir X avec le texte</a><button type="button" class="btn" data-share hidden>Copier le texte et partager l'image</button><button type="button" class="btn" data-copy-only>Copier le texte</button></div>
+      <label class="done"><input type="checkbox" data-done> Publié</label>
+    </article>
+    <details class="card auto" data-network="facebook">
+      <summary><span class="net">Facebook</span><span class="badge ok">Programmé dans Metricool</span><span class="when">Rien à faire · texte de secours</span></summary>
+      <p class="text" data-text>Taxe foncière, rentrée, Noël, vacances… Ces dépenses reviennent chaque année, et pourtant elles nous prennent souvent par surprise 😅
+
+L'astuce : additionnez-les et divisez par 12. Dans notre exemple, 2 400 € par an = 200 € à mettre de côté chaque mois, et plus de « mauvais mois ».
+
+Vous mettez déjà de côté pour ces dépenses, ou c'est le sprint à chaque échéance ?
+
+👉 https://www.budgetfamille.com/blog/5-etapes-gerer-budget-familial-2025?utm_source=facebook&amp;utm_medium=social&amp;utm_campaign=provision
+
+#budgetfamilial #astucesbudget #taxefonciere #epargne #famille</p>
+      <p class="count">564 / 63 206 caractères · 5 / 5 hashtags</p>
+      <div class="actions"><button type="button" class="btn primary" data-share hidden>Copier le texte et partager l'image</button><button type="button" class="btn" data-copy-only>Copier le texte</button></div>
+    </details>
+    <details class="card auto" data-network="instagram">
+      <summary><span class="net">Instagram</span><span class="badge ok">Programmé dans Metricool</span><span class="when">Rien à faire · texte de secours</span></summary>
+      <p class="text" data-text>La provision qui évite les mauvais mois 📅
+
+Rentrée, Noël, taxe foncière, assurance annuelle, vacances : ces dépenses ne tombent pas tous les mois, mais elles tombent tous les ans.
+
+L'astuce :
+1️⃣ Listez-les avec leur montant
+2️⃣ Additionnez
+3️⃣ Divisez par 12
+4️⃣ Mettez ce montant de côté chaque mois
+
+Dans notre exemple : rentrée 300 €, Noël 400 €, anniversaires 200 €, vacances 1 500 € = 2 400 € par an, soit 200 € par mois.
+
+Le jour de l'échéance, l'argent est déjà là 🙌
+
+👉 La méthode complète : lien en bio
+
+#budgetfamilial #astucesbudget #epargne #taxefonciere #gestionbudget</p>
+      <p class="count">581 / 2 200 caractères · 5 / 5 hashtags · le lien de la bio mène au blog</p>
+      <div class="actions"><button type="button" class="btn primary" data-share hidden>Copier le texte et partager l'image</button><button type="button" class="btn" data-copy-only>Copier le texte</button></div>
+    </details>
+  </section>
+  <section class="post" data-media="/social/serie-octobre-2026/3-famille-4.png">
+    <h2><span class="tag">3</span> Article · mardi 20 octobre</h2>
+    <figure>
+      <img src="/social/serie-octobre-2026/3-famille-4.png" alt="Carte bleue « Budget d'une famille de 4 : l'exemple poste par poste » : 4 350 € de revenus nets pour le foyer de l'exemple, 2 enfants." width="1080" height="1350" loading="lazy">
+      <figcaption><a class="btn" href="/social/serie-octobre-2026/3-famille-4.png" download="serie-octobre-2026-3-famille-4.png">Enregistrer l'image</a> <a class="btn ghost" href="https://www.budgetfamille.com/blog/budget-famille-4-personnes-exemple" target="_blank" rel="noopener">Voir la page liée</a></figcaption>
+    </figure>
+    
+    <article class="card" data-network="linkedin" data-id="3-linkedin">
+      <header><span class="net">LinkedIn</span><span class="badge todo">À publier</span><span class="when">mardi 20 oct. · vers 8 h 30</span></header>
+      <p class="text" data-text>Combien faut-il pour faire vivre une famille de 4 ?
+
+Il n'existe pas de montant unique : tout dépend du loyer, de la ville et de l'âge des enfants. Mais un exemple complet aide à situer son propre budget.
+
+Le foyer de notre exemple : un couple avec deux enfants de 4 et 9 ans, locataire d'un T4 dans une ville moyenne, une voiture, 4 350 € de revenus nets par mois.
+
+• Loyer et charges : 1 100 €
+• Courses : 800 €
+• Transport : 300 €
+• Enfants (cantine, périscolaire, activités) : 280 €
+• Provision pour les dépenses annuelles : 200 €
+• Épargne : 400 €
+• Marge pour les imprévus : 500 €
+
+Cette marge n'est pas de l'argent « en trop » : c'est elle qui absorbe une réparation ou une facture plus lourde sans toucher à l'épargne.
+
+Le budget complet poste par poste, et la méthode pour adapter le vôtre 👇
+https://www.budgetfamille.com/blog/budget-famille-4-personnes-exemple?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=famille4
+
+#budget #budgetfamilial #famille #parents #financespersonnelles</p>
+      <p class="count">995 / 3 000 caractères · 5 / 5 hashtags</p>
+      <div class="actions"><a class="btn primary" href="https://www.linkedin.com/feed/" target="_blank" rel="noopener" data-copy>Copier et ouvrir LinkedIn</a><button type="button" class="btn" data-share hidden>Copier le texte et partager l'image</button><button type="button" class="btn" data-copy-only>Copier le texte</button></div>
+      <label class="done"><input type="checkbox" data-done> Publié</label>
+    </article>
+    <article class="card" data-network="twitter" data-id="3-twitter">
+      <header><span class="net">X</span><span class="badge todo">À publier</span><span class="when">mardi 20 oct. · vers 8 h</span></header>
+      <p class="text" data-text>Budget d'une famille de 4, poste par poste : dans notre exemple, 4 350 € nets, 800 € de courses, 400 € d'épargne et 500 € de marge pour les imprévus 👇 https://www.budgetfamille.com/blog/budget-famille-4-personnes-exemple?utm_source=x&amp;utm_medium=social&amp;utm_campaign=famille4 #budget #famille</p>
+      <p class="count">191 / 280 caractères (un lien compte 23) · 2 / 3 hashtags</p>
+      <div class="actions"><a class="btn primary" href="https://x.com/intent/tweet?text=Budget%20d'une%20famille%20de%204%2C%20poste%20par%20poste%20%3A%20dans%20notre%20exemple%2C%204%20350%20%E2%82%AC%20nets%2C%20800%20%E2%82%AC%20de%20courses%2C%20400%20%E2%82%AC%20d'%C3%A9pargne%20et%20500%20%E2%82%AC%20de%20marge%20pour%20les%20impr%C3%A9vus%20%F0%9F%91%87%20https%3A%2F%2Fwww.budgetfamille.com%2Fblog%2Fbudget-famille-4-personnes-exemple%3Futm_source%3Dx%26utm_medium%3Dsocial%26utm_campaign%3Dfamille4%20%23budget%20%23famille" target="_blank" rel="noopener" data-copy>Ouvrir X avec le texte</a><button type="button" class="btn" data-share hidden>Copier le texte et partager l'image</button><button type="button" class="btn" data-copy-only>Copier le texte</button></div>
+      <label class="done"><input type="checkbox" data-done> Publié</label>
+    </article>
+    <details class="card auto" data-network="facebook">
+      <summary><span class="net">Facebook</span><span class="badge ok">Programmé dans Metricool</span><span class="when">Rien à faire · texte de secours</span></summary>
+      <p class="text" data-text>Famille de 4 : combien prévoir chaque mois ? 👨‍👩‍👧‍👦
+
+Nous avons détaillé un budget complet, poste par poste : loyer, courses, transport, enfants, épargne… avec une marge pour les imprévus.
+
+Dans notre exemple, le foyer perçoit 4 350 € nets et met 400 € de côté chaque mois.
+
+Chez vous, quel est le poste qui pèse le plus ?
+
+👉 https://www.budgetfamille.com/blog/budget-famille-4-personnes-exemple?utm_source=facebook&amp;utm_medium=social&amp;utm_campaign=famille4
+
+#budgetfamilial #famille #parents #budget #economies</p>
+      <p class="count">510 / 63 206 caractères · 5 / 5 hashtags</p>
+      <div class="actions"><button type="button" class="btn primary" data-share hidden>Copier le texte et partager l'image</button><button type="button" class="btn" data-copy-only>Copier le texte</button></div>
+    </details>
+    <details class="card auto" data-network="instagram">
+      <summary><span class="net">Instagram</span><span class="badge ok">Programmé dans Metricool</span><span class="when">Rien à faire · texte de secours</span></summary>
+      <p class="text" data-text>Budget d'une famille de 4 : l'exemple poste par poste 👨‍👩‍👧‍👦
+
+Le foyer de l'exemple : un couple, deux enfants de 4 et 9 ans, 4 350 € nets par mois.
+
+🏠 Loyer et charges : 1 100 €
+🛒 Courses : 800 €
+🚗 Transport : 300 €
+🎒 Enfants : 280 €
+📅 Provision dépenses annuelles : 200 €
+💰 Épargne : 400 €
+🛟 Marge pour les imprévus : 500 €
+
+Ce n'est pas une moyenne nationale : c'est un exemple pour vous aider à situer votre propre budget.
+
+👉 Le budget complet : lien en bio
+
+#budgetfamilial #famille #parents #gestionbudget #economies</p>
+      <p class="count">522 / 2 200 caractères · 5 / 5 hashtags · le lien de la bio mène au blog</p>
+      <div class="actions"><button type="button" class="btn primary" data-share hidden>Copier le texte et partager l'image</button><button type="button" class="btn" data-copy-only>Copier le texte</button></div>
+    </details>
+  </section>
+  <section class="post" data-media="/social/serie-octobre-2026/4-courses.png">
+    <h2><span class="tag">4</span> Astuce · jeudi 22 octobre</h2>
+    <figure>
+      <img src="/social/serie-octobre-2026/4-courses.png" alt="Carte bleue « Votre budget courses est sans doute sous-estimé » : × 52 ÷ 12, 185 € par semaine font environ 800 € par mois, pas 740 €." width="1080" height="1350" loading="lazy">
+      <figcaption><a class="btn" href="/social/serie-octobre-2026/4-courses.png" download="serie-octobre-2026-4-courses.png">Enregistrer l'image</a> <a class="btn ghost" href="https://www.budgetfamille.com/blog/budget-famille-4-personnes-exemple" target="_blank" rel="noopener">Voir la page liée</a></figcaption>
+    </figure>
+    
+    <article class="card" data-network="linkedin" data-id="4-linkedin">
+      <header><span class="net">LinkedIn</span><span class="badge todo">À publier</span><span class="when">jeudi 22 oct. · vers 12 h 15</span></header>
+      <p class="text" data-text>Votre budget courses est probablement sous-estimé. Ce n'est pas une question de discipline, c'est une question de calcul.
+
+Beaucoup de foyers comptent leurs courses à la semaine, puis multiplient par 4. Mais un mois ne fait pas 4 semaines : il en fait 4,33 en moyenne.
+
+La bonne formule :
+montant par semaine × 52 ÷ 12
+
+185 € par semaine font environ 800 € par mois, et non 740 €. Environ 60 € d'écart chaque mois : de quoi faire dérailler un budget pourtant bien tenu.
+
+Pour estimer ce poste au plus juste :
+• additionnez vos tickets (ou vos paiements en supermarché) sur 4 semaines
+• passez au mois réel avec la formule
+• séparez l'alimentation du reste (hygiène, entretien) : c'est souvent là que l'écart se cache
+
+Et pour le faire baisser sans se priver : menus de la semaine, liste de courses, prix au kilo, produits de saison.
+
+L'exemple complet d'une famille de 4 👇
+https://www.budgetfamille.com/blog/budget-famille-4-personnes-exemple?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=courses
+
+#budget #budgetfamilial #courses #economies #famille</p>
+      <p class="count">1 055 / 3 000 caractères · 5 / 5 hashtags</p>
+      <div class="actions"><a class="btn primary" href="https://www.linkedin.com/feed/" target="_blank" rel="noopener" data-copy>Copier et ouvrir LinkedIn</a><button type="button" class="btn" data-share hidden>Copier le texte et partager l'image</button><button type="button" class="btn" data-copy-only>Copier le texte</button></div>
+      <label class="done"><input type="checkbox" data-done> Publié</label>
+    </article>
+    <article class="card" data-network="twitter" data-id="4-twitter">
+      <header><span class="net">X</span><span class="badge todo">À publier</span><span class="when">jeudi 22 oct. · vers 12 h 30</span></header>
+      <p class="text" data-text>Budget courses : ne multipliez pas par 4, un mois compte 4,33 semaines. 185 €/semaine = environ 800 €/mois, pas 740 € 👇 https://www.budgetfamille.com/blog/budget-famille-4-personnes-exemple?utm_source=x&amp;utm_medium=social&amp;utm_campaign=courses #courses #budget</p>
+      <p class="count">160 / 280 caractères (un lien compte 23) · 2 / 3 hashtags</p>
+      <div class="actions"><a class="btn primary" href="https://x.com/intent/tweet?text=Budget%20courses%20%3A%20ne%20multipliez%20pas%20par%204%2C%20un%20mois%20compte%204%2C33%20semaines.%20185%20%E2%82%AC%2Fsemaine%20%3D%20environ%20800%20%E2%82%AC%2Fmois%2C%20pas%20740%20%E2%82%AC%20%F0%9F%91%87%20https%3A%2F%2Fwww.budgetfamille.com%2Fblog%2Fbudget-famille-4-personnes-exemple%3Futm_source%3Dx%26utm_medium%3Dsocial%26utm_campaign%3Dcourses%20%23courses%20%23budget" target="_blank" rel="noopener" data-copy>Ouvrir X avec le texte</a><button type="button" class="btn" data-share hidden>Copier le texte et partager l'image</button><button type="button" class="btn" data-copy-only>Copier le texte</button></div>
+      <label class="done"><input type="checkbox" data-done> Publié</label>
+    </article>
+    <details class="card auto" data-network="facebook">
+      <summary><span class="net">Facebook</span><span class="badge ok">Programmé dans Metricool</span><span class="when">Rien à faire · texte de secours</span></summary>
+      <p class="text" data-text>Petit test : combien dépensez-vous en courses par semaine ? 🛒
+
+Si vous multipliez par 4 pour avoir le mois, vous sous-estimez votre budget : un mois compte en moyenne 4,33 semaines.
+
+La bonne formule : montant par semaine × 52 ÷ 12. Exemple : 185 € par semaine font environ 800 € par mois, pas 740 €.
+
+Vous aviez déjà fait le calcul ?
+
+👉 https://www.budgetfamille.com/blog/budget-famille-4-personnes-exemple?utm_source=facebook&amp;utm_medium=social&amp;utm_campaign=courses
+
+#courses #budgetfamilial #astucesbudget #economies #famille</p>
+      <p class="count">527 / 63 206 caractères · 5 / 5 hashtags</p>
+      <div class="actions"><button type="button" class="btn primary" data-share hidden>Copier le texte et partager l'image</button><button type="button" class="btn" data-copy-only>Copier le texte</button></div>
+    </details>
+    <details class="card auto" data-network="instagram">
+      <summary><span class="net">Instagram</span><span class="badge ok">Programmé dans Metricool</span><span class="when">Rien à faire · texte de secours</span></summary>
+      <p class="text" data-text>Votre budget courses est sans doute sous-estimé 🛒
+
+Le piège : compter 4 semaines par mois. En réalité, un mois en compte 4,33 en moyenne.
+
+✅ La bonne formule :
+montant par semaine × 52 ÷ 12
+
+Exemple : 185 € par semaine = environ 800 € par mois… et non 740 €.
+
+3 réflexes pour faire baisser ce poste sans se priver :
+1️⃣ prévoir les menus de la semaine et faire une liste
+2️⃣ comparer le prix au kilo
+3️⃣ privilégier les fruits et légumes de saison
+
+👉 L'exemple complet d'une famille de 4 : lien en bio
+
+#courses #budgetfamilial #astucesbudget #economies #famille</p>
+      <p class="count">562 / 2 200 caractères · 5 / 5 hashtags · le lien de la bio mène au blog</p>
+      <div class="actions"><button type="button" class="btn primary" data-share hidden>Copier le texte et partager l'image</button><button type="button" class="btn" data-copy-only>Copier le texte</button></div>
+    </details>
+  </section>
+  <section class="post" data-media="/social/serie-octobre-2026/5-compte-commun.png">
+    <h2><span class="tag">5</span> Couple · mardi 27 octobre</h2>
+    <figure>
+      <img src="/social/serie-octobre-2026/5-compte-commun.png" alt="Carte bleue « Compte commun : 50/50, prorata ou même argent de poche ? » : 1 461 / 939 au prorata de 2 800 € et 1 800 € nets, pour 2 400 € de charges." width="1080" height="1350" loading="lazy">
+      <figcaption><a class="btn" href="/social/serie-octobre-2026/5-compte-commun.png" download="serie-octobre-2026-5-compte-commun.png">Enregistrer l'image</a> <a class="btn ghost" href="https://www.budgetfamille.com/blog/compte-commun-couple-argent-de-poche" target="_blank" rel="noopener">Voir la page liée</a></figcaption>
+    </figure>
+    
+    <article class="card" data-network="linkedin" data-id="5-linkedin">
+      <header><span class="net">LinkedIn</span><span class="badge todo">À publier</span><span class="when">mardi 27 oct. · vers 8 h 30</span></header>
+      <p class="text" data-text>En couple, combien chacun doit-il verser sur le compte commun ?
+
+Il n'y a pas de réponse unique, mais trois méthodes. Et elles ne donnent pas du tout le même résultat.
+
+Notre exemple : 2 400 € de charges communes, des salaires de 2 800 € et 1 800 € nets.
+
+• 50/50 : 1 200 € chacun. Il reste 1 600 € à l'un, 600 € à l'autre.
+• Au prorata des revenus : environ 1 461 € et 939 €. Il reste environ 1 339 € et 861 €.
+• Même argent de poche : 1 700 € et 700 €. Il reste 1 100 € à chacun.
+
+Le 50/50 convient aux revenus proches. Le prorata est le plus courant quand les écarts sont importants. Le « même argent de poche » privilégie l'égalité de niveau de vie.
+
+Un conseil : calculez sur le mois réel, pas sur une moyenne. Taxe foncière, assurance auto ou rentrée changent tout certains mois.
+
+La méthode complète, mariés ou non 👇
+https://www.budgetfamille.com/blog/compte-commun-couple-argent-de-poche?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=compte-commun
+
+#couple #comptecommun #budget #argent #financespersonnelles</p>
+      <p class="count">1 021 / 3 000 caractères · 5 / 5 hashtags</p>
+      <div class="actions"><a class="btn primary" href="https://www.linkedin.com/feed/" target="_blank" rel="noopener" data-copy>Copier et ouvrir LinkedIn</a><button type="button" class="btn" data-share hidden>Copier le texte et partager l'image</button><button type="button" class="btn" data-copy-only>Copier le texte</button></div>
+      <label class="done"><input type="checkbox" data-done> Publié</label>
+    </article>
+    <article class="card" data-network="twitter" data-id="5-twitter">
+      <header><span class="net">X</span><span class="badge todo">À publier</span><span class="when">mardi 27 oct. · vers 8 h</span></header>
+      <p class="text" data-text>Compte commun : 50/50, prorata ou même argent de poche ? Pour 2 400 € de charges et des salaires de 2 800 € et 1 800 €, chaque méthode change tout 👇 https://www.budgetfamille.com/blog/compte-commun-couple-argent-de-poche?utm_source=x&amp;utm_medium=social&amp;utm_campaign=compte-commun #couple #budget</p>
+      <p class="count">188 / 280 caractères (un lien compte 23) · 2 / 3 hashtags</p>
+      <div class="actions"><a class="btn primary" href="https://x.com/intent/tweet?text=Compte%20commun%20%3A%2050%2F50%2C%20prorata%20ou%20m%C3%AAme%20argent%20de%20poche%20%3F%20Pour%202%20400%20%E2%82%AC%20de%20charges%20et%20des%20salaires%20de%202%20800%20%E2%82%AC%20et%201%20800%20%E2%82%AC%2C%20chaque%20m%C3%A9thode%20change%20tout%20%F0%9F%91%87%20https%3A%2F%2Fwww.budgetfamille.com%2Fblog%2Fcompte-commun-couple-argent-de-poche%3Futm_source%3Dx%26utm_medium%3Dsocial%26utm_campaign%3Dcompte-commun%20%23couple%20%23budget" target="_blank" rel="noopener" data-copy>Ouvrir X avec le texte</a><button type="button" class="btn" data-share hidden>Copier le texte et partager l'image</button><button type="button" class="btn" data-copy-only>Copier le texte</button></div>
+      <label class="done"><input type="checkbox" data-done> Publié</label>
+    </article>
+    <details class="card auto" data-network="facebook">
+      <summary><span class="net">Facebook</span><span class="badge ok">Programmé dans Metricool</span><span class="when">Rien à faire · texte de secours</span></summary>
+      <p class="text" data-text>Compte commun : chez vous, c'est 50/50, au prorata des salaires, ou le même argent de poche pour chacun ? 💑
+
+Dans notre exemple (2 400 € de charges, salaires de 2 800 € et 1 800 €), selon la méthode, il reste de 600 € à 1 600 € d'argent de poche à chacun. Pas tout à fait la même vie !
+
+Dites-nous en commentaire quelle méthode vous avez choisie 👇
+
+👉 https://www.budgetfamille.com/blog/compte-commun-couple-argent-de-poche?utm_source=facebook&amp;utm_medium=social&amp;utm_campaign=compte-commun
+
+#couple #comptecommun #budgetdecouple #argent #famille</p>
+      <p class="count">543 / 63 206 caractères · 5 / 5 hashtags</p>
+      <div class="actions"><button type="button" class="btn primary" data-share hidden>Copier le texte et partager l'image</button><button type="button" class="btn" data-copy-only>Copier le texte</button></div>
+    </details>
+    <details class="card auto" data-network="instagram">
+      <summary><span class="net">Instagram</span><span class="badge ok">Programmé dans Metricool</span><span class="when">Rien à faire · texte de secours</span></summary>
+      <p class="text" data-text>Compte commun : 50/50, prorata ou même argent de poche ? 💑
+
+Notre exemple : 2 400 € de charges communes, salaires de 2 800 € et 1 800 € nets.
+
+⚖️ 50/50
+1 200 € chacun → il reste 1 600 € et 600 €
+
+📊 Au prorata des revenus
+≈ 1 461 € et 939 € → il reste ≈ 1 339 € et 861 €
+
+🤝 Même argent de poche
+1 700 € et 700 € → il reste 1 100 € chacun
+
+Aucune n'est « la bonne » : tout dépend de l'écart de revenus et de ce qui vous semble juste à deux.
+
+👉 La méthode complète : lien en bio
+
+#couple #comptecommun #budgetdecouple #argent #gestionbudget</p>
+      <p class="count">537 / 2 200 caractères · 5 / 5 hashtags · le lien de la bio mène au blog</p>
+      <div class="actions"><button type="button" class="btn primary" data-share hidden>Copier le texte et partager l'image</button><button type="button" class="btn" data-copy-only>Copier le texte</button></div>
+    </details>
+  </section>
+  <section class="post" data-media="/social/serie-octobre-2026/6-epargne.png">
+    <h2><span class="tag">6</span> Épargne · jeudi 29 octobre</h2>
+    <figure>
+      <img src="/social/serie-octobre-2026/6-epargne.png" alt="Carte bleue « Vacances d'été : combien mettre de côté dès novembre ? » : 300 € par mois pour 3 000 € en juin, 600 € déjà épargnés, exemple." width="1080" height="1350" loading="lazy">
+      <figcaption><a class="btn" href="/social/serie-octobre-2026/6-epargne.png" download="serie-octobre-2026-6-epargne.png">Enregistrer l'image</a> <a class="btn ghost" href="https://www.budgetfamille.com/blog/combien-epargner-par-mois-objectif-date" target="_blank" rel="noopener">Voir la page liée</a></figcaption>
+    </figure>
+    
+    <article class="card" data-network="linkedin" data-id="6-linkedin">
+      <header><span class="net">LinkedIn</span><span class="badge todo">À publier</span><span class="when">jeudi 29 oct. · vers 12 h 15</span></header>
+      <p class="text" data-text>Vacances d'été, apport, voiture : quand on connaît la somme et la date, la question devient simple. Combien mettre de côté chaque mois ?
+
+La formule :
+Montant mensuel = (objectif − déjà épargné) ÷ nombre de mois restants
+
+Dans notre exemple : 3 000 € pour les vacances en juin, 600 € déjà de côté, de novembre à juin, soit 8 mois.
+(3 000 − 600) ÷ 8 = 300 € par mois.
+
+Deux réflexes avant de vous engager :
+• Arrondissez à l'euro supérieur : mieux vaut finir avec un peu d'avance.
+• Faites le test du mois le plus serré : si ce mois-là le montant ne tient pas, l'objectif n'est pas tenable en l'état.
+
+S'il est trop élevé : repoussez la date, revoyez l'objectif ou réduisez une charge.
+
+Le calcul détaillé, avec d'autres exemples 👇
+https://www.budgetfamille.com/blog/combien-epargner-par-mois-objectif-date?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=epargne
+
+#epargne #budget #objectifs #vacances #financespersonnelles</p>
+      <p class="count">925 / 3 000 caractères · 5 / 5 hashtags</p>
+      <div class="actions"><a class="btn primary" href="https://www.linkedin.com/feed/" target="_blank" rel="noopener" data-copy>Copier et ouvrir LinkedIn</a><button type="button" class="btn" data-share hidden>Copier le texte et partager l'image</button><button type="button" class="btn" data-copy-only>Copier le texte</button></div>
+      <label class="done"><input type="checkbox" data-done> Publié</label>
+    </article>
+    <article class="card" data-network="twitter" data-id="6-twitter">
+      <header><span class="net">X</span><span class="badge todo">À publier</span><span class="when">jeudi 29 oct. · vers 12 h 30</span></header>
+      <p class="text" data-text>Vacances d'été : (objectif − déjà épargné) ÷ nombre de mois. Pour 3 000 € en juin avec 600 € de côté, c'est 300 €/mois dès novembre (exemple) 👇 https://www.budgetfamille.com/blog/combien-epargner-par-mois-objectif-date?utm_source=x&amp;utm_medium=social&amp;utm_campaign=epargne #epargne #vacances</p>
+      <p class="count">186 / 280 caractères (un lien compte 23) · 2 / 3 hashtags</p>
+      <div class="actions"><a class="btn primary" href="https://x.com/intent/tweet?text=Vacances%20d'%C3%A9t%C3%A9%20%3A%20(objectif%20%E2%88%92%20d%C3%A9j%C3%A0%20%C3%A9pargn%C3%A9)%20%C3%B7%20nombre%20de%20mois.%20Pour%203%20000%20%E2%82%AC%20en%20juin%20avec%20600%20%E2%82%AC%20de%20c%C3%B4t%C3%A9%2C%20c'est%20300%20%E2%82%AC%2Fmois%20d%C3%A8s%20novembre%20(exemple)%20%F0%9F%91%87%20https%3A%2F%2Fwww.budgetfamille.com%2Fblog%2Fcombien-epargner-par-mois-objectif-date%3Futm_source%3Dx%26utm_medium%3Dsocial%26utm_campaign%3Depargne%20%23epargne%20%23vacances" target="_blank" rel="noopener" data-copy>Ouvrir X avec le texte</a><button type="button" class="btn" data-share hidden>Copier le texte et partager l'image</button><button type="button" class="btn" data-copy-only>Copier le texte</button></div>
+      <label class="done"><input type="checkbox" data-done> Publié</label>
+    </article>
+    <details class="card auto" data-network="facebook">
+      <summary><span class="net">Facebook</span><span class="badge ok">Programmé dans Metricool</span><span class="when">Rien à faire · texte de secours</span></summary>
+      <p class="text" data-text>Les vacances d'été se préparent… dès novembre ! ☀️
+
+La formule : (objectif − déjà épargné) ÷ nombre de mois. Dans notre exemple, 3 000 € pour juin avec 600 € déjà de côté : 300 € par mois de novembre à juin.
+
+Vous avez un projet pour lequel vous mettez de côté en ce moment ?
+
+👉 https://www.budgetfamille.com/blog/combien-epargner-par-mois-objectif-date?utm_source=facebook&amp;utm_medium=social&amp;utm_campaign=epargne
+
+#epargne #vacances #budgetfamilial #objectifs #famille</p>
+      <p class="count">468 / 63 206 caractères · 5 / 5 hashtags</p>
+      <div class="actions"><button type="button" class="btn primary" data-share hidden>Copier le texte et partager l'image</button><button type="button" class="btn" data-copy-only>Copier le texte</button></div>
+    </details>
+    <details class="card auto" data-network="instagram">
+      <summary><span class="net">Instagram</span><span class="badge ok">Programmé dans Metricool</span><span class="when">Rien à faire · texte de secours</span></summary>
+      <p class="text" data-text>Vacances d'été : combien mettre de côté dès novembre ? ☀️
+
+La formule à garder :
+(objectif − déjà épargné) ÷ nombre de mois restants
+
+Notre exemple :
+🎯 Objectif : 3 000 € en juin
+💰 Déjà épargné : 600 €
+📅 De novembre à juin : 8 mois
+👉 300 € par mois
+
+2 astuces :
+✔️ arrondissez à l'euro supérieur
+✔️ vérifiez que ça tient le mois le plus chargé (taxe, rentrée, assurance…)
+
+👉 Le calcul détaillé : lien en bio
+
+#epargne #vacances #budgetfamilial #objectifs #gestionbudget</p>
+      <p class="count">469 / 2 200 caractères · 5 / 5 hashtags · le lien de la bio mène au blog</p>
+      <div class="actions"><button type="button" class="btn primary" data-share hidden>Copier le texte et partager l'image</button><button type="button" class="btn" data-copy-only>Copier le texte</button></div>
+    </details>
+  </section>
+  <section class="post" data-media="/social/serie-octobre-2026/7-minimum.png">
+    <h2><span class="tag">7</span> Le saviez-vous · mardi 3 novembre</h2>
+    <figure>
+      <img src="/social/serie-octobre-2026/7-minimum.png" alt="Carte bleue « Surendettement : le reste à vivre minimum garanti par la loi » : 977,54 € pour un foyer de 2 personnes, au 1er avril 2026." width="1080" height="1350" loading="lazy">
+      <figcaption><a class="btn" href="/social/serie-octobre-2026/7-minimum.png" download="serie-octobre-2026-7-minimum.png">Enregistrer l'image</a> <a class="btn ghost" href="https://www.budgetfamille.com/calcul-reste-a-vivre#minimum" target="_blank" rel="noopener">Voir la page liée</a></figcaption>
+    </figure>
+    
+    <article class="card" data-network="linkedin" data-id="7-linkedin">
+      <header><span class="net">LinkedIn</span><span class="badge todo">À publier</span><span class="when">mardi 3 nov. · vers 8 h 30</span></header>
+      <p class="text" data-text>Existe-t-il un reste à vivre minimum ? Oui, mais dans un seul cas : le surendettement.
+
+Quand une commission de surendettement établit les mesures pour un foyer, la loi impose de lui laisser de quoi faire face à ses dépenses courantes : logement, énergie, nourriture, scolarité, garde, déplacements professionnels, santé. Cette part ne peut pas être inférieure au montant forfaitaire du RSA pour le foyer (article L731-2 du Code de la consommation).
+
+Au 1er avril 2026 :
+• 1 personne : 651,69 €
+• 2 personnes : 977,54 €
+• 3 personnes : 1 173,05 €
+• 4 personnes : 1 368,55 €
+
+En dehors de ce cadre, il n'existe pas de minimum légal. Pour un crédit immobilier, les banques regardent d'abord le taux d'endettement, plafonné en principe à 35 % assurance comprise par le Haut Conseil de stabilité financière.
+
+Pour calculer votre propre reste à vivre, avec ces repères expliqués 👇
+https://www.budgetfamille.com/calcul-reste-a-vivre?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=rav-minimum#minimum
+
+#resteavivre #surendettement #budget #financespersonnelles #famille</p>
+      <p class="count">1 066 / 3 000 caractères · 5 / 5 hashtags</p>
+      <div class="actions"><a class="btn primary" href="https://www.linkedin.com/feed/" target="_blank" rel="noopener" data-copy>Copier et ouvrir LinkedIn</a><button type="button" class="btn" data-share hidden>Copier le texte et partager l'image</button><button type="button" class="btn" data-copy-only>Copier le texte</button></div>
+      <label class="done"><input type="checkbox" data-done> Publié</label>
+    </article>
+    <article class="card" data-network="twitter" data-id="7-twitter">
+      <header><span class="net">X</span><span class="badge todo">À publier</span><span class="when">mardi 3 nov. · vers 8 h</span></header>
+      <p class="text" data-text>Surendettement : la loi garantit au foyer de garder au moins le montant du RSA pour ses dépenses courantes. Au 1er avril 2026 : 977,54 € pour 2 personnes 👇 https://www.budgetfamille.com/calcul-reste-a-vivre?utm_source=x&amp;utm_medium=social&amp;utm_campaign=rav-minimum#minimum #budget #resteavivre</p>
+      <p class="count">200 / 280 caractères (un lien compte 23) · 2 / 3 hashtags</p>
+      <div class="actions"><a class="btn primary" href="https://x.com/intent/tweet?text=Surendettement%20%3A%20la%20loi%20garantit%20au%20foyer%20de%20garder%20au%20moins%20le%20montant%20du%20RSA%20pour%20ses%20d%C3%A9penses%20courantes.%20Au%201er%20avril%202026%20%3A%20977%2C54%20%E2%82%AC%20pour%202%20personnes%20%F0%9F%91%87%20https%3A%2F%2Fwww.budgetfamille.com%2Fcalcul-reste-a-vivre%3Futm_source%3Dx%26utm_medium%3Dsocial%26utm_campaign%3Drav-minimum%23minimum%20%23budget%20%23resteavivre" target="_blank" rel="noopener" data-copy>Ouvrir X avec le texte</a><button type="button" class="btn" data-share hidden>Copier le texte et partager l'image</button><button type="button" class="btn" data-copy-only>Copier le texte</button></div>
+      <label class="done"><input type="checkbox" data-done> Publié</label>
+    </article>
+    <details class="card auto" data-network="facebook">
+      <summary><span class="net">Facebook</span><span class="badge ok">Programmé dans Metricool</span><span class="when">Rien à faire · texte de secours</span></summary>
+      <p class="text" data-text>Le saviez-vous ? En cas de surendettement, la loi garantit au foyer de garder au moins le montant du RSA pour ses dépenses courantes, logement compris.
+
+Au 1er avril 2026, c'est 977,54 € par mois pour un foyer de 2 personnes, et 1 368,55 € pour 4 personnes.
+
+Si votre budget ne tient plus, les Points conseil budget sont gratuits et confidentiels. Et pour faire le point sur votre reste à vivre, notre simulateur est gratuit 👇
+
+https://www.budgetfamille.com/calcul-reste-a-vivre?utm_source=facebook&amp;utm_medium=social&amp;utm_campaign=rav-minimum#minimum
+
+#resteavivre #budget #budgetfamilial #famille #argent</p>
+      <p class="count">604 / 63 206 caractères · 5 / 5 hashtags</p>
+      <div class="actions"><button type="button" class="btn primary" data-share hidden>Copier le texte et partager l'image</button><button type="button" class="btn" data-copy-only>Copier le texte</button></div>
+    </details>
+    <details class="card auto" data-network="instagram">
+      <summary><span class="net">Instagram</span><span class="badge ok">Programmé dans Metricool</span><span class="when">Rien à faire · texte de secours</span></summary>
+      <p class="text" data-text>Le reste à vivre minimum garanti par la loi 🛟
+
+En cas de surendettement, la part laissée au foyer pour ses dépenses courantes (logement, énergie, nourriture, santé…) ne peut pas être inférieure au montant forfaitaire du RSA.
+
+Au 1er avril 2026 :
+👤 1 personne : 651,69 €
+👥 2 personnes : 977,54 €
+👨‍👩‍👦 3 personnes : 1 173,05 €
+👨‍👩‍👧‍👦 4 personnes : 1 368,55 €
+➕ 260,68 € par personne en plus
+
+Sources : article L731-2 du Code de la consommation, montants du RSA sur Service-Public.fr.
+
+Si le budget ne tient plus, les Points conseil budget sont gratuits et confidentiels.
+
+👉 Calculez votre reste à vivre : lien en bio
+
+#resteavivre #budget #budgetfamilial #famille #argent</p>
+      <p class="count">671 / 2 200 caractères · 5 / 5 hashtags · le lien de la bio mène au blog</p>
+      <div class="actions"><button type="button" class="btn primary" data-share hidden>Copier le texte et partager l'image</button><button type="button" class="btn" data-copy-only>Copier le texte</button></div>
+    </details>
+  </section>
+  <section class="post" data-media="/social/serie-octobre-2026/8-factures.png">
+    <h2><span class="tag">8</span> Outil · jeudi 5 novembre</h2>
+    <figure>
+      <img src="/social/serie-octobre-2026/8-factures.png" alt="Carte bleue « Box, mobile, énergie : vos factures peuvent-elles baisser ? » : une estimation en 30 secondes, gratuite, sans créer de compte." width="1080" height="1350" loading="lazy">
+      <figcaption><a class="btn" href="/social/serie-octobre-2026/8-factures.png" download="serie-octobre-2026-8-factures.png">Enregistrer l'image</a> <a class="btn ghost" href="https://www.budgetfamille.com/outils-ia" target="_blank" rel="noopener">Voir la page liée</a></figcaption>
+    </figure>
+    
+    <article class="card" data-network="linkedin" data-id="8-linkedin">
+      <header><span class="net">LinkedIn</span><span class="badge todo">À publier</span><span class="when">jeudi 5 nov. · vers 12 h 15</span></header>
+      <p class="text" data-text>Box internet, forfaits mobiles, énergie, assurances : ce sont des charges qu'on paie chaque mois sans y penser. Ce sont aussi celles qui se renégocient le plus facilement, une fois pour toutes.
+
+Nous avons mis en ligne des outils gratuits pour faire le point :
+• choisissez une dépense (énergie, internet, mobile ou assurance)
+• indiquez votre montant actuel et la taille du foyer
+• l'outil estime en 30 secondes ce que vous pourriez économiser et propose des alternatives
+
+Sans créer de compte.
+
+C'est souvent par là qu'il faut commencer quand le budget est serré : une charge fixe renégociée, c'est une économie qui revient chaque mois, sans effort supplémentaire.
+
+👉 https://www.budgetfamille.com/outils-ia?utm_source=linkedin&amp;utm_medium=social&amp;utm_campaign=factures
+
+#economies #budget #pouvoirdachat #energie #financespersonnelles</p>
+      <p class="count">835 / 3 000 caractères · 5 / 5 hashtags</p>
+      <div class="actions"><a class="btn primary" href="https://www.linkedin.com/feed/" target="_blank" rel="noopener" data-copy>Copier et ouvrir LinkedIn</a><button type="button" class="btn" data-share hidden>Copier le texte et partager l'image</button><button type="button" class="btn" data-copy-only>Copier le texte</button></div>
+      <label class="done"><input type="checkbox" data-done> Publié</label>
+    </article>
+    <article class="card" data-network="twitter" data-id="8-twitter">
+      <header><span class="net">X</span><span class="badge todo">À publier</span><span class="when">jeudi 5 nov. · vers 12 h 30</span></header>
+      <p class="text" data-text>Box, mobile, énergie, assurance : nos outils gratuits estiment en 30 secondes ce que vous pourriez économiser, sans créer de compte 👇 https://www.budgetfamille.com/outils-ia?utm_source=x&amp;utm_medium=social&amp;utm_campaign=factures #economies #budget</p>
+      <p class="count">176 / 280 caractères (un lien compte 23) · 2 / 3 hashtags</p>
+      <div class="actions"><a class="btn primary" href="https://x.com/intent/tweet?text=Box%2C%20mobile%2C%20%C3%A9nergie%2C%20assurance%20%3A%20nos%20outils%20gratuits%20estiment%20en%2030%20secondes%20ce%20que%20vous%20pourriez%20%C3%A9conomiser%2C%20sans%20cr%C3%A9er%20de%20compte%20%F0%9F%91%87%20https%3A%2F%2Fwww.budgetfamille.com%2Foutils-ia%3Futm_source%3Dx%26utm_medium%3Dsocial%26utm_campaign%3Dfactures%20%23economies%20%23budget" target="_blank" rel="noopener" data-copy>Ouvrir X avec le texte</a><button type="button" class="btn" data-share hidden>Copier le texte et partager l'image</button><button type="button" class="btn" data-copy-only>Copier le texte</button></div>
+      <label class="done"><input type="checkbox" data-done> Publié</label>
+    </article>
+    <details class="card auto" data-network="facebook">
+      <summary><span class="net">Facebook</span><span class="badge ok">Programmé dans Metricool</span><span class="when">Rien à faire · texte de secours</span></summary>
+      <p class="text" data-text>Box, mobile, énergie, assurance : depuis quand n'avez-vous pas comparé vos contrats ? 📱⚡
+
+Nos outils gratuits estiment en 30 secondes ce que vous pourriez économiser sur chacune de ces factures, sans créer de compte. Une charge fixe renégociée, c'est une économie qui revient tous les mois.
+
+👉 https://www.budgetfamille.com/outils-ia?utm_source=facebook&amp;utm_medium=social&amp;utm_campaign=factures
+
+#economies #pouvoirdachat #budgetfamilial #astucesbudget #energie</p>
+      <p class="count">460 / 63 206 caractères · 5 / 5 hashtags</p>
+      <div class="actions"><button type="button" class="btn primary" data-share hidden>Copier le texte et partager l'image</button><button type="button" class="btn" data-copy-only>Copier le texte</button></div>
+    </details>
+    <details class="card auto" data-network="instagram">
+      <summary><span class="net">Instagram</span><span class="badge ok">Programmé dans Metricool</span><span class="when">Rien à faire · texte de secours</span></summary>
+      <p class="text" data-text>Vos factures peuvent-elles baisser ? 📱⚡🏠
+
+Box internet, forfaits mobiles, énergie, assurances : on les paie chaque mois sans y penser… et ce sont les plus faciles à renégocier.
+
+Nos outils gratuits font le point en 30 secondes :
+1️⃣ choisissez une dépense
+2️⃣ indiquez votre montant actuel et la taille du foyer
+3️⃣ découvrez ce que vous pourriez économiser et les alternatives
+
+Sans créer de compte.
+
+Une charge fixe renégociée, c'est une économie qui revient tous les mois 💡
+
+👉 Les outils gratuits : lien en bio
+
+#economies #pouvoirdachat #astucesbudget #budgetfamilial #energie</p>
+      <p class="count">580 / 2 200 caractères · 5 / 5 hashtags · le lien de la bio mène au blog</p>
+      <div class="actions"><button type="button" class="btn primary" data-share hidden>Copier le texte et partager l'image</button><button type="button" class="btn" data-copy-only>Copier le texte</button></div>
+    </details>
+  </section>
+  <p class="eyebrow" style="margin-top:32px">Article : <a href="/blog/serie-octobre-2026" target="_blank" rel="noopener">budgetfamille.com/blog/serie-octobre-2026</a></p>
+</main>
+<div class="toast" role="status" aria-live="polite" data-toast></div>
+<script>
+(() => {
+  const slug = "serie-octobre-2026";
+  const toastEl = document.querySelector('[data-toast]');
+  let timer;
+  const toast = (msg) => {
+    toastEl.textContent = msg;
+    toastEl.classList.add('show');
+    clearTimeout(timer);
+    timer = setTimeout(() => toastEl.classList.remove('show'), 2200);
+  };
+  const store = {
+    get(k) { try { return localStorage.getItem(k); } catch { return null; } },
+    set(k, v) { try { v ? localStorage.setItem(k, '1') : localStorage.removeItem(k); } catch {} },
+  };
+  async function copy(text) {
+    try {
+      await navigator.clipboard.writeText(text);
+      return true;
+    } catch {
+      const ta = Object.assign(document.createElement('textarea'), { value: text });
+      ta.setAttribute('readonly', '');
+      ta.style.cssText = 'position:fixed;opacity:0';
+      document.body.append(ta);
+      ta.select();
+      const ok = document.execCommand('copy');
+      ta.remove();
+      return ok;
+    }
+  }
+  const textOf = (el) => el.closest('.card').querySelector('[data-text]').textContent;
+
+  document.querySelectorAll('[data-copy-only]').forEach((b) => b.addEventListener('click', async () => {
+    toast(await copy(textOf(b)) ? 'Texte copié' : 'Copie impossible : sélectionnez le texte');
+  }));
+  document.querySelectorAll('[data-copy]').forEach((a) => a.addEventListener('click', () => {
+    copy(textOf(a)).then((ok) => ok && toast('Texte copié : collez-le dans la publication'));
+  }));
+
+  // Share sheet with the image (phones): the image is fetched up front so the
+  // tap goes straight to navigator.share, inside the user gesture.
+  document.querySelectorAll('.post').forEach(async (section) => {
+    const url = section.dataset.media;
+    if (!url || !navigator.canShare) return;
+    try {
+      const blob = await (await fetch(url)).blob();
+      const file = new File([blob], url.split('/').pop(), { type: blob.type || 'image/png' });
+      if (!navigator.canShare({ files: [file] })) return;
+      section.querySelectorAll('[data-share]').forEach((b) => {
+        b.hidden = false;
+        // Phones: the share sheet (image + text, straight into the app) is the main action.
+        b.parentElement.querySelectorAll('.btn.primary').forEach((x) => x.classList.remove('primary'));
+        b.classList.add('primary');
+        b.parentElement.prepend(b);
+        b.addEventListener('click', () => {
+          const text = textOf(b);
+          copy(text);
+          navigator.share({ files: [file], text }).then(
+            () => toast('Partagé : collez le texte s\'il manque'),
+            (e) => e.name !== 'AbortError' && toast('Partage impossible : enregistrez l\'image'),
+          );
+        });
+      });
+    } catch {}
+  });
+
+  const cards = [...document.querySelectorAll('article.card[data-id]')];
+  const bar = document.querySelector('[data-bar]');
+  const label = document.querySelector('[data-progress]');
+  const refresh = () => {
+    const done = cards.filter((c) => c.classList.contains('is-done')).length;
+    if (bar) bar.style.width = (cards.length ? (100 * done) / cards.length : 0) + '%';
+    if (label) label.textContent = done + ' / ' + cards.length + ' publiés';
+  };
+  cards.forEach((c) => {
+    const key = 'kit:' + slug + ':' + c.dataset.id;
+    const box = c.querySelector('[data-done]');
+    box.checked = !!store.get(key);
+    c.classList.toggle('is-done', box.checked);
+    box.addEventListener('change', () => {
+      store.set(key, box.checked);
+      c.classList.toggle('is-done', box.checked);
+      refresh();
+      if (box.checked && cards.every((x) => x.classList.contains('is-done'))) toast('Tout est publié, merci !');
+    });
+  });
+  refresh();
+})();
+</script>
+</body>
+</html>
