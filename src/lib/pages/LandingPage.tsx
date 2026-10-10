@@ -23,13 +23,13 @@ const STEPS = [
 ];
 
 // Who it is for: « Famille » au sens large. Every line is something the app does.
-const USES: Array<{ icon: typeof Users; title: string; text: string }> = [
-  { icon: User, title: 'Seul', text: 'Votre budget perso : salaire, charges, épargne, et ce qui reste vraiment chaque mois. Idéal pour un premier appart ou un budget étudiant.' },
-  { icon: Heart, title: 'En couple', text: 'Chacun verse sa juste part au pot commun et garde son argent de poche. Les dépenses perso peuvent rester privées.' },
-  { icon: Home, title: 'En famille', text: 'Cantine certains mois, taxe foncière une fois par an, rentrée : chaque mois se prépare tout seul.' },
-  { icon: KeyRound, title: 'En colocation ou entre amis', text: 'Loyer, énergie, internet : invitez vos colocs par e-mail, chacun voit ce qu’il doit verser, en temps réel.' },
-  { icon: Plane, title: 'Pour un projet', text: 'Voyage, mariage, travaux, voiture, apport : un objectif, une date, et le montant à mettre de côté chaque mois.' },
-  { icon: Layers, title: 'Autant de budgets que nécessaire', text: 'Le foyer, la coloc, « Mariage 2027 » : chaque budget a ses membres, sa devise et ses chiffres. Gratuitement.' },
+const USES: Array<{ icon: typeof Users; title: string; text: string; link?: { to: string; label: string } }> = [
+  { icon: User, title: 'Seul', text: 'Votre budget perso : salaire, charges, épargne, et ce qui reste vraiment chaque mois. Idéal pour un premier appart ou un budget étudiant.', link: { to: '/budget-personnel', label: 'Calculer mon budget perso' } },
+  { icon: Heart, title: 'En couple', text: 'Chacun verse sa juste part au pot commun et garde son argent de poche. Les dépenses perso peuvent rester privées.', link: { to: '/blog/compte-commun-couple-argent-de-poche', label: 'Le guide du compte commun' } },
+  { icon: Home, title: 'En famille', text: 'Cantine certains mois, taxe foncière une fois par an, rentrée : chaque mois se prépare tout seul.', link: { to: '/calcul-reste-a-vivre', label: 'Calculer notre reste à vivre' } },
+  { icon: KeyRound, title: 'En colocation ou entre amis', text: 'Loyer, énergie, internet : invitez vos colocs par e-mail, chacun voit ce qu’il doit verser, en temps réel.', link: { to: '/budget-colocation', label: 'Calculer la part de chacun' } },
+  { icon: Plane, title: 'Pour un projet', text: 'Voyage, mariage, travaux, voiture, apport : un objectif, une date, et le montant à mettre de côté chaque mois.', link: { to: '/budget-mariage', label: 'Calculer un budget mariage' } },
+  { icon: Layers, title: 'Autant de budgets que nécessaire', text: 'Le foyer, la coloc, « Mariage 2027 » : chaque budget a ses membres, sa devise et ses chiffres. Gratuitement.', link: { to: '/signup', label: 'Créer mon premier budget' } },
 ];
 
 const FEATURES: Array<{ icon: typeof Users; kicker: string; title: string; text: string; points: string[]; img: string; alt: string }> = [
@@ -173,6 +173,11 @@ export default function LandingPage() {
                   <span>
                     <span className="block font-bold text-foreground">{u.title}</span>
                     <span className="mt-1 block text-sm leading-relaxed text-muted-foreground">{u.text}</span>
+                    {u.link && (
+                      <Link to={u.link.to} className="mt-2 inline-flex min-h-[44px] items-center gap-1 text-sm font-semibold text-primary hover:underline">
+                        {u.link.label} <ArrowRight className="h-4 w-4" aria-hidden="true" />
+                      </Link>
+                    )}
                   </span>
                 </li>
               ))}

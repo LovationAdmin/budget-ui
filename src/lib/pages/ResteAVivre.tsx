@@ -8,14 +8,15 @@
 // is either the visitor's own or sourced below.
 // ============================================================================
 
-import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
-  AlertTriangle, ArrowRight, Calculator, CheckCircle2, ChevronDown, Minus, Plus, RotateCcw, Share2, ShieldCheck,
+  AlertTriangle, ArrowRight, Calculator, CheckCircle2, ChevronDown, RotateCcw, Share2, ShieldCheck,
 } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
 import { Button } from '@/components/ui/button';
+import { MoneyInput, Panel, Stepper, Tile } from '@/components/tools/ToolKit';
 import { money, parseAmount } from '@/lib/budget/format';
 import { RAV_FAQ as FAQ } from '@/seo/faq';
 import {
@@ -45,82 +46,6 @@ const amount = (raw: string | undefined) => {
   const n = parseAmount(raw ?? '');
   return Number.isFinite(n) && n > 0 ? n : 0;
 };
-
-function Stepper({ label, hint, value, min, onChange }: { label: string; hint?: string; value: number; min: number; onChange: (v: number) => void }) {
-  return (
-    <div className="flex items-center justify-between gap-4 py-2">
-      <div>
-        <p className="font-medium text-foreground">{label}</p>
-        {hint && <p className="text-sm text-muted-foreground">{hint}</p>}
-      </div>
-      <div className="flex shrink-0 items-center gap-2">
-        <button
-          type="button"
-          onClick={() => onChange(Math.max(min, value - 1))}
-          disabled={value <= min}
-          aria-label={`Retirer : ${label}`}
-          className="flex h-11 w-11 items-center justify-center rounded-xl border border-border bg-background text-foreground transition hover:bg-muted disabled:opacity-40"
-        >
-          <Minus className="h-4 w-4" aria-hidden="true" />
-        </button>
-        <output className="w-8 text-center text-lg font-semibold tabular-nums text-foreground" aria-live="polite">{value}</output>
-        <button
-          type="button"
-          onClick={() => onChange(Math.min(12, value + 1))}
-          aria-label={`Ajouter : ${label}`}
-          className="flex h-11 w-11 items-center justify-center rounded-xl border border-border bg-background text-foreground transition hover:bg-muted"
-        >
-          <Plus className="h-4 w-4" aria-hidden="true" />
-        </button>
-      </div>
-    </div>
-  );
-}
-
-function MoneyInput({ id, label, hint, value, onChange }: { id: string; label: string; hint?: string; value: string; onChange: (v: string) => void }) {
-  return (
-    <div className="py-2">
-      <label htmlFor={id} className="block font-medium text-foreground">{label}</label>
-      {hint && <p id={`${id}-hint`} className="text-sm text-muted-foreground">{hint}</p>}
-      <div className="relative mt-1.5">
-        <input
-          id={id}
-          type="text"
-          inputMode="decimal"
-          autoComplete="off"
-          placeholder="0"
-          value={value}
-          aria-describedby={hint ? `${id}-hint` : undefined}
-          onChange={(e) => onChange(e.target.value.replace(/[^\d\s,.]/g, ''))}
-          className="h-12 w-full rounded-xl border border-input bg-background pl-4 pr-16 text-right text-lg tabular-nums text-foreground placeholder:text-muted-foreground/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ring-offset-background"
-        />
-        <span className="pointer-events-none absolute inset-y-0 right-4 flex items-center text-sm text-muted-foreground">€/mois</span>
-      </div>
-    </div>
-  );
-}
-
-function Panel({ title, step, children }: { title: string; step: number; children: ReactNode }) {
-  return (
-    <section className="rounded-2xl border border-border/70 bg-card p-5 sm:p-6" aria-labelledby={`step-${step}`}>
-      <h2 id={`step-${step}`} className="flex items-center gap-3 font-display text-xl font-bold text-foreground">
-        <span className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-sm text-primary-foreground" aria-hidden="true">{step}</span>
-        {title}
-      </h2>
-      <div className="mt-3 divide-y divide-border/60">{children}</div>
-    </section>
-  );
-}
-
-function Tile({ label, value, note }: { label: string; value: string; note: string }) {
-  return (
-    <div className="rounded-xl bg-muted/60 p-3">
-      <p className="text-xs font-medium text-muted-foreground">{label}</p>
-      <p className="mt-1 text-lg font-bold tabular-nums text-foreground">{value}</p>
-      <p className="text-xs text-muted-foreground">{note}</p>
-    </div>
-  );
-}
 
 const EXAMPLE = {
   household: { adults: 2, kidsUnder14: 2, teens14plus: 0 },

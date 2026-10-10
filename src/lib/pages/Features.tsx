@@ -93,9 +93,9 @@ export default function Features() {
     { feature: "Collaboration temps réel", budgetFamille: true, others: false, highlight: true },
     { feature: "Charges perso privées dans un budget partagé", budgetFamille: true, others: false, highlight: true },
     { feature: "Pot commun + argent de poche par membre", budgetFamille: true, others: false, highlight: true },
-    { feature: "Connexion bancaire (2500+ banques)", budgetFamille: true, others: true, highlight: false },
+    { feature: "Connexion bancaire (Premium, bientôt)", budgetFamille: true, others: true, highlight: false },
     { feature: "IA Market Suggestions", budgetFamille: true, others: false, highlight: true },
-    { feature: "Reality Check (Budget vs Réel)", budgetFamille: true, others: false, highlight: true },
+    { feature: "Reality Check : prévu vs réel (Premium, bientôt)", budgetFamille: true, others: false, highlight: true },
     { feature: "Progressive Web App", budgetFamille: true, others: false, highlight: false },
     { feature: "100% Gratuit (fonctions de base)", budgetFamille: true, others: false, highlight: false },
   ];
@@ -162,20 +162,20 @@ export default function Features() {
     {
       icon: CreditCard,
       title: "Connexion Bancaire",
-      description: "Synchronisez automatiquement vos transactions",
-      badge: "Beta"
+      description: "Vos transactions synchronisées automatiquement (Premium)",
+      badge: "Bientôt"
     },
     {
       icon: TrendingUp,
       title: "Reality Check",
-      description: "Comparez budget vs dépenses réelles",
-      badge: "Beta"
+      description: "Comparez budget prévu et dépenses réelles (Premium)",
+      badge: "Bientôt"
     },
     {
       icon: Brain,
       title: "IA Suggestions",
-      description: "Recevez des conseils personnalisés",
-      badge: "Premium"
+      description: "Des pistes d'économies et un plan proposés par l'IA",
+      badge: "Gratuit"
     },
     {
       icon: BarChart3,

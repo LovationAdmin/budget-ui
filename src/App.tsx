@@ -55,6 +55,9 @@ const Blog = lazy(() => import('./lib/pages/Blog'));
 const BlogArticle = lazy(() => import('./lib/pages/BlogArticle'));
 const BudgetTemplate = lazy(() => import('./lib/pages/BudgetTemplate'));
 const ResteAVivre = lazy(() => import('./lib/pages/ResteAVivre'));
+const BudgetColocation = lazy(() => import('./lib/pages/BudgetColocation'));
+const BudgetMariage = lazy(() => import('./lib/pages/BudgetMariage'));
+const BudgetPersonnel = lazy(() => import('./lib/pages/BudgetPersonnel'));
 const Profile = lazy(() => import('./lib/pages/Profile'));
 const AcceptInvitation = lazy(() => import('./lib/pages/AcceptInvitation'));
 const EnableBankingCallbackPage = lazy(() => import('./lib/pages/EnableBankingCallbackPage'));
@@ -99,6 +102,9 @@ export default function App() {
           <Route path="/features" element={<Features />} />
           <Route path="/tableau-budget-familial-gratuit" element={<BudgetTemplate />} />
           <Route path="/calcul-reste-a-vivre" element={<ResteAVivre />} />
+          <Route path="/budget-colocation" element={<BudgetColocation />} />
+          <Route path="/budget-mariage" element={<BudgetMariage />} />
+          <Route path="/budget-personnel" element={<BudgetPersonnel />} />
           <Route path="/about" element={<About />} />
           <Route path="/help" element={<Help />} />
           <Route path="/premium" element={<PremiumPage />} />

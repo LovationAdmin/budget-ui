@@ -81,8 +81,10 @@ avant que l'article et les visuels soient en ligne.
 - **Promesses produit exactes** : Budget Famille est gratuit (budgets illimités,
   partagés en temps réel entre les membres du foyer, outils d'IA : proposition de
   budget, suggestions d'économies), sans connexion bancaire obligatoire ; la
-  connexion bancaire et le suivi des dépenses réelles sont l'offre Premium à
-  2 €/mois. Ne rien promettre d'autre sans l'avoir vérifié dans le code
+  connexion bancaire et le suivi des dépenses réelles arrivent **bientôt** avec
+  l'offre Premium : la présenter comme « à venir », **sans jamais citer de prix**
+  (il sera annoncé au lancement), et renvoyer vers la démonstration de
+  `/premium`. Ne rien promettre d'autre sans l'avoir vérifié dans le code
   (`src/lib/pages/Features.tsx`, `src/lib/pages/PremiumPage.tsx`).
 - **Pas de dénigrement** de concurrents, banques ou fournisseurs nommés.
 - **Ton** : chaleureux, concret, déculpabilisant, en français, vouvoiement. Pas de
