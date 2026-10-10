@@ -65,6 +65,8 @@ const amount = (raw: string | undefined) => {
   return Number.isFinite(n) && n > 0 ? n : 0;
 };
 const invites = (n: number) => `${n} invité${n > 1 ? 's' : ''}`;
+/** « De mars 2027 », « D’octobre 2026 ». */
+const fromMonth = (label: string) => (/^[aeiouyàâéèêh]/i.test(label) ? `D’${label}` : `De ${label}`);
 
 /** The example as the form shows it. */
 const EXAMPLE_VALUES: Record<string, string> = Object.fromEntries(
@@ -130,14 +132,21 @@ export default function BudgetMariage() {
 
   const set = (key: string) => (v: string) => setValues((prev) => ({ ...prev, [key]: v }));
 
-  const fillExample = () => {
-    if (hasTotal && !wholeExample && !window.confirm('Remplacer vos montants par l’exemple fictif ?')) return;
+  // Once every example amount has been replaced, the « exemple fictif » labels go for good.
+  useEffect(() => {
+    if (example && !exampleLeft) setExample(false);
+  }, [example, exampleLeft]);
+
+  /** Returns false when the visitor keeps their own amounts. */
+  const fillExample = (): boolean => {
+    if (hasTotal && !wholeExample && !window.confirm('Remplacer vos montants par l’exemple fictif ?')) return false;
     setGuests(EXAMPLE.guests);
     setValues({ ...EXAMPLE_VALUES });
     setAlready(String(EXAMPLE.saved));
     setDate(formatMonthValue(addMonths(thisMonth, EXAMPLE.monthsAhead)));
     setExample(true);
     setMoreOpen(true);
+    return true;
   };
 
   const reset = () => {
@@ -183,7 +192,7 @@ export default function BudgetMariage() {
               <Calculator className="h-4 w-4" aria-hidden="true" /> Calculateur gratuit · sans inscription
             </span>
             <h1 className="mt-5 font-display text-4xl font-bold tracking-tight text-foreground sm:text-5xl [text-wrap:balance]">
-              Budget mariage : calculez le coût de votre mariage
+              Budget mariage{'\u00a0'}: calculez le coût de votre mariage
             </h1>
             <p className="mx-auto mt-4 max-w-2xl text-lg text-muted-foreground">
               Invités, traiteur, lieu, tenues : additionnez vos devis, voyez le coût par invité et ce qu’il faut mettre de côté
@@ -346,7 +355,7 @@ export default function BudgetMariage() {
                             <p className="mt-1 text-sm text-muted-foreground">
                               {plan.months === 1
                                 ? `Un seul versement, en ${monthLabel(plan.from)}`
-                                : `De ${monthLabel(plan.from)} à ${monthLabel(plan.to)}, soit ${plan.months} versements`}
+                                : `${fromMonth(monthLabel(plan.from))} à ${monthLabel(plan.to)}, soit ${plan.months} versements`}
                               , pour réunir {euros(plan.remaining)}
                               {amount(already) > 0 ? ` (${euros(r.total)} − ${euros(amount(already))} déjà de côté)` : ''}.
                             </p>
@@ -419,7 +428,7 @@ export default function BudgetMariage() {
 
                 {hasTotal && fewer.fewer > 0 && (
                   <div className="mt-5 rounded-xl bg-muted/60 p-4 text-sm text-muted-foreground">
-                    <p className="font-semibold text-foreground">Et avec {invites(fewer.fewer)} de moins ?</p>
+                    <p className="font-semibold text-foreground">Et avec {invites(fewer.fewer)} de moins{'\u00a0'}?</p>
                     {r.ratePerGuest > 0 ? (
                       <p className="mt-1">
                         Le traiteur et les boissons baissent de <strong>{euros(fewer.saving)}</strong> : {euros(fewer.total)} au lieu
@@ -436,7 +445,7 @@ export default function BudgetMariage() {
 
                 <SignupCard
                   title="Préparez votre mariage dans une cagnotte"
-                  text={`Dans Budget Famille, créez un budget à part « Mariage ${projectYear} » ou une cagnotte avec un objectif et une date : le montant à mettre de côté chaque mois est calculé, et vous pouvez inviter votre conjoint. Gratuit, sans connexion bancaire.`}
+                  text={`Dans Budget Famille, créez un budget à part «\u00a0Mariage ${projectYear}\u00a0» ou une cagnotte avec un objectif et une date : le montant à mettre de côté chaque mois est calculé, et vous pouvez inviter votre conjoint. Gratuit, sans avoir à connecter votre banque.`}
                 />
 
                 <div className="mt-3 flex flex-wrap gap-2">
@@ -472,7 +481,7 @@ export default function BudgetMariage() {
 
         <ToolArticle>
           <section>
-            <h2>Comment calculer le budget de son mariage ?</h2>
+            <h2>Comment calculer le budget de son mariage{'\u00a0'}?</h2>
             <p className="mt-4 text-lg">
               Un budget de mariage se construit à partir de <strong>vos devis</strong>, pas d’une moyenne : deux mariages avec le même
               nombre d’invités peuvent avoir des budgets très différents selon le lieu, le traiteur, la région et la saison.
@@ -500,7 +509,7 @@ export default function BudgetMariage() {
           </section>
 
           <section>
-            <h2>Budget mariage pour 100 invités : un exemple</h2>
+            <h2>Budget mariage pour 100 invités{'\u00a0'}: un exemple</h2>
             <p className="mt-4">
               Dans notre exemple, un couple reçoit {ex.guests} invités. Les montants sont <strong>fictifs</strong> : des chiffres ronds
               choisis pour montrer le calcul, pas des prix moyens. Il n’existe pas de prix de référence officiel ; le total dépend
@@ -545,14 +554,14 @@ export default function BudgetMariage() {
               type="button"
               variant="outline"
               className="mt-4 min-h-[44px]"
-              onClick={() => { fillExample(); scrollToResults(); }}
+              onClick={() => { if (fillExample()) scrollToResults(); }}
             >
               Charger cet exemple dans le calculateur <ArrowRight className="ml-2 h-4 w-4" aria-hidden="true" />
             </Button>
           </section>
 
           <section>
-            <h2>Combien épargner par mois pour son mariage ?</h2>
+            <h2>Combien épargner par mois pour son mariage{'\u00a0'}?</h2>
             <p className="mt-4 rounded-xl bg-muted/60 p-4 font-semibold text-foreground">
               Montant mensuel = (budget total − déjà mis de côté) ÷ nombre de mois avant le mariage
             </p>
@@ -577,7 +586,7 @@ export default function BudgetMariage() {
           </section>
 
           <section>
-            <h2>Comment réduire le budget d’un mariage ?</h2>
+            <h2>Comment réduire le budget d’un mariage{'\u00a0'}?</h2>
             <ul className="mt-4 list-disc space-y-2 pl-5">
               <li>
                 <strong>Revoir la liste d’invités</strong> : c’est le levier le plus direct, puisque le repas et les boissons sont
@@ -607,7 +616,7 @@ export default function BudgetMariage() {
           </section>
 
           <section>
-            <h2>Qui paie le mariage ?</h2>
+            <h2>Qui paie le mariage{'\u00a0'}?</h2>
             <p className="mt-4">
               Il n’y a pas de règle. Selon les familles et les moyens de chacun, le mariage est payé par le couple seul, partagé avec
               les parents, ou complété par une participation pour un poste précis, comme la robe ou le vin d’honneur.
@@ -619,10 +628,10 @@ export default function BudgetMariage() {
             <p className="mt-4">
               Un budget partagé aide. Dans{' '}
               <Link to="/signup" className="font-medium text-primary hover:underline">Budget Famille</Link>, créez un budget à part
-              « Mariage {projectYear} » avec ses propres membres : invitez votre conjoint, et vos parents si vous le souhaitez, par
+              «{'\u00a0'}Mariage {projectYear}{'\u00a0'}» avec ses propres membres : invitez votre conjoint, et vos parents si vous le souhaitez, par
               e-mail ; chacun voit les mêmes chiffres en temps réel. Une cagnotte avec un objectif et une date calcule le montant à
               mettre de côté chaque mois, et une dépense peut être payée directement depuis la cagnotte. C’est gratuit, sans
-              connexion bancaire.
+              avoir à connecter votre banque.
             </p>
           </section>
 

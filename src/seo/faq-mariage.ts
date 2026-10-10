@@ -24,7 +24,7 @@ export const MARIAGE_FAQ: FaqItem[] = [
   },
   {
     q: 'Quels postes oublie-t-on souvent dans le budget d’un mariage ?',
-    a: 'Les boissons et le vin d’honneur quand ils ne sont pas inclus chez le traiteur, la location de vaisselle ou de mobilier, les heures de service supplémentaires, la papeterie, les retouches des tenues, la coiffure et le maquillage d’essai, les transports et l’hébergement, et les petits achats de dernière minute. D’où l’intérêt d’une ligne « imprévus ».',
+    a: 'Les boissons et le vin d’honneur quand ils ne sont pas inclus chez le traiteur, la location de vaisselle ou de mobilier, les heures de service supplémentaires, la papeterie, les retouches des tenues, les essais de coiffure et de maquillage, les transports et l’hébergement, et les petits achats de dernière minute. D’où l’intérêt d’une ligne « imprévus ».',
   },
   {
     q: 'Mes chiffres sont-ils enregistrés ?',

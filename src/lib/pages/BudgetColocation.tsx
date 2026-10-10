@@ -139,7 +139,7 @@ export default function BudgetColocation() {
               <Calculator className="h-4 w-4" aria-hidden="true" /> Calculateur gratuit · sans inscription
             </span>
             <h1 className="mt-5 font-display text-4xl font-bold tracking-tight text-foreground sm:text-5xl [text-wrap:balance]">
-              Budget colocation : qui paie quoi ?
+              Budget colocation&nbsp;: qui paie quoi&nbsp;?
             </h1>
             <p className="mx-auto mt-4 max-w-2xl text-lg text-muted-foreground">
               Loyer, factures, courses communes : calculez la part de chaque colocataire, à parts égales, selon la chambre ou selon les revenus.
@@ -161,8 +161,8 @@ export default function BudgetColocation() {
               >
                 <Stepper label="Colocataires" value={mates.length} min={2} max={MAX} onChange={setCount} />
                 {mates.map((m, i) => (
-                  <div key={i} className="grid gap-2 py-3 sm:grid-cols-[1fr_auto] sm:items-end">
-                    <div>
+                  <div key={i} className={`grid items-end gap-3 py-3 ${method === 'chambre' ? 'grid-cols-[1fr_7rem]' : method === 'revenus' ? 'grid-cols-[1fr_9.5rem] sm:grid-cols-[1fr_12rem]' : ''}`}>
+                    <div className="pb-2">
                       <label htmlFor={`mate-${i}`} className="block text-sm font-medium text-foreground">Prénom ou surnom</label>
                       <input
                         id={`mate-${i}`}
@@ -175,12 +175,12 @@ export default function BudgetColocation() {
                       />
                     </div>
                     {method === 'chambre' && (
-                      <div className="sm:w-40">
+                      <div>
                         <MoneyInput id={`room-${i}`} label={<span className="text-sm">Chambre</span>} suffix="m²" value={m.room} onChange={(v) => setMate(i, { room: v })} />
                       </div>
                     )}
                     {method === 'revenus' && (
-                      <div className="sm:w-48">
+                      <div>
                         <MoneyInput id={`income-${i}`} label={<span className="text-sm">Revenu net</span>} value={m.income} onChange={(v) => setMate(i, { income: v })} />
                       </div>
                     )}

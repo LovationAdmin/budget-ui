@@ -177,6 +177,13 @@ export default function BudgetPersonnel() {
     setMoreOpen(false);
   };
 
+  const fillExample = () => {
+    setValues({
+      ...Object.fromEntries(Object.entries(EXAMPLE.incomes).map(([k, v]) => [`inc.${k}`, String(v)])),
+      ...Object.fromEntries(Object.entries(EXAMPLE.needs).map(([k, v]) => [`need.${k}`, String(v)])),
+    });
+  };
+
   const share = async () => {
     const url = 'https://www.budgetfamille.com/budget-personnel';
     const text = 'Un calculateur gratuit pour faire son budget perso avec la règle 50/30/20.';
@@ -221,7 +228,11 @@ export default function BudgetPersonnel() {
         <section className="px-4 pb-16 sm:px-6 lg:px-8" aria-label="Calculateur">
           <div className="mx-auto grid max-w-6xl gap-6 lg:grid-cols-[1fr_400px] lg:items-start">
             <div className="space-y-6">
-              <Panel title="Revenus nets du mois" step={1}>
+              <Panel
+                title="Revenus nets du mois"
+                step={1}
+                aside={<button type="button" onClick={fillExample} className="min-h-[44px] shrink-0 rounded-xl px-2 text-sm font-semibold text-primary hover:underline">Voir l’exemple</button>}
+              >
                 {INCOME_FIELDS.map((f) => (
                   <MoneyInput key={f.key} id={`inc-${f.key}`} label={f.label} hint={f.hint} value={values[`inc.${f.key}`] ?? ''} onChange={set(`inc.${f.key}`)} />
                 ))}

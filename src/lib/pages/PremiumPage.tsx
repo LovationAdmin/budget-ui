@@ -199,8 +199,8 @@ function Demo() {
 
       <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_1.1fr]">
         {/* Bank side */}
-        <div className="rounded-2xl bg-muted/50 p-4">
-          <div className="flex items-center justify-between gap-3">
+        <div className="min-w-0 rounded-2xl bg-muted/50 p-3 sm:p-4">
+          <div className="flex flex-wrap items-center justify-between gap-3">
             <p className="flex items-center gap-2 font-semibold text-foreground"><Building2 className="h-4 w-4 text-primary" aria-hidden="true" /> Compte de démonstration</p>
             {phase === 'idle' || phase === 'done' ? (
               <Button type="button" onClick={phase === 'done' ? () => reset() : run} className="min-h-[44px]" variant={phase === 'done' ? 'outline' : 'default'}>
@@ -247,7 +247,7 @@ function Demo() {
         </div>
 
         {/* Budget side */}
-        <div>
+        <div className="min-w-0">
           <p className="font-semibold text-foreground">Octobre : prévu et réel</p>
           <ul className="mt-3 space-y-3">
             {rows.map((r) => {
@@ -255,7 +255,7 @@ function Demo() {
               const over = r.gap > r.planned * 0.05;
               return (
                 <li key={r.id}>
-                  <div className="flex items-baseline justify-between gap-3 text-sm">
+                  <div className="flex flex-wrap items-baseline justify-between gap-x-3 text-sm">
                     <span className="font-medium text-foreground">{r.label}</span>
                     <span className="tabular-nums text-muted-foreground">
                       {euros(r.real)} / {euros(r.planned)}

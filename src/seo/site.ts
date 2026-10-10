@@ -98,6 +98,22 @@ export const PAGES: PageSEO[] = [
     changefreq: 'monthly',
   },
   {
+    path: '/budget-mariage',
+    title: 'Budget mariage : calculateur gratuit et épargne par mois',
+    description: 'Calculez le budget de votre mariage d’après vos devis : coût par invité, part du traiteur et épargne à prévoir chaque mois. Gratuit, sans inscription.',
+    h1: 'Budget mariage : calculez le coût de votre mariage',
+    intro: 'Invités, traiteur, lieu, tenues : additionnez vos devis, voyez le coût par invité et ce qu’il faut mettre de côté chaque mois d’ici le jour J.',
+    links: [CTA, { href: '/blog/combien-epargner-par-mois-objectif-date', label: 'Combien épargner par mois pour un objectif' }, { href: '/budget-personnel', label: 'Budget personnel' }, { href: '/calcul-reste-a-vivre', label: 'Calcul du reste à vivre' }],
+    sections: [
+      { h2: 'Comment calculer le budget de son mariage ?', text: 'Budget = (traiteur + boissons par invité) × nombre d’invités + postes fixes + imprévus. Il n’existe pas de prix moyen officiel : partez de vos devis.' },
+      { h2: 'Budget mariage pour 100 invités : un exemple', text: 'Exemple fictif : traiteur 80 € et boissons 20 € par invité, lieu 4 000 €, tenues 2 000 €… soit 22 000 € et 220 € par invité ; 20 invités de moins économisent 2 000 €.' },
+      { h2: 'Combien épargner par mois pour son mariage ?', text: '(Budget − déjà mis de côté) ÷ nombre de mois avant le mariage. Exemple fictif : 18 000 € à réunir en 18 mois, soit 1 000 € par mois.' },
+      { h2: 'Qui paie le mariage ?', text: 'Pas de règle : le couple, les familles, ou les deux. Parlez-en tôt ; un budget partagé et une cagnotte avec objectif et date aident.' },
+    ],
+    priority: 0.8,
+    changefreq: 'monthly',
+  },
+  {
     path: '/budget-colocation',
     title: 'Budget colocation : calculer la part de loyer de chacun',
     description: 'Calculez gratuitement la part de loyer et de factures de chaque colocataire : parts égales, selon la chambre ou selon les revenus. Et les règles à connaître.',
