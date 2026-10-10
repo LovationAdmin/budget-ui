@@ -31,5 +31,5 @@ chaque routine. Pour changer son comportement, modifier ce fichier (PR).
 | Instagram | 18:30 | 12:30 |
 | X | 08:00 | 12:30 |
 
-- **Instagram** : les liens des légendes ne sont pas cliquables ; le lien de la
-  bio du compte doit pointer vers https://www.budgetfamille.com/blog
+- **Instagram** : les liens des légendes ne sont pas cliquables ; le lien de la bio du compte pointe vers l'accueil,
+  https://www.budgetfamille.com, d'où l'on atteint articles, simulateur et outils

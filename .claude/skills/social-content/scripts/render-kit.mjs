@@ -7,6 +7,8 @@
 // end-of-routine notification. noindex: it is a tool, not content.
 // Usage: node .claude/skills/social-content/scripts/render-kit.mjs docs/social/posts/<week>-<slug>.md [out.html]
 //        (default out: public/social/<slug>/kit.html)
+// A series over several weeks gives each post a `date: AAAA-MM-JJ` line and the
+// front matter a `title:` (the page title, instead of the article's).
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -61,7 +63,7 @@ for (const line of src.slice(src.indexOf('\n---', 3) + 4).split('\n')) {
   } else if (post && net) {
     post.texts[net].push(line);
   } else if (post) {
-    const m = line.match(/^(media|alt|link):\s*(.+)$/);
+    const m = line.match(/^(media|alt|link|date):\s*(.+)$/);
     if (m) post.meta[m[1]] = m[2].trim();
   }
 }
@@ -90,10 +92,10 @@ for (const m of config.matchAll(/^\| *(LinkedIn|Facebook|Instagram|X) *\|(.+)\|\
 }
 
 // ---- article title (src/data/blog-articles.tsx) ---------------------------
-let title = slug;
+let title = front.title || slug;
 const articles = readFileSync(path.join(root, 'src/data/blog-articles.tsx'), 'utf8').split('\n');
 const at = articles.findIndex((l) => l.includes(`slug: "${slug}"`) || l.includes(`slug: '${slug}'`));
-for (let i = at - 1; at > 0 && i >= at - 4; i--) {
+for (let i = at - 1; !front.title && at > 0 && i >= at - 4; i--) {
   const m = articles[i].match(/^\s*title:\s*("(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*')/);
   if (m) {
     title = m[1].startsWith('"') ? JSON.parse(m[1]) : m[1].slice(1, -1).replace(/\\'/g, "'");
@@ -104,8 +106,9 @@ for (let i = at - 1; at > 0 && i >= at - 4; i--) {
 // ---- helpers --------------------------------------------------------------
 const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 const monday = new Date(`${week}T12:00:00Z`);
-const dateOf = (day) => {
-  const i = DAYS.indexOf(day);
+const dateOf = (p) => {
+  if (/^\d{4}-\d{2}-\d{2}$/.test(p.meta.date ?? '')) return new Date(`${p.meta.date}T12:00:00Z`);
+  const i = DAYS.indexOf(p.day);
   if (i < 0) return null;
   const d = new Date(monday);
   d.setUTCDate(d.getUTCDate() + i);
@@ -120,6 +123,11 @@ const xLength = (t) => [...t.replace(/https?:\/\/\S+/g, 'x'.repeat(23))].length;
 const count = (n, t) => (n === 'twitter' ? xLength(t) : [...t].length);
 const hashtags = (t) => (t.replace(/https?:\/\/\S+/g, '').match(/(^|\s)#[\p{L}\p{N}_]+/gu) ?? []).length;
 
+const postDates = posts.map(dateOf).filter(Boolean);
+const period = postDates.length > 1 && postDates.at(-1) - postDates[0] > 6 * 864e5
+  ? `du ${fmt(postDates[0], { day: 'numeric', month: 'long' })} au ${fmt(postDates.at(-1), { day: 'numeric', month: 'long' })}`
+  : `semaine du ${fmt(monday, { day: 'numeric', month: 'long' })}`;
+
 const manualTotal = posts.reduce((s, p) => s + Object.keys(p.texts).filter((n) => !auto.has(n)).length, 0);
 
 function card(p, pi, n) {
@@ -129,8 +137,9 @@ function card(p, pi, n) {
   const tags = hashtags(text);
   const over = len > limit;
   const id = `${p.id}-${n}`;
-  const hour = hours[n]?.[pi];
-  const when = dateOf(p.day);
+  // Config hours: first column for the 1st post of the week (A), second for the 2nd (B).
+  const hour = hours[n]?.[pi % 2];
+  const when = dateOf(p);
   const whenLabel = when ? `${fmt(when, { weekday: 'long', day: 'numeric', month: 'short' })}${hour && !auto.has(n) ? ` · vers ${hour.replace(/^0?(\d+):(\d+)$/, (_, h, m) => `${h} h ${m === '00' ? '' : m}`).trim()}` : ''}` : '';
   const actions = [];
   if (n === 'twitter') {
@@ -158,7 +167,7 @@ function card(p, pi, n) {
 }
 
 const sections = posts.map((p, pi) => {
-  const when = dateOf(p.day);
+  const when = dateOf(p);
   const order = Object.keys(NETWORKS).filter((n) => p.texts[n]).sort((a, b) => auto.has(a) - auto.has(b));
   const media = local(p.meta.media);
   const file = media?.split('/').pop();
@@ -232,7 +241,7 @@ const html = `<!doctype html>
 <body>
 <main>
   <div class="top">
-    <p class="eyebrow">Kit réseaux sociaux · semaine du ${esc(fmt(monday, { day: 'numeric', month: 'long' }))}</p>
+    <p class="eyebrow">Kit réseaux sociaux · ${esc(period)}</p>
     <h1>${esc(title)}</h1>
   </div>
   ${manualTotal ? `<div class="progress"><span class="bar"><i data-bar></i></span><span data-progress>0 / ${manualTotal} publiés</span></div>` : ''}

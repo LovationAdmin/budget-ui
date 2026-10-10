@@ -218,7 +218,7 @@ Dans les textes, chaque lien porte ses UTM, avec la source du réseau :
 |---|---|
 | LinkedIn | 700 à 1 300 caractères. Deux premières lignes = accroche (avant « voir plus »). Paragraphes de 1 à 2 lignes, une liste à puces (•, ✅) ; ton « parents actifs ». Lien en fin de texte, puis **5 hashtags** sur la dernière ligne. |
 | Facebook | 300 à 600 caractères, conversationnel, une question pour faire réagir. Lien dans le texte, puis **5 hashtags** sur la dernière ligne. |
-| Instagram | Accroche sur la première ligne, 500 à 1 000 caractères aérés, puis « 👉 L'article complet : lien en bio (budgetfamille.com/blog) ». Pas d'URL (non cliquable). **Exactement 5 hashtags** en fin de texte : c'est le maximum autorisé par Instagram depuis fin 2025 (au-delà, la publication peut être refusée). |
+| Instagram | Accroche sur la première ligne, 500 à 1 000 caractères aérés, puis « 👉 L'article complet : lien en bio ». Pas d'URL (non cliquable). **Exactement 5 hashtags** en fin de texte : c'est le maximum autorisé par Instagram depuis fin 2025 (au-delà, la publication peut être refusée). |
 | X | Un seul post (pas de fil), ≤ 260 caractères lien compris (un lien compte 23). **2 à 3 hashtags**, tant que la limite tient. |
 
 Hashtags : **le maximum de hashtags pertinents** que permet chaque réseau (5 sur
