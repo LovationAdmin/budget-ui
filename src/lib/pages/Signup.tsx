@@ -10,7 +10,8 @@
 
 import { useEffect, useState, type FormEvent } from 'react';
 import { Link } from 'react-router-dom';
-import { AlertCircle, Check, ExternalLink, Loader2, Mail, MailCheck, RotateCw, ShieldCheck, Wallet } from 'lucide-react';
+import { AlertCircle, Check, ExternalLink, Loader2, Mail, MailCheck, RotateCw, ShieldCheck } from 'lucide-react';
+import { BudgetLogo } from '@/components/budget/BudgetLogo';
 import { useAuth } from '../../contexts/AuthContext';
 import { authAPI } from '@/services/api';
 import { Button } from '@/components/ui/button';
@@ -160,9 +161,7 @@ export default function Signup() {
         ) : (
           <div className="w-full max-w-md space-y-6">
             <div className="text-center">
-              <div className="inline-flex h-16 w-16 items-center justify-center bg-primary/10 rounded-2xl mb-4">
-                <Wallet className="h-8 w-8 text-primary" />
-              </div>
+              <BudgetLogo size={64} className="mx-auto mb-4 block" />
               <h1 className="text-3xl font-display font-bold text-foreground">Créez votre budget gratuit</h1>
               <p className="text-muted-foreground mt-2">1 minute. Gratuit, sans carte bancaire, sans connexion à votre banque.</p>
             </div>

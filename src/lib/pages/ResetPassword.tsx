@@ -5,7 +5,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Wallet, AlertCircle, Loader2, CheckCircle2, Eye, EyeOff } from 'lucide-react';
+import { AlertCircle, Loader2, CheckCircle2, Eye, EyeOff } from 'lucide-react';
+import { BudgetLogo } from '@/components/budget/BudgetLogo';
 import { Footer } from '@/components/Footer';
 import { PasswordStrengthIndicator } from '@/components/PasswordStrengthIndicator';
 import { validatePassword } from '@/utils/passwordStrength';
@@ -89,9 +90,7 @@ export default function ResetPassword() {
         <div className="w-full max-w-md">
           
           <div className="text-center mb-8 animate-slide-up">
-            <div className="inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-[hsl(35_90%_65%)] mb-4 shadow-glow">
-              <Wallet className="h-8 w-8 text-primary-foreground" />
-            </div>
+            <BudgetLogo size={64} className="mx-auto mb-4 block" />
             <h1 className="font-display text-3xl font-bold text-foreground mb-2">
               Nouveau mot de passe
             </h1>
