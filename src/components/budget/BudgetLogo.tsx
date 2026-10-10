@@ -1,18 +1,19 @@
 // src/components/budget/BudgetLogo.tsx
 // ============================================================================
-// 🎯 BudgetLogo — Distinctive brand mark replacing the generic "B"
+// 🎯 BudgetLogo — official Budget Famille mark « Sous le même toit »
 // ============================================================================
-// Fixes P2 #14. Stylized mark: a piggy-bank silhouette built from coral
-// strokes that reads as both "B" (Budget) and a coin-slot. Pure SVG, no
-// runtime cost, scales perfectly, accessible.
+// A roof over the household budget, shared in three parts. Same drawing as
+// public/brand/budget-famille-icone.svg (source of the favicons, PWA icons and
+// social profile pictures). Pure SVG, no request, scales perfectly.
 // ============================================================================
 
+import { useId } from 'react';
 import { cn } from '@/lib/utils';
 
 interface BudgetLogoProps {
   size?: number;
   className?: string;
-  /** When true, draws on a gradient pill background (default: true) */
+  /** When true, draws on the blue rounded tile (default: true) */
   withBackground?: boolean;
 }
 
@@ -21,53 +22,49 @@ export function BudgetLogo({
   className,
   withBackground = true,
 }: BudgetLogoProps) {
+  // useId() returns ":r0:"-style ids; colons are unsafe inside url(#…).
+  const id = `bf${useId().replace(/:/g, '')}`;
+  const ink = withBackground ? '#fff' : 'hsl(var(--primary))';
+
   return (
-    <span
-      className={cn(
-        'inline-flex items-center justify-center',
-        withBackground &&
-          'rounded-xl bg-gradient-to-br from-primary to-[hsl(35_90%_65%)] shadow-soft',
-        className
-      )}
-      style={{ width: size, height: size }}
+    <svg
+      width={size}
+      height={size}
+      viewBox={withBackground ? '0 0 1024 1024' : '180 174 664 682'}
+      xmlns="http://www.w3.org/2000/svg"
+      className={cn('shrink-0', withBackground && 'shadow-soft rounded-[22.5%]', className)}
       aria-hidden="true"
+      focusable="false"
     >
-      <svg
-        width={size * 0.6}
-        height={size * 0.6}
-        viewBox="0 0 24 24"
+      <defs>
+        <linearGradient id={`${id}g`} x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stopColor="#1B8BC2" />
+          <stop offset="1" stopColor="#1A5FA6" />
+        </linearGradient>
+        {/* Gaps between the three shares are cut out, so the tile shows through. */}
+        <mask id={`${id}m`} maskUnits="userSpaceOnUse" x="0" y="0" width="1024" height="1024">
+          <rect width="1024" height="1024" fill="#fff" />
+          <g stroke="#000" strokeWidth="24" strokeLinecap="round">
+            <line x1="512" y1="650" x2="512" y2="438" />
+            <line x1="512" y1="650" x2="422.4" y2="842.1" />
+            <line x1="512" y1="650" x2="319.9" y2="560.4" />
+          </g>
+        </mask>
+      </defs>
+      {withBackground && <rect width="1024" height="1024" rx="230" fill={`url(#${id}g)`} />}
+      <path
+        d="M228 452 L512 222 L796 452"
         fill="none"
-        xmlns="http://www.w3.org/2000/svg"
-      >
-        {/* Stylized "B" with a coin slot inside the upper bowl */}
-        <path
-          d="M5 4h7c2.5 0 4.5 1.7 4.5 4 0 1.5-.7 2.7-1.8 3.4 1.5.6 2.4 2 2.4 3.6 0 2.5-2.1 4.5-5 4.5H5V4Z"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          className="text-primary-foreground"
-        />
-        {/* Coin slot */}
-        <line
-          x1="9"
-          y1="8"
-          x2="13"
-          y2="8"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          className="text-primary-foreground"
-        />
-        {/* Subtle coin */}
-        <circle
-          cx="11"
-          cy="14.5"
-          r="1.2"
-          fill="currentColor"
-          className="text-primary-foreground/60"
-        />
-      </svg>
-    </span>
+        stroke={ink}
+        strokeWidth="88"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <g mask={`url(#${id}m)`}>
+        <path d="M512 650 L512 450 A200 200 0 1 1 427.5 831.3 Z" fill={ink} />
+        <path d="M512 650 L427.5 831.3 A200 200 0 0 1 330.7 565.5 Z" fill="#F97316" />
+        <path d="M512 650 L330.7 565.5 A200 200 0 0 1 512 450 Z" fill="#8FD0EE" />
+      </g>
+    </svg>
   );
 }

@@ -13,7 +13,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { PasswordInput } from '@/components/ui/password-input';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Wallet, AlertCircle, Loader2, Mail, ShieldCheck } from 'lucide-react';
+import { AlertCircle, Loader2, Mail, ShieldCheck } from 'lucide-react';
+import { BudgetLogo } from '@/components/budget/BudgetLogo';
 import { useToast } from '@/hooks/use-toast';
 import { Footer } from '@/components/Footer';
 import Navbar from '@/components/Navbar';
@@ -80,9 +81,7 @@ export default function Login() {
       <div className="flex-1 flex items-center justify-center px-4 py-8 sm:py-12">
         <div className="w-full max-w-md space-y-6">
           <div className="text-center">
-            <div className="inline-flex h-16 w-16 items-center justify-center bg-primary/10 rounded-2xl mb-4">
-              <Wallet className="h-8 w-8 text-primary" />
-            </div>
+            <BudgetLogo size={64} className="mx-auto mb-4 block" />
             <h1 className="text-3xl font-display font-bold text-gray-900">
               Content de vous revoir
             </h1>

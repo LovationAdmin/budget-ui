@@ -32,6 +32,7 @@ export default defineConfig(({ mode }) => ({
       },
       includeAssets: [
         'favicon.ico',
+        'favicon.svg',
         'robots.txt',
         'apple-touch-icon.png',
         'icon-192.png',
@@ -51,19 +52,13 @@ export default defineConfig(({ mode }) => ({
         lang: 'fr',
         dir: 'ltr',
         categories: ['finance', 'productivity', 'lifestyle'],
+        // "any": rounded tile as drawn. "maskable": full-bleed tile that
+        // Android crops to its own shape (mark kept inside the safe zone).
         icons: [
-          {
-            src: '/icon-192.png',
-            sizes: '192x192',
-            type: 'image/png',
-            purpose: 'any maskable',
-          },
-          {
-            src: '/icon-512.png',
-            sizes: '512x512',
-            type: 'image/png',
-            purpose: 'any maskable',
-          },
+          { src: '/icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
+          { src: '/icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
+          { src: '/icon-maskable-192.png', sizes: '192x192', type: 'image/png', purpose: 'maskable' },
+          { src: '/icon-maskable-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
         ],
       },
       workbox: {
@@ -76,6 +71,9 @@ export default defineConfig(({ mode }) => ({
         clientsClaim: true,
         skipWaiting: true,
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff,woff2}'],
+        // Files for social networks, crawlers and the install prompt: never
+        // needed offline, so app users don't download them on install.
+        globIgnores: ['social/**', 'brand/**', 'screenshots/**', 'og-image.png'],
         runtimeCaching: [
           // 🔒 Sensitive APIs — never cache
           {

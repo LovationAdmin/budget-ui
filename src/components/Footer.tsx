@@ -1,6 +1,7 @@
 // src/components/Footer.tsx
 import { Link } from 'react-router-dom';
 import { ShieldCheck, Mail, HelpCircle, FileText, Sparkles, Info } from 'lucide-react';
+import { BudgetLogo } from '@/components/budget/BudgetLogo';
 
 export function Footer() {
   return (
@@ -10,7 +11,8 @@ export function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
           {/* Company Info */}
           <div>
-            <div className="flex items-center gap-2 mb-4">
+            <div className="flex items-center gap-2.5 mb-4">
+              <BudgetLogo size={32} />
               <span className="font-bold text-xl text-foreground">Budget Famille</span>
             </div>
             <p className="text-sm text-muted-foreground mb-4">

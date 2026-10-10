@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="180 174 664 682" role="img" aria-label="Budget Famille">
+  <title>Budget Famille</title>
+  <defs><mask id="bf-white-m" maskUnits="userSpaceOnUse" x="0" y="0" width="1024" height="1024">
+    <rect width="1024" height="1024" fill="#fff"/>
+    <line x1="512" y1="650" x2="512" y2="438" stroke="#000" stroke-width="24" stroke-linecap="round"/><line x1="512" y1="650" x2="422.4" y2="842.1" stroke="#000" stroke-width="24" stroke-linecap="round"/><line x1="512" y1="650" x2="319.9" y2="560.4" stroke="#000" stroke-width="24" stroke-linecap="round"/>
+  </mask></defs>
+  
+  <path d="M228 452 L512 222 L796 452" fill="none" stroke="#fff" stroke-width="88" stroke-linecap="round" stroke-linejoin="round"/>
+  <g mask="url(#bf-white-m)">
+    <path d="M512 650 L512 450 A200 200 0 1 1 427.5 831.3 Z" fill="#fff"/>
+    <path d="M512 650 L427.5 831.3 A200 200 0 0 1 330.7 565.5 Z" fill="#F97316"/>
+    <path d="M512 650 L330.7 565.5 A200 200 0 0 1 512 450 Z" fill="#8FD0EE"/>
+  </g>
+</svg>
