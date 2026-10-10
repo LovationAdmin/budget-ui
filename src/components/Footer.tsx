@@ -2,6 +2,7 @@
 import { Link } from 'react-router-dom';
 import { ShieldCheck, Mail, HelpCircle, FileText, Sparkles, Info } from 'lucide-react';
 import { BudgetLogo } from '@/components/budget/BudgetLogo';
+import { SocialLinks } from '@/components/SocialLinks';
 
 export function Footer() {
   return (
@@ -18,6 +19,8 @@ export function Footer() {
             <p className="text-sm text-muted-foreground mb-4">
               Gérez votre budget familial en toute simplicité et sécurité.
             </p>
+            <p className="text-sm font-semibold text-foreground mb-2">Suivez-nous</p>
+            <SocialLinks className="mb-4" />
             <p className="text-xs text-muted-foreground">
               <span className="font-semibold text-foreground">Lovation</span> &copy; {new Date().getFullYear()}
             </p>

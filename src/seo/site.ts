@@ -174,6 +174,14 @@ export function pageSEO(pathname: string): PageSEO | undefined {
 
 export const absolute = (path: string) => (path.startsWith('http') ? path : `${SITE}${path === '/' ? '/' : path}`);
 
+export type SocialNetwork = 'facebook' | 'instagram' | 'linkedin' | 'x';
+
+/** Official Budget Famille accounts: footer links, Help page and Organization sameAs. */
+export const SOCIAL_PROFILES: ReadonlyArray<{ network: SocialNetwork; label: string; url: string }> = [
+  { network: 'facebook', label: 'Facebook', url: 'https://www.facebook.com/1459022953950331' },
+  { network: 'instagram', label: 'Instagram', url: 'https://www.instagram.com/budgetfamille_lovation/' },
+];
+
 /** Organization + WebSite, published on every page. */
 export const ORGANIZATION_LD = {
   '@context': 'https://schema.org',
@@ -181,6 +189,7 @@ export const ORGANIZATION_LD = {
   name: SITE_NAME,
   url: `${SITE}/`,
   logo: `${SITE}/icon-512.png`,
+  sameAs: SOCIAL_PROFILES.map((p) => p.url),
 };
 
 export const SOFTWARE_LD = {
