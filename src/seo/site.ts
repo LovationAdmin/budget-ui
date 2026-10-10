@@ -180,6 +180,8 @@ export type SocialNetwork = 'facebook' | 'instagram' | 'linkedin' | 'x';
 export const SOCIAL_PROFILES: ReadonlyArray<{ network: SocialNetwork; label: string; url: string }> = [
   { network: 'facebook', label: 'Facebook', url: 'https://www.facebook.com/1459022953950331' },
   { network: 'instagram', label: 'Instagram', url: 'https://www.instagram.com/budgetfamille_lovation/' },
+  { network: 'linkedin', label: 'LinkedIn', url: 'https://www.linkedin.com/in/lovation-corp-238b99442/' },
+  { network: 'x', label: 'X', url: 'https://x.com/LovationLibasse' },
 ];
 
 /** Organization + WebSite, published on every page. */
