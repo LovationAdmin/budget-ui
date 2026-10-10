@@ -83,6 +83,7 @@ import {
   Segmented,
 } from '../shared/primitives';
 import type { SheetProps } from './BudgetSheets';
+import { PREMIUM_ENABLED } from '@/lib/premium';
 
 /**
  * A charge as its viewer may see it: for the creator of a private personal
@@ -402,15 +403,17 @@ export function ChargeDetailSheet({ sheet, onClose }: SheetProps<'chargeDetail'>
             }}
           />
         )}
-        <ActionItem
-          icon={<LinkIcon />}
-          title="Lier aux transactions bancaires"
-          sub={mapped > 0 ? `Réel constaté : ${fmt(mapped)}` : 'Comparer avec ce qui est vraiment prélevé'}
-          onClick={() => {
-            onClose();
-            handleOpenMapper(c);
-          }}
-        />
+        {PREMIUM_ENABLED && (
+          <ActionItem
+            icon={<LinkIcon />}
+            title="Lier aux transactions bancaires"
+            sub={mapped > 0 ? `Réel constaté : ${fmt(mapped)}` : 'Comparer avec ce qui est vraiment prélevé'}
+            onClick={() => {
+              onClose();
+              handleOpenMapper(c);
+            }}
+          />
+        )}
         <ActionItem
           icon={c.ignoreSuggestions ? <LightbulbOff /> : <Lightbulb />}
           title={c.ignoreSuggestions ? 'Réactiver les suggestions d’économies' : 'Désactiver les suggestions d’économies'}
