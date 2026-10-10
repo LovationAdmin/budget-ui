@@ -5,6 +5,7 @@ import Navbar from '@/components/Navbar';
 import { useAuth } from '@/contexts/AuthContext';
 import { 
   ArrowLeft, 
+  ArrowRight,
   Search, 
   HelpCircle, 
   BookOpen, 
@@ -14,7 +15,7 @@ import {
   Lock,
   CreditCard,
   Target,
-  Bell,
+  Newspaper,
   Smartphone,
   ChevronDown,
   ChevronUp,
@@ -22,6 +23,7 @@ import {
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Footer } from '@/components/Footer';
+import { SocialLinks } from '@/components/SocialLinks';
 import { cn } from '@/lib/utils';
 
 interface FAQItem {
@@ -369,36 +371,26 @@ export default function Help() {
               Communauté
             </h3>
             <p className="text-gray-600 mb-4">
-              Rejoignez notre communauté d'utilisateurs
+              Astuces budget et nouveautés, chaque semaine sur nos réseaux
             </p>
-            <a
-              href="https://discord.gg/budgetfamille"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-2 text-primary hover:underline font-medium"
-            >
-              Rejoindre Discord
-              <ExternalLink className="h-4 w-4" />
-            </a>
+            <SocialLinks withLabels />
           </div>
 
           <div className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition-shadow">
-            <Bell className="h-12 w-12 text-primary mb-4" />
+            <Newspaper className="h-12 w-12 text-primary mb-4" />
             <h3 className="text-xl font-semibold text-gray-900 mb-2">
-              Actualités
+              Blog
             </h3>
             <p className="text-gray-600 mb-4">
-              Suivez les dernières nouveautés
+              Conseils et guides pour le budget de la famille
             </p>
-            <a
-              href="https://twitter.com/budgetfamille"
-              target="_blank"
-              rel="noopener noreferrer"
+            <button
+              onClick={() => navigate('/blog')}
               className="flex items-center gap-2 text-primary hover:underline font-medium"
             >
-              Suivre sur Twitter
-              <ExternalLink className="h-4 w-4" />
-            </a>
+              Lire le blog
+              <ArrowRight className="h-4 w-4" />
+            </button>
           </div>
         </div>
       </div>

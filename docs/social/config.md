@@ -20,6 +20,9 @@ chaque routine. Pour changer son comportement, modifier ce fichier (PR).
 - **page LinkedIn** : https://www.linkedin.com/feed/ (adresse ouverte par le
   bouton « Copier et ouvrir LinkedIn » du kit ; mettre celle de la page
   lovation.pro si les posts sont publiés au nom de la page)
+- **comptes publics** : liste `SOCIAL_PROFILES` de `src/seo/site.ts` (liens
+  « Suivez-nous » du pied de page, page Aide, `sameAs` pour Google). Ajouter
+  une ligne quand un compte est créé ou change d'adresse.
 - **fuseau** : Europe/Paris (si Metricool n'en donne pas)
 - **horaires par défaut** (heure de Paris), si Metricool n'a pas encore assez
   d'historique pour proposer les meilleurs créneaux :
