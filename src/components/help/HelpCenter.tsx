@@ -51,6 +51,7 @@ import {
 import { cn } from "@/lib/utils";
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
+import { PREMIUM_ENABLED } from '@/lib/premium';
 
 // ============================================================================
 // TYPES
@@ -636,10 +637,22 @@ const HELP_ARTICLES: HelpArticle[] = [
     id: 'reality-check',
     category: 'Beta',
     icon: FlaskConical,
-    title: 'Reality Check (Connexion Bancaire)',
-    description: 'Connectez votre banque pour comparer budget vs réalité.',
-    tags: ['banque', 'connexion', 'transactions', 'reality check', 'psd2', 'enable banking', 'beta'],
-    content: (
+    title: PREMIUM_ENABLED ? 'Reality Check (Connexion Bancaire)' : 'Reality Check (bientôt avec Premium)',
+    description: PREMIUM_ENABLED ? 'Connectez votre banque pour comparer budget vs réalité.' : 'Bientôt : votre budget comparé à vos comptes réels.',
+    tags: ['banque', 'connexion', 'transactions', 'reality check', 'psd2', 'enable banking', 'beta', 'premium', 'bientôt'],
+    content: !PREMIUM_ENABLED ? (
+      <div className="space-y-4 text-sm text-gray-600">
+        <p>
+          Bientôt, avec <strong>Budget Famille Premium</strong>, vos comptes bancaires se synchroniseront pour comparer chaque mois
+          ce que votre budget prévoit et ce que vous avez vraiment dépensé, charge par charge. La connexion passera par un
+          prestataire agréé (DSP2) : vous vous identifierez sur le site de votre banque, Budget Famille ne verra jamais vos identifiants.
+        </p>
+        <p>
+          En attendant, ouvrez l’onglet <strong>Reality Check</strong> de votre budget pour essayer la démonstration, avec des
+          données fictives. Tout le reste de l’application fonctionne sans connexion bancaire. Le prix sera annoncé au lancement.
+        </p>
+      </div>
+    ) : (
       <div className="space-y-6">
         <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-3 mb-2">
           <p className="text-xs text-indigo-800 font-medium flex items-center gap-2">

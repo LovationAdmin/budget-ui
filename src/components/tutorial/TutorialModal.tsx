@@ -52,6 +52,7 @@ import {
   Calculator
 } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
+import { PREMIUM_ENABLED } from '@/lib/premium';
 
 // ============================================================================
 // TUTORIAL STEPS CONFIGURATION - COMPREHENSIVE VERSION
@@ -428,9 +429,21 @@ const STEPS = [
   // ==================== STEP 7: REALITY CHECK ====================
   {
     icon: FlaskConical,
-    title: "Étape 6 : Reality Check 🏦",
-    description: "Comparez votre budget avec vos comptes réels.",
-    content: (
+    title: PREMIUM_ENABLED ? "Étape 6 : Reality Check 🏦" : "Étape 6 : Reality Check, bientôt 🏦",
+    description: PREMIUM_ENABLED ? "Comparez votre budget avec vos comptes réels." : "Bientôt avec Premium : votre budget comparé à vos comptes réels.",
+    content: !PREMIUM_ENABLED ? (
+      <div className="space-y-4 text-sm text-muted-foreground">
+        <p>
+          Bientôt, avec <strong>Budget Famille Premium</strong>, vos comptes bancaires se synchroniseront pour comparer chaque mois
+          le budget prévu et les dépenses réelles, charge par charge.
+        </p>
+        <p>
+          En attendant, l’onglet <strong>Reality Check</strong> propose une démonstration avec des données fictives : vous y voyez
+          comment les opérations se rangent dans vos charges et où le budget dérape.
+        </p>
+        <p className="text-xs">Tout le reste de Budget Famille fonctionne sans connexion bancaire.</p>
+      </div>
+    ) : (
       <div className="space-y-4 text-sm text-muted-foreground">
         <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-2 mb-2">
           <p className="text-xs text-indigo-800 font-medium flex items-center gap-2">

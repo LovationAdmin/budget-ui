@@ -29,6 +29,7 @@ import InviteModal from '../../components/InviteModal';
 import { EnableBankingManager } from '../../components/budget/EnableBankingManager';
 import { TransactionMapper, MappedTransaction, BridgeTransaction } from '../../components/budget/TransactionMapper';
 import { DemoBanner } from '@/components/budget/DemoBanner';
+import { PREMIUM_ENABLED } from '@/lib/premium';
 import { BudgetSheets } from '@/components/budget/sheets/BudgetSheets';
 import type { SheetState } from '@/components/budget/sheets/types';
 
@@ -359,7 +360,7 @@ export default function BudgetCompleteLayout() {
   // BANKING
   // ============================================================================
   const refreshBankData = useCallback(async () => {
-    if (!id || isDemoMode) return;
+    if (!PREMIUM_ENABLED || !id || isDemoMode) return;
     try {
       const response = await api.get(`/banking/budgets/${id}/reality-check`);
       setRealBankBalance(response.data.total_real_cash || 0);
@@ -599,7 +600,7 @@ export default function BudgetCompleteLayout() {
           currentSection={currentSection}
         />
 
-        {isDemoMode && (
+        {PREMIUM_ENABLED && isDemoMode && (
           <div className="bg-indigo-50/80 border-b border-indigo-100">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2">
               <DemoBanner onDisable={disableDemoMode} />
@@ -653,6 +654,7 @@ export default function BudgetCompleteLayout() {
           />
         )}
 
+        {PREMIUM_ENABLED && (
         <Dialog open={showBankManager} onOpenChange={handleCloseBankManager}>
           <DialogContent className="sm:max-w-2xl max-h-[80vh] overflow-y-auto">
             <DialogHeader>
@@ -662,8 +664,9 @@ export default function BudgetCompleteLayout() {
             <EnableBankingManager budgetId={id!} onUpdate={refreshBankData} />
           </DialogContent>
         </Dialog>
+        )}
 
-        {chargeToMap && (
+        {PREMIUM_ENABLED && chargeToMap && (
           <TransactionMapper
             isOpen={showMapper}
             onClose={handleCloseMapper}
