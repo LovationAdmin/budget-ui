@@ -143,7 +143,7 @@ export const blogArticles: BlogArticleContent[] = [
         <h3>Quel pourcentage des revenus épargner ?</h3>
         <p>La règle 50/30/20 propose 20 %. L'essentiel est de commencer, même à 5 ou 10 %, puis d'augmenter au fil des mois.</p>
         <h3>Existe-t-il une application gratuite pour gérer le budget familial ?</h3>
-        <p>Oui : Budget Famille est gratuit pour le budget, le foyer, l'épargne et le partage. Seule la synchronisation bancaire automatique est une option payante.</p>
+        <p>Oui : Budget Famille est gratuit pour le budget, le foyer, l'épargne et le partage, sans connexion bancaire. Bientôt : avec Budget Famille Premium, vos comptes se synchroniseront automatiquement pour comparer le budget prévu aux dépenses réelles.</p>
       </div>
     )
   },
@@ -154,8 +154,8 @@ export const blogArticles: BlogArticleContent[] = [
   slug: "economiser-500-euros-abonnements",
   excerpt: "Énergie, internet et mobile, assurances : les trois postes où un foyer peut le plus souvent économiser. Découvrez comment réduire vos charges fixes sans sacrifier votre confort.",
   category: "Économies",
-  author: "Sophie Martin",
-  authorBio: "Experte en optimisation budgétaire et analyse de marché",
+  author: "Équipe Budget Famille",
+  authorBio: "Experts en gestion budgétaire et développeurs de Budget Famille",
   publishedAt: "2025-01-17",
   readTime: "8 min",
   tags: ["Économies", "Famille", "Abonnements", "IA", "Charges fixes"],
@@ -262,8 +262,8 @@ export const blogArticles: BlogArticleContent[] = [
         Ajoutez chaque abonnement comme une charge, avec son rythme : chaque mois (box,
         mobile, énergie), une fois par an (assurance, que vous pouvez étaler sur 12 mois)
         ou certains mois seulement. C'est gratuit et sans connexion bancaire obligatoire.
-        Avec l'option Premium (2€/mois), vos comptes se synchronisent automatiquement et
-        vous comparez votre budget prévu à vos dépenses réelles.
+        Bientôt : avec Budget Famille Premium, vos comptes se synchroniseront automatiquement
+        pour comparer le budget prévu aux dépenses réelles.
       </p>
 
       <p><strong>Étape 2 : Repérez les postes à renégocier</strong></p>
@@ -368,8 +368,8 @@ export const blogArticles: BlogArticleContent[] = [
   slug: "budget-couple-regles-gerer-argent",
   excerpt: "L'argent est un sujet de tension fréquent dans les couples. Découvrez nos 7 règles d'or pour une gestion financière harmonieuse, transparente et équitable à deux.",
   category: "Couple",
-  author: "Thomas Dubois",
-  authorBio: "Conseiller conjugal et expert en finances personnelles",
+  author: "Équipe Budget Famille",
+  authorBio: "Experts en gestion budgétaire et développeurs de Budget Famille",
   publishedAt: "2025-01-17",
   readTime: "10 min",
   tags: ["Couple", "Communication", "Collaboration", "Budget", "Harmonie"],
@@ -674,8 +674,8 @@ export const blogArticles: BlogArticleContent[] = [
     slug: "epargne-enfants-construire-capital",
     excerpt: "Livret A, assurance-vie, PEA... Comparatif complet des solutions d'épargne pour vos enfants.",
     category: "Épargne",
-    author: "Laurent Bernard",
-    authorBio: "Conseiller en gestion de patrimoine, spécialiste épargne familiale",
+    author: "Équipe Budget Famille",
+    authorBio: "Experts en gestion budgétaire et développeurs de Budget Famille",
     publishedAt: "2025-01-01",
     readTime: "10 min",
     tags: ["Épargne", "Enfants", "Placements", "Avenir"],
@@ -684,11 +684,11 @@ export const blogArticles: BlogArticleContent[] = [
       <div className="prose prose-lg max-w-none">
         <p className="lead">
           Préparer l'avenir de vos enfants financièrement est l'un des plus beaux cadeaux 
-          que vous puissiez leur faire. Comparatif des meilleures solutions en 2025.
+          que vous puissiez leur faire. Comparatif des principales solutions, avec leurs avantages et leurs limites.
         </p>
 
         <h2>1. Le Livret A : Sécurité Maximale</h2>
-        <p><strong>Taux :</strong> 3% en 2025</p>
+        <p><strong>Taux :</strong> fixé par l'État et révisé en principe deux fois par an (1er février et 1er août) : consultez le taux en vigueur sur service-public.fr</p>
         <ul>
           <li>✅ Aucun risque</li>
           <li>✅ Disponible à tout moment</li>
@@ -699,7 +699,7 @@ export const blogArticles: BlogArticleContent[] = [
         <p><strong>Verdict :</strong> Parfait pour l'épargne de précaution (0-5 ans)</p>
 
         <h2>2. L'Assurance-Vie : Le Couteau Suisse</h2>
-        <p><strong>Rendement moyen :</strong> 3-5% par an</p>
+        <p><strong>Rendement :</strong> variable et non garanti à l'avance ; il dépend des supports choisis (fonds en euros, unités de compte) et des frais du contrat</p>
         <ul>
           <li>✅ Fiscalité avantageuse après 8 ans</li>
           <li>✅ Transmission facilitée</li>
@@ -710,9 +710,9 @@ export const blogArticles: BlogArticleContent[] = [
         <p><strong>Verdict :</strong> Idéal pour préparer les 18 ans de l'enfant</p>
 
         <h2>3. Le PEA : Pour les Ados Avertis</h2>
-        <p><strong>Potentiel :</strong> 7-10% par an (risqué)</p>
+        <p><strong>Rendement :</strong> variable, non garanti, avec un risque de perte en capital</p>
         <ul>
-          <li>✅ Exonération totale d'impôts après 5 ans</li>
+          <li>✅ Gains exonérés d'impôt sur le revenu après 5 ans (les prélèvements sociaux restent dus)</li>
           <li>✅ Potentiel de rendement élevé</li>
           <li>❌ Accessible qu'à partir de 18 ans</li>
           <li>❌ Risque de perte en capital</li>
@@ -734,7 +734,7 @@ export const blogArticles: BlogArticleContent[] = [
         <p>La règle des 50€/mois :</p>
         <ul>
           <li>50€/mois pendant 18 ans = <strong>10 800€</strong></li>
-          <li>Avec 4% de rendement moyen = <strong>14 800€ à 18 ans</strong></li>
+          <li>Les intérêts s'y ajoutent, mais leur montant dépend des taux, qui changent : considérez-les comme un bonus, pas comme une base de calcul</li>
         </ul>
 
         <h2>Conclusion</h2>
@@ -750,10 +750,10 @@ export const blogArticles: BlogArticleContent[] = [
     id: '5',
     title: "Connexion Bancaire PSD2 : Sécurité & Avantages",
     slug: "connexion-bancaire-psd2-securite",
-    excerpt: "PSD2, Open Banking... Découvrez comment connecter votre banque en toute sécurité.",
+    excerpt: "PSD2, Open Banking... Comment fonctionne une connexion bancaire sécurisée, et ce que la synchronisation à venir avec Budget Famille Premium vous apportera.",
     category: "Technologie",
-    author: "Marie Leroy",
-    authorBio: "Ingénieure en cybersécurité et développeuse chez Budget Famille",
+    author: "Équipe Budget Famille",
+    authorBio: "Experts en gestion budgétaire et développeurs de Budget Famille",
     publishedAt: "2025-01-02",
     readTime: "5 min",
     tags: ["PSD2", "Sécurité", "Banking", "Technologie"],
@@ -761,42 +761,44 @@ export const blogArticles: BlogArticleContent[] = [
     content: (
       <div className="prose prose-lg max-w-none">
         <p className="lead">
-          Connecter sa banque à Budget Famille ? C'est possible grâce à PSD2, dans un cadre
-          européen strict. On vous explique tout.
+          Connecter sa banque à une application de budget ? C'est possible grâce à PSD2, dans un
+          cadre européen strict. Cette connexion arrive bientôt dans Budget Famille : on vous
+          explique dès maintenant comment elle fonctionne et pourquoi elle est sûre.
         </p>
         <p>
-          La connexion bancaire est facultative : Budget Famille est gratuit sans elle, que vous
-          gériez votre budget seul ou à plusieurs. Elle fait partie de l'option Premium (2 €/mois),
-          qui synchronise automatiquement vos comptes et compare votre budget prévu à vos dépenses réelles.
+          La connexion bancaire sera facultative : Budget Famille est gratuit sans elle, que vous
+          gériez votre budget seul ou à plusieurs. Bientôt : avec Budget Famille Premium, vos comptes
+          se synchroniseront automatiquement pour comparer le budget prévu aux dépenses réelles.
         </p>
 
         <h2>C'est quoi PSD2 ?</h2>
         <p>
-          PSD2 (Payment Services Directive 2) est une directive européenne de 2018 qui oblige 
-          les banques à ouvrir leur API de façon sécurisée.
+          PSD2 (Payment Services Directive 2) est une directive européenne, applicable depuis 2018,
+          qui oblige les banques à ouvrir l'accès aux comptes de façon sécurisée, à des prestataires
+          agréés et uniquement avec votre consentement.
         </p>
-        <p><strong>En clair :</strong> Vous pouvez autoriser Budget Famille à lire vos transactions, 
-        mais JAMAIS à effectuer des paiements.</p>
+        <p><strong>En clair :</strong> avec Budget Famille Premium, vous pourrez autoriser Budget Famille
+        à lire vos transactions, mais JAMAIS à effectuer des paiements.</p>
 
-        <h2>Comment ça marche ?</h2>
+        <h2>Comment ça marchera ?</h2>
         <ol>
-          <li>Vous cliquez sur "Connecter ma banque" dans Budget Famille</li>
-          <li>Vous êtes redirigé vers le site de VOTRE banque</li>
-          <li>Vous vous connectez avec VOS identifiants bancaires</li>
-          <li>Vous autorisez l'accès en lecture seule (à renouveler périodiquement)</li>
-          <li>Vos transactions apparaissent automatiquement dans Budget Famille</li>
+          <li>Vous cliquerez sur "Connecter ma banque" dans Budget Famille</li>
+          <li>Vous serez redirigé vers le site de VOTRE banque</li>
+          <li>Vous vous connecterez avec VOS identifiants bancaires</li>
+          <li>Vous autoriserez l'accès en lecture seule (à renouveler périodiquement)</li>
+          <li>Vos transactions apparaîtront automatiquement dans Budget Famille</li>
         </ol>
 
         <div className="bg-green-50 border-l-4 border-green-500 p-6 my-8">
           <h3 className="text-green-900">🔐 Sécurité Maximale</h3>
           <ul className="text-green-800">
-            <li>Budget Famille ne stocke JAMAIS vos identifiants bancaires</li>
+            <li>Vos identifiants bancaires se saisissent uniquement chez votre banque : Budget Famille ne les stockera JAMAIS</li>
             <li>Accès en lecture seule (impossible de faire des virements)</li>
             <li>Révocable à tout moment</li>
           </ul>
         </div>
 
-        <h2>Avantages Concrets</h2>
+        <h2>Avantages Concrets (à venir)</h2>
         <ul>
           <li>Suivi automatique de vos dépenses (fini la saisie manuelle !)</li>
           <li>Comparaison entre votre budget prévu et vos dépenses réelles</li>
@@ -804,25 +806,25 @@ export const blogArticles: BlogArticleContent[] = [
 
         <h2>Et ma vie privée ?</h2>
         <p>
-          L'accès est en <strong>lecture seule</strong> et vous pouvez le révoquer à tout moment.
+          L'accès sera en <strong>lecture seule</strong> et vous pourrez le révoquer à tout moment.
           Pour les dépenses qui ne regardent que vous, les <strong>charges perso privées</strong> ont
-          un nom chiffré, visible uniquement par la personne qui l'a créée. Et si vous préférez ne rien
+          déjà un nom chiffré, visible uniquement par la personne qui l'a créée. Et si vous préférez ne rien
           connecter, Budget Famille fonctionne entièrement sans connexion bancaire.
         </p>
 
         <h2>Compatibilité</h2>
-        <p>La connexion bancaire Premium est compatible avec <strong>2500+ banques européennes</strong> :</p>
-        <ul>
-          <li>France : BNP Paribas, Crédit Agricole, Société Générale, LCL, etc.</li>
-          <li>Belgique, Allemagne, Espagne, Italie, Portugal...</li>
-          <li>Banques en ligne : Boursorama, Fortuneo, N26, Revolut...</li>
-        </ul>
+        <p>
+          La connexion bancaire Premium passera par un prestataire agréé au titre de PSD2.
+          La liste des banques compatibles sera précisée à son lancement.
+        </p>
 
         <h2>Conclusion</h2>
         <p>
-          PSD2 rend le suivi de vos dépenses réelles simple et automatique, avec un accès
-          en lecture seule, des identifiants saisis uniquement chez votre banque et une
-          autorisation révocable. Avec ou sans connexion, à vous de choisir !
+          PSD2 permet un suivi automatique de vos dépenses réelles, avec un accès en lecture
+          seule, des identifiants saisis uniquement chez votre banque et une autorisation
+          révocable. Cette connexion arrive bientôt avec Budget Famille Premium ; en attendant,
+          Budget Famille reste gratuit et fonctionne sans connexion bancaire. Avec ou sans
+          connexion, à vous de choisir !
         </p>
       </div>
     )
@@ -834,8 +836,8 @@ export const blogArticles: BlogArticleContent[] = [
   slug: "budget-etudiant-guide-complet-2025",
   excerpt: "APL, job étudiant, courses, sorties... Comment gérer un budget serré sans se priver ? Toutes les astuces concrètes pour finir le mois sans appeler papa-maman.",
   category: "Étudiants",
-  author: "Camille Rousseau",
-  authorBio: "Ancienne étudiante en école de commerce, spécialiste budget jeunes",
+  author: "Équipe Budget Famille",
+  authorBio: "Experts en gestion budgétaire et développeurs de Budget Famille",
   publishedAt: "2025-01-17",
   readTime: "12 min",
   tags: ["Étudiants", "Budget", "Aides", "Économies", "Lifestyle"],
@@ -1220,8 +1222,8 @@ export const blogArticles: BlogArticleContent[] = [
   slug: "gerer-budget-familial-senegal-dakar",
   excerpt: "De la gestion des dépenses en FCFA à l'épargne malgré l'inflation, découvrez comment les familles sénégalaises optimisent leur budget au quotidien avec des solutions adaptées à la réalité locale.",
   category: "International",
-  author: "Amadou Diallo",
-  authorBio: "Consultant financier basé à Dakar, spécialiste finances personnelles Afrique",
+  author: "Équipe Budget Famille",
+  authorBio: "Experts en gestion budgétaire et développeurs de Budget Famille",
   publishedAt: "2025-01-17",
   readTime: "11 min",
   tags: ["Sénégal", "Afrique", "FCFA", "Budget", "Famille", "Dakar"],
@@ -1540,10 +1542,10 @@ export const blogArticles: BlogArticleContent[] = [
 
       <h3>Épargne Bancaire : Les Options</h3>
       <ul>
-        <li><strong>Compte épargne classique :</strong> 2-3% d'intérêt/an
+        <li><strong>Compte épargne classique :</strong> taux variable selon la banque, à vérifier avant d'ouvrir le compte
           <ul><li>Minimum : 25 000 FCFA</li></ul>
         </li>
-        <li><strong>Dépôt à terme (DAT) :</strong> 4-6% d'intérêt/an
+        <li><strong>Dépôt à terme (DAT) :</strong> taux négocié avec la banque selon le montant et la durée, fixé à la signature
           <ul><li>Blocage 6 mois - 2 ans</li></ul>
         </li>
         <li><strong>Mobile Money (Orange Money, Wave) :</strong>
@@ -1632,8 +1634,8 @@ export const blogArticles: BlogArticleContent[] = [
   slug: "budget-familial-abidjan-cote-ivoire",
   excerpt: "De Cocody à Yopougon, découvrez comment optimiser votre budget familial en Côte d'Ivoire. Gestion des dépenses en FCFA, tontines, maquis et réalités du coût de la vie abidjanais.",
   category: "International",
-  author: "Kouamé N'Guessan",
-  authorBio: "Économiste et consultant financier basé à Abidjan",
+  author: "Équipe Budget Famille",
+  authorBio: "Experts en gestion budgétaire et développeurs de Budget Famille",
   publishedAt: "2025-01-17",
   readTime: "13 min",
   tags: ["Côte d'Ivoire", "Abidjan", "FCFA", "Budget", "Famille", "Afrique"],
@@ -1979,11 +1981,11 @@ export const blogArticles: BlogArticleContent[] = [
       </div>
 
       <h3>Épargne Bancaire vs Mobile Money</h3>
-      <p><strong>Options d'épargne 2025 :</strong></p>
+      <p><strong>Options d'épargne :</strong></p>
       <ul>
         <li><strong>Livret d'épargne bancaire :</strong>
           <ul>
-            <li>Taux : 2,5 - 3,5%/an</li>
+            <li>Taux : variable selon la banque, à demander avant d'ouvrir le livret</li>
             <li>Minimum souvent élevé : 50 000 - 100 000 FCFA</li>
           </ul>
         </li>
@@ -1993,9 +1995,9 @@ export const blogArticles: BlogArticleContent[] = [
             <li>Parfait pour épargne court terme</li>
           </ul>
         </li>
-        <li><strong>Produits microfinance (ADVANS, COFINA) :</strong>
+        <li><strong>Produits de microfinance (établissements agréés) :</strong>
           <ul>
-            <li>Taux attractifs : 4-6%/an</li>
+            <li>Taux : variable selon l'établissement, à comparer avant de déposer</li>
             <li>Accessibles avec petits montants</li>
           </ul>
         </li>
@@ -2118,8 +2120,8 @@ export const blogArticles: BlogArticleContent[] = [
   slug: "budget-familial-maroc-casablanca-rabat",
   excerpt: "Budget d'une famille de 4 à Casablanca et Rabat, en dirhams : loyer, courses (souk ou grande surface), école, transport et épargne, avec un exemple chiffré.",
   category: "International",
-  author: "Fatima El Amrani",
-  authorBio: "Consultante financière basée à Casablanca, experte budget familles marocaines",
+  author: "Équipe Budget Famille",
+  authorBio: "Experts en gestion budgétaire et développeurs de Budget Famille",
   publishedAt: "2025-01-17",
   readTime: "14 min",
   tags: ["Maroc", "Casablanca", "Rabat", "MAD", "Budget", "Famille", "Maghreb"],
@@ -2513,25 +2515,25 @@ export const blogArticles: BlogArticleContent[] = [
       <h2>💰 Épargne : Bâtir son Avenir</h2>
 
       <h3>Options d'Épargne au Maroc</h3>
-      <p><strong>Produits disponibles 2025 :</strong></p>
+      <p><strong>Produits disponibles :</strong></p>
       <ul>
-        <li><strong>Compte sur Carnet (Banque Populaire, CIH, etc.) :</strong>
+        <li><strong>Compte sur Carnet :</strong>
           <ul>
-            <li>Taux : 2,5 - 3%/an</li>
+            <li>Taux : minimum réglementé, révisé chaque semestre ; demandez le taux en vigueur à votre banque</li>
             <li>Liquidité totale</li>
             <li>Minimum : 200 - 500 MAD</li>
           </ul>
         </li>
         <li><strong>Dépôt à Terme (DAT) :</strong>
           <ul>
-            <li>Taux : 3,5 - 4,5%/an</li>
+            <li>Taux : négocié avec la banque selon le montant et la durée</li>
             <li>Blocage 6 mois - 2 ans</li>
           </ul>
         </li>
         <li><strong>Assurance-vie :</strong>
           <ul>
             <li>Épargne + protection famille</li>
-            <li>Rendement : 3-5%/an</li>
+            <li>Rendement : variable, non garanti</li>
           </ul>
         </li>
         <li><strong>Immobilier :</strong>

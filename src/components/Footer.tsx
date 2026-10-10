@@ -44,7 +44,7 @@ export function Footer() {
                   to="/premium" 
                   className="text-sm text-muted-foreground hover:text-primary transition-colors"
                 >
-                  Premium
+                  Premium (bientôt)
                 </Link>
               </li>
               <li>
@@ -61,6 +61,30 @@ export function Footer() {
                   className="text-sm text-muted-foreground hover:text-primary transition-colors"
                 >
                   Calcul du reste à vivre
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to="/budget-personnel"
+                  className="text-sm text-muted-foreground hover:text-primary transition-colors"
+                >
+                  Budget personnel
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to="/budget-colocation"
+                  className="text-sm text-muted-foreground hover:text-primary transition-colors"
+                >
+                  Budget colocation
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to="/budget-mariage"
+                  className="text-sm text-muted-foreground hover:text-primary transition-colors"
+                >
+                  Budget mariage
                 </Link>
               </li>
               <li>

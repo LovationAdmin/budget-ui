@@ -10,7 +10,7 @@ export interface FaqItem {
 export const HOME_FAQ: FaqItem[] = [
   {
     q: 'Budget Famille est-il vraiment gratuit ?',
-    a: 'Oui. Les budgets, les membres, les charges, l’épargne et les projets, le Budget IA et le partage à plusieurs sont gratuits, sans carte bancaire. Seule la synchronisation bancaire automatique est une option Premium à 2 € par mois.',
+    a: 'Oui. Les budgets, les membres, les charges, l’épargne et les projets, le Budget IA et le partage à plusieurs sont gratuits, sans carte bancaire. La synchronisation bancaire automatique arrivera bientôt avec l’offre Premium : en attendant, tout fonctionne sans connexion bancaire.',
   },
   {
     q: 'Budget Famille est-il réservé aux familles ?',

@@ -107,18 +107,18 @@ export default function Help() {
     // Banking
     {
       category: 'banking',
-      question: 'Comment connecter ma banque (Beta 2) ?',
-      answer: 'Dans la version Beta 2, ouvrez votre budget, allez dans "Reality Check", puis cliquez sur "Connecter ma Banque". Sélectionnez votre banque dans la liste (2500+ banques européennes via Enable Banking), connectez-vous avec vos identifiants bancaires. La connexion est sécurisée via API PSD2.'
+      question: 'La connexion bancaire est-elle disponible ?',
+      answer: 'Elle arrive bientôt avec Budget Famille Premium (prix annoncé au lancement). Vos comptes se synchroniseront pour comparer le budget prévu et les dépenses réelles. Vous pouvez dès maintenant essayer la démonstration sur la page Premium. Tout le reste de l\'application est gratuit et fonctionne sans connexion bancaire.'
     },
     {
       category: 'banking',
-      question: 'Mes identifiants bancaires sont-ils stockés ?',
-      answer: 'Non ! Nous utilisons l\'API PSD2 réglementée par l\'UE. Vos identifiants bancaires transitent directement entre vous et votre banque via Enable Banking. Nous ne stockons jamais vos identifiants.'
+      question: 'Mes identifiants bancaires seront-ils stockés ?',
+      answer: 'Non. La connexion passera par un prestataire agréé, dans le cadre de la directive européenne DSP2 (PSD2) : vous vous identifiez sur le site de votre banque, et Budget Famille ne reçoit qu\'un accès en lecture à vos opérations. Nous ne verrons ni ne stockerons jamais vos identifiants.'
     },
     {
       category: 'banking',
       question: 'Qu\'est-ce que le Reality Check ?',
-      answer: 'Le Reality Check compare votre budget théorique (ce que vous avez planifié) avec votre solde bancaire réel. Cela vous permet de voir instantanément si vous êtes dans les clous ou si vous avez dépensé plus que prévu.'
+      answer: 'Le Reality Check, inclus dans Premium (bientôt), comparera votre budget prévu à vos dépenses bancaires réelles, charge par charge, pour voir tout de suite si vous êtes dans les clous ou si vous avez dépensé plus que prévu.'
     },
     {
       category: 'banking',

@@ -10,7 +10,10 @@
 import { renderToStaticMarkup } from 'react-dom/server';
 import { blogArticles } from '@/data/blog-articles';
 import { articlesByDate, relatedArticles } from '@/data/blog-related';
-import { HOME_FAQ, RAV_FAQ, TEMPLATE_FAQ } from './faq';
+import { HOME_FAQ, RAV_FAQ, TEMPLATE_FAQ, type FaqItem } from './faq';
+import { COLOC_FAQ } from './faq-colocation';
+import { MARIAGE_FAQ } from './faq-mariage';
+import { PERSO_FAQ } from './faq-budget-personnel';
 import {
   ORGANIZATION_LD, PAGES, SITE_NAME, SOFTWARE_LD, absolute, breadcrumbLD, faqLD, type PageSEO,
 } from './site';
@@ -36,6 +39,9 @@ function Shell({ children }: { children: React.ReactNode }) {
           <a href="/features" className="text-muted-foreground">Fonctionnalités</a>
           <a href="/tableau-budget-familial-gratuit" className="text-muted-foreground">Tableau gratuit</a>
           <a href="/calcul-reste-a-vivre" className="text-muted-foreground">Reste à vivre</a>
+          <a href="/budget-personnel" className="text-muted-foreground">Budget perso</a>
+          <a href="/budget-colocation" className="text-muted-foreground">Colocation</a>
+          <a href="/budget-mariage" className="text-muted-foreground">Mariage</a>
           <a href="/blog" className="text-muted-foreground">Conseils</a>
           <a href="/help" className="text-muted-foreground">Aide</a>
           <a href="/signup" className="font-semibold text-primary">Créer mon budget gratuit</a>
@@ -100,6 +106,14 @@ function BlogIndex() {
   );
 }
 
+/** Free calculators: WebApplication + FAQPage + breadcrumb structured data. */
+const TOOLS: Record<string, { name: string; crumb: string; faq: FaqItem[] }> = {
+  '/calcul-reste-a-vivre': { name: 'Simulateur de reste à vivre', crumb: 'Calcul du reste à vivre', faq: RAV_FAQ },
+  '/budget-colocation': { name: 'Calculateur de budget colocation', crumb: 'Budget colocation', faq: COLOC_FAQ },
+  '/budget-mariage': { name: 'Calculateur de budget mariage', crumb: 'Budget mariage', faq: MARIAGE_FAQ },
+  '/budget-personnel': { name: 'Calculateur de budget personnel 50/30/20', crumb: 'Budget personnel', faq: PERSO_FAQ },
+};
+
 export function buildPages(): BuiltPage[] {
   const out: BuiltPage[] = [];
   for (const page of PAGES) {
@@ -114,12 +128,13 @@ export function buildPages(): BuiltPage[] {
     } else if (page.path === '/tableau-budget-familial-gratuit') {
       jsonLd.push(faqLD(TEMPLATE_FAQ), breadcrumbLD([{ name: 'Accueil', path: '/' }, { name: 'Tableau de budget familial gratuit', path: page.path }]));
       extra = <FaqBlock items={TEMPLATE_FAQ} />;
-    } else if (page.path === '/calcul-reste-a-vivre') {
+    } else if (TOOLS[page.path]) {
+      const tool = TOOLS[page.path];
       jsonLd.push(
         {
           '@context': 'https://schema.org',
           '@type': 'WebApplication',
-          name: 'Simulateur de reste à vivre',
+          name: tool.name,
           url: absolute(page.path),
           applicationCategory: 'FinanceApplication',
           operatingSystem: 'Web',
@@ -128,10 +143,10 @@ export function buildPages(): BuiltPage[] {
           offers: { '@type': 'Offer', price: '0', priceCurrency: 'EUR' },
           publisher: ORGANIZATION_LD,
         },
-        faqLD(RAV_FAQ),
-        breadcrumbLD([{ name: 'Accueil', path: '/' }, { name: 'Calcul du reste à vivre', path: page.path }]),
+        faqLD(tool.faq),
+        breadcrumbLD([{ name: 'Accueil', path: '/' }, { name: tool.crumb, path: page.path }]),
       );
-      extra = <FaqBlock items={RAV_FAQ} />;
+      extra = <FaqBlock items={tool.faq} />;
     } else if (page.path === '/blog') {
       extra = <BlogIndex />;
     }
