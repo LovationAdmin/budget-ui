@@ -63,9 +63,9 @@ export default function Features() {
       icon: Users,
       title: "Collaboration Temps Réel",
       subtitle: "WebSocket Instantané",
-      description: "Toute la famille connectée simultanément. Une modification, et tous sont notifiés en <100ms.",
+      description: "Conjoint, famille ou colocataires connectés en même temps : une modification, et chacun la voit tout de suite.",
       highlights: [
-        "Synchronisation instantanée (<100ms)",
+        "Synchronisation instantanée",
         "Notifications push temps réel",
         "Gestion des conflits automatique"
       ],
@@ -79,7 +79,7 @@ export default function Features() {
       highlights: [
         "Analyse de marché en temps réel",
         "Suggestions personnalisées",
-        "Économies moyennes: 15-30%"
+        "Alternatives comparées charge par charge"
       ],
       color: "bg-purple-500"
     }
@@ -106,10 +106,11 @@ export default function Features() {
   const coreFeatures = [
     {
       icon: Users,
-      title: "Collaboration Familiale",
-      description: "Invitez votre famille et gérez ensemble vos budgets en temps réel.",
+      title: "Seul ou à plusieurs",
+      description: "Gérez votre budget seul, ou invitez conjoint, famille ou colocataires et gérez-le ensemble en temps réel.",
       features: [
-        "Invitations par email",
+        "Invitations par e-mail, à qui vous voulez",
+        "Plusieurs budgets : foyer, coloc, projet…",
         "Pot commun et argent de poche de chacun",
         "Répartition juste (prorata, parts égales, même argent de poche)",
         "Notifications en direct"
@@ -130,8 +131,8 @@ export default function Features() {
     },
     {
       icon: Target,
-      title: "Projets d'Épargne",
-      description: "Définissez des objectifs et suivez votre progression.",
+      title: "Projets et Épargne",
+      description: "Voyage, mariage, travaux, voiture : un objectif, une date, et votre progression.",
       features: [
         "Objectif + échéance → montant mensuel calculé",
         "Vérification : le pot commun peut-il suivre ?",
@@ -240,7 +241,7 @@ export default function Features() {
             Fonctionnalités de Budget Famille
           </h1>
           <p className="text-base sm:text-lg md:text-xl text-gray-600 max-w-3xl mx-auto px-4">
-            Découvrez tous les outils pour gérer efficacement le budget de votre famille
+            Tous les outils pour budgétiser et planifier, seul ou à plusieurs : famille, couple, coloc et projets
           </p>
         </div>
 
@@ -590,7 +591,7 @@ export default function Features() {
             Prêt à Reprendre le Contrôle de Vos Finances ?
           </h2>
           <p className="text-base sm:text-lg md:text-xl mb-6 sm:mb-8 max-w-2xl mx-auto opacity-90 px-2">
-            Rejoignez des milliers de familles qui gèrent leur budget avec Budget Famille
+            Gratuit, sans carte bancaire : commencez seul et invitez qui vous voulez ensuite
           </p>
           <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center">
             <Button 

@@ -18,7 +18,7 @@ export default function About() {
     {
       icon: Users,
       title: "Collaboration",
-      description: "La gestion de budget est une aventure familiale"
+      description: "Un budget se construit souvent à plusieurs : en couple, en famille, en coloc"
     },
     {
       icon: Lightbulb,
@@ -36,7 +36,7 @@ export default function About() {
     { year: "2025", title: "Lancement", description: "Budget Famille voit le jour" },
     { year: "2025 Q1", title: "Beta Privée", description: "Tests avec amis et famille" },
     { year: "2025 Q2", title: "Beta 2", description: "Connexion bancaire et IA" },
-    { year: "2025 Q3", title: "Expansion", description: "10 pays européens supportés" }
+    { year: "2025 Q3", title: "Expansion", description: "15 pays et 7 devises, dont le franc CFA et le dirham" }
   ];
 
   return (
@@ -62,9 +62,9 @@ export default function About() {
             Notre Mission
           </h1>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
-            Rendre la gestion de budget accessible, collaborative et sécurisée pour toutes les familles, 
-            en respectant leur vie privée et en leur donnant les outils pour reprendre le contrôle de 
-            leurs finances.
+            Rendre la gestion de budget accessible, collaborative et sécurisée pour chacun, seul ou à
+            plusieurs, en respectant la vie privée et en donnant les outils pour reprendre le contrôle
+            de ses finances et de ses projets.
           </p>
         </div>
 
@@ -77,18 +77,18 @@ export default function About() {
               </h2>
               <div className="prose prose-lg max-w-none text-gray-700">
                 <p className="leading-relaxed mb-4">
-                  Budget Famille est né d'un constat simple : <strong>gérer un budget familial ne devrait pas 
-                  être compliqué</strong>. Trop souvent, les familles se retrouvent perdues entre des tableurs 
-                  Excel complexes ou des applications mobiles qui ne répondent pas à leurs besoins.
+                  Budget Famille est né d'un constat simple : <strong>gérer un budget ne devrait pas
+                  être compliqué</strong>, surtout à plusieurs. Trop souvent, on se retrouve perdu entre des tableurs
+                  Excel complexes ou des applications mobiles qui ne connaissent ni le pot commun ni vos projets.
                 </p>
                 <p className="leading-relaxed mb-4">
                   Nous avons créé Budget Famille avec une vision claire : offrir une plateforme où la collaboration 
-                  est au cœur de l'expérience, où la sécurité n'est pas une option mais une garantie, et où chaque 
-                  membre de la famille peut contribuer à la santé financière du foyer.
+                  est au cœur de l'expérience, où la sécurité n'est pas une option mais une garantie, et où chacun
+                  (conjoint, enfant devenu grand, colocataire) peut contribuer au budget commun.
                 </p>
                 <p className="leading-relaxed">
-                  Aujourd'hui, des milliers de familles à travers l'Europe nous font confiance pour gérer leurs 
-                  finances. Et ce n'est que le début.
+                  « Famille » au sens large : Budget Famille sert aussi bien à tenir un budget perso qu'à gérer
+                  une colocation ou à préparer un projet (voyage, mariage, travaux) avec un objectif et une date.
                 </p>
               </div>
             </div>
@@ -173,20 +173,20 @@ export default function About() {
             </h2>
             <div className="grid md:grid-cols-4 gap-8">
               <div className="text-center">
-                <div className="text-5xl font-bold mb-2">1K+</div>
-                <div className="text-primary-100">Familles utilisatrices</div>
+                <div className="text-5xl font-bold mb-2">0 €</div>
+                <div className="text-primary-100">Pour l'essentiel, sans carte bancaire</div>
               </div>
               <div className="text-center">
-                <div className="text-5xl font-bold mb-2">10</div>
-                <div className="text-primary-100">Pays européens</div>
+                <div className="text-5xl font-bold mb-2">15</div>
+                <div className="text-primary-100">Pays, 7 devises</div>
               </div>
               <div className="text-center">
-                <div className="text-5xl font-bold mb-2">100%</div>
-                <div className="text-primary-100">Gratuit pour toujours</div>
+                <div className="text-5xl font-bold mb-2">∞</div>
+                <div className="text-primary-100">Budgets : foyer, coloc, projets</div>
               </div>
               <div className="text-center">
-                <div className="text-5xl font-bold mb-2">24/7</div>
-                <div className="text-primary-100">Synchronisation</div>
+                <div className="text-5xl font-bold mb-2">UE</div>
+                <div className="text-primary-100">Données hébergées en Europe, jamais revendues</div>
               </div>
             </div>
           </div>

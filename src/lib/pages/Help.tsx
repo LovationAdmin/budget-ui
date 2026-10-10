@@ -52,11 +52,11 @@ export default function Help() {
     {
       category: 'getting-started',
       question: 'Comment créer mon premier budget ?',
-      answer: 'Après vous être connecté, cliquez sur "Nouveau Budget" depuis votre dashboard. Donnez-lui un nom (ex: "Budget Famille 2025"), puis cliquez sur Créer. Vous serez redirigé vers votre nouveau budget où vous pourrez ajouter vos revenus, charges et projets.'
+      answer: 'Après vous être connecté, cliquez sur "Nouveau Budget" depuis votre dashboard. Donnez-lui un nom (ex : "Foyer", "Coloc" ou "Mariage 2027"), puis cliquez sur Créer. Vous pouvez créer autant de budgets que nécessaire. Vous serez redirigé vers votre nouveau budget où vous pourrez ajouter vos revenus, charges et projets.'
     },
     {
       category: 'getting-started',
-      question: 'Comment inviter des membres de ma famille ?',
+      question: 'Comment inviter mon conjoint, ma famille ou mes colocataires ?',
       answer: 'Dans votre budget, cliquez sur "Inviter" dans la barre supérieure. Entrez l\'adresse email du membre, choisissez son rôle (Propriétaire ou Membre), et cliquez sur Envoyer. Il recevra un email d\'invitation avec un lien pour rejoindre le budget.'
     },
     {

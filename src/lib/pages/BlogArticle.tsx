@@ -156,10 +156,10 @@ export default function BlogArticle() {
         {/* CTA */}
         <div className="bg-gradient-to-r from-primary to-purple-600 rounded-2xl p-8 text-center text-white">
           <h2 className="text-2xl font-bold mb-4">
-            Votre budget familial, calculé chaque mois
+            Votre budget et vos projets, calculés chaque mois
           </h2>
           <p className="text-lg mb-6 opacity-90">
-            Gratuit, sans carte bancaire, à plusieurs en temps réel.
+            Gratuit, sans carte bancaire. Seul ou à plusieurs : famille, couple, coloc.
           </p>
           <Button asChild size="lg" className="bg-white text-primary hover:bg-gray-100 font-semibold">
             <Link to="/signup">

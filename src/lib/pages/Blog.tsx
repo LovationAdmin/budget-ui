@@ -90,8 +90,8 @@ export default function Blog() {
             Blog Budget Famille
           </h1>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-            Guides pratiques pour gérer le budget de la famille et du couple :
-            méthode, compte commun, épargne, économies.
+            Guides pratiques pour gérer son budget, seul ou à plusieurs : famille, couple,
+            budget perso, épargne pour un projet, économies.
           </p>
         </div>
 

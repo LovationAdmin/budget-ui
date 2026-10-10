@@ -42,7 +42,7 @@ export default defineConfig(({ mode }) => ({
         name: 'Budget Famille',
         short_name: 'Budget Famille',
         description:
-          'Application de gestion de budget familial collaborative avec synchronisation en temps réel',
+          'Application de budget gratuite, seul ou à plusieurs : famille, couple, colocation et projets, synchronisée en temps réel',
         start_url: '/dashboard',
         scope: '/',
         display: 'standalone',

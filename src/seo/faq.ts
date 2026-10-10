@@ -10,7 +10,11 @@ export interface FaqItem {
 export const HOME_FAQ: FaqItem[] = [
   {
     q: 'Budget Famille est-il vraiment gratuit ?',
-    a: 'Oui. Le budget, le foyer, les charges, l’épargne, le Budget IA et le partage avec votre famille sont gratuits, sans carte bancaire. Seule la synchronisation bancaire automatique est une option Premium à 2 € par mois.',
+    a: 'Oui. Les budgets, les membres, les charges, l’épargne et les projets, le Budget IA et le partage à plusieurs sont gratuits, sans carte bancaire. Seule la synchronisation bancaire automatique est une option Premium à 2 € par mois.',
+  },
+  {
+    q: 'Budget Famille est-il réservé aux familles ?',
+    a: 'Non. « Famille » au sens large : vous pouvez l’utiliser seul pour votre budget perso, en couple avec un pot commun, en famille, en colocation ou entre amis, et pour planifier un projet (voyage, mariage, travaux, voiture, apport) avec un objectif et une date. Créez autant de budgets que nécessaire, chacun avec ses membres.',
   },
   {
     q: 'Faut-il connecter son compte bancaire ?',
@@ -26,7 +30,7 @@ export const HOME_FAQ: FaqItem[] = [
   },
   {
     q: 'Existe-t-il un logiciel de budget familial gratuit ?',
-    a: 'Oui. Budget Famille est un logiciel de budget familial gratuit qui fonctionne dans le navigateur, sur ordinateur comme sur téléphone, sans rien installer. Vous pouvez aussi l’installer comme une application sur l’écran d’accueil.',
+    a: 'Oui. Budget Famille est un logiciel de budget gratuit, pour la famille comme pour un budget perso ou de coloc, qui fonctionne dans le navigateur, sur ordinateur comme sur téléphone, sans rien installer. Vous pouvez aussi l’installer comme une application sur l’écran d’accueil.',
   },
   {
     q: 'Est-ce mieux qu’un tableau Excel ?',
