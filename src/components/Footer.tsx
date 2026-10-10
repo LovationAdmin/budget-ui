@@ -17,7 +17,7 @@ export function Footer() {
               <span className="font-bold text-xl text-foreground">Budget Famille</span>
             </div>
             <p className="text-sm text-muted-foreground mb-4">
-              Gérez votre budget familial en toute simplicité et sécurité.
+              Budgétisez et planifiez tout ce qui compte, seul ou à plusieurs : famille, couple, coloc, projets.
             </p>
             <p className="text-sm font-semibold text-foreground mb-2">Suivez-nous</p>
             <SocialLinks className="mb-4" />

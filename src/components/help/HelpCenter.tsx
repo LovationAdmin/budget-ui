@@ -704,12 +704,12 @@ const HELP_ARTICLES: HelpArticle[] = [
     category: 'Équipe',
     icon: UserPlus,
     title: 'Inviter des Membres',
-    description: 'Partager votre budget avec votre famille.',
-    tags: ['invitation', 'membre', 'partage', 'famille', 'conjoint', 'collaboration'],
+    description: 'Partager votre budget avec votre conjoint, votre famille ou vos colocataires.',
+    tags: ['invitation', 'membre', 'partage', 'famille', 'conjoint', 'colocation', 'coloc', 'amis', 'collaboration'],
     content: (
       <div className="space-y-6">
         <p className="text-sm text-gray-600">
-          Budget Famille est conçu pour être utilisé à plusieurs. Invitez votre conjoint(e) ou d'autres membres de la famille.
+          Budget Famille s'utilise seul ou à plusieurs. Invitez qui vous voulez par e-mail : conjoint(e), famille, colocataires ou amis.
         </p>
 
         <div>

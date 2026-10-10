@@ -8,7 +8,7 @@
 
 import { Link } from 'react-router-dom';
 import {
-  ArrowRight, CheckCircle2, Lock, Moon, PiggyBank, Scale, Sparkles, Target, Users, Wallet,
+  ArrowRight, CheckCircle2, Heart, Home, KeyRound, Layers, Lock, Moon, Plane, PiggyBank, Scale, Sparkles, Target, User, Users, Wallet,
 } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
@@ -17,15 +17,25 @@ import SmartToolsWidget from '@/components/SmartToolsWidget';
 import { HOME_FAQ } from '@/seo/faq';
 
 const STEPS = [
-  { icon: Users, title: 'Ajoutez votre foyer', text: 'Le salaire de chacun, et ce qu’il verse au pot commun. Seul ou à plusieurs.' },
-  { icon: Wallet, title: 'Notez vos charges une fois', text: 'Loyer, énergie, cantine, taxe foncière : chaque mois se remplit tout seul.' },
-  { icon: Scale, title: 'Répartissez, épargnez', text: 'Une contribution juste pour chacun, l’argent de poche qui reste, et des cagnottes avec une date.' },
+  { icon: Users, title: 'Créez votre budget', text: 'Seul, à deux, en famille ou en coloc : les revenus de chacun, et ce qu’il verse au pot commun.' },
+  { icon: Wallet, title: 'Notez vos charges une fois', text: 'Loyer, énergie, abonnements, taxe foncière : chaque mois se remplit tout seul.' },
+  { icon: Scale, title: 'Répartissez, planifiez', text: 'Une contribution juste pour chacun, l’argent de poche qui reste, et vos projets avec un objectif et une date.' },
+];
+
+// Who it is for: « Famille » au sens large. Every line is something the app does.
+const USES: Array<{ icon: typeof Users; title: string; text: string }> = [
+  { icon: User, title: 'Seul', text: 'Votre budget perso : salaire, charges, épargne, et ce qui reste vraiment chaque mois. Idéal pour un premier appart ou un budget étudiant.' },
+  { icon: Heart, title: 'En couple', text: 'Chacun verse sa juste part au pot commun et garde son argent de poche. Les dépenses perso peuvent rester privées.' },
+  { icon: Home, title: 'En famille', text: 'Cantine certains mois, taxe foncière une fois par an, rentrée : chaque mois se prépare tout seul.' },
+  { icon: KeyRound, title: 'En colocation ou entre amis', text: 'Loyer, énergie, internet : invitez vos colocs par e-mail, chacun voit ce qu’il doit verser, en temps réel.' },
+  { icon: Plane, title: 'Pour un projet', text: 'Voyage, mariage, travaux, voiture, apport : un objectif, une date, et le montant à mettre de côté chaque mois.' },
+  { icon: Layers, title: 'Autant de budgets que nécessaire', text: 'Le foyer, la coloc, « Mariage 2027 » : chaque budget a ses membres, sa devise et ses chiffres. Gratuitement.' },
 ];
 
 const FEATURES: Array<{ icon: typeof Users; kicker: string; title: string; text: string; points: string[]; img: string; alt: string }> = [
   {
     icon: Scale,
-    kicker: 'Couple et famille',
+    kicker: 'À plusieurs',
     title: 'Pot commun et argent de poche, enfin clairs',
     text: 'Pour chacun : son salaire, ce qu’il verse au pot commun et ce qui lui reste vraiment. L’assistant calcule une répartition juste sur le mois réel.',
     points: ['50/50, au prorata des salaires ou même argent de poche', 'Calculé sur le mois en cours, pas sur une moyenne', 'Historique de chaque membre, mois par mois'],
@@ -43,9 +53,9 @@ const FEATURES: Array<{ icon: typeof Users; kicker: string; title: string; text:
   },
   {
     icon: Target,
-    kicker: 'Épargne',
+    kicker: 'Projets et épargne',
     title: 'Un objectif, une date : le montant se calcule',
-    text: 'Vacances, apport, voiture : indiquez combien il vous faut et pour quand. Budget Famille calcule la somme à mettre de côté chaque mois et vérifie qu’elle tient.',
+    text: 'Vacances, mariage, travaux, apport, voiture : indiquez combien il vous faut et pour quand. Budget Famille calcule la somme à mettre de côté chaque mois et vérifie qu’elle tient.',
     points: ['Cagnottes avec objectif et progression', 'Dépenses payées avec l’épargne suivies', 'Bilan de l’année, net de ce qui a été dépensé'],
     img: '/images/app/saving.jpg',
     alt: 'Cagnotte « Vacances été 2027 » : 500 € en caisse, 17 % de l’objectif',
@@ -86,12 +96,12 @@ export default function LandingPage() {
                 <Sparkles className="h-4 w-4" aria-hidden="true" /> Nouveau : Budget IA, charges perso privées, mode sombre
               </Link>
               <h1 className="font-display text-4xl font-bold tracking-tight text-foreground sm:text-5xl lg:text-6xl [text-wrap:balance]">
-                L’application de budget familial gratuite,{' '}
-                <span className="bg-gradient-to-r from-primary to-purple-600 bg-clip-text text-transparent">pensée pour le couple et la famille</span>
+                L’application de budget gratuite{' '}
+                <span className="bg-gradient-to-r from-primary to-purple-600 bg-clip-text text-transparent">pour la famille, le couple, la coloc et vos projets</span>
               </h1>
               <p className="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-muted-foreground lg:mx-0">
-                Pot commun, argent de poche de chacun, charges et épargne : tout le mois en un coup d’œil.
-                Sans connexion bancaire obligatoire, sans publicité, à plusieurs en temps réel.
+                Seul ou à plusieurs, budgétez le mois et planifiez ce qui compte : charges, pot commun, épargne,
+                voyage, mariage, travaux. Sans connexion bancaire obligatoire, sans publicité, en temps réel.
               </p>
               <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row lg:justify-start">
                 <Button asChild size="lg" className="h-14 px-8 text-lg shadow-lg">
@@ -149,6 +159,27 @@ export default function LandingPage() {
           </div>
         </section>
 
+        {/* Who it is for */}
+        <section id="pour-qui" className="scroll-mt-20 px-4 py-20 sm:px-6 lg:px-8" aria-labelledby="uses-title">
+          <div className="mx-auto max-w-6xl">
+            <h2 id="uses-title" className="text-center font-display text-3xl font-bold text-foreground">Pas seulement pour les familles</h2>
+            <p className="mx-auto mt-3 max-w-2xl text-center text-muted-foreground">« Famille » au sens large : Budget Famille sert à budgétiser et planifier tout ce qui compte, seul ou à plusieurs.</p>
+            <ul className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {USES.map((u) => (
+                <li key={u.title} className="flex gap-4 rounded-2xl border border-border/70 bg-card p-5">
+                  <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                    <u.icon className="h-5 w-5" aria-hidden="true" />
+                  </span>
+                  <span>
+                    <span className="block font-bold text-foreground">{u.title}</span>
+                    <span className="mt-1 block text-sm leading-relaxed text-muted-foreground">{u.text}</span>
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </section>
+
         {/* Features */}
         <section className="px-4 py-20 sm:px-6 lg:px-8" aria-labelledby="features-title">
           <div className="mx-auto max-w-6xl">
@@ -177,12 +208,12 @@ export default function LandingPage() {
               <div className="rounded-2xl bg-gradient-to-br from-slate-900 to-sky-900 p-8 text-white">
                 <p className="flex items-center gap-2 text-sm font-bold uppercase tracking-wider text-sky-200"><Sparkles className="h-4 w-4" aria-hidden="true" /> Budget IA</p>
                 <h3 className="mt-3 font-display text-2xl font-bold">Votre budget, proposé par l’IA</h3>
-                <p className="mt-3 text-slate-200">Décrivez votre foyer et vos projets : l’IA propose une répartition juste, des pistes d’économies et un plan pour tenir vos objectifs. Rien ne change tant que vous ne validez pas.</p>
+                <p className="mt-3 text-slate-200">Décrivez votre situation (couple, famille, amis, colocataires) et vos projets : l’IA propose une répartition juste, des pistes d’économies et un plan pour tenir vos objectifs. Rien ne change tant que vous ne validez pas.</p>
               </div>
               <div className="rounded-2xl border border-border/70 bg-card p-8">
                 <p className="flex items-center gap-2 text-sm font-bold uppercase tracking-wider text-primary"><Moon className="h-4 w-4" aria-hidden="true" /> Partout, à plusieurs</p>
                 <h3 className="mt-3 font-display text-2xl font-bold text-foreground">Sur téléphone, en clair ou en sombre</h3>
-                <p className="mt-3 text-muted-foreground">Invitez votre conjoint : chacun voit les mêmes chiffres, en temps réel. Chaque changement s’enregistre en une seconde et s’annule aussi vite.</p>
+                <p className="mt-3 text-muted-foreground">Invitez votre conjoint, votre famille ou vos colocs : chacun voit les mêmes chiffres, en temps réel. Chaque changement s’enregistre en une seconde et s’annule aussi vite.</p>
               </div>
             </div>
 
@@ -233,7 +264,7 @@ export default function LandingPage() {
             <div className="flex items-end justify-between gap-4">
               <div>
                 <h2 className="font-display text-3xl font-bold text-foreground">Conseils budget</h2>
-                <p className="mt-2 text-muted-foreground">Couple, épargne, compte commun : nos guides pratiques.</p>
+                <p className="mt-2 text-muted-foreground">Budget perso, couple, famille, épargne et projets : nos guides pratiques.</p>
               </div>
               <Link to="/blog" className="hidden font-medium text-primary hover:underline sm:block">Tous les articles →</Link>
             </div>
@@ -253,8 +284,8 @@ export default function LandingPage() {
         <section className="bg-primary px-4 py-20 text-primary-foreground">
           <div className="mx-auto max-w-3xl text-center">
             <PiggyBank className="mx-auto h-10 w-10 opacity-90" aria-hidden="true" />
-            <h2 className="mt-4 font-display text-3xl font-bold sm:text-4xl">Votre budget de famille, enfin simple</h2>
-            <p className="mt-4 text-lg opacity-90">Gratuit, sans carte bancaire. Vous pourrez inviter votre conjoint ensuite.</p>
+            <h2 className="mt-4 font-display text-3xl font-bold sm:text-4xl">Votre budget, enfin simple</h2>
+            <p className="mt-4 text-lg opacity-90">Gratuit, sans carte bancaire. Commencez seul, invitez qui vous voulez ensuite.</p>
             <Button asChild size="lg" variant="secondary" className="mt-8 h-14 bg-white px-10 text-lg text-primary hover:bg-gray-100">
               <Link to="/signup">Créer mon budget gratuit</Link>
             </Button>

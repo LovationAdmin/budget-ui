@@ -62,7 +62,7 @@ const STEPS = [
   {
     icon: ShieldCheck,
     title: "Bienvenue sur Budget Famille 👋",
-    description: "L'outil de gestion budgétaire sécurisé pour toute la famille.",
+    description: "Votre budget et vos projets, seul ou à plusieurs, en toute sécurité.",
     content: (
       <div className="space-y-4 text-sm text-muted-foreground">
         <p>
@@ -486,11 +486,11 @@ const STEPS = [
   {
     icon: Users,
     title: "Étape 7 : Collaboration 👥",
-    description: "Gérez votre budget en famille.",
+    description: "Gérez votre budget à plusieurs.",
     content: (
       <div className="space-y-4 text-sm text-muted-foreground">
         <p>
-          Budget Famille est conçu pour être utilisé à plusieurs. Invitez votre conjoint(e) ou d'autres membres de la famille !
+          Budget Famille s'utilise seul ou à plusieurs. Invitez votre conjoint(e), votre famille ou vos colocataires !
         </p>
 
         <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">

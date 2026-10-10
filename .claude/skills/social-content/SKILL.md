@@ -26,6 +26,27 @@ mobile avec chaque texte, son visuel et des boutons « copier », « partager
 l'image » (ouvre l'appli avec le visuel) et « ouvrir X avec le texte ». Le kit
 contient aussi les textes Facebook et Instagram, en secours.
 
+## Positionnement : « famille » au sens large
+
+Malgré son nom, Budget Famille n'est pas réservé aux familles : c'est
+l'application pour **budgétiser et planifier tout ce qui compte, seul ou à
+plusieurs**. Chaque semaine, le contenu doit le faire comprendre :
+
+- **Publics à faire tourner** d'une semaine à l'autre : budget perso (solo,
+  étudiant, premier appartement), couple, famille, colocation, et **projets**
+  (voyage, mariage, travaux, voiture, déménagement, naissance, apport
+  immobilier, fêtes de fin d'année). Pas plus de deux semaines de suite sur
+  « famille avec enfants ».
+- **Quand un post ou un article présente l'application**, le dire au moins une
+  fois, sans forcer : « seul ou à plusieurs », « pour le foyer ou pour un
+  projet », « en couple, en coloc ou en famille ».
+- **Un sujet « famille » reste un sujet famille** : ne pas diluer un article
+  « budget d'une famille de 4 ». C'est la présentation de l'application qui
+  s'élargit, pas chaque sujet.
+- Ne promettre que ce que fait l'application (voir « Promesses produit
+  exactes ») : plusieurs budgets séparés (ex. « Coloc », « Mariage 2027 »),
+  des membres invités par e-mail, des cagnottes avec objectif et date.
+
 Tout le travail de la semaine passe par **une pull request** sur
 `LovationAdmin/budget-ui` : la fusionner vaut validation (mode `validation`), ou la
 session la fusionne elle-même (mode `autonome`). Rien n'est publié sur un réseau
@@ -114,7 +135,8 @@ le dire dans un commentaire de la PR, avec le marqueur.
    jamais refaire un sujet ; un angle nouveau sur un thème proche est possible s'il
    vise une autre recherche.
 2. Partir de la saison (voir le calendrier) et des piliers :
-   méthodes de budget · couple et famille · enfants et argent · baisser ses charges
+   méthodes de budget · budget perso et étudiant · couple · famille et enfants ·
+   colocation · projets (voyage, mariage, travaux, voiture, déménagement) · baisser ses charges
    (énergie, assurances, box, mobile → simulateur `/outils-ia`) · épargne et
    objectifs · dépenses de saison · budget en Afrique francophone et au Maghreb
    (Sénégal, Côte d'Ivoire, Maroc déjà traités : élargir, ex. Cameroun, Tunisie, Belgique, Suisse).
@@ -216,7 +238,7 @@ Dans les textes, chaque lien porte ses UTM, avec la source du réseau :
 
 | Réseau | Format |
 |---|---|
-| LinkedIn | 700 à 1 300 caractères. Deux premières lignes = accroche (avant « voir plus »). Paragraphes de 1 à 2 lignes, une liste à puces (•, ✅) ; ton « parents actifs ». Lien en fin de texte, puis **5 hashtags** sur la dernière ligne. |
+| LinkedIn | 700 à 1 300 caractères. Deux premières lignes = accroche (avant « voir plus »). Paragraphes de 1 à 2 lignes, une liste à puces (•, ✅) ; ton « actifs qui gèrent leur argent » (parents ou non). Lien en fin de texte, puis **5 hashtags** sur la dernière ligne. |
 | Facebook | 300 à 600 caractères, conversationnel, une question pour faire réagir. Lien dans le texte, puis **5 hashtags** sur la dernière ligne. |
 | Instagram | Accroche sur la première ligne, 500 à 1 000 caractères aérés, puis « 👉 L'article complet : lien en bio ». Pas d'URL (non cliquable). **Exactement 5 hashtags** en fin de texte : c'est le maximum autorisé par Instagram depuis fin 2025 (au-delà, la publication peut être refusée). |
 | X | Un seul post (pas de fil), ≤ 260 caractères lien compris (un lien compte 23). **2 à 3 hashtags**, tant que la limite tient. |
@@ -224,11 +246,12 @@ Dans les textes, chaque lien porte ses UTM, avec la source du réseau :
 Hashtags : **le maximum de hashtags pertinents** que permet chaque réseau (5 sur
 LinkedIn, Facebook et Instagram ; 2 à 3 sur X), jamais un hashtag hors sujet
 pour faire du nombre. Sans accents ni espaces, en minuscules (#budgetfamilial).
-Un ou deux hashtags larges (#budget, #famille) + des hashtags du sujet de la
-semaine. Réserve, à compléter selon le sujet :
+Un ou deux hashtags larges (#budget, #financespersonnelles ; #famille seulement
+si le sujet est la famille) + des hashtags du sujet de la semaine. Réserve, à compléter selon le sujet :
 
-- Budget : #budget #budgetfamilial #gestionbudget #budgetmensuel #gestiondebudget #finances #financespersonnelles #argent
+- Budget : #budget #budgetfamilial #budgetperso #gestionbudget #budgetmensuel #gestiondebudget #finances #financespersonnelles #argent
 - Famille et couple : #famille #parents #couple #viedefamille #papa #maman #enfants
+- Solo, coloc et projets : #budgetetudiant #colocation #premierappart #projets #mariage #voyage #travaux #demenagement
 - Économies : #economies #economiser #astucesbudget #pouvoirdachat #consommermieux #antigaspi #bonplan
 - Épargne et objectifs : #epargne #epargner #objectifs #projetdevie
 - Outils : #budgetgratuit #applibudget #simulateur #resteavivre

@@ -123,7 +123,7 @@ export const blogArticles: BlogArticleContent[] = [
         <h2>Quel outil choisir ?</h2>
         <ul>
           <li><strong>Un tableau</strong> : notre <a href="/tableau-budget-familial-gratuit">tableau de budget familial gratuit</a> existe en Excel (calculs automatiques) et en PDF à imprimer.</li>
-          <li><strong>Une application</strong> : Budget Famille reprend ces cinq étapes, remplit chaque mois à partir de vos règles (loyer mensuel, taxe annuelle, cantine certains mois) et se partage en temps réel à deux. Gratuit, sans connexion bancaire obligatoire.</li>
+          <li><strong>Une application</strong> : Budget Famille reprend ces cinq étapes, remplit chaque mois à partir de vos règles (loyer mensuel, taxe annuelle, cantine certains mois) et se partage en temps réel, à deux ou à plusieurs. Malgré son nom, elle convient aussi à un budget solo, à une coloc ou à un projet (mariage, travaux, voyage) dans un budget à part. Gratuit, sans connexion bancaire obligatoire.</li>
         </ul>
 
         <div className="bg-gradient-to-r from-primary to-purple-600 text-white rounded-xl p-8 text-center my-8">
@@ -152,58 +152,58 @@ export const blogArticles: BlogArticleContent[] = [
     id: '2',
   title: "Comment Économiser 500€ par An sur vos Abonnements (Énergie, Internet, Assurances)",
   slug: "economiser-500-euros-abonnements",
-  excerpt: "Notre IA a analysé des milliers de budgets et identifié les postes où les familles peuvent économiser le plus. Découvrez comment réduire vos charges fixes sans sacrifier votre confort.",
+  excerpt: "Énergie, internet et mobile, assurances : les trois postes où un foyer peut le plus souvent économiser. Découvrez comment réduire vos charges fixes sans sacrifier votre confort.",
   category: "Économies",
   author: "Sophie Martin",
   authorBio: "Experte en optimisation budgétaire et analyse de marché",
   publishedAt: "2025-01-17",
   readTime: "8 min",
-  tags: ["Économies", "Famille", "Abonnements", "IA", "Smart Tools"],
+  tags: ["Économies", "Famille", "Abonnements", "IA", "Charges fixes"],
   featured: true,
   content: (
     <div className="prose prose-lg max-w-none">
       <p className="lead">
-        La majorité des familles françaises payent trop cher leurs abonnements. 
-        Notre intelligence artificielle a analysé plus de 10 000 budgets et révèle 
-        qu'en moyenne, <strong>chaque foyer peut économiser 520€ par an</strong> en 
-        renégociant simplement 3 postes de dépenses.
+        Beaucoup de foyers paient leurs abonnements plus cher que nécessaire, simplement
+        parce qu'ils ne les ont jamais remis en question. Dans les exemples ci-dessous,
+        <strong> renégocier 3 postes de dépenses fait économiser 520€ par an</strong> :
+        voici comment faire le même calcul chez vous.
       </p>
 
       <h2>📊 Les 3 Postes où Vous Perdez le Plus d'Argent</h2>
       
       <h3>1. L'Électricité et le Gaz : 180€/an d'économies possibles</h3>
       <p>
-        Le marché de l'énergie a explosé avec la fin des tarifs réglementés. 
-        Aujourd'hui, plus de 40 fournisseurs se battent pour votre contrat.
+        Depuis l'ouverture du marché de l'énergie, de nombreux fournisseurs se disputent
+        votre contrat, avec des prix très variables d'une offre à l'autre.
       </p>
-      
+
       <div className="bg-blue-50 border-l-4 border-blue-500 p-6 my-6">
         <p className="font-semibold text-blue-900 mb-2">💡 Conseil Budget Famille</p>
         <p className="text-blue-800 mb-0">
-          Notre Smart Tool compare automatiquement votre consommation avec les 
-          meilleures offres du marché. En moyenne, nos utilisateurs économisent 
-          <strong> 15€/mois en changeant de fournisseur</strong>, soit 180€/an.
+          Notez votre contrat d'énergie comme une charge de votre budget : vous voyez
+          ce qu'il pèse vraiment chaque mois. Par exemple, une offre
+          <strong> 15€/mois moins chère</strong> fait économiser 180€/an.
         </p>
       </div>
 
       <p><strong>Comment faire ?</strong></p>
       <ul>
         <li>Récupérez votre dernière facture (pour connaître votre consommation annuelle)</li>
-        <li>Utilisez notre Smart Tool "Énergie" qui analyse les tarifs en temps réel</li>
+        <li>Utilisez le comparateur gratuit du médiateur national de l'énergie (energie-info.fr)</li>
         <li>Comparez les 3 meilleures offres adaptées à votre profil</li>
         <li>Changez en 5 minutes (aucune coupure, votre nouveau fournisseur s'occupe de tout)</li>
       </ul>
 
       <p className="text-sm italic text-gray-600">
-        ⚠️ Attention aux offres alléchantes la première année qui explosent ensuite. 
-        Notre IA privilégie les contrats transparents et stables.
+        ⚠️ Attention aux offres alléchantes la première année qui explosent ensuite.
+        Privilégiez les contrats transparents et stables.
       </p>
 
       <h3>2. Internet & Mobile : 200€/an d'économies</h3>
       <p>
-        Les opérateurs comptent sur votre inertie. <strong>63% des Français</strong> n'ont 
-        jamais changé d'opérateur alors que de nouvelles offres plus compétitives 
-        apparaissent chaque mois.
+        Les opérateurs comptent sur votre inertie. <strong>Beaucoup de foyers</strong> n'ont
+        jamais changé d'opérateur alors que de nouvelles offres plus compétitives
+        apparaissent régulièrement.
       </p>
 
       <p><strong>Le piège classique :</strong></p>
@@ -222,7 +222,7 @@ export const blogArticles: BlogArticleContent[] = [
         </p>
       </div>
 
-      <p><strong>Économies moyennes constatées :</strong></p>
+      <p><strong>Exemple d'économies :</strong></p>
       <ul>
         <li>Box Internet : -12€/mois = 144€/an</li>
         <li>Forfait Mobile : -5€/mois = 60€/an</li>
@@ -235,7 +235,7 @@ export const blogArticles: BlogArticleContent[] = [
         Pourtant, le marché évolue constamment.
       </p>
 
-      <p><strong>Cas réel :</strong> Marie, 34 ans, 2 enfants</p>
+      <p><strong>Exemple :</strong> un foyer avec 2 enfants</p>
       <ul>
         <li>Assurance habitation depuis 8 ans : 28€/mois</li>
         <li>Après comparaison : même garanties à 19€/mois</li>
@@ -244,54 +244,56 @@ export const blogArticles: BlogArticleContent[] = [
 
       <p className="text-sm bg-yellow-50 border border-yellow-200 p-4 rounded">
         💰 <strong>Astuce pro :</strong> Regroupez vos assurances (habitation + auto) 
-        chez le même assureur pour obtenir une réduction supplémentaire de 10-15%.
+        chez le même assureur et demandez la réduction multi-contrats.
       </p>
 
       <h2>🚀 Comment Budget Famille vous Fait Gagner du Temps</h2>
       
       <p>
-        Analyser manuellement toutes ces offres prendrait des heures. C'est pourquoi 
-        nous avons créé les <strong>Smart Tools IA</strong>.
+        Pour renégocier, il faut d'abord savoir ce que l'on paie. Budget Famille réunit
+        toutes vos charges au même endroit, que vous gériez votre budget seul, en couple,
+        en famille ou en colocation.
       </p>
 
       <h3>Le Processus en 3 Étapes</h3>
-      
-      <p><strong>Étape 1 : Analyse Automatique</strong></p>
+
+      <p><strong>Étape 1 : Listez vos abonnements</strong></p>
       <p>
-        Connectez vos comptes bancaires (connexion sécurisée PSD2, nous n'avons JAMAIS 
-        accès à vos identifiants). Notre IA détecte automatiquement vos abonnements et 
-        leur montant exact.
+        Ajoutez chaque abonnement comme une charge, avec son rythme : chaque mois (box,
+        mobile, énergie), une fois par an (assurance, que vous pouvez étaler sur 12 mois)
+        ou certains mois seulement. C'est gratuit et sans connexion bancaire obligatoire.
+        Avec l'option Premium (2€/mois), vos comptes se synchronisent automatiquement et
+        vous comparez votre budget prévu à vos dépenses réelles.
       </p>
 
-      <p><strong>Étape 2 : Comparaison Intelligente</strong></p>
+      <p><strong>Étape 2 : Repérez les postes à renégocier</strong></p>
       <p>
-        Pour chaque abonnement détecté, notre IA cherche les 3 meilleures alternatives 
-        du marché en fonction de :
-      </p>
-      <ul>
-        <li>Votre consommation réelle</li>
-        <li>Votre localisation géographique</li>
-        <li>Votre situation familiale</li>
-        <li>Les promotions en cours</li>
-      </ul>
-
-      <p><strong>Étape 3 : Action Directe</strong></p>
-      <p>
-        Nous vous donnons le contact direct du fournisseur recommandé et un script 
-        de négociation prêt à l'emploi. Certains de nos utilisateurs négocient même 
-        avec leur fournisseur actuel en montrant notre comparatif !
+        Vos abonnements sont réunis sur un seul écran : comparez-les aux repères de cet
+        article (plus de 35€/mois pour une box, plus de 15€/mois pour un forfait mobile)
+        et notez ceux à renégocier en priorité. Nos <a href="/outils-ia">outils gratuits</a> estiment
+        aussi en 30 secondes ce que vous pourriez économiser sur l'énergie, internet, le mobile
+        ou l'assurance, sans créer de compte.
       </p>
 
-      <h2>📈 Résultats Réels de nos Utilisateurs</h2>
+      <p><strong>Étape 3 : Passez à l'action</strong></p>
+      <p>
+        Comparez les offres, changez ou renégociez, puis mettez à jour le montant de la
+        charge : vous voyez tout de suite ce qu'il vous reste. Le Budget IA peut aussi
+        vous proposer des idées d'économies et un plan, sans rien modifier tant que vous
+        ne l'avez pas validé. Et l'argent économisé peut alimenter une cagnotte
+        (vacances, travaux, voiture).
+      </p>
+
+      <h2>📈 Exemple : les 3 Postes Réunis</h2>
 
       <div className="bg-gray-50 rounded-lg p-6 my-6">
-        <p className="font-semibold mb-4">Économies moyennes par catégorie :</p>
+        <p className="font-semibold mb-4">Économies de nos exemples, par catégorie :</p>
         <ul className="space-y-2">
           <li>⚡ <strong>Électricité :</strong> 180€/an</li>
           <li>📡 <strong>Internet + Mobile :</strong> 200€/an</li>
           <li>🏠 <strong>Assurances :</strong> 140€/an</li>
           <li className="pt-3 border-t border-gray-300 font-bold text-lg">
-            💰 <strong>TOTAL MOYEN : 520€/an</strong>
+            💰 <strong>TOTAL : 520€/an</strong>
           </li>
         </ul>
       </div>
@@ -332,23 +334,23 @@ export const blogArticles: BlogArticleContent[] = [
 
       <h3>Comment être sûr de ne pas perdre en qualité ?</h3>
       <p>
-        Notre IA ne recommande que des fournisseurs ayant une <strong>note minimale 
-        de 4/5 sur les avis clients</strong>. Nous privilégions la fiabilité à 
-        l'économie maximale.
+        Comparez les <strong>garanties ligne à ligne</strong> (franchises, plafonds,
+        débit, service client) et lisez les avis clients récents avant de signer.
+        Privilégiez la fiabilité à l'économie maximale.
       </p>
 
       <h2>🎁 Passez à l'Action Dès Maintenant</h2>
-      
+
       <p>
-        Créez votre compte Budget Famille gratuitement et lancez votre première analyse 
-        Smart Tool. En moins de 5 minutes, vous saurez exactement combien vous pouvez 
-        économiser ce mois-ci.
+        Créez votre compte Budget Famille gratuitement et listez vos abonnements.
+        En quelques minutes, vous voyez ce qu'ils pèsent dans votre budget et lesquels
+        renégocier en premier.
       </p>
 
       <div className="bg-gradient-to-r from-primary to-purple-600 text-white rounded-xl p-8 text-center my-8">
         <h3 className="text-2xl font-bold mb-4">Prêt à économiser 500€ cette année ?</h3>
         <p className="text-lg mb-6 opacity-90">
-          Rejoignez les 12 000+ familles qui utilisent Budget Famille pour optimiser leurs dépenses
+          Gratuit, sans connexion bancaire obligatoire : seul, en couple, en famille ou en coloc
         </p>
         <a 
           href="/signup" 
@@ -364,7 +366,7 @@ export const blogArticles: BlogArticleContent[] = [
   {id: '3',
   title: "Budget Couple : 7 Règles d'Or pour Gérer l'Argent à Deux sans Conflits",
   slug: "budget-couple-regles-gerer-argent",
-  excerpt: "L'argent est la première cause de disputes dans les couples. Découvrez nos 7 règles d'or pour une gestion financière harmonieuse, transparente et équitable à deux.",
+  excerpt: "L'argent est un sujet de tension fréquent dans les couples. Découvrez nos 7 règles d'or pour une gestion financière harmonieuse, transparente et équitable à deux.",
   category: "Couple",
   author: "Thomas Dubois",
   authorBio: "Conseiller conjugal et expert en finances personnelles",
@@ -375,8 +377,8 @@ export const blogArticles: BlogArticleContent[] = [
   content: (
     <div className="prose prose-lg max-w-none">
       <p className="lead">
-        Selon une étude récente, <strong>72% des couples</strong> se disputent 
-        régulièrement à propos d'argent. Pourtant, avec les bonnes règles et les 
+        L'argent est l'un des <strong>sujets de dispute</strong> les plus courants
+        dans un couple. Pourtant, avec les bonnes règles et les
         bons outils, la gestion financière peut devenir un facteur d'union plutôt 
         que de division.
       </p>
@@ -411,15 +413,15 @@ export const blogArticles: BlogArticleContent[] = [
       <div className="bg-blue-50 border-l-4 border-blue-500 p-6 my-6">
         <p className="font-semibold text-blue-900 mb-2">💡 Outil Budget Famille</p>
         <p className="text-blue-800 mb-0">
-          Créez un budget partagé où les deux partenaires voient les mêmes informations 
-          en temps réel. Chacun peut suivre les dépenses depuis son téléphone, avec 
-          notifications instantanées. Plus de mauvaises surprises !
+          Créez un budget partagé et invitez votre partenaire par e-mail : vous voyez
+          tous les deux les mêmes chiffres, mis à jour en temps réel, y compris depuis
+          votre téléphone. Plus de mauvaises surprises !
         </p>
       </div>
 
       <h3>Règle 2 : Le Système des 3 Comptes</h3>
       <p>
-        La formule magique qui fonctionne pour 80% des couples : 
+        Une formule simple qui convient à beaucoup de couples :
         <strong> 1 compte commun + 2 comptes personnels</strong>.
       </p>
 
@@ -527,8 +529,9 @@ export const blogArticles: BlogArticleContent[] = [
       <div className="bg-primary/10 border-l-4 border-primary p-6 my-6">
         <p className="font-semibold text-gray-900 mb-2">🎯 Visualisez vos Progrès</p>
         <p className="mb-0">
-          Budget Famille vous permet de créer des "enveloppes d'épargne" avec des objectifs visuels. 
-          Voir la barre de progression qui avance vers "Vacances aux Maldives" est bien plus 
+          Budget Famille vous permet de créer des cagnottes d'épargne avec un objectif et une date :
+          le montant à mettre de côté chaque mois est calculé pour vous. Voir la barre de progression
+          qui avance vers "Vacances aux Maldives" est bien plus
           motivant qu'un simple chiffre dans un tableau !
         </p>
       </div>
@@ -574,22 +577,24 @@ export const blogArticles: BlogArticleContent[] = [
         <li><strong>Répartition assistée :</strong> 50/50, au prorata des revenus ou « même argent de poche », calculée sur le mois choisi</li>
         <li><strong>Charges perso, publiques ou privées :</strong> un impôt ou un envoi d'argent se déduit de votre argent de poche ; en privé, son nom n'est visible que par vous</li>
         <li><strong>Cagnottes d'épargne communes :</strong> objectif, date, montant mensuel calculé automatiquement</li>
+        <li><strong>Plusieurs budgets :</strong> à côté du budget du couple, créez-en un à part pour un projet (mariage, travaux, voyage) ou pour une coloc entre amis, chacun avec ses propres membres</li>
       </ul>
 
       <p>
         👉 Pour aller plus loin : <a href="/blog/compte-commun-couple-argent-de-poche">compte commun en couple : pot commun, argent de poche et charges perso</a>.
       </p>
 
-      <h2>💑 Témoignage : Laura & Kevin</h2>
+      <h2>💑 Exemple : un Couple qui Prépare son Apport</h2>
 
-      <blockquote className="border-l-4 border-gray-300 pl-6 italic text-gray-700 my-6">
-        "Avant Budget Famille, on se disputait chaque fin de mois. Kevin ne comprenait pas 
-        où partait l'argent, et moi j'en avais marre d'être celle qui 'fait les comptes'. 
-        Maintenant, on a chacun l'app sur notre téléphone. On voit les mêmes chiffres, 
-        on prend les décisions ensemble. En 6 mois, on a économisé 2 800€ pour l'apport 
-        de notre appart. Et surtout : zéro dispute d'argent depuis 4 mois !" 
-        <footer className="text-sm mt-2 not-italic">— Laura, 29 ans, en couple depuis 5 ans</footer>
-      </blockquote>
+      <div className="bg-gray-50 rounded-lg p-6 my-6">
+        <p className="mb-0">
+          Par exemple, un couple où l'un « fait les comptes » pendant que l'autre ne sait
+          pas où part l'argent finit souvent par se disputer en fin de mois. Avec un budget
+          partagé, chacun voit les mêmes chiffres sur son téléphone et les décisions se
+          prennent à deux. Une cagnotte "Apport" de 2 800€ sur 6 mois, c'est environ
+          <strong> 467€ à mettre de côté chaque mois</strong> : l'objectif devient concret.
+        </p>
+      </div>
 
       <h2>🎁 Passez à l'Action en Couple</h2>
 
@@ -756,8 +761,13 @@ export const blogArticles: BlogArticleContent[] = [
     content: (
       <div className="prose prose-lg max-w-none">
         <p className="lead">
-          Connecter sa banque à Budget Famille en un clic ? C'est possible grâce à PSD2. 
-          Et oui, c'est 100% sécurisé. On vous explique tout.
+          Connecter sa banque à Budget Famille ? C'est possible grâce à PSD2, dans un cadre
+          européen strict. On vous explique tout.
+        </p>
+        <p>
+          La connexion bancaire est facultative : Budget Famille est gratuit sans elle, que vous
+          gériez votre budget seul ou à plusieurs. Elle fait partie de l'option Premium (2 €/mois),
+          qui synchronise automatiquement vos comptes et compare votre budget prévu à vos dépenses réelles.
         </p>
 
         <h2>C'est quoi PSD2 ?</h2>
@@ -773,7 +783,7 @@ export const blogArticles: BlogArticleContent[] = [
           <li>Vous cliquez sur "Connecter ma banque" dans Budget Famille</li>
           <li>Vous êtes redirigé vers le site de VOTRE banque</li>
           <li>Vous vous connectez avec VOS identifiants bancaires</li>
-          <li>Vous autorisez l'accès en lecture seule (90 jours)</li>
+          <li>Vous autorisez l'accès en lecture seule (à renouveler périodiquement)</li>
           <li>Vos transactions apparaissent automatiquement dans Budget Famille</li>
         </ol>
 
@@ -782,7 +792,6 @@ export const blogArticles: BlogArticleContent[] = [
           <ul className="text-green-800">
             <li>Budget Famille ne stocke JAMAIS vos identifiants bancaires</li>
             <li>Accès en lecture seule (impossible de faire des virements)</li>
-            <li>Chiffrement bancaire (même niveau que votre banque)</li>
             <li>Révocable à tout moment</li>
           </ul>
         </div>
@@ -790,19 +799,19 @@ export const blogArticles: BlogArticleContent[] = [
         <h2>Avantages Concrets</h2>
         <ul>
           <li>Suivi automatique de vos dépenses (fini la saisie manuelle !)</li>
-          <li>Alertes en temps réel sur vos budgets</li>
-          <li>Détection des abonnements oubliés</li>
-          <li>Suggestions d'économies par l'IA</li>
+          <li>Comparaison entre votre budget prévu et vos dépenses réelles</li>
         </ul>
 
         <h2>Et ma vie privée ?</h2>
         <p>
-          Vos données bancaires sont <strong>chiffrées de bout en bout</strong>. 
-          Même nous, développeurs de Budget Famille, ne pouvons pas les lire en clair.
+          L'accès est en <strong>lecture seule</strong> et vous pouvez le révoquer à tout moment.
+          Pour les dépenses qui ne regardent que vous, les <strong>charges perso privées</strong> ont
+          un nom chiffré, visible uniquement par la personne qui l'a créée. Et si vous préférez ne rien
+          connecter, Budget Famille fonctionne entièrement sans connexion bancaire.
         </p>
 
         <h2>Compatibilité</h2>
-        <p>Budget Famille est compatible avec <strong>2500+ banques européennes</strong> :</p>
+        <p>La connexion bancaire Premium est compatible avec <strong>2500+ banques européennes</strong> :</p>
         <ul>
           <li>France : BNP Paribas, Crédit Agricole, Société Générale, LCL, etc.</li>
           <li>Belgique, Allemagne, Espagne, Italie, Portugal...</li>
@@ -811,9 +820,9 @@ export const blogArticles: BlogArticleContent[] = [
 
         <h2>Conclusion</h2>
         <p>
-          PSD2 rend la gestion budgétaire enfin simple et automatique, 
-          tout en garantissant une sécurité de niveau bancaire. 
-          Essayez, vous ne pourrez plus vous en passer !
+          PSD2 rend le suivi de vos dépenses réelles simple et automatique, avec un accès
+          en lecture seule, des identifiants saisis uniquement chez votre banque et une
+          autorisation révocable. Avec ou sans connexion, à vous de choisir !
         </p>
       </div>
     )
@@ -823,7 +832,7 @@ export const blogArticles: BlogArticleContent[] = [
   id: '6',
   title: "Budget Étudiant 2025 : Le Guide Complet pour Gérer 600€/mois (et Profiter Quand Même)",
   slug: "budget-etudiant-guide-complet-2025",
-  excerpt: "APL, job étudiant, courses, sorties... Comment gérer un budget serré sans se priver ? Toutes les astuces testées par de vrais étudiants pour finir le mois sans appeler papa-maman.",
+  excerpt: "APL, job étudiant, courses, sorties... Comment gérer un budget serré sans se priver ? Toutes les astuces concrètes pour finir le mois sans appeler papa-maman.",
   category: "Étudiants",
   author: "Camille Rousseau",
   authorBio: "Ancienne étudiante en école de commerce, spécialiste budget jeunes",
@@ -884,11 +893,11 @@ export const blogArticles: BlogArticleContent[] = [
       </ul>
 
       <div className="bg-green-50 border-l-4 border-green-500 p-6 my-6">
-        <p className="font-semibold text-green-900 mb-2">✅ Calculateur Budget Famille</p>
+        <p className="font-semibold text-green-900 mb-2">✅ Estimez vos Droits</p>
         <p className="text-green-800 mb-0">
-          Utilisez notre calculateur d'aides étudiantes (Smart Tool) qui estime vos droits 
-          en 2 minutes. En moyenne, nos utilisateurs découvrent <strong>1-2 aides auxquelles 
-          ils n'avaient pas pensé</strong>, soit 80-150€/mois de revenus supplémentaires !
+          Faites les simulations officielles : caf.fr pour l'APL, etudiant.gouv.fr pour la
+          bourse. Quelques minutes suffisent, et vous découvrirez peut-être <strong>une aide
+          à laquelle vous n'aviez pas pensé</strong>.
         </p>
       </div>
 
@@ -1129,27 +1138,30 @@ export const blogArticles: BlogArticleContent[] = [
         </ul>
       </div>
 
-      <h2>🎯 Budget Famille : L'App Pensée pour les Étudiants</h2>
+      <h2>🎯 Budget Famille : Aussi pour les Étudiants</h2>
 
-      <p><strong>Fonctionnalités étudiantes :</strong></p>
+      <p>
+        Malgré son nom, Budget Famille ne sert pas qu'aux familles : il fonctionne aussi bien
+        pour un budget solo que pour une coloc.
+      </p>
       <ul>
-        <li><strong>Budget ultra-serré :</strong> Alertes automatiques si dépassement</li>
-        <li><strong>Suivi job étudiant :</strong> Combien vous avez gagné ce mois-ci ?</li>
-        <li><strong>Calculateur aides :</strong> Estimez vos droits CAF, CROUS, etc.</li>
-        <li><strong>Colocation :</strong> Gérez les dépenses communes avec vos colocataires</li>
-        <li><strong>Enveloppes :</strong> "Sorties", "Fringues", "Vacances" → respectez vos limites</li>
+        <li><strong>Budget solo :</strong> loyer, forfait, abonnements saisis une fois, avec leur rythme (chaque mois, certains mois, une fois par an)</li>
+        <li><strong>Colocation :</strong> créez un budget "Coloc" à part, invitez vos colocataires par e-mail et partagez loyer, box et courses à parts égales ou au prorata des revenus</li>
+        <li><strong>Cagnottes :</strong> "Vacances", "Permis", "Ordinateur" → un objectif, une date, et le montant à mettre de côté chaque mois est calculé pour vous</li>
+        <li><strong>Argent de poche :</strong> voyez ce qu'il vous reste une fois les charges payées</li>
+        <li><strong>Budget IA :</strong> décrivez votre situation et vos objectifs, il vous propose un plan ; rien ne change sans votre accord</li>
       </ul>
 
       <div className="bg-gradient-to-r from-primary to-purple-600 text-white rounded-xl p-8 text-center my-8">
-        <h3 className="text-2xl font-bold mb-4">Offre Spéciale Étudiants</h3>
+        <h3 className="text-2xl font-bold mb-4">Votre Budget Étudiant, Gratuit</h3>
         <p className="text-lg mb-6 opacity-90">
-          Version Premium GRATUITE pendant 6 mois avec justificatif étudiant 🎓
+          Sans connexion bancaire obligatoire, seul ou en coloc 🎓
         </p>
-        <a 
-          href="/signup" 
+        <a
+          href="/signup"
           className="inline-block bg-white text-primary font-semibold px-8 py-3 rounded-lg hover:bg-gray-100 transition-colors"
         >
-          Créer mon compte étudiant →
+          Créer mon budget gratuit →
         </a>
       </div>
 
@@ -1191,8 +1203,8 @@ export const blogArticles: BlogArticleContent[] = [
 
       <p>
         Le secret ? <strong>Suivre ses dépenses régulièrement</strong> (10 min/semaine) 
-        plutôt que de découvrir le désastre en fin de mois. Budget Famille automatise 
-        tout ça pour vous.
+        plutôt que de découvrir le désastre en fin de mois. Budget Famille vous y aide :
+        vos charges reviennent chaque mois selon vos règles, et vous voyez ce qu'il vous reste.
       </p>
 
       <p className="text-lg font-semibold text-primary">
@@ -1550,24 +1562,24 @@ export const blogArticles: BlogArticleContent[] = [
       <h2>📱 Budget Famille : Enfin Adapté au Sénégal</h2>
 
       <p>
-        Les applications de budget européennes ne comprennent pas la réalité sénégalaise : 
-        tontines, dépenses solidaires, revenus irréguliers...
+        Un budget sénégalais a ses particularités : tontines, dépenses solidaires, revenus
+        irréguliers... Budget Famille vous laisse les noter telles qu'elles sont.
       </p>
 
-      <p><strong>Budget Famille en FCFA inclut :</strong></p>
+      <p><strong>Budget Famille en FCFA, c'est :</strong></p>
       <ul>
-        <li>✅ <strong>Gestion multi-devises :</strong> FCFA, EUR si vous avez famille en France</li>
-        <li>✅ <strong>Catégories sénégalaises :</strong> Tontines, cérémonies, entraide familiale</li>
-        <li>✅ <strong>Revenus irréguliers :</strong> Lissage automatique sur plusieurs mois</li>
-        <li>✅ <strong>Partage familial :</strong> Toute la famille suit le budget ensemble</li>
-        <li>✅ <strong>Alertes SENELEC :</strong> "Votre facture électricité dépasse la moyenne"</li>
-        <li>✅ <strong>Connexion Orange Money/Wave :</strong> Import automatique des transactions</li>
+        <li>✅ <strong>Un budget en FCFA :</strong> choisissez le Sénégal et le franc CFA à la création ; un autre budget peut être en euros si vous avez de la famille en France</li>
+        <li>✅ <strong>Vos propres charges :</strong> tontine, aide aux parents, scolarité, cérémonies, nommées comme vous voulez</li>
+        <li>✅ <strong>À votre rythme :</strong> chaque mois, certains mois, ou une fois par an en l'étalant sur 12 mois</li>
+        <li>✅ <strong>Partage familial :</strong> invitez vos proches par e-mail, tout le monde voit les mêmes chiffres en temps réel</li>
+        <li>✅ <strong>Cagnottes :</strong> Tabaski, ramadan, fonds d'urgence, avec un objectif et une date</li>
+        <li>✅ <strong>Pas seulement pour les familles :</strong> un budget solo, en couple ou une coloc en FCFA fonctionne de la même façon</li>
       </ul>
 
       <div className="bg-gradient-to-r from-primary to-purple-600 text-white rounded-xl p-8 text-center my-8">
-        <h3 className="text-2xl font-bold mb-4">Rejoignez les Familles Sénégalaises qui Reprennent le Contrôle</h3>
+        <h3 className="text-2xl font-bold mb-4">Reprenez le Contrôle de votre Budget en FCFA</h3>
         <p className="text-lg mb-6 opacity-90">
-          Application 100% gratuite, en français, adaptée à la réalité dakaroise
+          Application gratuite, en français : en famille, en couple, en coloc ou seul
         </p>
         <a 
           href="/signup" 
@@ -2040,20 +2052,20 @@ export const blogArticles: BlogArticleContent[] = [
 
       <h2>📱 Budget Famille : Adapté à la Réalité Ivoirienne</h2>
 
-      <p><strong>Fonctionnalités spéciales Côte d'Ivoire :</strong></p>
+      <p><strong>Ce que vous pouvez faire en Côte d'Ivoire :</strong></p>
       <ul>
-        <li>✅ <strong>Gestion en FCFA</strong> avec connexion Orange Money/MTN/Moov</li>
-        <li>✅ <strong>Catégories locales :</strong> Maquis, Wôrô-wôrô, Aide ménagère, Cérémonies</li>
-        <li>✅ <strong>Suivi tontines :</strong> Gérez vos cotisations et tours</li>
-        <li>✅ <strong>Alertes CIE/SODECI :</strong> "Votre consommation électricité explose ce mois-ci"</li>
-        <li>✅ <strong>Budget partagé famille :</strong> Toute la famille voit les mêmes données</li>
-        <li>✅ <strong>Smart Tools IA :</strong> Comparez vos abonnements (internet, électricité)</li>
+        <li>✅ <strong>Gestion en FCFA :</strong> choisissez la Côte d'Ivoire et le franc CFA à la création du budget</li>
+        <li>✅ <strong>Vos propres charges :</strong> maquis, wôrô-wôrô, aide ménagère, cotisation de tontine, nommées comme vous voulez</li>
+        <li>✅ <strong>À votre rythme :</strong> chaque mois, certains mois (rentrée), ou une fois par an en l'étalant sur 12 mois</li>
+        <li>✅ <strong>Cagnottes :</strong> "Événements sociaux", "Scolarité", "Terrain", avec objectif et date ; une dépense peut être payée depuis une cagnotte</li>
+        <li>✅ <strong>Budget partagé :</strong> invitez vos proches par e-mail, tout le monde voit les mêmes chiffres en temps réel</li>
+        <li>✅ <strong>Budget IA :</strong> décrivez votre foyer et vos objectifs, il propose une répartition, des idées d'économies et un plan</li>
       </ul>
 
       <div className="bg-gradient-to-r from-orange-500 to-red-600 text-white rounded-xl p-8 text-center my-8">
-        <h3 className="text-2xl font-bold mb-4">Rejoignez les Familles Abidjanaises qui Maîtrisent leur Budget</h3>
+        <h3 className="text-2xl font-bold mb-4">Maîtrisez votre Budget en FCFA</h3>
         <p className="text-lg mb-6 opacity-90">
-          Application 100% gratuite, adaptée au coût de la vie ivoirien
+          Application gratuite : en famille, en couple, entre colocataires ou pour vous seul
         </p>
         <a 
           href="/signup" 
@@ -2538,21 +2550,20 @@ export const blogArticles: BlogArticleContent[] = [
 
       <h2>📱 Budget Famille : Enfin Adapté au Maroc</h2>
 
-      <p><strong>Fonctionnalités spéciales Maroc :</strong></p>
+      <p><strong>Ce que vous pouvez faire au Maroc :</strong></p>
       <ul>
-        <li>✅ <strong>Gestion en Dirhams (MAD)</strong> avec conversions EUR si besoin</li>
-        <li>✅ <strong>Catégories marocaines :</strong> Souk, Hammam, Ramadan, Aïd, CNSS</li>
-        <li>✅ <strong>Alertes LYDEC/AMENDIS :</strong> "Votre consommation électricité anormale"</li>
-        <li>✅ <strong>Budget Ramadan dédié :</strong> Suivez vos dépenses du mois sacré</li>
-        <li>✅ <strong>Suivi multi-comptes :</strong> Compte courant + CCP + compte épargne</li>
-        <li>✅ <strong>Smart Tools IA :</strong> Comparez abonnements (IAM vs Orange vs Inwi)</li>
-        <li>✅ <strong>Budget partagé famille :</strong> Visibilité totale pour tous</li>
+        <li>✅ <strong>Gestion en Dirhams (MAD) :</strong> choisissez le Maroc et le dirham à la création du budget ; un autre budget peut être en euros si besoin</li>
+        <li>✅ <strong>Vos propres charges :</strong> souk, hammam, CNSS, scolarité, nommées comme vous voulez</li>
+        <li>✅ <strong>Cagnottes Ramadan et Aïd :</strong> un objectif, une date, et le montant mensuel est calculé pour vous</li>
+        <li>✅ <strong>Charges annuelles étalées :</strong> vignette, assurance ou rentrée réparties sur 12 mois</li>
+        <li>✅ <strong>Budget partagé :</strong> invitez vos proches par e-mail, tout le monde voit les mêmes chiffres en temps réel</li>
+        <li>✅ <strong>Pas seulement pour les familles :</strong> budget solo, en couple, entre colocataires ou pour un projet (mariage, travaux), toujours en dirhams</li>
       </ul>
 
       <div className="bg-gradient-to-r from-green-600 to-red-600 text-white rounded-xl p-8 text-center my-8">
-        <h3 className="text-2xl font-bold mb-4">Rejoignez les Familles Marocaines qui Maîtrisent leur Budget</h3>
+        <h3 className="text-2xl font-bold mb-4">Maîtrisez votre Budget en Dirhams</h3>
         <p className="text-lg mb-6 opacity-90">
-          Application 100% gratuite, en français et arabe, adaptée à la vie au Maroc
+          Application gratuite, en français : en famille, en couple, entre amis ou seul
         </p>
         <a 
           href="/signup" 
@@ -2707,6 +2718,10 @@ export const blogArticles: BlogArticleContent[] = [
           <li>Ouvrez <strong>« Répartir le pot commun »</strong> : choisissez 50/50, prorata ou même argent de poche, et le mois de référence.</li>
           <li>Chaque membre voit son <strong>argent de poche</strong> du mois, dont ses charges perso, et peut consulter son historique mois par mois.</li>
         </ol>
+        <p>
+          Le même principe marche en colocation ou entre amis : créez un budget à part (« Coloc », « Vacances entre amis »),
+          invitez chacun par e-mail, et le pot commun se répartit de la même façon.
+        </p>
 
         <div className="bg-gradient-to-r from-primary to-purple-600 text-white rounded-xl p-8 text-center my-8">
           <h3 className="text-2xl font-bold mb-4">Votre pot commun, calculé au mois près</h3>
@@ -2806,6 +2821,10 @@ export const blogArticles: BlogArticleContent[] = [
         <p>
           Si ce n'est pas tenable, deux boutons : <strong>« Créer et ajuster les contributions »</strong> pour revoir la répartition du pot commun,
           ou <strong>« Créer et demander un plan au Budget IA »</strong> : l'IA propose des économies et une répartition qui respectent votre date limite.
+        </p>
+        <p>
+          La cagnotte peut vivre dans votre budget du foyer, ou dans un budget à part dédié au projet (« Mariage 2027 », « Travaux »),
+          que vous épargniez seul ou à plusieurs.
         </p>
 
         <div className="bg-gradient-to-r from-primary to-purple-600 text-white rounded-xl p-8 text-center my-8">
@@ -2934,7 +2953,8 @@ export const blogArticles: BlogArticleContent[] = [
         </ol>
         <p>
           Pour aller vite : notre <a href="/tableau-budget-familial-gratuit">tableau de budget familial gratuit</a> (Excel avec calculs, ou PDF à imprimer),
-          ou l'application Budget Famille, qui remplit chaque mois à partir de vos règles et calcule le pot commun de chacun.
+          ou l'application Budget Famille, qui remplit chaque mois à partir de vos règles et calcule le pot commun de chacun ;
+          elle permet aussi d'ouvrir un budget à part pour un projet (vacances, travaux, naissance).
           Pour voir en une minute ce qu'il reste à votre foyer après les charges fixes, par personne et par jour : notre{' '}
           <a href="/calcul-reste-a-vivre">simulateur de reste à vivre</a>.
         </p>

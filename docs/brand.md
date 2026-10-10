@@ -4,6 +4,21 @@ Logo officiel « Sous le même toit » : un toit au-dessus du budget du foyer,
 partagé en trois parts. Fichiers sources (vectoriels) dans `public/brand/`,
 publiés sur https://www.budgetfamille.com/brand/.
 
+## Positionnement
+
+Budget Famille sert à **budgétiser et planifier tout ce qui compte, seul ou à
+plusieurs**. « Famille » au sens large : vous seul (budget perso, étudiant),
+votre couple, vos enfants, vos colocataires ou amis, et vos projets (voyage,
+mariage, travaux, voiture, apport) avec un objectif et une date.
+
+- Phrase de présentation : « L’application de budget gratuite pour la famille,
+  le couple, la coloc et vos projets. »
+- Dès qu’on présente l’application (site, articles, posts), le dire au moins
+  une fois : « seul ou à plusieurs », « en couple, en famille ou en coloc »,
+  « un budget à part pour un projet ».
+- Un sujet « famille » reste un sujet famille : c’est la présentation de
+  l’application qui s’élargit, pas chaque article.
+
 ## Fichiers
 
 | Usage | Fichier |

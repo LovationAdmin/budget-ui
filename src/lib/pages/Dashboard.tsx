@@ -364,7 +364,7 @@ export default function Dashboard() {
   useEffect(() => {
     if (!welcome || loading) return;
     if (budgets.length === 0) {
-      setNewBudgetName((n) => n || 'Budget famille');
+      setNewBudgetName((n) => n || 'Mon budget');
       setShowCreateModal(true);
     }
     setParams((p) => {
@@ -375,7 +375,7 @@ export default function Dashboard() {
   }, [welcome, loading, budgets.length, setParams]);
 
   const openCreate = () => {
-    if (budgets.length === 0) setNewBudgetName((n) => n || 'Budget famille');
+    if (budgets.length === 0) setNewBudgetName((n) => n || 'Mon budget');
     setShowCreateModal(true);
   };
 
@@ -443,7 +443,7 @@ export default function Dashboard() {
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Nouveau budget</DialogTitle>
-            <DialogDescription>Configurez votre budget familial.</DialogDescription>
+            <DialogDescription>Un budget pour le foyer, la coloc ou un projet : vous pourrez en créer d’autres.</DialogDescription>
           </DialogHeader>
           <form onSubmit={handleCreateBudget}>
             <div className="space-y-4 py-4">
@@ -453,7 +453,7 @@ export default function Dashboard() {
                   id="budget-name"
                   value={newBudgetName} 
                   onChange={(e) => setNewBudgetName(e.target.value)} 
-                  placeholder="Ex. : Budget famille, Coloc…"
+                  placeholder="Ex. : Foyer, Coloc, Mariage 2027…"
                   autoFocus 
                   className="min-h-[44px]"
                 />

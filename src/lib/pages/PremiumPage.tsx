@@ -51,7 +51,7 @@ export default function PremiumPage() {
               Abonnement Premium
             </CardTitle>
             <CardDescription className="text-indigo-100">
-              Toutes les fonctionnalités avancées pour gérer votre budget familial
+              Toutes les fonctionnalités avancées pour gérer votre budget, seul ou à plusieurs
             </CardDescription>
           </CardHeader>
 

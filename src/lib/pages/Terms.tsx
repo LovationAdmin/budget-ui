@@ -67,8 +67,9 @@ export default function Terms() {
                 Budget Famille accessible à l'adresse <strong>budgetfamille.com</strong> (ci-après « le Service »).
               </p>
               <p className="text-gray-700 leading-relaxed mt-3">
-                Budget Famille est une application web de gestion de budget familial permettant aux utilisateurs de 
-                planifier, suivre et partager leurs finances en temps réel.
+                Budget Famille est une application web de gestion de budget (personnel, de couple, familial, de
+                colocation ou de projet) permettant aux utilisateurs de planifier, suivre et partager leurs finances
+                en temps réel.
               </p>
             </section>
 
@@ -99,10 +100,10 @@ export default function Terms() {
                 Budget Famille propose les services suivants :
               </p>
               <ul className="list-disc pl-6 space-y-2 text-gray-700">
-                <li>Création et gestion de budgets familiaux</li>
+                <li>Création et gestion de budgets, seul ou à plusieurs</li>
                 <li>Suivi des revenus et dépenses</li>
                 <li>Planification de projets financiers</li>
-                <li>Partage collaboratif avec membres de la famille</li>
+                <li>Partage collaboratif avec les membres invités (conjoint, famille, colocataires…)</li>
                 <li>Synchronisation en temps réel</li>
                 <li>Connexion bancaire sécurisée (fonctionnalité Beta)</li>
                 <li>Suggestions d'économies par IA</li>
