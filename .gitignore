@@ -28,3 +28,6 @@ dist-ssr
 Thumbs.db
 # Playwright CLI snapshots/screenshots
 .playwright-cli/
+
+# Knowledge graph, regenerated locally by `graphify update .`
+graphify-out/
