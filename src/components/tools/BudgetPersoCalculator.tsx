@@ -10,23 +10,12 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { AlertTriangle, CheckCircle2, ChevronDown, Info, RotateCcw, Share2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import type { ToolFormat } from '@/i18n/format';
 import { MoneyInput, Panel, SignupCard, Tile } from '@/components/tools/ToolKit';
 import {
   FULL_SAVINGS_MAX_NEEDS_SHARE, INCOME_FIELDS, NEED_FIELDS, RULE, computeBudgetPerso,
   type BudgetPerso, type IncomeKey, type NeedKey,
 } from '@/lib/tools/budgetPerso';
-
-/** How the page writes and reads amounts, in its language and currency. */
-export interface BudgetPersoFormat {
-  /** Whole amount: "1 180 €", "$1,180". */
-  money: (n: number) => string;
-  /** Cents when present: "16,67 €", "$16.67". */
-  moneyExact: (n: number) => string;
-  pct: (share: number) => string;
-  parse: (raw: string) => number;
-  /** Shown after each amount field: "€/mois", "$/month". */
-  suffix: string;
-}
 
 interface FieldCopy {
   label: string;
@@ -92,7 +81,7 @@ function StackedBar({ label, parts }: { label: string; parts: Array<{ key: strin
   );
 }
 
-function Comparison({ r, t, f }: { r: BudgetPerso; t: BudgetPersoCopy; f: BudgetPersoFormat }) {
+function Comparison({ r, t, f }: { r: BudgetPerso; t: BudgetPersoCopy; f: ToolFormat }) {
   const share = (n: number) => (r.revenus > 0 ? n / r.revenus : 0);
   const deficit = r.status === 'deficit';
   const rows = [
@@ -163,7 +152,7 @@ function Comparison({ r, t, f }: { r: BudgetPerso; t: BudgetPersoCopy; f: Budget
 
 const SAVINGS_KEY = 'epargne';
 
-const positive = (parse: BudgetPersoFormat['parse'], raw: string | undefined) => {
+const positive = (parse: ToolFormat['parse'], raw: string | undefined) => {
   const n = parse(raw ?? '');
   return Number.isFinite(n) && n > 0 ? n : 0;
 };
@@ -179,7 +168,7 @@ function load(storageKey: string): Record<string, string> | null {
 
 export function BudgetPersoCalculator({ t, format: f, storageKey, beforeIncomes }: {
   t: BudgetPersoCopy;
-  format: BudgetPersoFormat;
+  format: ToolFormat;
   /** localStorage key of the visitor's values, one per page. */
   storageKey: string;
   /** Shown at the top of step 1 (the currency choice, in English). */
@@ -260,14 +249,14 @@ export function BudgetPersoCalculator({ t, format: f, storageKey, beforeIncomes 
             >
               {beforeIncomes}
               {INCOME_FIELDS.map((i) => (
-                <MoneyInput key={i.key} id={`inc-${i.key}`} label={t.incomes[i.key].label} hint={t.incomes[i.key].hint} suffix={f.suffix} value={values[`inc.${i.key}`] ?? ''} onChange={set(`inc.${i.key}`)} />
+                <MoneyInput key={i.key} id={`inc-${i.key}`} label={t.incomes[i.key].label} hint={t.incomes[i.key].hint} suffix={`${f.symbol}${t.perMonth}`} value={values[`inc.${i.key}`] ?? ''} onChange={set(`inc.${i.key}`)} />
               ))}
             </Panel>
 
             <Panel title={t.needsTitle} step={2}>
               <p className="pb-2 text-sm text-muted-foreground">{t.needsIntro}</p>
               {NEED_FIELDS.filter((n) => n.main || moreOpen).map((n) => (
-                <MoneyInput key={n.key} id={`need-${n.key}`} label={t.needs[n.key].label} hint={t.needs[n.key].hint} suffix={f.suffix} value={values[`need.${n.key}`] ?? ''} onChange={set(`need.${n.key}`)} />
+                <MoneyInput key={n.key} id={`need-${n.key}`} label={t.needs[n.key].label} hint={t.needs[n.key].hint} suffix={`${f.symbol}${t.perMonth}`} value={values[`need.${n.key}`] ?? ''} onChange={set(`need.${n.key}`)} />
               ))}
               {!moreOpen && (
                 <div className="pt-3">
@@ -288,7 +277,7 @@ export function BudgetPersoCalculator({ t, format: f, storageKey, beforeIncomes 
                 id="epargne-actuelle"
                 label={t.savingsLabel}
                 hint={t.savingsHint}
-                suffix={f.suffix}
+                suffix={`${f.symbol}${t.perMonth}`}
                 value={values[SAVINGS_KEY] ?? ''}
                 onChange={set(SAVINGS_KEY)}
               />

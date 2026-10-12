@@ -14,7 +14,10 @@ import { blogArticles } from '@/data/blog-articles';
 import { articlesByDate, relatedArticles } from '@/data/blog-related';
 import { LOCALES, alternatesOf, hreflangsOf, localeOf, type Locale } from '@/i18n/locales';
 import { HOME_FAQ, RAV_FAQ, TEMPLATE_FAQ, type FaqItem } from './faq';
+import { EN_TOOLS } from '@/i18n/en/tools';
 import { BUDGET_503020_FAQ_EN } from './faq-503020-en';
+import { RENT_SPLIT_FAQ_EN } from './faq-rent-split-en';
+import { WEDDING_FAQ_EN } from './faq-wedding-en';
 import { COLOC_FAQ } from './faq-colocation';
 import { MARIAGE_FAQ } from './faq-mariage';
 import { PERSO_FAQ } from './faq-budget-personnel';
@@ -61,6 +64,7 @@ function Shell({ path, children }: { path: string; children: React.ReactNode }) 
         <header className="border-b border-border/60 px-4 py-4">
           <nav aria-label="Main navigation" className="mx-auto flex max-w-5xl flex-wrap items-center gap-x-5 gap-y-2 text-sm">
             <a href={LOCALES.en.home} className="font-display text-lg font-bold text-foreground">{SITE_NAME}</a>
+            {EN_TOOLS.map((tool) => <a key={tool.path} href={tool.path} className="text-muted-foreground">{tool.label}</a>)}
             <LanguageLinks path={path} />
           </nav>
         </header>
@@ -151,6 +155,8 @@ const TOOLS: Record<string, { name: string; crumb: string; faq: FaqItem[] }> = {
   '/budget-mariage': { name: 'Calculateur de budget mariage', crumb: 'Budget mariage', faq: MARIAGE_FAQ },
   '/budget-personnel': { name: 'Calculateur de budget personnel 50/30/20', crumb: 'Budget personnel', faq: PERSO_FAQ },
   '/en/50-30-20-budget-calculator': { name: '50/30/20 Budget Calculator', crumb: '50/30/20 budget calculator', faq: BUDGET_503020_FAQ_EN },
+  '/en/rent-split-calculator': { name: 'Rent Split Calculator', crumb: 'Rent split calculator', faq: RENT_SPLIT_FAQ_EN },
+  '/en/wedding-budget-calculator': { name: 'Wedding Budget Calculator', crumb: 'Wedding budget calculator', faq: WEDDING_FAQ_EN },
 };
 
 /** Language fields of a built page: its locale, Open Graph locales and hreflang versions. */

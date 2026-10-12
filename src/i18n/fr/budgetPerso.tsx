@@ -3,17 +3,8 @@
 // as every other language (BudgetPersoCopy): a missing one fails the build.
 
 import { Link } from 'react-router-dom';
-import type { BudgetPersoCopy, BudgetPersoFormat } from '@/components/tools/BudgetPersoCalculator';
-import { money, parseAmount } from '@/lib/budget/format';
+import type { BudgetPersoCopy } from '@/components/tools/BudgetPersoCalculator';
 import { EXAMPLE, INCOME_FIELDS, NEED_FIELDS } from '@/lib/tools/budgetPerso';
-
-export const FORMAT_FR: BudgetPersoFormat = {
-  money: (n) => money(n, '€', true),
-  moneyExact: (n) => money(n),
-  pct: (r) => `${Math.round(r * 100)} %`,
-  parse: parseAmount,
-  suffix: '€/mois',
-};
 
 const fields = <K extends string>(list: Array<{ key: K; label: string; hint?: string }>) =>
   Object.fromEntries(list.map((f) => [f.key, { label: f.label, hint: f.hint }])) as Record<K, { label: string; hint?: string }>;

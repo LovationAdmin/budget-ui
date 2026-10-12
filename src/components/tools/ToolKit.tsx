@@ -12,8 +12,10 @@ import { ArrowRight, Minus, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import type { FaqItem } from '@/seo/faq';
 
-export function Stepper({ label, hint, value, min, max = 12, onChange }: {
+export function Stepper({ label, hint, value, min, max = 12, onChange, removeLabel = `Retirer : ${label}`, addLabel = `Ajouter : ${label}` }: {
   label: string; hint?: string; value: number; min: number; max?: number; onChange: (v: number) => void;
+  /** Names of the − and + buttons for screen readers. */
+  removeLabel?: string; addLabel?: string;
 }) {
   return (
     <div className="flex items-center justify-between gap-4 py-2">
@@ -26,7 +28,7 @@ export function Stepper({ label, hint, value, min, max = 12, onChange }: {
           type="button"
           onClick={() => onChange(Math.max(min, value - 1))}
           disabled={value <= min}
-          aria-label={`Retirer : ${label}`}
+          aria-label={removeLabel}
           className="flex h-11 w-11 items-center justify-center rounded-xl border border-border bg-background text-foreground transition hover:bg-muted disabled:opacity-40"
         >
           <Minus className="h-4 w-4" aria-hidden="true" />
@@ -36,7 +38,7 @@ export function Stepper({ label, hint, value, min, max = 12, onChange }: {
           type="button"
           onClick={() => onChange(Math.min(max, value + 1))}
           disabled={value >= max}
-          aria-label={`Ajouter : ${label}`}
+          aria-label={addLabel}
           className="flex h-11 w-11 items-center justify-center rounded-xl border border-border bg-background text-foreground transition hover:bg-muted disabled:opacity-40"
         >
           <Plus className="h-4 w-4" aria-hidden="true" />

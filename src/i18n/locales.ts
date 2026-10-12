@@ -29,6 +29,8 @@ const ALL = Object.keys(LOCALES) as Locale[];
 /** One entry per translated page: its path in each language. */
 export const TRANSLATIONS: ReadonlyArray<Partial<Record<Locale, string>>> = [
   { fr: '/budget-personnel', en: '/en/50-30-20-budget-calculator' },
+  { fr: '/budget-colocation', en: '/en/rent-split-calculator' },
+  { fr: '/budget-mariage', en: '/en/wedding-budget-calculator' },
 ];
 
 const normalize = (path: string) => (path.length > 1 ? path.replace(/\/+$/, '') : path);
