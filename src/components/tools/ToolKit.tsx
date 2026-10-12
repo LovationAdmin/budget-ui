@@ -121,22 +121,22 @@ export function Segmented<T extends string>({ label, value, options, onChange }:
 }
 
 /** Dark call-to-action card shown under a calculator result. */
-export function SignupCard({ title, text }: { title: string; text: string }) {
+export function SignupCard({ title, text, cta = 'Créer mon budget gratuit' }: { title: string; text: string; cta?: string }) {
   return (
     <div className="mt-6 rounded-xl bg-gradient-to-br from-slate-900 to-sky-900 p-4 text-white">
       <p className="font-semibold">{title}</p>
       <p className="mt-1 text-sm text-slate-200">{text}</p>
       <Button asChild size="lg" variant="secondary" className="mt-3 h-12 w-full bg-white text-slate-900 hover:bg-slate-100">
-        <Link to="/signup">Créer mon budget gratuit <ArrowRight className="ml-2 h-4 w-4" aria-hidden="true" /></Link>
+        <Link to="/signup">{cta} <ArrowRight className="ml-2 h-4 w-4" aria-hidden="true" /></Link>
       </Button>
     </div>
   );
 }
 
-export function FaqList({ id, items }: { id: string; items: FaqItem[] }) {
+export function FaqList({ id, items, title = 'Questions fréquentes' }: { id: string; items: FaqItem[]; title?: string }) {
   return (
     <section aria-labelledby={id}>
-      <h2 id={id}>Questions fréquentes</h2>
+      <h2 id={id}>{title}</h2>
       <dl className="mt-6 space-y-6">
         {items.map((f) => (
           <div key={f.q}>

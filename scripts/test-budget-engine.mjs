@@ -16,6 +16,7 @@ const SUITES = [
   'src/lib/tools/__tests__/colocation.test.ts',
   'src/lib/tools/__tests__/mariage.test.ts',
   'src/lib/tools/__tests__/budgetPerso.test.ts',
+  'src/i18n/__tests__/i18n.test.ts',
 ];
 
 try {

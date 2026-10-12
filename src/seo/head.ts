@@ -1,7 +1,9 @@
 // src/seo/head.ts
 // Applies a page's search metadata to the live document (client-side
-// navigation). The prerendered HTML already carries the same values.
+// navigation). The prerendered HTML already carries the same values. The
+// language and its alternates follow from the canonical path (src/i18n).
 
+import { LOCALES, alternatesOf, hreflangsOf, localeOf, type Locale } from '@/i18n/locales';
 import { DEFAULT_IMAGE, SITE_NAME, absolute } from './site';
 
 export interface HeadMeta {
@@ -45,4 +47,22 @@ export function applyHead(m: HeadMeta) {
     document.head.appendChild(link);
   }
   link.href = url;
+  const locale = localeOf(m.canonical);
+  document.documentElement.lang = locale;
+  setMeta('property', 'og:locale', LOCALES[locale].og);
+  document.head.querySelectorAll('link[rel="alternate"][hreflang], meta[property="og:locale:alternate"]').forEach((el) => el.remove());
+  for (const alt of hreflangsOf(m.canonical)) {
+    const el = document.createElement('link');
+    el.rel = 'alternate';
+    el.hreflang = alt.hreflang;
+    el.href = absolute(alt.path);
+    document.head.appendChild(el);
+  }
+  for (const l of Object.keys(alternatesOf(m.canonical) ?? {}) as Locale[]) {
+    if (l === locale) continue;
+    const el = document.createElement('meta');
+    el.setAttribute('property', 'og:locale:alternate');
+    el.content = LOCALES[l].og;
+    document.head.appendChild(el);
+  }
 }

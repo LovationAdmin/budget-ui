@@ -6,202 +6,30 @@
 // of that remainder between wants and savings (rule in budgetPerso.ts) and the
 // wants per day. Targets « budget personnel », « règle 50/30/20 » and « combien
 // épargner par mois »; every figure on the page is either the visitor's own or
-// the fictitious example computed by the module.
+// the fictitious example computed by the module. The calculator itself
+// (BudgetPersoCalculator) is shared with /en/50-30-20-budget-calculator.
 // ============================================================================
 
-import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import {
-  AlertTriangle, ArrowRight, Calculator, CheckCircle2, ChevronDown, Info, RotateCcw, Share2, ShieldCheck,
-} from 'lucide-react';
+import { ArrowRight, Calculator, ShieldCheck } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
-import { Button } from '@/components/ui/button';
-import { FaqList, MoneyInput, Panel, SignupCard, Tile, ToolArticle } from '@/components/tools/ToolKit';
-import { money, parseAmount } from '@/lib/budget/format';
+import { LanguageSwitch } from '@/components/LanguageSwitch';
+import { BudgetPersoCalculator } from '@/components/tools/BudgetPersoCalculator';
+import { FaqList, ToolArticle } from '@/components/tools/ToolKit';
+import { BUDGET_PERSO_FR, FORMAT_FR } from '@/i18n/fr/budgetPerso';
+import { money } from '@/lib/budget/format';
 import { PERSO_FAQ } from '@/seo/faq-budget-personnel';
 import {
-  EXAMPLE, EXAMPLE_HIGH_RENT, FULL_SAVINGS_MAX_NEEDS_SHARE, INCOME_FIELDS, NEED_FIELDS, RULE, computeBudgetPerso,
-  type BudgetPerso,
+  EXAMPLE, EXAMPLE_HIGH_RENT, FULL_SAVINGS_MAX_NEEDS_SHARE, NEED_FIELDS, computeBudgetPerso,
 } from '@/lib/tools/budgetPerso';
 
-const STORAGE_KEY = 'bf:budget-personnel:v1';
-const SAVINGS_KEY = 'epargne';
-
-interface Saved {
-  values: Record<string, string>;
-}
-
-function load(): Saved | null {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? (JSON.parse(raw) as Saved) : null;
-  } catch {
-    return null;
-  }
-}
-
-const euros = (n: number) => money(n, '€', true);
-const pct = (r: number) => `${Math.round(r * 100)} %`;
-const amount = (raw: string | undefined) => {
-  const n = parseAmount(raw ?? '');
-  return Number.isFinite(n) && n > 0 ? n : 0;
-};
+const { money: euros, pct } = FORMAT_FR;
 
 const example = computeBudgetPerso(EXAMPLE.incomes, EXAMPLE.needs);
 const exampleHigh = computeBudgetPerso(EXAMPLE_HIGH_RENT.incomes, EXAMPLE_HIGH_RENT.needs);
 
-const COLORS = { besoins: 'bg-primary', envies: 'bg-sky-400', epargne: 'bg-success', marge: 'bg-success/30', deficit: 'bg-destructive' };
-
-/** Stacked bar, decorative: the table under it carries the same figures as text. */
-function StackedBar({ label, parts }: { label: string; parts: Array<{ key: string; share: number; className: string }> }) {
-  return (
-    <div>
-      <p className="text-xs font-medium text-muted-foreground">{label}</p>
-      <div className="mt-1 flex h-3 overflow-hidden rounded-full bg-muted" aria-hidden="true">
-        {parts.filter((p) => p.share > 0).map((p) => (
-          <div key={p.key} className={`h-full ${p.className}`} style={{ width: `${Math.min(100, p.share * 100)}%` }} />
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function Comparison({ r }: { r: BudgetPerso }) {
-  const share = (n: number) => (r.revenus > 0 ? n / r.revenus : 0);
-  const deficit = r.status === 'deficit';
-  const rows = [
-    { key: 'besoins', label: 'Besoins', ref: r.regle.besoins, refPct: RULE.besoins, you: r.besoins },
-    { key: 'envies', label: 'Envies', ref: r.regle.envies, refPct: RULE.envies, you: r.envies },
-    { key: 'epargne', label: 'Épargne', ref: r.regle.epargne, refPct: RULE.epargne, you: r.epargne },
-  ];
-  return (
-    <div className="mt-5 space-y-3">
-      <StackedBar
-        label="Repère 50/30/20"
-        parts={[
-          { key: 'besoins', share: RULE.besoins, className: COLORS.besoins },
-          { key: 'envies', share: RULE.envies, className: COLORS.envies },
-          { key: 'epargne', share: RULE.epargne, className: COLORS.epargne },
-        ]}
-      />
-      <StackedBar
-        label="Votre budget"
-        parts={deficit ? [{ key: 'besoins', share: 1, className: COLORS.deficit }] : [
-          { key: 'besoins', share: share(r.besoins), className: COLORS.besoins },
-          { key: 'envies', share: share(r.envies), className: COLORS.envies },
-          { key: 'epargne', share: share(r.epargne), className: COLORS.epargne },
-          { key: 'marge', share: share(r.marge), className: COLORS.marge },
-        ]}
-      />
-      <table className="w-full text-left text-sm">
-        <caption className="sr-only">Votre budget du mois comparé à la règle 50/30/20</caption>
-        <thead>
-          <tr className="border-b border-border text-xs text-muted-foreground">
-            <th scope="col" className="py-1.5 font-medium">Poste</th>
-            <th scope="col" className="py-1.5 text-right font-medium">Repère</th>
-            <th scope="col" className="py-1.5 text-right font-medium">Votre budget</th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-border/60">
-          {rows.map((row) => (
-            <tr key={row.key}>
-              <th scope="row" className="py-2 font-medium text-foreground">
-                <span className={`mr-2 inline-block h-2.5 w-2.5 rounded-full ${row.key === 'besoins' && deficit ? COLORS.deficit : COLORS[row.key as keyof typeof COLORS]}`} aria-hidden="true" />
-                {row.label}
-              </th>
-              <td className="py-2 text-right tabular-nums">
-                {euros(row.ref)}<span className="block text-xs text-muted-foreground">{pct(row.refPct)}</span>
-              </td>
-              <td className="py-2 text-right tabular-nums font-semibold text-foreground">
-                {euros(row.you)}<span className="block text-xs font-normal text-muted-foreground">{pct(share(row.you))}</span>
-              </td>
-            </tr>
-          ))}
-          {r.marge > 0 && (
-            <tr>
-              <th scope="row" className="py-2 font-medium text-foreground">
-                <span className={`mr-2 inline-block h-2.5 w-2.5 rounded-full ${COLORS.marge}`} aria-hidden="true" />
-                Marge libre
-              </th>
-              <td className="py-2 text-right text-muted-foreground">—</td>
-              <td className="py-2 text-right tabular-nums font-semibold text-foreground">
-                {euros(r.marge)}<span className="block text-xs font-normal text-muted-foreground">{pct(share(r.marge))}</span>
-              </td>
-            </tr>
-          )}
-        </tbody>
-      </table>
-    </div>
-  );
-}
-
 export default function BudgetPersonnel() {
-  const saved = useMemo(load, []);
-  const [values, setValues] = useState<Record<string, string>>(saved?.values ?? {});
-  const [moreOpen, setMoreOpen] = useState(() => NEED_FIELDS.some((f) => !f.main && amount(saved?.values?.[`need.${f.key}`]) > 0));
-  const [resultsVisible, setResultsVisible] = useState(true);
-  const [copied, setCopied] = useState(false);
-  const resultsRef = useRef<HTMLDivElement>(null);
-  const headlineRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify({ values }));
-    } catch {
-      // Private mode or blocked storage: the calculator still works.
-    }
-  }, [values]);
-
-  useEffect(() => {
-    const el = headlineRef.current;
-    if (!el || typeof IntersectionObserver === 'undefined') return;
-    const io = new IntersectionObserver(([entry]) => setResultsVisible(entry.isIntersecting), { threshold: 0.5 });
-    io.observe(el);
-    return () => io.disconnect();
-  }, []);
-
-  const r = useMemo(() => computeBudgetPerso(
-    Object.fromEntries(INCOME_FIELDS.map((f) => [f.key, amount(values[`inc.${f.key}`])])),
-    Object.fromEntries(NEED_FIELDS.map((f) => [f.key, amount(values[`need.${f.key}`])])),
-    amount(values[SAVINGS_KEY]),
-  ), [values]);
-
-  const set = (key: string) => (v: string) => setValues((prev) => ({ ...prev, [key]: v }));
-  const hasIncome = r.revenus > 0;
-  const deficit = r.status === 'deficit';
-  const needsShare = r.besoinsShare ?? 0;
-
-  const reset = () => {
-    setValues({});
-    setMoreOpen(false);
-  };
-
-  const fillExample = () => {
-    setValues({
-      ...Object.fromEntries(Object.entries(EXAMPLE.incomes).map(([k, v]) => [`inc.${k}`, String(v)])),
-      ...Object.fromEntries(Object.entries(EXAMPLE.needs).map(([k, v]) => [`need.${k}`, String(v)])),
-    });
-  };
-
-  const share = async () => {
-    const url = 'https://www.budgetfamille.com/budget-personnel';
-    const text = 'Un calculateur gratuit pour faire son budget perso avec la règle 50/30/20.';
-    try {
-      if (navigator.share) {
-        await navigator.share({ title: 'Budget perso : la règle 50/30/20', text, url });
-        return;
-      }
-      await navigator.clipboard.writeText(url);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2500);
-    } catch {
-      // Share sheet dismissed.
-    }
-  };
-
-  const scrollToResults = () => resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary-50 to-purple-50 flex flex-col">
       <Navbar />
@@ -222,180 +50,11 @@ export default function BudgetPersonnel() {
             <p className="mt-3 text-sm text-muted-foreground">
               <ShieldCheck className="mr-1 inline h-4 w-4 align-[-3px] text-success" aria-hidden="true" />Sans inscription. Vos chiffres restent sur cet appareil : rien n’est envoyé.
             </p>
+            <LanguageSwitch className="mt-3" />
           </div>
         </section>
 
-        <section className="px-4 pb-16 sm:px-6 lg:px-8" aria-label="Calculateur">
-          <div className="mx-auto grid max-w-6xl gap-6 lg:grid-cols-[1fr_400px] lg:items-start">
-            <div className="space-y-6">
-              <Panel
-                title="Revenus nets du mois"
-                step={1}
-                aside={<button type="button" onClick={fillExample} className="min-h-[44px] shrink-0 rounded-xl px-2 text-sm font-semibold text-primary hover:underline">Voir l’exemple</button>}
-              >
-                {INCOME_FIELDS.map((f) => (
-                  <MoneyInput key={f.key} id={`inc-${f.key}`} label={f.label} hint={f.hint} value={values[`inc.${f.key}`] ?? ''} onChange={set(`inc.${f.key}`)} />
-                ))}
-              </Panel>
-
-              <Panel title="Dépenses essentielles du mois" step={2}>
-                <p className="pb-2 text-sm text-muted-foreground">
-                  Les « besoins » : ce que vous devez payer quoi qu’il arrive pour vous loger, vous nourrir, travailler et rester assuré.
-                </p>
-                {NEED_FIELDS.filter((f) => f.main || moreOpen).map((f) => (
-                  <MoneyInput key={f.key} id={`need-${f.key}`} label={f.label} hint={f.hint} value={values[`need.${f.key}`] ?? ''} onChange={set(`need.${f.key}`)} />
-                ))}
-                {!moreOpen && (
-                  <div className="pt-3">
-                    <button
-                      type="button"
-                      onClick={() => setMoreOpen(true)}
-                      className="inline-flex min-h-[44px] items-center gap-2 rounded-xl px-2 font-semibold text-primary hover:underline"
-                    >
-                      <ChevronDown className="h-4 w-4" aria-hidden="true" /> Autres : santé, garde et enfants, impôts…
-                    </button>
-                  </div>
-                )}
-                <p className="pt-3 text-sm text-muted-foreground">
-                  Une dépense annuelle (taxe foncière, assurance payée en une fois, abonnement à l’année) ? Divisez-la par 12. Les
-                  sorties, les loisirs et le shopping ne sont pas des besoins : ce sont les envies, la règle leur garde une part.
-                </p>
-              </Panel>
-
-              <Panel title="Votre épargne actuelle" step={3} aside={<span className="rounded-full bg-muted px-3 py-1 text-xs font-medium text-muted-foreground">Facultatif</span>}>
-                <MoneyInput
-                  id="epargne-actuelle"
-                  label="Épargne déjà mise de côté chaque mois"
-                  hint="Virements vers votre épargne, cagnottes… Laissez vide si vous débutez : c’est très bien aussi."
-                  value={values[SAVINGS_KEY] ?? ''}
-                  onChange={set(SAVINGS_KEY)}
-                />
-              </Panel>
-            </div>
-
-            <div ref={resultsRef} id="resultat" className="scroll-mt-24">
-              <div className="rounded-2xl border border-border/70 bg-card p-5 shadow-sm sm:p-6" aria-live="polite">
-                <div ref={headlineRef}>
-                  <p className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Après vos dépenses essentielles</p>
-                  {hasIncome ? (
-                    <p className={`mt-2 font-display text-5xl font-bold tabular-nums ${deficit ? 'text-destructive' : 'text-foreground'}`}>
-                      {euros(r.reste)}<span className="ml-1 text-lg font-semibold text-muted-foreground">/mois</span>
-                    </p>
-                  ) : (
-                    <p className="mt-3 text-muted-foreground">
-                      Indiquez votre salaire net et vos dépenses essentielles : votre budget 50/30/20 s’affiche ici au fil de la saisie.
-                    </p>
-                  )}
-                </div>
-                {hasIncome && (
-                  <>
-                    {deficit ? (
-                      <p className="mt-2 flex items-start gap-2 text-sm font-medium text-destructive">
-                        <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
-                        Vos dépenses essentielles dépassent vos revenus de {euros(-r.reste)} par mois.
-                      </p>
-                    ) : (
-                      <p className="mt-1 text-sm text-muted-foreground">sur {euros(r.revenus)} de revenus, après {euros(r.besoins)} de besoins</p>
-                    )}
-
-                    {!deficit && (
-                      <p className="mt-4 flex items-start gap-2 text-sm text-foreground">
-                        {r.status === 'within'
-                          ? <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-success" aria-hidden="true" />
-                          : <Info className="mt-0.5 h-4 w-4 shrink-0 text-primary" aria-hidden="true" />}
-                        <span>
-                          Vos besoins : <strong>{pct(needsShare)}</strong> de vos revenus, {r.status === 'within' ? 'dans le repère des 50 %' : 'au-dessus du repère des 50 %'}.
-                        </span>
-                      </p>
-                    )}
-
-                    <Comparison r={r} />
-
-                    {deficit ? (
-                      <div className="mt-5 rounded-xl bg-muted/60 p-4 text-sm text-muted-foreground">
-                        <p className="font-semibold text-foreground">Ce n’est pas une fatalité : des pistes pour rééquilibrer</p>
-                        <p className="mt-1">Vérifiez d’abord vos montants (une dépense annuelle comptée sans la diviser par 12 ?), puis :</p>
-                        <ul className="mt-2 space-y-1.5">
-                          <li><Link to="/outils-ia" className="font-medium text-primary hover:underline">Estimer ce que vos factures peuvent baisser</Link></li>
-                          <li><a href="https://www.mesdroitssociaux.gouv.fr/" target="_blank" rel="noopener" className="font-medium text-primary hover:underline">Vérifier vos droits aux aides</a> (simulateur officiel)</li>
-                          <li><a href="https://solidarites.gouv.fr/point-conseil-budget-pcb" target="_blank" rel="noopener" className="font-medium text-primary hover:underline">Parler à un Point conseil budget</a> : gratuit et confidentiel</li>
-                        </ul>
-                      </div>
-                    ) : (
-                      <>
-                        <div className="mt-5 grid grid-cols-3 gap-2">
-                          <Tile label="Envies" value={euros(r.envies)} note={`${pct(r.envies / r.revenus)} des revenus`} />
-                          <Tile label="Épargne" value={euros(r.epargne)} note={`${pct(r.epargneShare ?? 0)} des revenus`} />
-                          <Tile label="Envies par jour" value={money(r.enviesParJour)} note="sur 30 jours" />
-                        </div>
-                        <div className="mt-4 rounded-xl bg-muted/60 p-4 text-sm text-muted-foreground">
-                          {r.status === 'within' && (
-                            <p>
-                              Vos besoins restent sous 50 % : la règle s’applique telle quelle, 30 % pour les envies et 20 % pour
-                              l’épargne.{r.marge > 0 && <> Les {euros(r.marge)} qui restent en plus sont une <strong>marge libre</strong> : plus d’épargne, un projet ou un peu plus d’envies, c’est vous qui choisissez.</>}
-                            </p>
-                          )}
-                          {r.status === 'trimmed' && (
-                            <p>
-                              Vos besoins dépassent 50 % : cela arrive vite quand le loyer est élevé, ce n’est pas une faute. On réduit
-                              d’abord les envies et on garde 20 % pour l’épargne, tant que les envies gardent au moins autant que
-                              l’épargne (jusqu’à {pct(FULL_SAVINGS_MAX_NEEDS_SHARE)} de besoins).
-                            </p>
-                          )}
-                          {r.status === 'shared' && (
-                            <p>
-                              Avec {pct(needsShare)} de besoins, garder 20 % d’épargne laisserait moins aux envies qu’à l’épargne. On partage
-                              donc ce qui reste en deux moitiés égales : votre <strong>épargne possible</strong> est de {euros(r.epargne)} par
-                              mois. Si c’est encore trop, un plus petit montant régulier compte déjà.
-                            </p>
-                          )}
-                          <a href="#regle" className="mt-2 inline-block font-medium text-primary hover:underline">Comment ce partage est calculé</a>
-                        </div>
-                        {r.epargneActuelle > 0 && (
-                          <p className="mt-4 text-sm text-muted-foreground">
-                            Vous mettez déjà <strong>{euros(r.epargneActuelle)}</strong> de côté par mois ({pct(r.epargneActuelleShare ?? 0)} de vos revenus).{' '}
-                            {r.epargneActuelle > r.reste
-                              ? 'C’est plus que ce qui reste après vos besoins : vérifiez vos montants.'
-                              : r.ecartEpargne > 0
-                                ? `Pour atteindre la proposition : ${euros(r.ecartEpargne)} de plus par mois, à votre rythme.`
-                                : 'C’est au moins la proposition : bien joué.'}
-                          </p>
-                        )}
-                      </>
-                    )}
-                  </>
-                )}
-
-                <SignupCard
-                  title="Suivez ce budget chaque mois, seul ou à plusieurs"
-                  text="Budget Famille remplit chaque mois à partir de vos charges (tous les mois, certains mois ou une fois par an), avec des cagnottes d’épargne qui ont un objectif et une date. Vous pourrez inviter plus tard votre conjoint ou vos colocataires. Gratuit, sans connexion bancaire."
-                />
-
-                <div className="mt-3 flex flex-wrap gap-2">
-                  <Button type="button" variant="ghost" className="min-h-[44px]" onClick={reset}>
-                    <RotateCcw className="mr-2 h-4 w-4" aria-hidden="true" /> Effacer
-                  </Button>
-                  <Button type="button" variant="ghost" className="min-h-[44px]" onClick={share}>
-                    <Share2 className="mr-2 h-4 w-4" aria-hidden="true" /> {copied ? 'Lien copié' : 'Partager le calculateur'}
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* The results card scrolls away while filling the form (html/body clip overflow-x, so sticky is inert): this bar keeps the figure in sight. */}
-        {hasIncome && !resultsVisible && (
-          <div className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-card/95 px-4 py-3 backdrop-blur">
-            <div className="mx-auto flex max-w-md items-center justify-between gap-3">
-              <div>
-                <p className="text-xs text-muted-foreground">Après vos besoins</p>
-                <p className={`text-xl font-bold tabular-nums ${deficit ? 'text-destructive' : 'text-foreground'}`}>{euros(r.reste)}<span className="text-sm font-medium text-muted-foreground"> /mois</span></p>
-              </div>
-              <Button type="button" onClick={scrollToResults} className="min-h-[44px]">Voir le détail</Button>
-            </div>
-          </div>
-        )}
+        <BudgetPersoCalculator t={BUDGET_PERSO_FR} format={FORMAT_FR} storageKey="bf:budget-personnel:v1" />
 
         <ToolArticle>
           <section>

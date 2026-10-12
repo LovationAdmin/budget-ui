@@ -75,3 +75,34 @@ export function parseAmount(input: string | number): number {
   const n = Number(cleaned);
   return Number.isFinite(n) ? n : NaN;
 }
+
+// ============================================================================
+// Other languages than French: the currency symbol and separators follow the
+// locale ("$1,180", "£1,180.50", "−€240").
+// ============================================================================
+
+const intlFormatters = new Map<string, Intl.NumberFormat>();
+
+/** "$1,180" (cents shown only when present, unless `whole`). */
+export function moneyIntl(n: number, locale: string, currency: string, whole = false): string {
+  const v = roundCents(n);
+  const decimals = decimalsFor(v, whole);
+  const key = `${locale}|${currency}|${decimals}`;
+  let f = intlFormatters.get(key);
+  if (!f) {
+    f = new Intl.NumberFormat(locale, {
+      style: 'currency', currency, currencyDisplay: 'narrowSymbol', minimumFractionDigits: decimals, maximumFractionDigits: decimals,
+    });
+    intlFormatters.set(key, f);
+  }
+  return f.format(Math.abs(v) < 0.005 ? 0 : v).replace('-', MINUS);
+}
+
+/** Parses English input, where the comma separates thousands: "1,250.50". Returns NaN when invalid. */
+export function parseAmountEn(input: string | number): number {
+  if (typeof input === 'number') return input;
+  const cleaned = String(input).replace(/[\s,$£€]/g, '');
+  if (cleaned === '') return NaN;
+  const n = Number(cleaned);
+  return Number.isFinite(n) ? n : NaN;
+}
