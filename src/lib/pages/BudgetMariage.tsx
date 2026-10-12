@@ -7,180 +7,30 @@
 // poste, what 20 fewer guests save and the amount to put aside each month out.
 // Targets « budget mariage », « calcul budget mariage » and their variants.
 // There is no official average: every figure on the page is the visitor's own
-// or the fictitious example, labelled as such wherever it shows.
+// or the fictitious example, labelled as such wherever it shows. The
+// calculator itself (MariageCalculator) is shared with
+// /en/wedding-budget-calculator.
 // ============================================================================
 
-import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import {
-  AlertTriangle, ArrowRight, Calculator, CheckCircle2, ChevronDown, Info, RotateCcw, Share2, ShieldCheck, Sparkles,
-} from 'lucide-react';
+import { ArrowRight, Calculator, ShieldCheck, Sparkles } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
+import { LanguageSwitch } from '@/components/LanguageSwitch';
 import { Button } from '@/components/ui/button';
-import { FaqList, MoneyInput, Panel, SignupCard, Stepper, Tile, ToolArticle } from '@/components/tools/ToolKit';
-import { money, parseAmount } from '@/lib/budget/format';
+import { MariageCalculator, useMariageCalculator } from '@/components/tools/MariageCalculator';
+import { FaqList, ToolArticle } from '@/components/tools/ToolKit';
+import { FORMAT_FR } from '@/i18n/format';
+import { MARIAGE_FR } from '@/i18n/fr/mariage';
 import { MARIAGE_FAQ } from '@/seo/faq-mariage';
-import {
-  DEFAULT_GUESTS, EXAMPLE, FEWER_GUESTS, MAX_GUESTS, MIN_GUESTS, POSTE_FIELDS, addMonths, clampGuests, computeMariage,
-  exampleResult, formatMonthValue, monthLabel, parseMonth, savingPlan, toYearMonth, withFewerGuests,
-  type Amounts, type PosteField,
-} from '@/lib/tools/mariage';
+import { EXAMPLE, FEWER_GUESTS, POSTE_FIELDS, exampleResult } from '@/lib/tools/mariage';
 
-const STORAGE_KEY = 'bf:budget-mariage:v1';
-
-interface Saved {
-  guests: number;
-  /** Wedding month, "2027-06" (or what a browser without a month picker let the visitor type). */
-  date: string;
-  /** « Déjà mis de côté », as typed. */
-  saved: string;
-  /** Postes as typed, by PosteKey. */
-  values: Record<string, string>;
-  /** The fictitious example was filled in (its values are labelled while they remain). */
-  example: boolean;
-}
-
-function load(): Saved | null {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return null;
-    const s = JSON.parse(raw) as Partial<Saved>;
-    return {
-      guests: clampGuests(Number(s.guests ?? DEFAULT_GUESTS)),
-      date: typeof s.date === 'string' ? s.date : '',
-      saved: typeof s.saved === 'string' ? s.saved : '',
-      values: s.values && typeof s.values === 'object' ? s.values : {},
-      example: s.example === true,
-    };
-  } catch {
-    return null;
-  }
-}
-
-const euros = (n: number) => money(n, '€', true);
-const pct = (r: number) => `${Math.round(r * 100)} %`;
-const amount = (raw: string | undefined) => {
-  const n = parseAmount(raw ?? '');
-  return Number.isFinite(n) && n > 0 ? n : 0;
-};
-const invites = (n: number) => `${n} invité${n > 1 ? 's' : ''}`;
-/** « De mars 2027 », « D’octobre 2026 ». */
-const fromMonth = (label: string) => (/^[aeiouyàâéèêh]/i.test(label) ? `D’${label}` : `De ${label}`);
-
-/** The example as the form shows it. */
-const EXAMPLE_VALUES: Record<string, string> = Object.fromEntries(
-  Object.entries(EXAMPLE.amounts).map(([k, v]) => [k, String(v)]),
-);
-const EXAMPLE_NOTE = 'Exemple fictif, à remplacer par vos devis';
-
-function ExampleBadge() {
-  return (
-    <span className="ml-2 inline-block rounded-full bg-warning/15 px-2 py-0.5 align-middle text-xs font-semibold text-foreground">
-      exemple fictif
-    </span>
-  );
-}
+const { money: euros, moneyExact: money, pct } = FORMAT_FR;
+const ex = exampleResult();
 
 export default function BudgetMariage() {
-  const saved = useMemo(load, []);
-  const today = useMemo(() => new Date(), []);
-  const thisMonth = toYearMonth(today);
-  const [guests, setGuests] = useState<number>(saved?.guests ?? DEFAULT_GUESTS);
-  const [date, setDate] = useState(saved?.date ?? '');
-  const [already, setAlready] = useState(saved?.saved ?? '');
-  const [values, setValues] = useState<Record<string, string>>(saved?.values ?? {});
-  const [example, setExample] = useState(saved?.example ?? false);
-  const [moreOpen, setMoreOpen] = useState(() => POSTE_FIELDS.some((f) => !f.main && amount(saved?.values?.[f.key]) > 0));
-  const [resultsVisible, setResultsVisible] = useState(true);
-  const [copied, setCopied] = useState(false);
-  const resultsRef = useRef<HTMLDivElement>(null);
-  const headlineRef = useRef<HTMLDivElement>(null);
-  const dateRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify({ guests, date, saved: already, values, example } satisfies Saved));
-    } catch {
-      // Private mode or blocked storage: the calculator still works.
-    }
-  }, [guests, date, already, values, example]);
-
-  useEffect(() => {
-    const el = headlineRef.current;
-    if (!el || typeof IntersectionObserver === 'undefined') return;
-    const io = new IntersectionObserver(([entry]) => setResultsVisible(entry.isIntersecting), { threshold: 0.5 });
-    io.observe(el);
-    return () => io.disconnect();
-  }, []);
-
-  const r = useMemo(
-    () => computeMariage(guests, Object.fromEntries(POSTE_FIELDS.map((f) => [f.key, amount(values[f.key])])) as Amounts),
-    [guests, values],
-  );
-  const plan = useMemo(() => savingPlan(r.total, amount(already), date, today), [r.total, already, date, today]);
-  const fewer = withFewerGuests(r);
-  const ex = useMemo(exampleResult, []);
-
-  const hasTotal = r.total > 0;
-  const isExampleValue = (key: string) => example && EXAMPLE_VALUES[key] !== undefined && values[key] === EXAMPLE_VALUES[key];
-  const alreadyIsExample = example && already === String(EXAMPLE.saved);
-  const exampleLeft = POSTE_FIELDS.some((f) => isExampleValue(f.key)) || alreadyIsExample;
-  const wholeExample = example && POSTE_FIELDS.every((f) => (values[f.key] ?? '') === (EXAMPLE_VALUES[f.key] ?? ''));
-  const maxLine = r.lines[0]?.amount ?? 0;
-  const projectYear = parseMonth(date)?.year ?? thisMonth.year + 1;
-
-  const set = (key: string) => (v: string) => setValues((prev) => ({ ...prev, [key]: v }));
-
-  // Once every example amount has been replaced, the « exemple fictif » labels go for good.
-  useEffect(() => {
-    if (example && !exampleLeft) setExample(false);
-  }, [example, exampleLeft]);
-
-  /** Returns false when the visitor keeps their own amounts. */
-  const fillExample = (): boolean => {
-    if (hasTotal && !wholeExample && !window.confirm('Remplacer vos montants par l’exemple fictif ?')) return false;
-    setGuests(EXAMPLE.guests);
-    setValues({ ...EXAMPLE_VALUES });
-    setAlready(String(EXAMPLE.saved));
-    setDate(formatMonthValue(addMonths(thisMonth, EXAMPLE.monthsAhead)));
-    setExample(true);
-    setMoreOpen(true);
-    return true;
-  };
-
-  const reset = () => {
-    setGuests(DEFAULT_GUESTS);
-    setDate('');
-    setAlready('');
-    setValues({});
-    setExample(false);
-    setMoreOpen(false);
-  };
-
-  const share = async () => {
-    const url = 'https://www.budgetfamille.com/budget-mariage';
-    const text = 'Un calculateur gratuit pour estimer le budget de son mariage et ce qu’il faut mettre de côté chaque mois.';
-    try {
-      if (navigator.share) {
-        await navigator.share({ title: 'Calcul du budget de mariage', text, url });
-        return;
-      }
-      await navigator.clipboard.writeText(url);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2500);
-    } catch {
-      // Share sheet dismissed.
-    }
-  };
-
-  const scrollToResults = () => resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-
-  const posteHint = (f: PosteField): string | undefined => {
-    const rate = amount(values[f.key]);
-    if (f.perGuest && rate > 0) return `${money(rate)} × ${invites(r.guests)} = ${euros(rate * r.guests)}`;
-    return f.hint;
-  };
+  const calc = useMariageCalculator({ t: MARIAGE_FR, format: FORMAT_FR, storageKey: 'bf:budget-mariage:v1' });
+  const { fillExample, scrollToResults, projectYear } = calc;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary-50 to-purple-50 flex flex-col">
@@ -201,283 +51,17 @@ export default function BudgetMariage() {
             <p className="mt-3 text-sm text-muted-foreground">
               <ShieldCheck className="mr-1 inline h-4 w-4 align-[-3px] text-success" aria-hidden="true" />Vos chiffres restent sur cet appareil : rien n’est envoyé.
             </p>
+            <LanguageSwitch className="mt-3" />
             <div className="mt-6 flex flex-col items-center gap-1.5">
               <Button type="button" variant="outline" className="min-h-[44px] bg-card" onClick={fillExample}>
                 <Sparkles className="mr-2 h-4 w-4" aria-hidden="true" /> Remplir avec un exemple
               </Button>
-              <p className="text-xs text-muted-foreground">{EXAMPLE_NOTE}.</p>
+              <p className="text-xs text-muted-foreground">{MARIAGE_FR.exampleNote}.</p>
             </div>
           </div>
         </section>
 
-        <section className="px-4 pb-16 sm:px-6 lg:px-8" aria-label="Calculateur">
-          <div className="mx-auto grid max-w-6xl gap-6 lg:grid-cols-[1fr_400px] lg:items-start">
-            <div className="space-y-6">
-              <Panel title="Votre mariage" step={1}>
-                <div>
-                  <Stepper
-                    label="Nombre d’invités"
-                    hint="Adultes et enfants présents au repas"
-                    value={guests}
-                    min={MIN_GUESTS}
-                    max={MAX_GUESTS}
-                    onChange={(v) => setGuests(clampGuests(v))}
-                  />
-                  <div className="flex justify-end gap-2 pb-2">
-                    <button
-                      type="button"
-                      onClick={() => setGuests((g) => clampGuests(g - 10))}
-                      disabled={guests <= MIN_GUESTS}
-                      aria-label="Retirer 10 invités"
-                      className="min-h-[44px] min-w-[44px] rounded-xl border border-border bg-background px-3 text-sm font-semibold tabular-nums text-foreground transition hover:bg-muted disabled:opacity-40"
-                    >
-                      −10
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setGuests((g) => clampGuests(g + 10))}
-                      disabled={guests >= MAX_GUESTS}
-                      aria-label="Ajouter 10 invités"
-                      className="min-h-[44px] min-w-[44px] rounded-xl border border-border bg-background px-3 text-sm font-semibold tabular-nums text-foreground transition hover:bg-muted disabled:opacity-40"
-                    >
-                      +10
-                    </button>
-                  </div>
-                </div>
-                <div className="py-2">
-                  <label htmlFor="mariage-date" className="block font-medium text-foreground">Date du mariage</label>
-                  <p id="mariage-date-hint" className="text-sm text-muted-foreground">Mois et année, pour calculer l’épargne de chaque mois</p>
-                  <input
-                    ref={dateRef}
-                    id="mariage-date"
-                    type="month"
-                    min={formatMonthValue(thisMonth)}
-                    placeholder="aaaa-mm"
-                    value={date}
-                    aria-describedby="mariage-date-hint"
-                    onChange={(e) => setDate(e.target.value)}
-                    className="mt-1.5 block h-12 w-full rounded-xl border border-input bg-background px-4 text-lg text-foreground placeholder:text-muted-foreground/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ring-offset-background"
-                  />
-                </div>
-                <MoneyInput
-                  id="mariage-epargne"
-                  label={<>Déjà mis de côté{alreadyIsExample && <ExampleBadge />}</>}
-                  hint="Ce que vous avez déjà réuni pour le mariage, y compris les acomptes déjà versés"
-                  value={already}
-                  onChange={setAlready}
-                  suffix="€"
-                />
-              </Panel>
-
-              <Panel title="Postes de dépenses" step={2}>
-                <p className="py-2 text-sm text-muted-foreground">
-                  Saisissez vos devis : le montant total de chaque poste, sauf le traiteur et les boissons, en prix par invité.
-                  Il n’existe pas de prix moyen officiel : le total dépend surtout du nombre d’invités et du traiteur.
-                </p>
-                {exampleLeft && (
-                  <p className="flex items-start gap-2 py-3 text-sm text-foreground">
-                    <Info className="mt-0.5 h-4 w-4 shrink-0 text-warning" aria-hidden="true" />
-                    <span>
-                      <strong>{EXAMPLE_NOTE}.</strong> Ces montants ronds servent à montrer le calcul : ce ne sont ni des moyennes ni des prix du marché.
-                    </span>
-                  </p>
-                )}
-                {POSTE_FIELDS.filter((f) => f.main || moreOpen).map((f) => (
-                  <MoneyInput
-                    key={f.key}
-                    id={`poste-${f.key}`}
-                    label={<>{f.label}{isExampleValue(f.key) && <ExampleBadge />}</>}
-                    hint={posteHint(f)}
-                    value={values[f.key] ?? ''}
-                    onChange={set(f.key)}
-                    suffix={f.perGuest ? '€/invité' : '€'}
-                  />
-                ))}
-                {!moreOpen && (
-                  <div className="pt-3">
-                    <button
-                      type="button"
-                      onClick={() => setMoreOpen(true)}
-                      className="inline-flex min-h-[44px] items-center gap-2 rounded-xl px-2 text-left font-semibold text-primary hover:underline"
-                    >
-                      <ChevronDown className="h-4 w-4 shrink-0" aria-hidden="true" /> Autres postes : alliances, faire-part, voyage de noces
-                    </button>
-                  </div>
-                )}
-              </Panel>
-            </div>
-
-            <div ref={resultsRef} id="resultat" className="scroll-mt-24">
-              <div className="rounded-2xl border border-border/70 bg-card p-5 shadow-sm sm:p-6">
-                <div aria-live="polite">
-                  <div ref={headlineRef}>
-                    <p className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Budget total du mariage</p>
-                    {hasTotal ? (
-                      <p className="mt-2 font-display text-5xl font-bold tabular-nums text-foreground">{euros(r.total)}</p>
-                    ) : (
-                      <p className="mt-3 text-muted-foreground">
-                        Indiquez le nombre d’invités et vos devis : le total s’affiche ici au fil de la saisie.
-                      </p>
-                    )}
-                  </div>
-
-                  {hasTotal && (
-                    <>
-                      <p className="mt-1 text-sm text-muted-foreground">
-                        pour {invites(r.guests)}{r.voyage > 0 ? ', voyage de noces compris' : ''}
-                      </p>
-                      {exampleLeft && (
-                        <p className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-warning/15 px-3 py-1 text-xs font-semibold text-foreground">
-                          <Info className="h-3.5 w-3.5" aria-hidden="true" /> {EXAMPLE_NOTE}
-                        </p>
-                      )}
-
-                      <div className="mt-5 grid grid-cols-2 gap-2">
-                        <Tile label="Par invité" value={euros(r.costPerGuest)} note={r.voyage > 0 ? 'hors voyage de noces' : 'tout compris'} />
-                        <Tile
-                          label="Lié aux invités"
-                          value={euros(r.perGuestTotal)}
-                          note={`traiteur + boissons${r.perGuestShare !== null ? ` · ${pct(r.perGuestShare)}` : ''}`}
-                        />
-                      </div>
-                      <p className="mt-2 text-sm text-muted-foreground">
-                        Part fixe : <strong className="text-foreground">{euros(r.fixedTotal)}</strong>
-                        {r.perGuestShare !== null ? ` (${pct(1 - r.perGuestShare)})` : ''}, qui ne bouge pas avec le nombre d’invités.
-                      </p>
-
-                      <div className="mt-5 rounded-xl border border-border/70 p-4">
-                        <p className="text-sm font-semibold text-foreground">À mettre de côté chaque mois</p>
-                        {plan.status === 'ok' && plan.from && plan.to && (
-                          <>
-                            <p className="mt-1 font-display text-3xl font-bold tabular-nums text-foreground">
-                              {euros(plan.monthly ?? 0)}<span className="ml-1 text-base font-semibold text-muted-foreground">/mois</span>
-                            </p>
-                            <p className="mt-1 text-sm text-muted-foreground">
-                              {plan.months === 1
-                                ? `Un seul versement, en ${monthLabel(plan.from)}`
-                                : `${fromMonth(monthLabel(plan.from))} à ${monthLabel(plan.to)}, soit ${plan.months} versements`}
-                              , pour réunir {euros(plan.remaining)}
-                              {amount(already) > 0 ? ` (${euros(r.total)} − ${euros(amount(already))} déjà de côté)` : ''}.
-                            </p>
-                          </>
-                        )}
-                        {plan.status === 'covered' && (
-                          <p className="mt-1 flex items-start gap-2 text-sm text-muted-foreground">
-                            <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-success" aria-hidden="true" />
-                            Ce que vous avez déjà mis de côté couvre ce budget : rien à ajouter chaque mois.
-                          </p>
-                        )}
-                        {plan.status === 'this-month' && (
-                          <p className="mt-1 flex items-start gap-2 text-sm text-muted-foreground">
-                            <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-warning" aria-hidden="true" />
-                            {plan.remaining > 0
-                              ? `Le mariage a lieu ce mois-ci : il ne reste plus de mois pour épargner, et ${euros(plan.remaining)} à réunir.`
-                              : 'Le mariage a lieu ce mois-ci, et ce que vous avez mis de côté couvre ce budget.'}
-                          </p>
-                        )}
-                        {plan.status === 'past' && (
-                          <p className="mt-1 flex items-start gap-2 text-sm text-muted-foreground">
-                            <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-warning" aria-hidden="true" />
-                            Cette date est passée : indiquez le mois du mariage à venir.
-                          </p>
-                        )}
-                        {plan.status === 'no-date' && (
-                          <p className="mt-1 text-sm text-muted-foreground">
-                            <button type="button" onClick={() => dateRef.current?.focus()} className="font-medium text-primary hover:underline">
-                              Indiquez la date du mariage
-                            </button>{' '}
-                            pour savoir combien mettre de côté chaque mois.
-                          </p>
-                        )}
-                      </div>
-                    </>
-                  )}
-                </div>
-
-                {!hasTotal && (
-                  <Button type="button" variant="outline" className="mt-4 min-h-[44px] w-full" onClick={fillExample}>
-                    <Sparkles className="mr-2 h-4 w-4" aria-hidden="true" /> Remplir avec un exemple fictif
-                  </Button>
-                )}
-
-                {r.lines.length > 0 && (
-                  <div className="mt-5">
-                    <h3 className="text-sm font-semibold text-foreground">Répartition par poste</h3>
-                    <ul className="mt-3 space-y-3">
-                      {r.lines.map((l) => (
-                        <li key={l.key}>
-                          <div className="flex items-baseline justify-between gap-3 text-sm">
-                            <span className="text-foreground">
-                              {l.label}
-                              {l.perGuest && l.rate !== undefined && (
-                                <span className="text-muted-foreground"> · {money(l.rate)} par invité</span>
-                              )}
-                            </span>
-                            <span className="shrink-0 tabular-nums text-muted-foreground">
-                              <strong className="font-semibold text-foreground">{euros(l.amount)}</strong> · {pct(l.share)}
-                            </span>
-                          </div>
-                          <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-muted" aria-hidden="true">
-                            <div className="h-full rounded-full bg-primary" style={{ width: `${maxLine > 0 ? (l.amount / maxLine) * 100 : 0}%` }} />
-                          </div>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-
-                {hasTotal && fewer.fewer > 0 && (
-                  <div className="mt-5 rounded-xl bg-muted/60 p-4 text-sm text-muted-foreground">
-                    <p className="font-semibold text-foreground">Et avec {invites(fewer.fewer)} de moins{'\u00a0'}?</p>
-                    {r.ratePerGuest > 0 ? (
-                      <p className="mt-1">
-                        Le traiteur et les boissons baissent de <strong>{euros(fewer.saving)}</strong> : {euros(fewer.total)} au lieu
-                        de {euros(r.total)} pour {invites(fewer.guests)}. C’est un minimum : une salle plus petite, moins de tables et
-                        de faire-part peuvent faire baisser d’autres postes.
-                      </p>
-                    ) : (
-                      <p className="mt-1">
-                        Indiquez le prix par invité du traiteur et des boissons pour voir ce que change une liste d’invités plus courte.
-                      </p>
-                    )}
-                  </div>
-                )}
-
-                <SignupCard
-                  title="Préparez votre mariage dans une cagnotte"
-                  text={`Dans Budget Famille, créez un budget à part «\u00a0Mariage ${projectYear}\u00a0» ou une cagnotte avec un objectif et une date : le montant à mettre de côté chaque mois est calculé, et vous pouvez inviter votre conjoint. Gratuit, sans avoir à connecter votre banque.`}
-                />
-
-                <div className="mt-3 flex flex-wrap gap-2">
-                  <Button type="button" variant="ghost" className="min-h-[44px]" onClick={reset}>
-                    <RotateCcw className="mr-2 h-4 w-4" aria-hidden="true" /> Effacer
-                  </Button>
-                  <Button type="button" variant="ghost" className="min-h-[44px]" onClick={share}>
-                    <Share2 className="mr-2 h-4 w-4" aria-hidden="true" /> {copied ? 'Lien copié' : 'Partager le calculateur'}
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* The results card scrolls away while filling the form (html/body clip overflow-x, so sticky is inert): this bar keeps the figure in sight. */}
-        {hasTotal && !resultsVisible && (
-          <div className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-card/95 px-4 py-3 backdrop-blur">
-            <div className="mx-auto flex max-w-md items-center justify-between gap-3">
-              <div>
-                <p className="text-xs text-muted-foreground">Budget total{exampleLeft ? ' (exemple fictif)' : ''}</p>
-                <p className="text-xl font-bold tabular-nums text-foreground">
-                  {euros(r.total)}
-                  {plan.status === 'ok' && (
-                    <span className="text-sm font-medium text-muted-foreground"> · {euros(plan.monthly ?? 0)}/mois</span>
-                  )}
-                </p>
-              </div>
-              <Button type="button" onClick={scrollToResults} className="min-h-[44px]">Voir le détail</Button>
-            </div>
-          </div>
-        )}
+        <MariageCalculator calc={calc} t={MARIAGE_FR} format={FORMAT_FR} />
 
         <ToolArticle>
           <section>

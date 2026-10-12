@@ -70,10 +70,11 @@ test('shares always add up to the coloc total', () => {
 test('missing areas or incomes fall back to equal shares', () => {
   const noRoom = rentWeights('chambre', [{ ...three[0], room: 0 }, three[1]]);
   eq(noRoom.applied, 'egal');
-  eq(noRoom.fallback !== null, true);
+  eq(noRoom.fallback, 'rooms');
   const noIncome = rentWeights('revenus', three.map((t) => ({ ...t, income: 0 })));
   eq(noIncome.applied, 'egal');
   eq(noIncome.weights, [1 / 3, 1 / 3, 1 / 3]);
+  eq(noIncome.fallback, 'incomes');
 });
 
 test('empty or invalid amounts count as zero', () => {

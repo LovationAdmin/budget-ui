@@ -59,6 +59,8 @@ const BudgetColocation = lazy(() => import('./lib/pages/BudgetColocation'));
 const BudgetMariage = lazy(() => import('./lib/pages/BudgetMariage'));
 const BudgetPersonnel = lazy(() => import('./lib/pages/BudgetPersonnel'));
 const BudgetCalculatorEn = lazy(() => import('./lib/pages/en/BudgetCalculator'));
+const RentSplitCalculatorEn = lazy(() => import('./lib/pages/en/RentSplitCalculator'));
+const WeddingBudgetCalculatorEn = lazy(() => import('./lib/pages/en/WeddingBudgetCalculator'));
 const Profile = lazy(() => import('./lib/pages/Profile'));
 const AcceptInvitation = lazy(() => import('./lib/pages/AcceptInvitation'));
 const EnableBankingCallbackPage = lazy(() => import('./lib/pages/EnableBankingCallbackPage'));
@@ -107,6 +109,8 @@ export default function App() {
           <Route path="/budget-mariage" element={<BudgetMariage />} />
           <Route path="/budget-personnel" element={<BudgetPersonnel />} />
           <Route path="/en/50-30-20-budget-calculator" element={<BudgetCalculatorEn />} />
+          <Route path="/en/rent-split-calculator" element={<RentSplitCalculatorEn />} />
+          <Route path="/en/wedding-budget-calculator" element={<WeddingBudgetCalculatorEn />} />
           <Route path="/about" element={<About />} />
           <Route path="/help" element={<Help />} />
           <Route path="/premium" element={<PremiumPage />} />

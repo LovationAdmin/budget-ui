@@ -4,62 +4,25 @@
 // (hreflang pair, src/i18n/locales.ts). Same calculator and rule; the words,
 // the example, the help links and the article are written for English
 // readers, and amounts are in the visitor's currency (from the browser's
-// region, changeable, remembered on this device). Targets « 50/30/20 budget
+// region, changeable, shared by the English pages). Targets « 50/30/20 budget
 // calculator », « 50/30/20 rule » and « how much should I save a month ».
 // ============================================================================
 
-import { useEffect, useMemo, useState } from 'react';
 import { Calculator, ShieldCheck } from 'lucide-react';
-import { EnglishFooter, EnglishHeader } from '@/components/en/EnglishLayout';
+import { CurrencyPicker, useCurrency } from '@/components/en/CurrencyPicker';
+import { EnglishFooter, EnglishHeader, EnglishToolLinks } from '@/components/en/EnglishLayout';
 import { BudgetPersoCalculator } from '@/components/tools/BudgetPersoCalculator';
 import { FaqList, ToolArticle } from '@/components/tools/ToolKit';
-import {
-  BUDGET_PERSO_EN, CURRENCIES, EXAMPLE_EN, EXAMPLE_EN_HIGH_RENT, currencyFromBrowser, formatEn, type CurrencyCode,
-} from '@/i18n/en/budgetPerso';
+import { BUDGET_PERSO_EN, EXAMPLE_EN, EXAMPLE_EN_HIGH_RENT } from '@/i18n/en/budgetPerso';
 import { FULL_SAVINGS_MAX_NEEDS_SHARE, NEED_FIELDS, computeBudgetPerso } from '@/lib/tools/budgetPerso';
 import { BUDGET_503020_FAQ_EN } from '@/seo/faq-503020-en';
-
-const CURRENCY_KEY = 'bf:503020-calculator:currency';
-
-function initialCurrency(): CurrencyCode {
-  try {
-    const saved = localStorage.getItem(CURRENCY_KEY);
-    if (CURRENCIES.some((c) => c.code === saved)) return saved as CurrencyCode;
-  } catch {
-    // Blocked storage: fall back on the browser's region.
-  }
-  return currencyFromBrowser();
-}
 
 const example = computeBudgetPerso(EXAMPLE_EN.incomes, EXAMPLE_EN.needs);
 const exampleHigh = computeBudgetPerso(EXAMPLE_EN_HIGH_RENT.incomes, EXAMPLE_EN_HIGH_RENT.needs);
 
 export default function BudgetCalculatorEn() {
-  const [currency, setCurrency] = useState<CurrencyCode>(initialCurrency);
-  const format = useMemo(() => formatEn(currency), [currency]);
+  const { code, setCode, format } = useCurrency();
   const { money, moneyExact, pct } = format;
-
-  useEffect(() => {
-    try {
-      localStorage.setItem(CURRENCY_KEY, currency);
-    } catch {
-      // Private mode: the choice lasts for the visit.
-    }
-  }, [currency]);
-
-  const currencyPicker = (
-    <div className="flex items-center justify-between gap-4 py-2">
-      <label htmlFor="currency" className="font-medium text-foreground">Currency</label>
-      <select
-        id="currency"
-        value={currency}
-        onChange={(e) => setCurrency(e.target.value as CurrencyCode)}
-        className="h-11 rounded-xl border border-input bg-background px-3 text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ring-offset-background"
-      >
-        {CURRENCIES.map((c) => <option key={c.code} value={c.code}>{c.label}</option>)}
-      </select>
-    </div>
-  );
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary-50 to-purple-50 flex flex-col">
@@ -83,7 +46,7 @@ export default function BudgetCalculatorEn() {
           </div>
         </section>
 
-        <BudgetPersoCalculator t={BUDGET_PERSO_EN} format={format} storageKey="bf:503020-calculator:v1" beforeIncomes={currencyPicker} />
+        <BudgetPersoCalculator t={BUDGET_PERSO_EN} format={format} storageKey="bf:503020-calculator:v1" beforeIncomes={<CurrencyPicker value={code} onChange={setCode} />} />
 
         <ToolArticle>
           <section>
@@ -213,6 +176,8 @@ export default function BudgetCalculatorEn() {
           </section>
 
           <FaqList id="faq-503020" items={BUDGET_503020_FAQ_EN} title="Frequently asked questions" />
+
+          <EnglishToolLinks current="/en/50-30-20-budget-calculator" />
 
           <section className="text-sm">
             <h2 className="!text-xl">Good to know</h2>

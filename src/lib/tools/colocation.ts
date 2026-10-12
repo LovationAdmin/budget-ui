@@ -9,10 +9,14 @@
 //                shares, the rest in proportion to each bedroom's area;
 // - « revenus »: in proportion to each roommate's net income.
 // When the data a method needs is missing (no area, no income), the rent
-// falls back to equal shares and `fallback` says so.
+// falls back to equal shares and `fallback` says which data is missing (the
+// page words it in its language).
 // ============================================================================
 
 export type SplitMethod = 'egal' | 'chambre' | 'revenus';
+
+/** Data a method lacked: a bedroom area or an income. */
+export type ColocFallback = 'rooms' | 'incomes';
 
 /** Part of the rent paid in equal shares with the « chambre » method. */
 export const COMMON_SHARE = 0.5;
@@ -49,19 +53,19 @@ export interface ColocResult {
   /** Method actually applied to the rent. */
   applied: SplitMethod;
   /** Set when the chosen method lacked data and equal shares were used. */
-  fallback: string | null;
+  fallback: ColocFallback | null;
 }
 
 const pos = (n: number) => (Number.isFinite(n) && n > 0 ? n : 0);
 
-export function rentWeights(method: SplitMethod, roommates: Roommate[]): { weights: number[]; applied: SplitMethod; fallback: string | null } {
+export function rentWeights(method: SplitMethod, roommates: Roommate[]): { weights: number[]; applied: SplitMethod; fallback: ColocFallback | null } {
   const n = roommates.length;
   const equal = Array.from({ length: n }, () => 1 / n);
   if (method === 'chambre') {
     const rooms = roommates.map((r) => pos(r.room));
     const sum = rooms.reduce((a, b) => a + b, 0);
     if (rooms.some((r) => r === 0) || sum === 0) {
-      return { weights: equal, applied: 'egal', fallback: 'Indiquez la surface de chaque chambre : en attendant, le loyer est partagé à parts égales.' };
+      return { weights: equal, applied: 'egal', fallback: 'rooms' };
     }
     return { weights: rooms.map((r) => COMMON_SHARE / n + (1 - COMMON_SHARE) * (r / sum)), applied: 'chambre', fallback: null };
   }
@@ -69,7 +73,7 @@ export function rentWeights(method: SplitMethod, roommates: Roommate[]): { weigh
     const incomes = roommates.map((r) => pos(r.income));
     const sum = incomes.reduce((a, b) => a + b, 0);
     if (incomes.some((i) => i === 0) || sum === 0) {
-      return { weights: equal, applied: 'egal', fallback: 'Indiquez le revenu de chaque colocataire : en attendant, le loyer est partagé à parts égales.' };
+      return { weights: equal, applied: 'egal', fallback: 'incomes' };
     }
     return { weights: incomes.map((i) => i / sum), applied: 'revenus', fallback: null };
   }

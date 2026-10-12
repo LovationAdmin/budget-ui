@@ -4,9 +4,15 @@
 // English way, and the English example says what its page publishes.
 
 import { LOCALES, TRANSLATIONS, alternatesOf, hreflangsOf, localeOf, type Locale } from '../locales';
-import { EXAMPLE_EN, EXAMPLE_EN_HIGH_RENT, formatEn } from '../en/budgetPerso';
+import { EXAMPLE_EN, EXAMPLE_EN_HIGH_RENT } from '../en/budgetPerso';
+import { colocExampleEn } from '../en/colocation';
+import { MARIAGE_EN } from '../en/mariage';
+import { EN_TOOLS } from '../en/tools';
+import { FORMAT_FR, formatEn } from '../format';
 import { moneyIntl, parseAmountEn } from '@/lib/budget/format';
 import { computeBudgetPerso } from '@/lib/tools/budgetPerso';
+import { computeColocation } from '@/lib/tools/colocation';
+import { exampleResult } from '@/lib/tools/mariage';
 import { PAGES } from '@/seo/site';
 
 type Fn = () => void;
@@ -81,7 +87,7 @@ test('English amounts: comma for thousands, symbol first', () => {
   eq(moneyIntl(-240, 'en-IE', 'EUR', true), '−€240');
   eq(moneyIntl(1180, 'en-CA', 'CAD', true), '$1,180');
   const f = formatEn('GBP');
-  eq([f.money(33.33), f.moneyExact(33.33), f.pct(0.55), f.suffix], ['£33', '£33.33', '55%', '£/month']);
+  eq([f.money(33.33), f.moneyExact(33.33), f.pct(0.55), f.symbol], ['£33', '£33.33', '55%', '£']);
 });
 
 test('English example published on the page and in its prerendered summary', () => {
@@ -89,4 +95,34 @@ test('English example published on the page and in its prerendered summary', () 
   eq([r.revenus, r.besoins, r.status, r.envies, r.epargne, r.enviesParJour], [4000, 2200, 'trimmed', 1000, 800, 33.33]);
   const high = computeBudgetPerso(EXAMPLE_EN_HIGH_RENT.incomes, EXAMPLE_EN_HIGH_RENT.needs);
   eq([high.besoins, Math.round((high.besoinsShare ?? 0) * 100), high.status, high.envies, high.epargne], [2600, 65, 'shared', 700, 700]);
+});
+
+test('every English page: in the site, linked to its French version', () => {
+  const paths = new Set(PAGES.map((p) => p.path));
+  for (const tool of EN_TOOLS) {
+    eq(paths.has(tool.path), true, tool.path);
+    eq(localeOf(tool.path), 'en', tool.path);
+    eq(typeof alternatesOf(tool.path)?.fr, 'string', `${tool.path} has a French version`);
+  }
+});
+
+test('French amounts keep a non-breaking space before %', () => {
+  eq(FORMAT_FR.pct(0.334), '33\u00a0%');
+});
+
+test('English rent split example: same split in square feet or meters, as published', () => {
+  const total = (unit: 'sq ft' | 'm²', method: 'egal' | 'chambre' | 'revenus') =>
+    computeColocation({ ...colocExampleEn(unit), method }).shares.map((x) => Math.round(x.total * 100) / 100);
+  eq(total('sq ft', 'chambre'), total('m²', 'chambre'));
+  eq(total('sq ft', 'egal'), [1010, 1010, 1010]);
+  eq(total('sq ft', 'chambre'), [897.5, 998.75, 1133.75]);
+  eq(colocExampleEn('sq ft').roommates.map((m) => m.room), [100, 130, 170]);
+});
+
+test('English wedding page: months in English, published example figures', () => {
+  eq(MARIAGE_EN.monthLabel({ year: 2027, month: 6 }), 'June 2027');
+  eq(MARIAGE_EN.plan({ months: 8, from: 'October 2026', to: 'May 2027', remaining: '$18,000', total: '$22,000', saved: '$4,000' }),
+    'From October 2026 to May 2027, 8 deposits, to gather $18,000 ($22,000 − $4,000 already saved).');
+  const ex = exampleResult();
+  eq([ex.total, ex.costPerGuest, ex.fewerGuests.saving, ex.monthly], [22000, 220, 2000, 1000]);
 });

@@ -4,131 +4,27 @@
 // and shared bills in, each roommate's monthly share out, with three ways to
 // split the rent (equal, by bedroom, by income). Targets « budget colocation »,
 // « répartir le loyer en colocation » and their variants. Legal points are
-// sourced on the page (Service-Public.fr, CAF); the example is labelled.
+// sourced on the page (Service-Public.fr, CAF); the example is labelled. The
+// calculator itself (ColocationCalculator) is shared with
+// /en/rent-split-calculator.
 // ============================================================================
 
-import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Calculator, Info, RotateCcw, Share2, ShieldCheck, Users } from 'lucide-react';
+import { Calculator, ShieldCheck, Users } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
-import { Button } from '@/components/ui/button';
-import { FaqList, MoneyInput, Panel, Segmented, SignupCard, Stepper, Tile, ToolArticle } from '@/components/tools/ToolKit';
-import { money, parseAmount } from '@/lib/budget/format';
-import { COLOC_EXAMPLE, COMMON_SHARE, computeColocation, type SplitMethod } from '@/lib/tools/colocation';
+import { LanguageSwitch } from '@/components/LanguageSwitch';
+import { ColocationCalculator } from '@/components/tools/ColocationCalculator';
+import { FaqList, ToolArticle } from '@/components/tools/ToolKit';
+import { FORMAT_FR } from '@/i18n/format';
+import { COLOCATION_FR } from '@/i18n/fr/colocation';
+import { COLOC_EXAMPLE, COMMON_SHARE, computeColocation } from '@/lib/tools/colocation';
 import { COLOC_FAQ as FAQ } from '@/seo/faq-colocation';
 
-const STORAGE_KEY = 'bf:budget-colocation:v1';
-const MAX = 6;
-
-interface Mate { name: string; room: string; income: string }
-interface Saved { mates: Mate[]; method: SplitMethod; values: Record<string, string> }
-
-const BILLS = [
-  { key: 'energie', label: 'Énergie (électricité, gaz)', hint: 'Le total de la coloc, par mois' },
-  { key: 'internet', label: 'Internet' },
-  { key: 'assurance', label: 'Assurance habitation', hint: 'Si elle est commune à la coloc' },
-  { key: 'courses', label: 'Courses et produits communs', hint: 'Ménage, papier, huile, sel…' },
-  { key: 'autres', label: 'Autres dépenses communes', hint: 'Abonnement, eau si non comprise…' },
-];
-
-const METHODS: Array<{ value: SplitMethod; label: string; hint: string }> = [
-  { value: 'egal', label: 'Parts égales', hint: 'Chambres proches' },
-  { value: 'chambre', label: 'Selon la chambre', hint: 'Tailles différentes' },
-  { value: 'revenus', label: 'Selon les revenus', hint: 'Écarts de revenus' },
-];
-
-const mate = (i: number): Mate => ({ name: `Coloc ${i + 1}`, room: '', income: '' });
-const DEFAULT: Saved = { mates: [mate(0), mate(1)], method: 'egal', values: {} };
-
-function load(): Saved | null {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? (JSON.parse(raw) as Saved) : null;
-  } catch {
-    return null;
-  }
-}
-
-const amount = (raw: string | undefined) => {
-  const n = parseAmount(raw ?? '');
-  return Number.isFinite(n) && n > 0 ? n : 0;
-};
-const euros = (n: number) => money(n);
-const pct = (r: number) => `${Math.round(r * 100)} %`;
+const { moneyExact: euros, pct } = FORMAT_FR;
+const examples = (['egal', 'chambre', 'revenus'] as const).map((m) => computeColocation({ ...COLOC_EXAMPLE, method: m }));
 
 export default function BudgetColocation() {
-  const saved = useMemo(load, []);
-  const [mates, setMates] = useState<Mate[]>(saved?.mates?.length ? saved.mates : DEFAULT.mates);
-  const [method, setMethod] = useState<SplitMethod>(saved?.method ?? DEFAULT.method);
-  const [values, setValues] = useState<Record<string, string>>(saved?.values ?? {});
-  const [resultsVisible, setResultsVisible] = useState(true);
-  const [copied, setCopied] = useState(false);
-  const resultsRef = useRef<HTMLDivElement>(null);
-  const headlineRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify({ mates, method, values }));
-    } catch {
-      // Private mode or blocked storage: the calculator still works.
-    }
-  }, [mates, method, values]);
-
-  useEffect(() => {
-    const el = headlineRef.current;
-    if (!el || typeof IntersectionObserver === 'undefined') return;
-    const io = new IntersectionObserver(([entry]) => setResultsVisible(entry.isIntersecting), { threshold: 0.5 });
-    io.observe(el);
-    return () => io.disconnect();
-  }, []);
-
-  const r = useMemo(() => computeColocation({
-    rent: amount(values.loyer),
-    bills: BILLS.map((b) => amount(values[b.key])),
-    method,
-    roommates: mates.map((m, i) => ({ name: m.name.trim() || `Coloc ${i + 1}`, room: amount(m.room), income: amount(m.income) })),
-  }), [mates, method, values]);
-  const examples = useMemo(() => (['egal', 'chambre', 'revenus'] as const).map((m) => computeColocation({ ...COLOC_EXAMPLE, method: m })), []);
-
-  const set = (key: string) => (v: string) => setValues((prev) => ({ ...prev, [key]: v }));
-  const setMate = (i: number, patch: Partial<Mate>) => setMates((ms) => ms.map((m, j) => (j === i ? { ...m, ...patch } : m)));
-  const setCount = (n: number) => setMates((ms) => (n > ms.length ? [...ms, ...Array.from({ length: n - ms.length }, (_, k) => mate(ms.length + k))] : ms.slice(0, n)));
-  const hasData = r.total > 0;
-  const maxShare = Math.max(0, ...r.shares.map((s) => s.total));
-
-  const fillExample = () => {
-    setMethod(COLOC_EXAMPLE.method);
-    setMates(COLOC_EXAMPLE.roommates.map((m) => ({ name: m.name, room: String(m.room), income: String(m.income) })));
-    setValues({ loyer: String(COLOC_EXAMPLE.rent), energie: '90', internet: '30', assurance: '18', courses: '60' });
-  };
-  const reset = () => {
-    setMates(DEFAULT.mates);
-    setMethod(DEFAULT.method);
-    setValues({});
-  };
-  const share = async () => {
-    const url = 'https://www.budgetfamille.com/budget-colocation';
-    const text = 'Un calculateur gratuit pour partager le loyer et les factures de la coloc.';
-    try {
-      if (navigator.share) {
-        await navigator.share({ title: 'Budget colocation', text, url });
-        return;
-      }
-      await navigator.clipboard.writeText(url);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2500);
-    } catch {
-      // Share sheet dismissed.
-    }
-  };
-
-  const methodHelp = {
-    egal: 'Chacun paie la même part du loyer. Simple et juste quand les chambres se valent.',
-    chambre: `${pct(COMMON_SHARE)} du loyer couvre les pièces communes et se partage à parts égales ; le reste suit la surface de chaque chambre.`,
-    revenus: 'Chacun paie le loyer en proportion de ses revenus nets. Utile quand les écarts de revenus sont importants.',
-  }[method];
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary-50 to-purple-50 flex flex-col">
       <Navbar />
@@ -148,125 +44,11 @@ export default function BudgetColocation() {
             <p className="mt-3 text-sm text-muted-foreground">
               <ShieldCheck className="mr-1 inline h-4 w-4 align-[-3px] text-success" aria-hidden="true" />Vos chiffres restent sur cet appareil : rien n’est envoyé.
             </p>
+            <LanguageSwitch className="mt-3" />
           </div>
         </section>
 
-        <section className="px-4 pb-16 sm:px-6 lg:px-8" aria-label="Calculateur">
-          <div className="mx-auto grid max-w-6xl gap-6 lg:grid-cols-[1fr_400px] lg:items-start">
-            <div className="space-y-6">
-              <Panel
-                title="La colocation"
-                step={1}
-                aside={<button type="button" onClick={fillExample} className="min-h-[44px] rounded-xl px-2 text-sm font-semibold text-primary hover:underline">Voir l’exemple</button>}
-              >
-                <Stepper label="Colocataires" value={mates.length} min={2} max={MAX} onChange={setCount} />
-                {mates.map((m, i) => (
-                  <div key={i} className={`grid items-end gap-3 py-3 ${method === 'chambre' ? 'grid-cols-[1fr_7rem]' : method === 'revenus' ? 'grid-cols-[1fr_9.5rem] sm:grid-cols-[1fr_12rem]' : ''}`}>
-                    <div className="pb-2">
-                      <label htmlFor={`mate-${i}`} className="block text-sm font-medium text-foreground">Prénom ou surnom</label>
-                      <input
-                        id={`mate-${i}`}
-                        type="text"
-                        autoComplete="off"
-                        maxLength={24}
-                        value={m.name}
-                        onChange={(e) => setMate(i, { name: e.target.value })}
-                        className="mt-1.5 h-12 w-full rounded-xl border border-input bg-background px-4 text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ring-offset-background"
-                      />
-                    </div>
-                    {method === 'chambre' && (
-                      <div>
-                        <MoneyInput id={`room-${i}`} label={<span className="text-sm">Chambre</span>} suffix="m²" value={m.room} onChange={(v) => setMate(i, { room: v })} />
-                      </div>
-                    )}
-                    {method === 'revenus' && (
-                      <div>
-                        <MoneyInput id={`income-${i}`} label={<span className="text-sm">Revenu net</span>} value={m.income} onChange={(v) => setMate(i, { income: v })} />
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </Panel>
-
-              <Panel title="Loyer et factures du mois" step={2}>
-                <MoneyInput id="loyer" label="Loyer, charges comprises" hint="Le loyer total de la coloc" value={values.loyer ?? ''} onChange={set('loyer')} />
-                {BILLS.map((b) => (
-                  <MoneyInput key={b.key} id={`bill-${b.key}`} label={b.label} hint={b.hint} value={values[b.key] ?? ''} onChange={set(b.key)} />
-                ))}
-                <p className="pt-3 text-sm text-muted-foreground">Une facture payée tous les deux mois ou à l’année ? Ramenez-la au mois (÷ 2, ÷ 12). Les factures sont partagées à parts égales.</p>
-              </Panel>
-
-              <Panel title="Répartition du loyer" step={3}>
-                <Segmented label="Méthode" value={method} options={METHODS} onChange={setMethod} />
-                <p className="flex items-start gap-2 pt-3 text-sm text-muted-foreground"><Info className="mt-0.5 h-4 w-4 shrink-0 text-primary" aria-hidden="true" /> {methodHelp}</p>
-              </Panel>
-            </div>
-
-            <div ref={resultsRef} id="resultat" className="scroll-mt-24">
-              <div className="rounded-2xl border border-border/70 bg-card p-5 shadow-sm sm:p-6" aria-live="polite">
-                <div ref={headlineRef}>
-                  <p className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Part de chacun, par mois</p>
-                  {!hasData && <p className="mt-3 text-muted-foreground">Indiquez le loyer et les factures : la part de chacun s’affiche ici au fil de la saisie.</p>}
-                </div>
-                {hasData && (
-                  <>
-                    <ul className="mt-4 space-y-4">
-                      {r.shares.map((s, i) => (
-                        <li key={i}>
-                          <div className="flex items-baseline justify-between gap-3">
-                            <span className="truncate font-semibold text-foreground">{s.name}</span>
-                            <span className="font-display text-2xl font-bold tabular-nums text-foreground">{euros(s.total)}</span>
-                          </div>
-                          <p className="text-xs text-muted-foreground">loyer {euros(s.rent)} + factures {euros(s.bills)} · {pct(s.ratio)} du total</p>
-                          <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-muted" aria-hidden="true">
-                            <div className="h-full rounded-full bg-primary" style={{ width: `${maxShare > 0 ? (s.total / maxShare) * 100 : 0}%` }} />
-                          </div>
-                        </li>
-                      ))}
-                    </ul>
-                    {r.fallback && <p className="mt-4 rounded-xl bg-warning/10 p-3 text-sm text-foreground">{r.fallback}</p>}
-                    <div className="mt-5 grid grid-cols-3 gap-2">
-                      <Tile label="Loyer" value={euros(r.rent)} />
-                      <Tile label="Factures" value={euros(r.bills)} />
-                      <Tile label="Total coloc" value={euros(r.total)} />
-                    </div>
-                    <p className="mt-4 text-sm text-muted-foreground">
-                      Le plus simple : chacun verse sa part sur un compte ou un pot commun au début du mois, et le loyer et les factures partent de là.
-                    </p>
-                  </>
-                )}
-
-                <SignupCard
-                  title="Gérez la coloc dans un budget partagé"
-                  text="Créez un budget « Coloc », invitez vos colocataires par e-mail : chacun voit en temps réel ce qu’il verse au pot commun. Reportez ces montants comme versement de chacun. Gratuit."
-                />
-
-                <div className="mt-3 flex flex-wrap gap-2">
-                  <Button type="button" variant="ghost" className="min-h-[44px]" onClick={reset}>
-                    <RotateCcw className="mr-2 h-4 w-4" aria-hidden="true" /> Effacer
-                  </Button>
-                  <Button type="button" variant="ghost" className="min-h-[44px]" onClick={share}>
-                    <Share2 className="mr-2 h-4 w-4" aria-hidden="true" /> {copied ? 'Lien copié' : 'Partager avec la coloc'}
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {hasData && !resultsVisible && (
-          <div className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-card/95 px-4 py-3 backdrop-blur">
-            <div className="mx-auto flex max-w-md items-center justify-between gap-3">
-              <div className="min-w-0">
-                <p className="text-xs text-muted-foreground">Total de la coloc : {euros(r.total)}</p>
-                <p className="truncate text-sm font-semibold tabular-nums text-foreground">
-                  {r.shares.map((s) => `${s.name} ${euros(s.total)}`).join(' · ')}
-                </p>
-              </div>
-              <Button type="button" onClick={() => resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })} className="min-h-[44px] shrink-0">Détail</Button>
-            </div>
-          </div>
-        )}
+        <ColocationCalculator t={COLOCATION_FR} format={FORMAT_FR} storageKey="bf:budget-colocation:v1" example={COLOC_EXAMPLE} areaUnit="m²" />
 
         <ToolArticle>
           <section>

@@ -17,7 +17,8 @@ import { Footer } from '@/components/Footer';
 import { LanguageSwitch } from '@/components/LanguageSwitch';
 import { BudgetPersoCalculator } from '@/components/tools/BudgetPersoCalculator';
 import { FaqList, ToolArticle } from '@/components/tools/ToolKit';
-import { BUDGET_PERSO_FR, FORMAT_FR } from '@/i18n/fr/budgetPerso';
+import { FORMAT_FR } from '@/i18n/format';
+import { BUDGET_PERSO_FR } from '@/i18n/fr/budgetPerso';
 import { money } from '@/lib/budget/format';
 import { PERSO_FAQ } from '@/seo/faq-budget-personnel';
 import {

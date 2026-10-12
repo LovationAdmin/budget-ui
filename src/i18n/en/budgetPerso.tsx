@@ -1,50 +1,11 @@
 // src/i18n/en/budgetPerso.tsx
 // Words of the 50/30/20 calculator in English (/en/50-30-20-budget-calculator).
 // Localized rather than translated: take-home pay instead of « salaire net »,
-// help links for English-speaking countries, an example sized for them, and
-// the visitor's currency (CURRENCIES, chosen from the browser's region).
+// help links for English-speaking countries and an example sized for them.
+// Amounts are in the visitor's currency (src/i18n/format.ts).
 
-import type { BudgetPersoCopy, BudgetPersoFormat } from '@/components/tools/BudgetPersoCalculator';
-import { moneyIntl, parseAmountEn } from '@/lib/budget/format';
+import type { BudgetPersoCopy } from '@/components/tools/BudgetPersoCalculator';
 import type { IncomeKey, NeedKey } from '@/lib/tools/budgetPerso';
-
-export type CurrencyCode = 'USD' | 'GBP' | 'EUR' | 'CAD' | 'AUD';
-
-export const CURRENCIES: ReadonlyArray<{ code: CurrencyCode; label: string; locale: string; symbol: string }> = [
-  { code: 'USD', label: 'US dollar ($)', locale: 'en-US', symbol: '$' },
-  { code: 'GBP', label: 'Pound sterling (£)', locale: 'en-GB', symbol: '£' },
-  { code: 'EUR', label: 'Euro (€)', locale: 'en-IE', symbol: '€' },
-  { code: 'CAD', label: 'Canadian dollar ($)', locale: 'en-CA', symbol: '$' },
-  { code: 'AUD', label: 'Australian dollar ($)', locale: 'en-AU', symbol: '$' },
-];
-
-const EURO_REGIONS = ['AT', 'BE', 'CY', 'DE', 'EE', 'ES', 'FI', 'FR', 'GR', 'HR', 'IE', 'IT', 'LT', 'LU', 'LV', 'MT', 'NL', 'PT', 'SI', 'SK'];
-
-/** The currency of the browser's region ("en-GB" → GBP), US dollar otherwise. */
-export function currencyFromBrowser(): CurrencyCode {
-  if (typeof navigator === 'undefined') return 'USD';
-  for (const tag of navigator.languages ?? [navigator.language]) {
-    const region = tag?.split('-')[1]?.toUpperCase();
-    if (!region) continue;
-    if (region === 'GB' || region === 'UK') return 'GBP';
-    if (region === 'CA') return 'CAD';
-    if (region === 'AU') return 'AUD';
-    if (EURO_REGIONS.includes(region)) return 'EUR';
-    if (region === 'US') return 'USD';
-  }
-  return 'USD';
-}
-
-export function formatEn(code: CurrencyCode): BudgetPersoFormat {
-  const c = CURRENCIES.find((x) => x.code === code) ?? CURRENCIES[0];
-  return {
-    money: (n) => moneyIntl(n, c.locale, c.code, true),
-    moneyExact: (n) => moneyIntl(n, c.locale, c.code),
-    pct: (r) => `${Math.round(r * 100)}%`,
-    parse: parseAmountEn,
-    suffix: `${c.symbol}/month`,
-  };
-}
 
 /** Fictitious example: a single person taking home 4,000 a month, needs at 55 %. */
 export const EXAMPLE_EN: { incomes: Partial<Record<IncomeKey, number>>; needs: Partial<Record<NeedKey, number>> } = {
