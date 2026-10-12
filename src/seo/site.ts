@@ -3,7 +3,8 @@
 // One source of truth for the search metadata of public pages: used in the
 // browser by <RouteSEO /> (title/description/canonical on navigation) and at
 // build time by scripts/prerender.mjs, which writes one HTML file per page
-// with its own head, structured data and readable content.
+// with its own head, structured data and readable content. Pages under /en/
+// are in English; src/i18n/locales.ts pairs each with its French version.
 // ============================================================================
 
 /** Canonical host: the bare domain redirects here. */
@@ -210,6 +211,21 @@ export const PAGES: PageSEO[] = [
     ],
     priority: 0.4,
     changefreq: 'yearly',
+  },
+  {
+    path: '/en/50-30-20-budget-calculator',
+    title: '50/30/20 Budget Calculator: Free, No Sign-Up',
+    description: 'Free 50/30/20 budget calculator: enter your take-home pay and essential bills to see your needs, wants and savings split, and how much to save each month. No sign-up.',
+    h1: '50/30/20 budget calculator',
+    intro: 'Your take-home pay and essential expenses in: the 50/30/20 rule applied to your income, what’s left after your needs and how much to save each month.',
+    sections: [
+      { h2: 'How to make a personal budget in 5 steps', text: 'Take-home pay, fixed bills, yearly costs ÷ 12, variable spending, then pay yourself first, right after payday.' },
+      { h2: 'The 50/30/20 rule explained', text: '50% for needs, 30% for wants, 20% for savings: a rule popularized by Elizabeth Warren and Amelia Warren Tyagi (All Your Worth, 2005). A benchmark, not an obligation, to adapt to the cost of housing.' },
+      { h2: 'A 50/30/20 budget example', text: 'In our example, 4,000 take-home pay and 2,200 of needs (55%): 1,000 for wants and 800 of savings a month.' },
+      { h2: 'How much should you save each month?', text: '20% of take-home pay as a benchmark; start small, build an emergency fund of a few months of expenses first, then your goals.' },
+    ],
+    priority: 0.8,
+    changefreq: 'monthly',
   },
   { path: '/signup', title: 'Créer un compte gratuit – Budget Famille', description: 'Créez votre budget gratuit en 1 minute, seul ou à plusieurs : sans carte bancaire, sans connexion à votre banque.', priority: 0.7, changefreq: 'yearly', h1: 'Créez votre budget gratuit' },
   { path: '/privacy', title: 'Politique de confidentialité – Budget Famille', description: 'Comment Budget Famille protège vos données : hébergement en Europe, chiffrement, aucune revente.', priority: 0.3, changefreq: 'yearly' },

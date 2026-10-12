@@ -21,6 +21,7 @@ Allow: /telechargements/
 Allow: /forgot-password
 Allow: /privacy
 Allow: /terms
+Allow: /en/
 
 # Pages protégées à bloquer (données utilisateurs)
 Disallow: /dashboard

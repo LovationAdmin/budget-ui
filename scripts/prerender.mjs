@@ -2,7 +2,8 @@
 // Runs after `vite build`: writes one HTML file per public page (from
 // src/seo/prerender.tsx), the sitemap and seo-manifest.json. dist/index.html
 // becomes the home page; dist/app.html stays the neutral shell for every
-// other route.
+// other route. Each page gets its language (lang, og:locale) and, when it is
+// translated, its versions (hreflang), in its head and in the sitemap.
 //
 // seo-manifest.json holds a hash of each page's content and the date it last
 // changed. A production build (Vercel) compares with the manifest currently
@@ -31,6 +32,11 @@ function setTag(html, re, tag) {
 function render(template, page) {
   const title = page.title.includes('Budget Famille') || page.title.length > 50 ? page.title : `${page.title} – Budget Famille`;
   let html = template;
+  html = setTag(html, /<html lang="[^"]*">/, `<html lang="${page.locale}">`);
+  html = setTag(html, /<meta property="og:locale"[^>]*>/, [
+    `<meta property="og:locale" content="${page.ogLocale}" />`,
+    ...page.ogLocaleAlternates.map((l) => `<meta property="og:locale:alternate" content="${l}" />`),
+  ].join('\n  '));
   html = setTag(html, /<title>[\s\S]*?<\/title>/, `<title>${esc(title)}</title>`);
   html = setTag(html, /<meta name="description"[^>]*>/, `<meta name="description" content="${esc(page.description)}" />`);
   html = html.replace(/\s*<meta name="keywords"[^>]*>/, '');
@@ -45,15 +51,16 @@ function render(template, page) {
   html = setTag(html, /<meta name="twitter:title"[^>]*>/, `<meta name="twitter:title" content="${esc(title)}" />`);
   html = setTag(html, /<meta name="twitter:description"[^>]*>/, `<meta name="twitter:description" content="${esc(page.description)}" />`);
   html = setTag(html, /<meta name="twitter:image"[^>]*>/, `<meta name="twitter:image" content="${SITE}/og-image.png" />`);
+  const alternates = page.hreflang.map((h) => `<link rel="alternate" hreflang="${h.hreflang}" href="${h.href}" />\n  `).join('');
   const ld = page.jsonLd.map((o) => `<script type="application/ld+json">${JSON.stringify(o).replace(/</g, '\\u003c')}</script>`).join('\n  ');
-  html = html.replace('</head>', `  ${ld}\n</head>`);
+  html = html.replace('</head>', `  ${alternates}${ld}\n</head>`);
   html = setTag(html, /<div id="root"><\/div>/, `<div id="root">${page.body}</div>`);
   return html;
 }
 
-/** Content fingerprint: what a crawler reads, not the build's asset hashes. */
+/** Content fingerprint: what a crawler reads, not the build's asset hashes (language versions only when there are some, so untranslated pages keep their hash). */
 const contentHash = (page) => createHash('sha256')
-  .update(JSON.stringify([page.title, page.description, page.canonical, page.noindex, page.jsonLd, page.body]))
+  .update(JSON.stringify([page.title, page.description, page.canonical, page.noindex, page.jsonLd, page.body, ...(page.hreflang.length ? [page.hreflang] : [])]))
   .digest('hex')
   .slice(0, 16);
 
@@ -113,8 +120,8 @@ try {
   for (const path of Object.keys(previous?.pages ?? {})) if (!manifest[path]) changed.push(abs(path));
   const urls = pages
     .filter((p) => p.sitemap)
-    .map((p) => `  <url>\n    <loc>${abs(p.path)}</loc>\n    <lastmod>${manifest[p.path].lastmod}</lastmod>\n    <changefreq>${p.sitemap.changefreq}</changefreq>\n    <priority>${p.sitemap.priority}</priority>\n  </url>`);
-  writeFileSync(join(dist, 'sitemap.xml'), `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.join('\n')}\n</urlset>\n`);
+    .map((p) => `  <url>\n    <loc>${abs(p.path)}</loc>\n${p.hreflang.map((h) => `    <xhtml:link rel="alternate" hreflang="${h.hreflang}" href="${h.href}" />\n`).join('')}    <lastmod>${manifest[p.path].lastmod}</lastmod>\n    <changefreq>${p.sitemap.changefreq}</changefreq>\n    <priority>${p.sitemap.priority}</priority>\n  </url>`);
+  writeFileSync(join(dist, 'sitemap.xml'), `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">\n${urls.join('\n')}\n</urlset>\n`);
   writeFileSync(join(dist, 'seo-manifest.json'), `${JSON.stringify({
     generatedAt: new Date().toISOString(),
     commit: process.env.VERCEL_GIT_COMMIT_SHA ?? null,

@@ -5,12 +5,16 @@
 // canonical, robots, Open Graph, JSON-LD) and readable static content, so
 // search engines, social networks and AI crawlers see the page without
 // running JavaScript. React replaces the content as soon as the app loads.
+// The language (lang, og:locale, hreflang) follows from the path: pages under
+// /en/ are in English, and src/i18n/locales.ts pairs translated pages.
 // ============================================================================
 
 import { renderToStaticMarkup } from 'react-dom/server';
 import { blogArticles } from '@/data/blog-articles';
 import { articlesByDate, relatedArticles } from '@/data/blog-related';
+import { LOCALES, alternatesOf, hreflangsOf, localeOf, type Locale } from '@/i18n/locales';
 import { HOME_FAQ, RAV_FAQ, TEMPLATE_FAQ, type FaqItem } from './faq';
+import { BUDGET_503020_FAQ_EN } from './faq-503020-en';
 import { COLOC_FAQ } from './faq-colocation';
 import { MARIAGE_FAQ } from './faq-mariage';
 import { PERSO_FAQ } from './faq-budget-personnel';
@@ -20,6 +24,12 @@ import {
 
 export interface BuiltPage {
   path: string;
+  locale: Locale;
+  /** Open Graph locale of the page, then of its other versions. */
+  ogLocale: string;
+  ogLocaleAlternates: string[];
+  /** Versions of the page in each language (empty when it has none). */
+  hreflang: Array<{ hreflang: string; href: string }>;
   title: string;
   description: string;
   canonical: string;
@@ -30,7 +40,34 @@ export interface BuiltPage {
   sitemap?: { priority: number; changefreq: string; lastmod?: string };
 }
 
-function Shell({ children }: { children: React.ReactNode }) {
+/** Link to the page in its other language(s), written in that language. */
+function LanguageLinks({ path }: { path: string }) {
+  const alts = alternatesOf(path);
+  const current = localeOf(path);
+  if (!alts) return null;
+  return (
+    <>
+      {(Object.keys(LOCALES) as Locale[]).filter((l) => l !== current && alts[l]).map((l) => (
+        <a key={l} href={alts[l]} hrefLang={l} lang={l} className="font-semibold text-primary">{LOCALES[l].switchLabel}</a>
+      ))}
+    </>
+  );
+}
+
+function Shell({ path, children }: { path: string; children: React.ReactNode }) {
+  if (localeOf(path) === 'en') {
+    return (
+      <div className="min-h-screen bg-background">
+        <header className="border-b border-border/60 px-4 py-4">
+          <nav aria-label="Main navigation" className="mx-auto flex max-w-5xl flex-wrap items-center gap-x-5 gap-y-2 text-sm">
+            <a href={LOCALES.en.home} className="font-display text-lg font-bold text-foreground">{SITE_NAME}</a>
+            <LanguageLinks path={path} />
+          </nav>
+        </header>
+        <main className="mx-auto max-w-3xl px-4 py-12">{children}</main>
+      </div>
+    );
+  }
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b border-border/60 px-4 py-4">
@@ -45,6 +82,7 @@ function Shell({ children }: { children: React.ReactNode }) {
           <a href="/blog" className="text-muted-foreground">Conseils</a>
           <a href="/help" className="text-muted-foreground">Aide</a>
           <a href="/signup" className="font-semibold text-primary">Créer mon budget gratuit</a>
+          <LanguageLinks path={path} />
         </nav>
       </header>
       <main className="mx-auto max-w-3xl px-4 py-12">{children}</main>
@@ -54,7 +92,7 @@ function Shell({ children }: { children: React.ReactNode }) {
 
 function StaticPage({ page, extra }: { page: PageSEO; extra?: React.ReactNode }) {
   return (
-    <Shell>
+    <Shell path={page.path}>
       <h1 className="font-display text-4xl font-bold text-foreground">{page.h1 ?? page.title}</h1>
       <p className="mt-4 text-lg text-muted-foreground">{page.intro ?? page.description}</p>
       {page.links && (
@@ -75,10 +113,10 @@ function StaticPage({ page, extra }: { page: PageSEO; extra?: React.ReactNode })
   );
 }
 
-function FaqBlock({ items }: { items: Array<{ q: string; a: string }> }) {
+function FaqBlock({ items, locale = 'fr' }: { items: Array<{ q: string; a: string }>; locale?: Locale }) {
   return (
     <section className="mt-12">
-      <h2 className="font-display text-2xl font-bold text-foreground">Questions fréquentes</h2>
+      <h2 className="font-display text-2xl font-bold text-foreground">{locale === 'en' ? 'Frequently asked questions' : 'Questions fréquentes'}</h2>
       <dl className="mt-4 space-y-4">
         {items.map((f) => (
           <div key={f.q}>
@@ -112,7 +150,20 @@ const TOOLS: Record<string, { name: string; crumb: string; faq: FaqItem[] }> = {
   '/budget-colocation': { name: 'Calculateur de budget colocation', crumb: 'Budget colocation', faq: COLOC_FAQ },
   '/budget-mariage': { name: 'Calculateur de budget mariage', crumb: 'Budget mariage', faq: MARIAGE_FAQ },
   '/budget-personnel': { name: 'Calculateur de budget personnel 50/30/20', crumb: 'Budget personnel', faq: PERSO_FAQ },
+  '/en/50-30-20-budget-calculator': { name: '50/30/20 Budget Calculator', crumb: '50/30/20 budget calculator', faq: BUDGET_503020_FAQ_EN },
 };
+
+/** Language fields of a built page: its locale, Open Graph locales and hreflang versions. */
+function languageOf(path: string): Pick<BuiltPage, 'locale' | 'ogLocale' | 'ogLocaleAlternates' | 'hreflang'> {
+  const locale = localeOf(path);
+  const alts = alternatesOf(path) ?? {};
+  return {
+    locale,
+    ogLocale: LOCALES[locale].og,
+    ogLocaleAlternates: (Object.keys(alts) as Locale[]).filter((l) => l !== locale).map((l) => LOCALES[l].og),
+    hreflang: hreflangsOf(path).map((h) => ({ hreflang: h.hreflang, href: absolute(h.path) })),
+  };
+}
 
 export function buildPages(): BuiltPage[] {
   const out: BuiltPage[] = [];
@@ -130,6 +181,7 @@ export function buildPages(): BuiltPage[] {
       extra = <FaqBlock items={TEMPLATE_FAQ} />;
     } else if (TOOLS[page.path]) {
       const tool = TOOLS[page.path];
+      const locale = localeOf(page.path);
       jsonLd.push(
         {
           '@context': 'https://schema.org',
@@ -138,20 +190,21 @@ export function buildPages(): BuiltPage[] {
           url: absolute(page.path),
           applicationCategory: 'FinanceApplication',
           operatingSystem: 'Web',
-          inLanguage: 'fr',
+          inLanguage: locale,
           isAccessibleForFree: true,
           offers: { '@type': 'Offer', price: '0', priceCurrency: 'EUR' },
           publisher: ORGANIZATION_LD,
         },
         faqLD(tool.faq),
-        breadcrumbLD([{ name: 'Accueil', path: '/' }, { name: tool.crumb, path: page.path }]),
+        breadcrumbLD([{ name: locale === 'en' ? SITE_NAME : 'Accueil', path: '/' }, { name: tool.crumb, path: page.path }]),
       );
-      extra = <FaqBlock items={tool.faq} />;
+      extra = <FaqBlock items={tool.faq} locale={locale} />;
     } else if (page.path === '/blog') {
       extra = <BlogIndex />;
     }
     out.push({
       path: page.path,
+      ...languageOf(canonical),
       title: page.title,
       description: page.description,
       canonical,
@@ -166,6 +219,7 @@ export function buildPages(): BuiltPage[] {
     const path = `/blog/${a.slug}`;
     out.push({
       path,
+      ...languageOf(path),
       title: a.title,
       description: a.excerpt,
       canonical: path,
@@ -188,7 +242,7 @@ export function buildPages(): BuiltPage[] {
         breadcrumbLD([{ name: 'Accueil', path: '/' }, { name: 'Blog', path: '/blog' }, { name: a.title, path }]),
       ],
       body: renderToStaticMarkup(
-        <Shell>
+        <Shell path={path}>
           <p className="text-sm text-muted-foreground"><a href="/blog" className="underline">Blog</a> · {a.category} · {a.readTime}{a.updatedAt ? ` · mis à jour le ${new Date(a.updatedAt).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}` : ''}</p>
           <h1 className="mt-2 font-display text-4xl font-bold text-foreground">{a.title}</h1>
           <p className="mt-3 text-lg text-muted-foreground">{a.excerpt}</p>
