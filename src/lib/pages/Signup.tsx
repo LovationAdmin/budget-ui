@@ -22,6 +22,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Footer } from '@/components/Footer';
 import Navbar from '@/components/Navbar';
 import { cn } from '@/lib/utils';
+import { track } from '@/lib/analytics';
 
 /** The same rules as the server (utils.ValidatePassword). */
 export function passwordChecks(password: string) {
@@ -148,7 +149,10 @@ export default function Signup() {
     setLoading(true);
     const result = await signup(name.trim(), email.trim(), password);
     setLoading(false);
-    if (result.success) setSentTo(email.trim());
+    if (result.success) {
+      track('sign_up', { method: 'email' });
+      setSentTo(email.trim());
+    }
     else setError({ message: result.error || 'La création du compte a échoué.', code: result.code });
   };
 

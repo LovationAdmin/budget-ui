@@ -18,6 +18,7 @@ import { Footer } from '@/components/Footer';
 import { Button } from '@/components/ui/button';
 import { MoneyInput, Panel, Stepper, Tile } from '@/components/tools/ToolKit';
 import { money, parseAmount } from '@/lib/budget/format';
+import { useCalculatorUsed } from '@/lib/analytics';
 import { RAV_FAQ as FAQ } from '@/seo/faq';
 import {
   CHARGE_FIELDS, HCSF_MAX_RATIO, INCOME_FIELDS, RSA_DATE, computeResteAVivre, rsaFloor, type Household,
@@ -88,6 +89,7 @@ export default function ResteAVivre() {
 
   const set = (key: string) => (v: string) => setValues((prev) => ({ ...prev, [key]: v }));
   const hasIncome = r.revenus > 0;
+  useCalculatorUsed('reste_a_vivre', hasIncome, r);
   const deficit = r.reste < 0;
 
   const reset = () => {

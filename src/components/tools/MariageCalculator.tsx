@@ -14,6 +14,7 @@ import { AlertTriangle, CheckCircle2, ChevronDown, Info, RotateCcw, Share2, Spar
 import { Button } from '@/components/ui/button';
 import { MoneyInput, Panel, SignupCard, Stepper, Tile } from '@/components/tools/ToolKit';
 import type { ToolFormat } from '@/i18n/format';
+import { useCalculatorUsed } from '@/lib/analytics';
 import {
   DEFAULT_GUESTS, EXAMPLE, MAX_GUESTS, MIN_GUESTS, POSTE_FIELDS, addMonths, clampGuests, computeMariage,
   formatMonthValue, parseMonth, savingPlan, toYearMonth, withFewerGuests,
@@ -150,6 +151,7 @@ export function useMariageCalculator({ t, format: f, storageKey }: { t: MariageC
   const plan = useMemo(() => savingPlan(r.total, positive(parse, already), date, today), [r.total, already, date, today, parse]);
 
   const hasTotal = r.total > 0;
+  useCalculatorUsed('wedding', hasTotal, r);
   const isExampleValue = (key: string) => example && EXAMPLE_VALUES[key] !== undefined && values[key] === EXAMPLE_VALUES[key];
   const alreadyIsExample = example && already === String(EXAMPLE.saved);
   const exampleLeft = POSTE_FIELDS.some((p) => isExampleValue(p.key)) || alreadyIsExample;
