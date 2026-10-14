@@ -10,7 +10,9 @@
 
 import { Calculator, ShieldCheck } from 'lucide-react';
 import { CurrencyPicker, useCurrency } from '@/components/en/CurrencyPicker';
-import { EnglishFooter, EnglishHeader, EnglishToolLinks } from '@/components/en/EnglishLayout';
+import Navbar from '@/components/Navbar';
+import { Footer } from '@/components/Footer';
+import { EnglishToolLinks } from '@/components/en/EnglishLayout';
 import { BudgetPersoCalculator } from '@/components/tools/BudgetPersoCalculator';
 import { FaqList, ToolArticle } from '@/components/tools/ToolKit';
 import { BUDGET_PERSO_EN, EXAMPLE_EN, EXAMPLE_EN_HIGH_RENT } from '@/i18n/en/budgetPerso';
@@ -26,7 +28,7 @@ export default function BudgetCalculatorEn() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary-50 to-purple-50 flex flex-col">
-      <EnglishHeader />
+      <Navbar />
       <main className="flex-1">
         <section className="px-4 pt-12 pb-8 sm:px-6 lg:px-8">
           <div className="mx-auto max-w-3xl text-center">
@@ -188,7 +190,7 @@ export default function BudgetCalculatorEn() {
           </section>
         </ToolArticle>
       </main>
-      <EnglishFooter />
+      <Footer />
     </div>
   );
 }

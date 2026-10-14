@@ -7,12 +7,15 @@ import { LOCALES, TRANSLATIONS, alternatesOf, hreflangsOf, localeOf, type Locale
 import { EXAMPLE_EN, EXAMPLE_EN_HIGH_RENT } from '../en/budgetPerso';
 import { colocExampleEn } from '../en/colocation';
 import { MARIAGE_EN } from '../en/mariage';
+import { RAV_EXAMPLE_EN } from '../en/resteAVivre';
+import { RAV_EXAMPLE_FR } from '../fr/resteAVivre';
 import { EN_TOOLS } from '../en/tools';
 import { FORMAT_FR, formatEn } from '../format';
 import { moneyIntl, parseAmountEn } from '@/lib/budget/format';
 import { computeBudgetPerso } from '@/lib/tools/budgetPerso';
 import { computeColocation } from '@/lib/tools/colocation';
 import { exampleResult } from '@/lib/tools/mariage';
+import { computeResteAVivre } from '@/lib/tools/resteAVivre';
 import { PAGES } from '@/seo/site';
 
 type Fn = () => void;
@@ -69,7 +72,7 @@ test('hreflang: reciprocal, own version included, x-default in English', () => {
       eq(h.find((x) => x.hreflang === 'x-default')?.path, t.en, path);
     }
   }
-  eq(hreflangsOf('/calcul-reste-a-vivre'), [], 'untranslated page');
+  eq(hreflangsOf('/blog'), [], 'untranslated page');
 });
 
 test('each language home is a page of the site', () => {
@@ -125,4 +128,22 @@ test('English wedding page: months in English, published example figures', () =>
     'From October 2026 to May 2027, 8 deposits, to gather $18,000 ($22,000 − $4,000 already saved).');
   const ex = exampleResult();
   eq([ex.total, ex.costPerGuest, ex.fewerGuests.saving, ex.monthly], [22000, 220, 2000, 1000]);
+});
+
+test('leftover income examples: what their pages publish', () => {
+  const en = computeResteAVivre(RAV_EXAMPLE_EN.household, RAV_EXAMPLE_EN.incomes, RAV_EXAMPLE_EN.charges);
+  eq([en.revenus, en.charges, en.reste, en.parPersonne, Math.round(en.parJour)], [6000, 3700, 2300, 575, 77]);
+  const page = PAGES.find((p) => p.path === '/en/leftover-income-calculator');
+  eq(page?.sections?.some((sec) => sec.text.includes('2,300 a month, or 575 per person and about 77 a day')), true, 'site.ts example');
+  const fr = computeResteAVivre(RAV_EXAMPLE_FR.household, RAV_EXAMPLE_FR.incomes, RAV_EXAMPLE_FR.charges);
+  eq([fr.reste, fr.parPersonne], [1790, 447.5], 'French example unchanged');
+});
+
+test('English calculators: each one listed, translated and indexable', () => {
+  const indexed = new Set(PAGES.filter((p) => !p.noindex).map((p) => p.path));
+  for (const tool of EN_TOOLS) {
+    eq(localeOf(tool.path), 'en', tool.path);
+    eq(!!alternatesOf(tool.path)?.fr, true, `${tool.path} has a French version`);
+    eq(indexed.has(tool.path), true, tool.path);
+  }
 });

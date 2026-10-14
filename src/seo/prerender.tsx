@@ -16,13 +16,16 @@ import { LOCALES, alternatesOf, hreflangsOf, localeOf, type Locale } from '@/i18
 import { HOME_FAQ, RAV_FAQ, TEMPLATE_FAQ, type FaqItem } from './faq';
 import { EN_TOOLS } from '@/i18n/en/tools';
 import { BUDGET_503020_FAQ_EN } from './faq-503020-en';
+import { HOME_FAQ_EN } from './faq-home-en';
+import { LEFTOVER_INCOME_FAQ_EN } from './faq-leftover-income-en';
+import { TEMPLATE_FAQ_EN } from './faq-template-en';
 import { RENT_SPLIT_FAQ_EN } from './faq-rent-split-en';
 import { WEDDING_FAQ_EN } from './faq-wedding-en';
 import { COLOC_FAQ } from './faq-colocation';
 import { MARIAGE_FAQ } from './faq-mariage';
 import { PERSO_FAQ } from './faq-budget-personnel';
 import {
-  ORGANIZATION_LD, PAGES, SITE_NAME, SOFTWARE_LD, absolute, breadcrumbLD, faqLD, type PageSEO,
+  ORGANIZATION_LD, PAGES, SITE_NAME, SOFTWARE_LD, SOFTWARE_LD_EN, absolute, breadcrumbLD, faqLD, type PageSEO,
 } from './site';
 
 export interface BuiltPage {
@@ -64,7 +67,11 @@ function Shell({ path, children }: { path: string; children: React.ReactNode }) 
         <header className="border-b border-border/60 px-4 py-4">
           <nav aria-label="Main navigation" className="mx-auto flex max-w-5xl flex-wrap items-center gap-x-5 gap-y-2 text-sm">
             <a href={LOCALES.en.home} className="font-display text-lg font-bold text-foreground">{SITE_NAME}</a>
+            <a href="/en/features" className="text-muted-foreground">Features</a>
+            <a href="/en/free-budget-template" className="text-muted-foreground">Free template</a>
             {EN_TOOLS.map((tool) => <a key={tool.path} href={tool.path} className="text-muted-foreground">{tool.label}</a>)}
+            <a href="/en/help" className="text-muted-foreground">Help</a>
+            <a href="/signup" className="font-semibold text-primary">Create my free budget</a>
             <LanguageLinks path={path} />
           </nav>
         </header>
@@ -157,6 +164,7 @@ const TOOLS: Record<string, { name: string; crumb: string; faq: FaqItem[] }> = {
   '/en/50-30-20-budget-calculator': { name: '50/30/20 Budget Calculator', crumb: '50/30/20 budget calculator', faq: BUDGET_503020_FAQ_EN },
   '/en/rent-split-calculator': { name: 'Rent Split Calculator', crumb: 'Rent split calculator', faq: RENT_SPLIT_FAQ_EN },
   '/en/wedding-budget-calculator': { name: 'Wedding Budget Calculator', crumb: 'Wedding budget calculator', faq: WEDDING_FAQ_EN },
+  '/en/leftover-income-calculator': { name: 'Leftover Income Calculator', crumb: 'Leftover income calculator', faq: LEFTOVER_INCOME_FAQ_EN },
 };
 
 /** Language fields of a built page: its locale, Open Graph locales and hreflang versions. */
@@ -182,6 +190,14 @@ export function buildPages(): BuiltPage[] {
         '@context': 'https://schema.org', '@type': 'WebSite', name: SITE_NAME, url: absolute('/'), inLanguage: 'fr',
       });
       extra = <FaqBlock items={HOME_FAQ} />;
+    } else if (page.path === '/en') {
+      jsonLd.push(SOFTWARE_LD_EN, faqLD(HOME_FAQ_EN), {
+        '@context': 'https://schema.org', '@type': 'WebSite', name: SITE_NAME, url: absolute('/en'), inLanguage: 'en',
+      });
+      extra = <FaqBlock items={HOME_FAQ_EN} locale="en" />;
+    } else if (page.path === '/en/free-budget-template') {
+      jsonLd.push(faqLD(TEMPLATE_FAQ_EN), breadcrumbLD([{ name: 'Home', path: '/en' }, { name: 'Free budget template', path: page.path }]));
+      extra = <FaqBlock items={TEMPLATE_FAQ_EN} locale="en" />;
     } else if (page.path === '/tableau-budget-familial-gratuit') {
       jsonLd.push(faqLD(TEMPLATE_FAQ), breadcrumbLD([{ name: 'Accueil', path: '/' }, { name: 'Tableau de budget familial gratuit', path: page.path }]));
       extra = <FaqBlock items={TEMPLATE_FAQ} />;
@@ -202,7 +218,7 @@ export function buildPages(): BuiltPage[] {
           publisher: ORGANIZATION_LD,
         },
         faqLD(tool.faq),
-        breadcrumbLD([{ name: locale === 'en' ? SITE_NAME : 'Accueil', path: '/' }, { name: tool.crumb, path: page.path }]),
+        breadcrumbLD([{ name: locale === 'en' ? 'Home' : 'Accueil', path: LOCALES[locale].home }, { name: tool.crumb, path: page.path }]),
       );
       extra = <FaqBlock items={tool.faq} locale={locale} />;
     } else if (page.path === '/blog') {

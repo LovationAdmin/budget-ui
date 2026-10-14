@@ -21,19 +21,29 @@ export const LOCALES: Record<Locale, {
   home: string;
 }> = {
   fr: { og: 'fr_FR', switchLabel: 'Lire en français', home: '/' },
-  en: { og: 'en_US', switchLabel: 'Read in English', home: '/en/50-30-20-budget-calculator' },
+  en: { og: 'en_US', switchLabel: 'Read in English', home: '/en' },
 };
 
 const ALL = Object.keys(LOCALES) as Locale[];
 
 /** One entry per translated page: its path in each language. */
 export const TRANSLATIONS: ReadonlyArray<Partial<Record<Locale, string>>> = [
+  { fr: '/', en: '/en' },
+  { fr: '/features', en: '/en/features' },
+  { fr: '/tableau-budget-familial-gratuit', en: '/en/free-budget-template' },
+  { fr: '/calcul-reste-a-vivre', en: '/en/leftover-income-calculator' },
   { fr: '/budget-personnel', en: '/en/50-30-20-budget-calculator' },
   { fr: '/budget-colocation', en: '/en/rent-split-calculator' },
   { fr: '/budget-mariage', en: '/en/wedding-budget-calculator' },
+  { fr: '/outils-ia', en: '/en/ai-tools' },
+  { fr: '/premium', en: '/en/premium' },
+  { fr: '/help', en: '/en/help' },
+  { fr: '/about', en: '/en/about' },
+  { fr: '/privacy', en: '/en/privacy' },
+  { fr: '/terms', en: '/en/terms' },
 ];
 
-const normalize = (path: string) => (path.length > 1 ? path.replace(/\/+$/, '') : path);
+const normalize = (path: string) => (path.length > 1 ? path.replace(/\/+$/, '') || '/' : path);
 
 export function localeOf(path: string): Locale {
   const p = normalize(path);

@@ -1,5 +1,5 @@
-// Widget « Simulateur d'économies » de la page d'accueil (sans compte).
-// Logique partagée avec la page Outils IA (useSavingsSimulator).
+// Widget « Simulateur d'économies » de la page d'accueil (sans compte), en
+// français et en anglais. Logique partagée avec la page Outils IA (useSavingsSimulator).
 import {
   Brain, Sparkles, CheckCircle2, Loader2, AlertTriangle, Globe, MapPin, PartyPopper,
 } from 'lucide-react';
@@ -31,10 +31,61 @@ import {
   monthlySaving,
   useSavingsSimulator,
 } from '@/hooks/useSavingsSimulator';
+import { defineMessages, useT } from '@/i18n/runtime';
+
+const M = defineMessages({
+  fr: {
+    title: "Simulateur d'Économies",
+    subtitle: 'Analysez vos factures en temps réel',
+    country: 'Pays',
+    which: 'Quelle dépense analyser ?',
+    amount: (currency: string) => `Montant actuel (${currency}/mois)`,
+    amountPlaceholder: 'Ex : 140',
+    household: 'Taille du foyer (pers.)',
+    householdPlaceholder: 'Ex : 4',
+    details: 'Détails (optionnel)',
+    detailsPlaceholder: 'Ex : 80m², chauffage élec, option TV…',
+    analyzing: 'Analyse du marché…',
+    find: 'Trouver des économies',
+    usually: 'Généralement moins de 15 secondes',
+    retry: 'Réessayer',
+    found: "Résultats trouvés par l'IA",
+    best: 'Meilleur choix',
+    perMonth: '/mois',
+    saving: (amount: string) => `Économie : ${amount}/mois`,
+    seeOffer: "Voir l'offre",
+    competitive: 'Bonne nouvelle : votre tarif est déjà compétitif.',
+    noCheaper: 'Aucune offre équivalente moins chère trouvée pour ces critères.',
+  },
+  en: {
+    title: 'Savings simulator',
+    subtitle: 'Analyze your bills in real time',
+    country: 'Country',
+    which: 'Which expense should we analyze?',
+    amount: (currency: string) => `Current amount (${currency}/month)`,
+    amountPlaceholder: 'E.g. 140',
+    household: 'Household size (people)',
+    householdPlaceholder: 'E.g. 4',
+    details: 'Details (optional)',
+    detailsPlaceholder: 'E.g. 900 sq ft, electric heating, TV option…',
+    analyzing: 'Analyzing the market…',
+    find: 'Find savings',
+    usually: 'Usually under 15 seconds',
+    retry: 'Try again',
+    found: 'Results found by the AI',
+    best: 'Best choice',
+    perMonth: '/month',
+    saving: (amount: string) => `You save: ${amount}/month`,
+    seeOffer: 'See the offer',
+    competitive: 'Good news: your price is already competitive.',
+    noCheaper: 'No cheaper equivalent offer found for these criteria.',
+  },
+});
 
 export default function SmartToolsWidget() {
   const sim = useSavingsSimulator();
-  const { config } = sim;
+  const { config, locale } = sim;
+  const t = useT(M);
 
   return (
     <Card className="shadow-2xl overflow-hidden border-0 w-full">
@@ -45,16 +96,16 @@ export default function SmartToolsWidget() {
               <Sparkles className="h-6 w-6" aria-hidden="true" />
             </div>
             <div>
-              <CardTitle className="text-xl sm:text-2xl">Simulateur d'Économies</CardTitle>
+              <CardTitle className="text-xl sm:text-2xl">{t.title}</CardTitle>
               <CardDescription className="text-white/90">
-                Analysez vos factures en temps réel
+                {t.subtitle}
               </CardDescription>
             </div>
           </div>
 
           <div className="w-full sm:w-48">
             <Select value={sim.locationCode} onValueChange={sim.setLocationCode}>
-              <SelectTrigger className="bg-white/10 border-white/20 text-white hover:bg-white/20 h-10" aria-label="Pays">
+              <SelectTrigger className="bg-white/10 border-white/20 text-white hover:bg-white/20 h-10" aria-label={t.country}>
                 <div className="flex items-center gap-2">
                     <MapPin className="h-4 w-4" aria-hidden="true" />
                   <SelectValue />
@@ -63,7 +114,7 @@ export default function SmartToolsWidget() {
               <SelectContent>
                 {LOCATION_CONFIGS.map((c) => (
                   <SelectItem key={c.code} value={c.code}>
-                    {c.name} ({c.currency})
+                    {c.name[locale]} ({c.currency})
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -82,7 +133,7 @@ export default function SmartToolsWidget() {
           }}
         >
           <fieldset className="mb-8">
-            <legend className="text-base font-semibold mb-4">Quelle dépense analyser ?</legend>
+            <legend className="text-base font-semibold mb-4">{t.which}</legend>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
               {MARKET_CATEGORIES.map((cat) => {
                 const CategoryIcon = cat.icon;
@@ -102,7 +153,7 @@ export default function SmartToolsWidget() {
                     <div className={`h-10 w-10 ${cat.color} rounded-lg flex items-center justify-center mb-2 mx-auto text-white`}>
                       <CategoryIcon className="h-5 w-5" aria-hidden="true" />
                     </div>
-                    <div className="text-xs font-semibold text-gray-900">{cat.title}</div>
+                    <div className="text-xs font-semibold text-gray-900">{cat.title[locale]}</div>
                   </button>
                 );
               })}
@@ -112,7 +163,7 @@ export default function SmartToolsWidget() {
           <div className="grid gap-6">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
               <div>
-                <Label htmlFor="w-amount" className="mb-2 block">Montant actuel ({config.currency}/mois)</Label>
+                <Label htmlFor="w-amount" className="mb-2 block">{t.amount(config.currency)}</Label>
                 <Input
                   id="w-amount"
                         name="monthly-amount"
@@ -123,7 +174,7 @@ export default function SmartToolsWidget() {
                   inputMode="decimal"
                   min={0}
                   step="any"
-                  placeholder="Ex : 140"
+                  placeholder={t.amountPlaceholder}
                   value={sim.currentAmount}
                   onChange={(e) => sim.setCurrentAmount(e.target.value)}
                   className="h-12 text-lg"
@@ -133,7 +184,7 @@ export default function SmartToolsWidget() {
                       )}
               </div>
               <div>
-                <Label htmlFor="w-household" className="mb-2 block">Taille du foyer (pers.)</Label>
+                <Label htmlFor="w-household" className="mb-2 block">{t.household}</Label>
                 <Input
                   id="w-household"
                         name="household-size"
@@ -144,7 +195,7 @@ export default function SmartToolsWidget() {
                   inputMode="numeric"
                   min={1}
                   max={20}
-                  placeholder="Ex : 4"
+                  placeholder={t.householdPlaceholder}
                   value={sim.householdSize}
                   onChange={(e) => sim.setHouseholdSize(e.target.value)}
                   className="h-12 text-lg"
@@ -157,14 +208,14 @@ export default function SmartToolsWidget() {
 
             <div>
               <div className="flex justify-between mb-2">
-                <Label htmlFor="w-details">Détails (optionnel)</Label>
+                <Label htmlFor="w-details">{t.details}</Label>
                 <span className="text-xs text-muted-foreground">{sim.description.length}/{MAX_DESCRIPTION_LENGTH}</span>
               </div>
               <Textarea
                 id="w-details"
                         name="details"
                         autoComplete="off"
-                placeholder="Ex : 80m², chauffage élec, option TV…"
+                placeholder={t.detailsPlaceholder}
                 value={sim.description}
                 maxLength={MAX_DESCRIPTION_LENGTH}
                 onChange={(e) => sim.setDescription(e.target.value.slice(0, MAX_DESCRIPTION_LENGTH))}
@@ -179,7 +230,7 @@ export default function SmartToolsWidget() {
               className="w-full h-12 text-lg font-semibold bg-gradient-to-r from-primary to-purple-600 hover:opacity-90 transition-opacity shadow-lg"
             >
               {sim.status === 'loading' ? <Loader2 className="mr-2 h-5 w-5 animate-spin" aria-hidden="true" /> : <Brain className="mr-2 h-5 w-5" aria-hidden="true" />}
-              {sim.status === 'loading' ? 'Analyse du marché…' : 'Trouver des économies'}
+              {sim.status === 'loading' ? t.analyzing : t.find}
             </Button>
           </div>
         </form>
@@ -193,20 +244,20 @@ export default function SmartToolsWidget() {
                     <div className="absolute inset-0 bg-primary/20 rounded-full animate-ping motion-reduce:hidden"></div>
                     <Brain className="h-12 w-12 text-primary relative z-10" aria-hidden="true" />
                   </div>
-                  <p className="mt-4 text-gray-600 font-medium">{loadingMessage(sim.elapsed, config.name)}</p>
-                  <p className="mt-1 text-xs text-gray-400">Généralement moins de 15 secondes</p>
+                  <p className="mt-4 text-gray-600 font-medium">{loadingMessage(sim.elapsed, config, locale)}</p>
+                  <p className="mt-1 text-xs text-gray-400">{t.usually}</p>
                 </div>
               ) : sim.status === 'error' ? (
                 <div className="p-6 bg-red-50 border border-red-200 rounded-xl text-center text-red-700" role="alert">
                   <AlertTriangle className="h-10 w-10 mb-2 mx-auto" aria-hidden="true" />
                   <p>{sim.error}</p>
                   <Button variant="outline" className="mt-4" onClick={() => sim.analyze()} disabled={!sim.canAnalyze}>
-                    Réessayer
+                    {t.retry}
                   </Button>
                 </div>
               ) : sim.result && sim.result.competitors.length > 0 ? (
                 <div className="grid grid-cols-1 gap-4">
-                  <p className="text-sm font-medium text-muted-foreground mb-2 text-center uppercase tracking-wide">Résultats trouvés par l'IA</p>
+                  <p className="text-sm font-medium text-muted-foreground mb-2 text-center uppercase tracking-wide">{t.found}</p>
                   {sim.result.competitors.slice(0, 2).map((offer, idx) => (
                     <div key={idx} className={`bg-white rounded-xl p-4 shadow-sm border-2 ${idx === 0 ? 'border-green-400 bg-green-50/30' : 'border-gray-100'}`}>
                       <div className="flex justify-between items-start gap-2 mb-2">
@@ -214,14 +265,14 @@ export default function SmartToolsWidget() {
                           <h3 className="font-bold text-lg text-gray-900">{offer.name}</h3>
                           <p className="text-xs text-gray-500">{offer.best_offer}</p>
                         </div>
-                        {idx === 0 && <Badge className="bg-green-600 border-0 shrink-0">Meilleur choix</Badge>}
+                        {idx === 0 && <Badge className="bg-green-600 border-0 shrink-0">{t.best}</Badge>}
                       </div>
 
                       <div className="flex flex-wrap items-end gap-x-2 gap-y-1 mb-3">
                         <span className="text-2xl font-bold text-primary">{formatMoney(offer.typical_price, config.symbol, config.currency)}</span>
-                        <span className="text-xs text-gray-500 mb-1">/mois</span>
+                        <span className="text-xs text-gray-500 mb-1">{t.perMonth}</span>
                         <span className="ml-auto text-sm font-semibold text-green-700">
-                          Économie : {formatMoney(monthlySaving(offer.potential_savings), config.symbol, config.currency)}/mois
+                          {t.saving(formatMoney(monthlySaving(offer.potential_savings), config.symbol, config.currency))}
                         </span>
                       </div>
 
@@ -240,7 +291,7 @@ export default function SmartToolsWidget() {
                         className="w-full h-8 text-xs"
                         onClick={() => window.open(offer.website_url || offer.affiliate_link, '_blank', 'noopener,noreferrer')}
                       >
-                        Voir l'offre <Globe className="ml-2 h-3 w-3" aria-hidden="true" />
+                        {t.seeOffer} <Globe className="ml-2 h-3 w-3" aria-hidden="true" />
                       </Button>
                     </div>
                   ))}
@@ -248,8 +299,8 @@ export default function SmartToolsWidget() {
               ) : (
                 <div className="text-center py-8">
                   <PartyPopper className="h-10 w-10 mx-auto mb-3 text-green-600" aria-hidden="true" />
-                  <p className="font-semibold text-gray-900">Bonne nouvelle : votre tarif est déjà compétitif.</p>
-                  <p className="text-sm text-gray-500 mt-1">Aucune offre équivalente moins chère trouvée pour ces critères.</p>
+                  <p className="font-semibold text-gray-900">{t.competitive}</p>
+                  <p className="text-sm text-gray-500 mt-1">{t.noCheaper}</p>
                 </div>
               )}
             </div>

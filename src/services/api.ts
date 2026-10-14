@@ -444,6 +444,8 @@ export const budgetAPI = {
     budget_id?: string;
     country?: string;
     currency?: string;
+    /** Language of the answer (offer descriptions, pros). */
+    language?: string;
   }): Promise<AxiosResponse<MarketSuggestion>> =>
     api.post('/public/suggestions/analyze', {
       // Mapper current_amount (front) → amount (backend)
@@ -455,6 +457,7 @@ export const budgetAPI = {
       budget_id: data.budget_id,
       country: data.country,
       currency: data.currency,
+      language: data.language,
     }),
 
   // Cached suggestions par catégorie

@@ -1,4 +1,5 @@
 // src/pages/Features.tsx
+// Features page, in French (/features) and English (/en/features).
 // ✅ VERSION MOBILE-OPTIMIZED - CORRIGE LES PROBLÈMES GOOGLE MOBILE COMPLIANCE
 // Changements principaux:
 // 1. Tableau comparatif responsive (cards sur mobile au lieu de table)
@@ -38,182 +39,258 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Footer } from '@/components/Footer';
+import { localizedPath } from '@/i18n/locales';
+import { defineMessages, useLocale, useT } from '@/i18n/runtime';
+
+const UNIQUE_VISUALS = [
+  { icon: Shield, color: 'bg-emerald-500' },
+  { icon: Users, color: 'bg-blue-500' },
+  { icon: Brain, color: 'bg-purple-500' },
+];
+const CORE_VISUALS = [
+  { icon: Users, color: 'bg-blue-500' },
+  { icon: TrendingUp, color: 'bg-green-500' },
+  { icon: Target, color: 'bg-purple-500' },
+  { icon: CreditCard, color: 'bg-orange-500' },
+];
+const ADVANCED_ICONS = [CreditCard, TrendingUp, Brain, BarChart3];
+const SECURITY_ICONS = [Lock, Shield, Eye, Database];
+const TECHNICAL_VISUALS = [
+  { icon: Zap, value: '<100ms' },
+  { icon: Database, value: '99.9%' },
+  { icon: Shield, value: '256-bit' },
+  { icon: Globe, value: '10+' },
+];
+const PLATFORM_ICONS = [Smartphone, Globe, Download, Share2];
+
+const M = defineMessages({
+  fr: {
+    back: 'Retour',
+    version: 'Nouvelle Version 2.0',
+    h1: 'Fonctionnalités de Budget Famille',
+    intro: 'Tous les outils pour budgétiser et planifier, seul ou à plusieurs : famille, couple, coloc et projets',
+    differentKicker: 'Ce qui nous différencie',
+    whyTitle: 'Pourquoi Choisir Budget Famille ?',
+    whyIntro: 'Des fonctionnalités exclusives que vous ne trouverez nulle part ailleurs',
+    unique: [
+      {
+        title: 'Privacy Forte',
+        subtitle: 'Chiffrement AES-256-GCM at-rest',
+        description: "Toutes vos données budgétaires sont stockées chiffrées en base. Et dans un budget partagé, vos charges perso privées restent à vous : leur nom n'est lisible que par vous.",
+        highlights: ['Chiffrement AES-256-GCM at-rest', 'Charges perso privées : lisibles par vous seul', 'Hébergement UE (Frankfurt) — RGPD'],
+      },
+      {
+        title: 'Collaboration Temps Réel',
+        subtitle: 'WebSocket Instantané',
+        description: 'Conjoint, famille ou colocataires connectés en même temps : une modification, et chacun la voit tout de suite.',
+        highlights: ['Synchronisation instantanée', 'Notifications push temps réel', 'Gestion des conflits automatique'],
+      },
+      {
+        title: 'IA Market Suggestions',
+        subtitle: 'Propulsé par Claude (Anthropic)',
+        description: 'Notre IA analyse vos charges et trouve automatiquement des alternatives moins chères sur le marché.',
+        highlights: ['Analyse de marché en temps réel', 'Suggestions personnalisées', 'Alternatives comparées charge par charge'],
+      },
+    ],
+    vsTitle: 'Budget Famille vs Autres Applications',
+    vsIntro: 'Comparaison objective des fonctionnalités',
+    colFeature: 'Fonctionnalité',
+    colOthers: 'Autres Apps',
+    exclusive: 'Exclusif',
+    us: 'Nous',
+    others: 'Autres',
+    comparison: [
+      { feature: 'Gestion multi-budgets', budgetFamille: true, others: true, highlight: false },
+      { feature: 'Collaboration temps réel', budgetFamille: true, others: false, highlight: true },
+      { feature: 'Charges perso privées dans un budget partagé', budgetFamille: true, others: false, highlight: true },
+      { feature: 'Pot commun + argent de poche par membre', budgetFamille: true, others: false, highlight: true },
+      { feature: 'Connexion bancaire (Premium, bientôt)', budgetFamille: true, others: true, highlight: false },
+      { feature: 'IA Market Suggestions', budgetFamille: true, others: false, highlight: true },
+      { feature: 'Reality Check : prévu vs réel (Premium, bientôt)', budgetFamille: true, others: false, highlight: true },
+      { feature: 'Progressive Web App', budgetFamille: true, others: false, highlight: false },
+      { feature: '100% Gratuit (fonctions de base)', budgetFamille: true, others: false, highlight: false },
+    ],
+    coreTitle: 'Fonctionnalités Principales',
+    core: [
+      {
+        title: 'Seul ou à plusieurs',
+        description: 'Gérez votre budget seul, ou invitez conjoint, famille ou colocataires et gérez-le ensemble en temps réel.',
+        features: ['Invitations par e-mail, à qui vous voulez', 'Plusieurs budgets : foyer, coloc, projet…', 'Pot commun et argent de poche de chacun', 'Répartition juste (prorata, parts égales, même argent de poche)', 'Notifications en direct'],
+      },
+      {
+        title: 'Suivi Complet',
+        description: 'Visualisez vos finances avec des graphiques clairs et intuitifs.',
+        features: ['Vue Mois : entrées, charges, épargne, reste', 'Vue Année et historique de chaque membre', 'Mois clôturés figés automatiquement', 'Mode sombre et export des données'],
+      },
+      {
+        title: 'Projets et Épargne',
+        description: 'Voyage, mariage, travaux, voiture : un objectif, une date, et votre progression.',
+        features: ['Objectif + échéance → montant mensuel calculé', 'Vérification : le pot commun peut-il suivre ?', 'Plan proposé par le Budget IA', 'Cagnottes, épargne générale automatique'],
+      },
+      {
+        title: 'Gestion des Charges',
+        description: 'Catégorisez et analysez toutes vos dépenses récurrentes.',
+        features: ["Charges du foyer ou charges perso (sur l'argent de poche)", 'Mensuelles, certains mois, annuelles lissées, ponctuelles', 'Montants datés : le passé ne bouge jamais', 'Total du mois et moyenne sur 12 mois'],
+      },
+    ],
+    advancedKicker: 'Fonctionnalités Avancées',
+    advancedTitle: 'Allez Plus Loin avec la Beta 2',
+    advancedIntro: 'Profitez des dernières innovations pour un contrôle total de vos finances',
+    advanced: [
+      { title: 'Connexion Bancaire', description: 'Vos transactions synchronisées automatiquement (Premium)', badge: 'Bientôt' },
+      { title: 'Reality Check', description: 'Comparez budget prévu et dépenses réelles (Premium)', badge: 'Bientôt' },
+      { title: 'IA Suggestions', description: "Des pistes d'économies et un plan proposés par l'IA", badge: 'Gratuit' },
+      { title: 'Analytics Pro', description: 'Tableaux de bord avancés', badge: 'Bientôt' },
+    ],
+    securityTitle: 'Sécurité & Confidentialité',
+    securityIntro: 'Votre vie privée est notre priorité. Toutes vos données sont protégées par des technologies de chiffrement de niveau bancaire.',
+    security: [
+      { title: 'Chiffrement AES-256-GCM', description: 'Données budgétaires chiffrées en base' },
+      { title: 'Accès restreint', description: 'Accès journalisé, jamais commercial' },
+      { title: 'Aucun tracking', description: 'Pas de revente, pas de profiling' },
+      { title: 'RGPD compliant', description: "Hébergement UE, droit à l'effacement" },
+    ],
+    performanceTitle: 'Performance & Fiabilité',
+    performanceIntro: 'Une architecture technique de pointe pour une expérience fluide',
+    technical: [
+      { title: 'Latence', description: 'Sync temps réel' },
+      { title: 'Uptime', description: 'Disponibilité garantie' },
+      { title: 'Chiffrement', description: 'Grade militaire' },
+      { title: 'Pays', description: 'Support multi-devise' },
+    ],
+    platformTitle: 'Accessible Partout, Tout le Temps',
+    platform: [
+      { title: 'Mobile First', description: 'Interface optimisée pour smartphone' },
+      { title: 'Web App', description: 'Accessible depuis tout navigateur' },
+      { title: 'PWA Installable', description: 'Installez comme une app native' },
+      { title: 'Multi-device', description: 'Synchronisé sur tous vos appareils' },
+    ],
+    ctaTitle: 'Prêt à Reprendre le Contrôle de Vos Finances ?',
+    ctaText: 'Gratuit, sans carte bancaire : commencez seul et invitez qui vous voulez ensuite',
+    ctaSignup: 'Créer mon compte gratuit',
+    ctaPremium: 'Découvrir Premium',
+  },
+  en: {
+    back: 'Back',
+    version: 'New version 2.0',
+    h1: 'Budget Famille features',
+    intro: 'Every tool to budget and plan, on your own or together: family, couple, roommates and goals',
+    differentKicker: 'What sets us apart',
+    whyTitle: 'Why choose Budget Famille?',
+    whyIntro: 'Features you won’t find anywhere else',
+    unique: [
+      {
+        title: 'Strong privacy',
+        subtitle: 'AES-256-GCM encryption at rest',
+        description: 'All your budget data is stored encrypted in the database. And in a shared budget, your private personal expenses stay yours: only you can read their names.',
+        highlights: ['AES-256-GCM encryption at rest', 'Private personal expenses: readable by you only', 'Hosted in the EU (Frankfurt) — GDPR'],
+      },
+      {
+        title: 'Real-time collaboration',
+        subtitle: 'Instant WebSocket sync',
+        description: 'Your partner, family or roommates connected at the same time: one change, and everyone sees it right away.',
+        highlights: ['Instant sync', 'Real-time push notifications', 'Automatic conflict handling'],
+      },
+      {
+        title: 'AI market suggestions',
+        subtitle: 'Powered by Claude (Anthropic)',
+        description: 'Our AI analyzes your bills and automatically finds cheaper alternatives on the market.',
+        highlights: ['Real-time market analysis', 'Personalized suggestions', 'Alternatives compared bill by bill'],
+      },
+    ],
+    vsTitle: 'Budget Famille vs other apps',
+    vsIntro: 'An objective feature comparison',
+    colFeature: 'Feature',
+    colOthers: 'Other apps',
+    exclusive: 'Exclusive',
+    us: 'Us',
+    others: 'Others',
+    comparison: [
+      { feature: 'Multiple budgets', budgetFamille: true, others: true, highlight: false },
+      { feature: 'Real-time collaboration', budgetFamille: true, others: false, highlight: true },
+      { feature: 'Private personal expenses in a shared budget', budgetFamille: true, others: false, highlight: true },
+      { feature: 'Joint pot + spending money per member', budgetFamille: true, others: false, highlight: true },
+      { feature: 'Bank connection (Premium, coming soon)', budgetFamille: true, others: true, highlight: false },
+      { feature: 'AI market suggestions', budgetFamille: true, others: false, highlight: true },
+      { feature: 'Reality check: planned vs actual (Premium, coming soon)', budgetFamille: true, others: false, highlight: true },
+      { feature: 'Progressive Web App', budgetFamille: true, others: false, highlight: false },
+      { feature: '100% free (core features)', budgetFamille: true, others: false, highlight: false },
+    ],
+    coreTitle: 'Core features',
+    core: [
+      {
+        title: 'On your own or together',
+        description: 'Manage your budget on your own, or invite your partner, family or roommates and manage it together in real time.',
+        features: ['Email invitations, to whoever you like', 'Several budgets: household, shared flat, a goal…', 'A joint pot and everyone’s spending money', 'A fair split (in proportion, equal shares, the same spending money)', 'Live notifications'],
+      },
+      {
+        title: 'Full tracking',
+        description: 'See your finances with clear, intuitive charts.',
+        features: ['Month view: income, bills, savings, what’s left', 'Year view and each member’s history', 'Closed months frozen automatically', 'Dark mode and data export'],
+      },
+      {
+        title: 'Goals and savings',
+        description: 'A trip, a wedding, renovations, a car: a target, a date, and your progress.',
+        features: ['Target + due date → monthly amount worked out', 'Check: can the joint pot keep up?', 'A plan suggested by the AI budget', 'Savings pots, automatic general savings'],
+      },
+      {
+        title: 'Bill management',
+        description: 'Categorize and analyze all your recurring expenses.',
+        features: ['Household bills or personal expenses (from spending money)', 'Monthly, some months, yearly spread out, one-off', 'Dated amounts: the past never changes', 'Month total and 12-month average'],
+      },
+    ],
+    advancedKicker: 'Advanced features',
+    advancedTitle: 'Go further with Beta 2',
+    advancedIntro: 'The latest features for full control of your finances',
+    advanced: [
+      { title: 'Bank connection', description: 'Your transactions synced automatically (Premium)', badge: 'Coming soon' },
+      { title: 'Reality check', description: 'Compare planned budget and actual spending (Premium)', badge: 'Coming soon' },
+      { title: 'AI suggestions', description: 'Ways to save and a plan suggested by AI', badge: 'Free' },
+      { title: 'Analytics Pro', description: 'Advanced dashboards', badge: 'Coming soon' },
+    ],
+    securityTitle: 'Security & privacy',
+    securityIntro: 'Your privacy is our priority. All your data is protected with bank-grade encryption.',
+    security: [
+      { title: 'AES-256-GCM encryption', description: 'Budget data encrypted in the database' },
+      { title: 'Restricted access', description: 'Logged access, never commercial' },
+      { title: 'No tracking', description: 'No reselling, no profiling' },
+      { title: 'GDPR compliant', description: 'Hosted in the EU, right to erasure' },
+    ],
+    performanceTitle: 'Performance & reliability',
+    performanceIntro: 'State-of-the-art architecture for a smooth experience',
+    technical: [
+      { title: 'Latency', description: 'Real-time sync' },
+      { title: 'Uptime', description: 'Guaranteed availability' },
+      { title: 'Encryption', description: 'Military grade' },
+      { title: 'Countries', description: 'Multi-currency support' },
+    ],
+    platformTitle: 'Available everywhere, all the time',
+    platform: [
+      { title: 'Mobile first', description: 'An interface built for smartphones' },
+      { title: 'Web app', description: 'Works in any browser' },
+      { title: 'Installable PWA', description: 'Install it like a native app' },
+      { title: 'Multi-device', description: 'Synced across all your devices' },
+    ],
+    ctaTitle: 'Ready to take back control of your finances?',
+    ctaText: 'Free, no credit card: start on your own and invite whoever you like later',
+    ctaSignup: 'Create my free account',
+    ctaPremium: 'Discover Premium',
+  },
+});
 
 export default function Features() {
   const navigate = useNavigate();
   const { user } = useAuth();
 
-  // ============================================================================
-  // DATA - Unique Features
-  // ============================================================================
-  const uniqueFeatures = [
-    {
-      icon: Shield,
-      title: "Privacy Forte",
-      subtitle: "Chiffrement AES-256-GCM at-rest",
-      description: "Toutes vos données budgétaires sont stockées chiffrées en base. Et dans un budget partagé, vos charges perso privées restent à vous : leur nom n'est lisible que par vous.",
-      highlights: [
-        "Chiffrement AES-256-GCM at-rest",
-        "Charges perso privées : lisibles par vous seul",
-        "Hébergement UE (Frankfurt) — RGPD"
-      ],
-      color: "bg-emerald-500"
-    },
-    {
-      icon: Users,
-      title: "Collaboration Temps Réel",
-      subtitle: "WebSocket Instantané",
-      description: "Conjoint, famille ou colocataires connectés en même temps : une modification, et chacun la voit tout de suite.",
-      highlights: [
-        "Synchronisation instantanée",
-        "Notifications push temps réel",
-        "Gestion des conflits automatique"
-      ],
-      color: "bg-blue-500"
-    },
-    {
-      icon: Brain,
-      title: "IA Market Suggestions",
-      subtitle: "Propulsé par Claude (Anthropic)",
-      description: "Notre IA analyse vos charges et trouve automatiquement des alternatives moins chères sur le marché.",
-      highlights: [
-        "Analyse de marché en temps réel",
-        "Suggestions personnalisées",
-        "Alternatives comparées charge par charge"
-      ],
-      color: "bg-purple-500"
-    }
-  ];
-
-  // ============================================================================
-  // DATA - Comparison Table
-  // ============================================================================
-  const comparisonTable = [
-    { feature: "Gestion multi-budgets", budgetFamille: true, others: true, highlight: false },
-    { feature: "Collaboration temps réel", budgetFamille: true, others: false, highlight: true },
-    { feature: "Charges perso privées dans un budget partagé", budgetFamille: true, others: false, highlight: true },
-    { feature: "Pot commun + argent de poche par membre", budgetFamille: true, others: false, highlight: true },
-    { feature: "Connexion bancaire (Premium, bientôt)", budgetFamille: true, others: true, highlight: false },
-    { feature: "IA Market Suggestions", budgetFamille: true, others: false, highlight: true },
-    { feature: "Reality Check : prévu vs réel (Premium, bientôt)", budgetFamille: true, others: false, highlight: true },
-    { feature: "Progressive Web App", budgetFamille: true, others: false, highlight: false },
-    { feature: "100% Gratuit (fonctions de base)", budgetFamille: true, others: false, highlight: false },
-  ];
-
-  // ============================================================================
-  // DATA - Core Features
-  // ============================================================================
-  const coreFeatures = [
-    {
-      icon: Users,
-      title: "Seul ou à plusieurs",
-      description: "Gérez votre budget seul, ou invitez conjoint, famille ou colocataires et gérez-le ensemble en temps réel.",
-      features: [
-        "Invitations par e-mail, à qui vous voulez",
-        "Plusieurs budgets : foyer, coloc, projet…",
-        "Pot commun et argent de poche de chacun",
-        "Répartition juste (prorata, parts égales, même argent de poche)",
-        "Notifications en direct"
-      ],
-      color: "bg-blue-500"
-    },
-    {
-      icon: TrendingUp,
-      title: "Suivi Complet",
-      description: "Visualisez vos finances avec des graphiques clairs et intuitifs.",
-      features: [
-        "Vue Mois : entrées, charges, épargne, reste",
-        "Vue Année et historique de chaque membre",
-        "Mois clôturés figés automatiquement",
-        "Mode sombre et export des données"
-      ],
-      color: "bg-green-500"
-    },
-    {
-      icon: Target,
-      title: "Projets et Épargne",
-      description: "Voyage, mariage, travaux, voiture : un objectif, une date, et votre progression.",
-      features: [
-        "Objectif + échéance → montant mensuel calculé",
-        "Vérification : le pot commun peut-il suivre ?",
-        "Plan proposé par le Budget IA",
-        "Cagnottes, épargne générale automatique"
-      ],
-      color: "bg-purple-500"
-    },
-    {
-      icon: CreditCard,
-      title: "Gestion des Charges",
-      description: "Catégorisez et analysez toutes vos dépenses récurrentes.",
-      features: [
-        "Charges du foyer ou charges perso (sur l'argent de poche)",
-        "Mensuelles, certains mois, annuelles lissées, ponctuelles",
-        "Montants datés : le passé ne bouge jamais",
-        "Total du mois et moyenne sur 12 mois"
-      ],
-      color: "bg-orange-500"
-    }
-  ];
-
-  // ============================================================================
-  // DATA - Advanced Features
-  // ============================================================================
-  const advancedFeatures = [
-    {
-      icon: CreditCard,
-      title: "Connexion Bancaire",
-      description: "Vos transactions synchronisées automatiquement (Premium)",
-      badge: "Bientôt"
-    },
-    {
-      icon: TrendingUp,
-      title: "Reality Check",
-      description: "Comparez budget prévu et dépenses réelles (Premium)",
-      badge: "Bientôt"
-    },
-    {
-      icon: Brain,
-      title: "IA Suggestions",
-      description: "Des pistes d'économies et un plan proposés par l'IA",
-      badge: "Gratuit"
-    },
-    {
-      icon: BarChart3,
-      title: "Analytics Pro",
-      description: "Tableaux de bord avancés",
-      badge: "Bientôt"
-    }
-  ];
-
-  // ============================================================================
-  // DATA - Security Features
-  // ============================================================================
-  const securityFeatures = [
-    { icon: Lock, title: "Chiffrement AES-256-GCM", description: "Données budgétaires chiffrées en base" },
-    { icon: Shield, title: "Accès restreint", description: "Accès journalisé, jamais commercial" },
-    { icon: Eye, title: "Aucun tracking", description: "Pas de revente, pas de profiling" },
-    { icon: Database, title: "RGPD compliant", description: "Hébergement UE, droit à l'effacement" }
-  ];
-
-  // ============================================================================
-  // DATA - Technical Advantages
-  // ============================================================================
-  const technicalAdvantages = [
-    { icon: Zap, value: "<100ms", title: "Latence", description: "Sync temps réel" },
-    { icon: Database, value: "99.9%", title: "Uptime", description: "Disponibilité garantie" },
-    { icon: Shield, value: "256-bit", title: "Chiffrement", description: "Grade militaire" },
-    { icon: Globe, value: "10+", title: "Pays", description: "Support multi-devise" }
-  ];
-
-  // ============================================================================
-  // DATA - Platform Features
-  // ============================================================================
-  const platformFeatures = [
-    { icon: Smartphone, title: "Mobile First", description: "Interface optimisée pour smartphone" },
-    { icon: Globe, title: "Web App", description: "Accessible depuis tout navigateur" },
-    { icon: Download, title: "PWA Installable", description: "Installez comme une app native" },
-    { icon: Share2, title: "Multi-device", description: "Synchronisé sur tous vos appareils" }
-  ];
+  const t = useT(M);
+  const locale = useLocale();
+  const uniqueFeatures = t.unique.map((f, i) => ({ ...f, ...UNIQUE_VISUALS[i] }));
+  const comparisonTable = t.comparison;
+  const coreFeatures = t.core.map((f, i) => ({ ...f, ...CORE_VISUALS[i] }));
+  const advancedFeatures = t.advanced.map((f, i) => ({ ...f, icon: ADVANCED_ICONS[i] }));
+  const securityFeatures = t.security.map((f, i) => ({ ...f, icon: SECURITY_ICONS[i] }));
+  const technicalAdvantages = t.technical.map((f, i) => ({ ...f, ...TECHNICAL_VISUALS[i] }));
+  const platformFeatures = t.platform.map((f, i) => ({ ...f, icon: PLATFORM_ICONS[i] }));
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary-50 to-purple-50 flex flex-col">
@@ -228,20 +305,20 @@ export default function Features() {
           className="flex items-center gap-2 text-primary-600 hover:text-primary-700 mb-6 sm:mb-8 font-medium min-h-[44px]"
         >
           <ArrowLeft className="h-4 w-4" />
-          Retour
+          {t.back}
         </button>
 
         {/* Hero */}
         <div className="text-center mb-12 sm:mb-16">
           <div className="inline-flex items-center gap-2 bg-primary/10 text-primary px-3 py-1.5 sm:px-4 sm:py-2 rounded-full mb-4 sm:mb-6">
             <Sparkles className="h-4 w-4" />
-            <span className="font-semibold text-xs sm:text-sm">Nouvelle Version 2.0</span>
+            <span className="font-semibold text-xs sm:text-sm">{t.version}</span>
           </div>
           <h1 className="text-3xl sm:text-4xl md:text-5xl font-display font-bold text-gray-900 mb-3 sm:mb-4 px-2">
-            Fonctionnalités de Budget Famille
+            {t.h1}
           </h1>
           <p className="text-base sm:text-lg md:text-xl text-gray-600 max-w-3xl mx-auto px-4">
-            Tous les outils pour budgétiser et planifier, seul ou à plusieurs : famille, couple, coloc et projets
+            {t.intro}
           </p>
         </div>
 
@@ -252,13 +329,13 @@ export default function Features() {
           <div className="text-center mb-8 sm:mb-12">
             <div className="inline-flex items-center gap-2 bg-gradient-to-r from-primary to-purple-600 text-white px-3 py-1.5 sm:px-4 sm:py-2 rounded-full text-xs sm:text-sm font-medium mb-3 sm:mb-4">
               <Star className="h-3 w-3 sm:h-4 sm:w-4" />
-              Ce qui nous différencie
+              {t.differentKicker}
             </div>
             <h2 className="text-2xl sm:text-3xl md:text-4xl font-display font-bold text-gray-900 mb-3 sm:mb-4">
-              Pourquoi Choisir Budget Famille ?
+              {t.whyTitle}
             </h2>
             <p className="text-sm sm:text-base md:text-xl text-gray-600 max-w-2xl mx-auto px-4">
-              Des fonctionnalités exclusives que vous ne trouverez nulle part ailleurs
+              {t.whyIntro}
             </p>
           </div>
 
@@ -302,10 +379,10 @@ export default function Features() {
         <section className="mb-16 sm:mb-24">
           <div className="text-center mb-8 sm:mb-12">
             <h2 className="text-2xl sm:text-3xl md:text-4xl font-display font-bold text-gray-900 mb-3 sm:mb-4 px-2">
-              Budget Famille vs Autres Applications
+              {t.vsTitle}
             </h2>
             <p className="text-sm sm:text-base md:text-xl text-gray-600 px-4">
-              Comparaison objective des fonctionnalités
+              {t.vsIntro}
             </p>
           </div>
 
@@ -315,9 +392,9 @@ export default function Features() {
               <table className="w-full">
                 <thead className="bg-gradient-to-r from-primary to-purple-600">
                   <tr>
-                    <th className="px-4 sm:px-6 py-3 sm:py-4 text-left text-white font-semibold text-sm sm:text-base">Fonctionnalité</th>
+                    <th className="px-4 sm:px-6 py-3 sm:py-4 text-left text-white font-semibold text-sm sm:text-base">{t.colFeature}</th>
                     <th className="px-4 sm:px-6 py-3 sm:py-4 text-center text-white font-semibold text-sm sm:text-base">Budget Famille</th>
-                    <th className="px-4 sm:px-6 py-3 sm:py-4 text-center text-white font-semibold text-sm sm:text-base">Autres Apps</th>
+                    <th className="px-4 sm:px-6 py-3 sm:py-4 text-center text-white font-semibold text-sm sm:text-base">{t.colOthers}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
@@ -331,7 +408,7 @@ export default function Features() {
                           {row.feature}
                           {row.highlight && (
                             <span className="ml-2 text-xs bg-green-100 text-green-700 px-2 py-0.5 sm:py-1 rounded-full">
-                              Exclusif
+                              {t.exclusive}
                             </span>
                           )}
                         </span>
@@ -371,13 +448,13 @@ export default function Features() {
                     </span>
                     {row.highlight && (
                       <span className="ml-2 text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">
-                        Exclusif
+                        {t.exclusive}
                       </span>
                     )}
                   </div>
                   <div className="flex items-center gap-4">
                     <div className="text-center">
-                      <div className="text-xs text-gray-500 mb-1">Nous</div>
+                      <div className="text-xs text-gray-500 mb-1">{t.us}</div>
                       {row.budgetFamille ? (
                         <CheckCircle2 className="h-5 w-5 text-green-500 mx-auto" />
                       ) : (
@@ -385,7 +462,7 @@ export default function Features() {
                       )}
                     </div>
                     <div className="text-center">
-                      <div className="text-xs text-gray-500 mb-1">Autres</div>
+                      <div className="text-xs text-gray-500 mb-1">{t.others}</div>
                       {row.others ? (
                         <CheckCircle2 className="h-5 w-5 text-gray-400 mx-auto" />
                       ) : (
@@ -404,7 +481,7 @@ export default function Features() {
         {/* ====================================================================== */}
         <section className="mb-16 sm:mb-20">
           <h2 className="text-2xl sm:text-3xl font-display font-bold text-gray-900 mb-6 sm:mb-8 text-center">
-            Fonctionnalités Principales
+            {t.coreTitle}
           </h2>
           <div className="grid gap-6 sm:gap-8 md:grid-cols-2">
             {coreFeatures.map((feature, index) => {
@@ -444,13 +521,13 @@ export default function Features() {
           <div className="text-center mb-8 sm:mb-12">
             <div className="inline-flex items-center gap-2 bg-gradient-to-r from-indigo-500 to-purple-600 text-white px-3 py-1.5 sm:px-4 sm:py-2 rounded-full text-xs sm:text-sm font-medium mb-3 sm:mb-4">
               <Zap className="h-3 w-3 sm:h-4 sm:w-4" />
-              Fonctionnalités Avancées
+              {t.advancedKicker}
             </div>
             <h2 className="text-2xl sm:text-3xl font-display font-bold text-gray-900 mb-3 sm:mb-4">
-              Allez Plus Loin avec la Beta 2
+              {t.advancedTitle}
             </h2>
             <p className="text-sm sm:text-base text-gray-600 max-w-2xl mx-auto px-4">
-              Profitez des dernières innovations pour un contrôle total de vos finances
+              {t.advancedIntro}
             </p>
           </div>
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
@@ -493,11 +570,10 @@ export default function Features() {
                 <Shield className="h-6 w-6 sm:h-8 sm:w-8" />
               </div>
               <h2 className="text-2xl sm:text-3xl font-display font-bold mb-3 sm:mb-4">
-                Sécurité & Confidentialité
+                {t.securityTitle}
               </h2>
               <p className="text-sm sm:text-base text-green-100 max-w-2xl mx-auto px-2">
-                Votre vie privée est notre priorité. Toutes vos données sont protégées par des technologies 
-                de chiffrement de niveau bancaire.
+                {t.securityIntro}
               </p>
             </div>
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
@@ -522,10 +598,10 @@ export default function Features() {
           <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl sm:rounded-3xl p-6 sm:p-8 md:p-12 text-white">
             <div className="text-center mb-8 sm:mb-12">
               <h2 className="text-2xl sm:text-3xl md:text-4xl font-display font-bold mb-3 sm:mb-4">
-                Performance & Fiabilité
+                {t.performanceTitle}
               </h2>
               <p className="text-sm sm:text-base md:text-xl text-gray-300">
-                Une architecture technique de pointe pour une expérience fluide
+                {t.performanceIntro}
               </p>
             </div>
 
@@ -558,7 +634,7 @@ export default function Features() {
         {/* ====================================================================== */}
         <section className="mb-16 sm:mb-20">
           <h2 className="text-2xl sm:text-3xl font-display font-bold text-gray-900 mb-6 sm:mb-8 text-center">
-            Accessible Partout, Tout le Temps
+            {t.platformTitle}
           </h2>
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
             {platformFeatures.map((feature, index) => {
@@ -588,10 +664,10 @@ export default function Features() {
         {/* ====================================================================== */}
         <section className="bg-gradient-to-r from-primary to-purple-600 rounded-2xl sm:rounded-3xl p-6 sm:p-8 md:p-12 text-center text-white">
           <h2 className="text-2xl sm:text-3xl font-display font-bold mb-3 sm:mb-4">
-            Prêt à Reprendre le Contrôle de Vos Finances ?
+            {t.ctaTitle}
           </h2>
           <p className="text-base sm:text-lg md:text-xl mb-6 sm:mb-8 max-w-2xl mx-auto opacity-90 px-2">
-            Gratuit, sans carte bancaire : commencez seul et invitez qui vous voulez ensuite
+            {t.ctaText}
           </p>
           <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center">
             <Button 
@@ -599,15 +675,15 @@ export default function Features() {
               onClick={() => navigate('/signup')}
               className="bg-white text-primary hover:bg-gray-100 font-semibold shadow-lg min-h-[48px] text-sm sm:text-base"
             >
-              Créer mon compte gratuit
+              {t.ctaSignup}
             </Button>
             <Button 
               size="lg" 
               variant="outline"
-              onClick={() => navigate('/premium')}
+              onClick={() => navigate(localizedPath('/premium', locale))}
               className="border-2 border-white text-white hover:bg-white/10 min-h-[48px] text-sm sm:text-base"
             >
-              Découvrir Premium
+              {t.ctaPremium}
             </Button>
           </div>
         </section>

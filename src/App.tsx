@@ -62,6 +62,7 @@ const BudgetPersonnel = lazy(() => import('./lib/pages/BudgetPersonnel'));
 const BudgetCalculatorEn = lazy(() => import('./lib/pages/en/BudgetCalculator'));
 const RentSplitCalculatorEn = lazy(() => import('./lib/pages/en/RentSplitCalculator'));
 const WeddingBudgetCalculatorEn = lazy(() => import('./lib/pages/en/WeddingBudgetCalculator'));
+const LeftoverIncomeCalculatorEn = lazy(() => import('./lib/pages/en/LeftoverIncomeCalculator'));
 const Profile = lazy(() => import('./lib/pages/Profile'));
 const AcceptInvitation = lazy(() => import('./lib/pages/AcceptInvitation'));
 const EnableBankingCallbackPage = lazy(() => import('./lib/pages/EnableBankingCallbackPage'));
@@ -88,6 +89,7 @@ export default function App() {
             path="/"
             element={user ? <Navigate to="/dashboard" replace /> : <LandingPage />}
           />
+          <Route path="/en" element={user ? <Navigate to="/dashboard" replace /> : <LandingPage />} />
 
           <Route path="/admin/stats" element={
             <AdminRoute>
@@ -113,6 +115,15 @@ export default function App() {
           <Route path="/en/50-30-20-budget-calculator" element={<BudgetCalculatorEn />} />
           <Route path="/en/rent-split-calculator" element={<RentSplitCalculatorEn />} />
           <Route path="/en/wedding-budget-calculator" element={<WeddingBudgetCalculatorEn />} />
+          <Route path="/en/leftover-income-calculator" element={<LeftoverIncomeCalculatorEn />} />
+          <Route path="/en/free-budget-template" element={<BudgetTemplate />} />
+          <Route path="/en/features" element={<Features />} />
+          <Route path="/en/ai-tools" element={<SmartTools />} />
+          <Route path="/en/premium" element={<PremiumPage />} />
+          <Route path="/en/help" element={<Help />} />
+          <Route path="/en/about" element={<About />} />
+          <Route path="/en/privacy" element={<PrivacyPolicy />} />
+          <Route path="/en/terms" element={<Terms />} />
           <Route path="/about" element={<About />} />
           <Route path="/help" element={<Help />} />
           <Route path="/premium" element={<PremiumPage />} />

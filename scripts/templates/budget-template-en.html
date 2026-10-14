@@ -1,0 +1,232 @@
+<!doctype html>
+<!--
+  English printable budget template (public/telechargements/budget-template-printable.pdf).
+  Rendered by scripts/templates/make-template-en.mjs with Chromium. Same layout as the
+  French PDF: monthly budget, yearly expenses and joint pot, year tracker.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Printable family budget template – Budget Famille</title>
+<style>
+  @font-face { font-family: 'DM Sans'; font-weight: 400; src: url('FONTS/dm-sans-latin-400-normal.woff2') format('woff2'); }
+  @font-face { font-family: 'DM Sans'; font-weight: 500; src: url('FONTS/dm-sans-latin-500-normal.woff2') format('woff2'); }
+  @font-face { font-family: 'DM Sans'; font-weight: 600; src: url('FONTS/dm-sans-latin-600-normal.woff2') format('woff2'); }
+  @font-face { font-family: 'DM Sans'; font-weight: 700; src: url('FONTS/dm-sans-latin-700-normal.woff2') format('woff2'); }
+  @font-face { font-family: 'Plus Jakarta Sans'; font-weight: 800; src: url('FONTS/plus-jakarta-sans-latin-800-normal.woff2') format('woff2'); }
+  @page { size: A4; margin: 0; }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: 'DM Sans', sans-serif; color: #13202B; font-size: 9.5pt; }
+  .page { width: 210mm; height: 297mm; padding: 14mm 14mm 10mm; position: relative; page-break-after: always; display: flex; flex-direction: column; }
+  .page:last-child { page-break-after: auto; }
+  header { display: flex; justify-content: space-between; align-items: flex-end; border-bottom: 2px solid #1879A9; padding-bottom: 3mm; }
+  h1 { font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 800; font-size: 20pt; margin: 0 0 1mm; letter-spacing: -0.02em; }
+  .lead { color: #1879A9; margin: 0; font-size: 9pt; max-width: 110mm; }
+  .fields { display: flex; gap: 8mm; font-weight: 700; font-size: 8.5pt; }
+  .fields span { display: inline-block; border-bottom: 1px solid #13202B; width: 30mm; margin-left: 2mm; }
+  h2 { color: #1879A9; font-size: 11pt; margin: 6mm 0 2mm; }
+  .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 6mm; }
+  table { width: 100%; border-collapse: collapse; }
+  th { text-align: left; font-size: 7pt; letter-spacing: 0.06em; text-transform: uppercase; color: #4b5563; font-weight: 600; padding: 1.6mm 1.5mm; border-bottom: 1.5px solid #13202B; }
+  th.n { text-align: right; width: 15mm; }
+  td { padding: 1.6mm 1.5mm; border-bottom: 1px solid #d7dee5; height: 7mm; }
+  tr.total td { font-weight: 700; background: #eef1f4; border-bottom: none; }
+  .note { font-size: 7.5pt; color: #4b5563; margin: 1.5mm 0 0; }
+  .box { border: 1px solid #1879A9; background: #e8f3fa; border-radius: 3mm; padding: 4mm; }
+  .formula { display: grid; grid-template-columns: 1fr auto 1fr auto 1fr auto 1fr auto 1fr; gap: 2mm; align-items: end; font-size: 7.5pt; color: #4b5563; }
+  .formula div { border-bottom: 1px solid #13202B; padding-bottom: 5mm; }
+  .formula b { font-size: 12pt; color: #13202B; }
+  .notes { border: 1px solid #d7dee5; border-radius: 3mm; margin-top: 6mm; flex: 1; display: flex; flex-direction: column; }
+  .notes p { margin: 0; padding: 2.5mm 3mm; font-size: 7pt; letter-spacing: 0.06em; font-weight: 600; color: #4b5563; }
+  .notes i { display: block; border-top: 1px solid #d7dee5; flex: 1; max-height: 9mm; }
+  .methods { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4mm; }
+  .method { border: 1px solid #d7dee5; border-radius: 3mm; padding: 3mm; font-size: 8pt; }
+  .method b { display: block; margin: 1mm 0; }
+  .check { display: inline-block; width: 3mm; height: 3mm; border: 1.2px solid #13202B; border-radius: 0.6mm; }
+  .cta { margin-top: 6mm; }
+  footer { margin-top: auto; padding-top: 3mm; display: flex; justify-content: space-between; font-size: 7pt; color: #4b5563; }
+  footer b { color: #1879A9; }
+  .spacer { flex: 1; }
+</style>
+</head>
+<body>
+
+<!-- Page 1: monthly budget -->
+<section class="page">
+  <header>
+    <div>
+      <h1>Monthly budget</h1>
+      <p class="lead">Write the plan at the start of the month and the actual at the end: the gap shows what’s slipping.</p>
+    </div>
+    <div class="fields"><label>Month<span></span></label><label>Year<span></span></label></div>
+  </header>
+
+  <div class="cols">
+    <div>
+      <h2>Take-home income</h2>
+      <table>
+        <tr><th>Source</th><th class="n">Plan</th><th class="n">Actual</th><th class="n">Gap</th></tr>
+        <tr><td>Pay 1</td><td></td><td></td><td></td></tr>
+        <tr><td>Pay 2</td><td></td><td></td><td></td></tr>
+        <tr><td>Child benefit, tax credits</td><td></td><td></td><td></td></tr>
+        <tr><td>Housing assistance</td><td></td><td></td><td></td></tr>
+        <tr><td>Bonuses, side income</td><td></td><td></td><td></td></tr>
+        <tr><td>Other</td><td></td><td></td><td></td></tr>
+        <tr class="total"><td>Total income</td><td></td><td></td><td></td></tr>
+      </table>
+
+      <h2>Savings and sinking funds</h2>
+      <table>
+        <tr><th>Item</th><th class="n">Plan</th><th class="n">Actual</th><th class="n">Gap</th></tr>
+        <tr><td>Emergency fund</td><td></td><td></td><td></td></tr>
+        <tr><td>Goal 1:</td><td></td><td></td><td></td></tr>
+        <tr><td>Goal 2:</td><td></td><td></td><td></td></tr>
+        <tr><td>Yearly expenses fund (page 2)</td><td></td><td></td><td></td></tr>
+        <tr class="total"><td>Total savings</td><td></td><td></td><td></td></tr>
+      </table>
+    </div>
+    <div>
+      <h2>Fixed bills</h2>
+      <table>
+        <tr><th>Item</th><th class="n">Plan</th><th class="n">Actual</th><th class="n">Gap</th></tr>
+        <tr><td>Rent or mortgage</td><td></td><td></td><td></td></tr>
+        <tr><td>Service charges, local taxes</td><td></td><td></td><td></td></tr>
+        <tr><td>Electricity, gas</td><td></td><td></td><td></td></tr>
+        <tr><td>Water</td><td></td><td></td><td></td></tr>
+        <tr><td>Insurance (home, car)</td><td></td><td></td><td></td></tr>
+        <tr><td>Health insurance</td><td></td><td></td><td></td></tr>
+        <tr><td>Phone, internet</td><td></td><td></td><td></td></tr>
+        <tr><td>Subscriptions (streaming…)</td><td></td><td></td><td></td></tr>
+        <tr><td>Loans (car, personal)</td><td></td><td></td><td></td></tr>
+        <tr><td>Childcare, school meals</td><td></td><td></td><td></td></tr>
+        <tr class="total"><td>Total fixed bills</td><td></td><td></td><td></td></tr>
+      </table>
+    </div>
+  </div>
+
+  <h2>Day-to-day spending</h2>
+  <div class="cols">
+    <table>
+      <tr><th>Item</th><th class="n">Plan</th><th class="n">Actual</th><th class="n">Gap</th></tr>
+      <tr><td>Groceries</td><td></td><td></td><td></td></tr>
+      <tr><td>Toiletries, cleaning</td><td></td><td></td><td></td></tr>
+      <tr><td>Fuel, transportation</td><td></td><td></td><td></td></tr>
+      <tr><td>Health (out of pocket)</td><td></td><td></td><td></td></tr>
+      <tr class="total"><td>Subtotal</td><td></td><td></td><td></td></tr>
+    </table>
+    <table>
+      <tr><th>Item</th><th class="n">Plan</th><th class="n">Actual</th><th class="n">Gap</th></tr>
+      <tr><td>Clothes</td><td></td><td></td><td></td></tr>
+      <tr><td>Leisure, going out</td><td></td><td></td><td></td></tr>
+      <tr><td>Kids (activities, pocket money)</td><td></td><td></td><td></td></tr>
+      <tr><td>Gifts, unexpected</td><td></td><td></td><td></td></tr>
+      <tr class="total"><td>Subtotal</td><td></td><td></td><td></td></tr>
+    </table>
+  </div>
+
+  <h2>Left for the month</h2>
+  <div class="box">
+    <div class="formula">
+      <div>Total income</div><b>−</b><div>Fixed bills</div><b>−</b><div>Day-to-day spending</div><b>−</b><div>Savings</div><b>=</b><div>Left for the month</div>
+    </div>
+    <p class="note">Positive: keep a margin for the unexpected, then save more. Negative: start by renegotiating a fixed bill (energy, insurance, subscriptions).</p>
+  </div>
+
+  <div class="notes"><p>NOTES</p><i></i><i></i><i></i></div>
+
+  <footer><span><b>Budget Famille</b> · free template · Excel version with automatic calculations: budgetfamille.com/en/free-budget-template</span><span>1/3</span></footer>
+</section>
+
+<!-- Page 2: yearly expenses and joint pot -->
+<section class="page">
+  <header>
+    <div>
+      <h1>Yearly expenses and joint pot</h1>
+      <p class="lead">What doesn’t come every month, and what each person pays into the joint account.</p>
+    </div>
+    <div class="fields"><label>Year<span></span></label></div>
+  </header>
+
+  <h2>Yearly expenses to spread over the months</h2>
+  <table>
+    <tr><th>Expense</th><th class="n" style="width:28mm">Amount / year</th><th class="n" style="width:22mm">Month</th><th class="n" style="width:32mm">÷ 12 = per month</th></tr>
+    <tr><td>Back to school</td><td></td><td></td><td></td></tr>
+    <tr><td>Holidays and gifts</td><td></td><td></td><td></td></tr>
+    <tr><td>Birthdays</td><td></td><td></td><td></td></tr>
+    <tr><td>Vacations</td><td></td><td></td><td></td></tr>
+    <tr><td>Property tax</td><td></td><td></td><td></td></tr>
+    <tr><td>Insurance paid yearly</td><td></td><td></td><td></td></tr>
+    <tr><td>Car maintenance, inspection</td><td></td><td></td><td></td></tr>
+    <tr><td>Other:</td><td></td><td></td><td></td></tr>
+    <tr><td>Other:</td><td></td><td></td><td></td></tr>
+    <tr class="total"><td>Total to set aside each month</td><td></td><td></td><td></td></tr>
+  </table>
+  <p class="note">Example: back to school 300 + holidays 400 + birthdays 200 + vacations 1,500 = 2,400 a year, or 200 a month. Carry this total to page 1, “Yearly expenses fund”.</p>
+
+  <h2>The couple’s joint pot</h2>
+  <div class="methods">
+    <div class="method"><span class="check"></span><b>50/50</b>Each person pays half of the household’s needs.</div>
+    <div class="method"><span class="check"></span><b>In proportion</b>Each person pays the same % of their pay.</div>
+    <div class="method"><span class="check"></span><b>Same spending money</b>Each person keeps the same amount for themselves.</div>
+  </div>
+  <table style="margin-top:4mm">
+    <tr><th></th><th class="n" style="width:42mm">Person 1:</th><th class="n" style="width:42mm">Person 2:</th></tr>
+    <tr><td>Take-home pay</td><td></td><td></td></tr>
+    <tr><td>Share of total pay (%)</td><td></td><td></td></tr>
+    <tr><td>Payment into the joint pot</td><td></td><td></td></tr>
+    <tr><td>Personal expenses (tax, personal loan…)</td><td></td><td></td></tr>
+    <tr class="total"><td>Spending money (pay − payment − personal expenses)</td><td></td><td></td></tr>
+  </table>
+  <p class="note">Household needs = fixed bills + day-to-day spending + shared savings (page 1). In proportion: payment = needs × pay ÷ total pay.</p>
+
+  <div class="box cta">
+    <b>The same math, without copying it every month.</b> The Budget Famille app fills in every month from your rules, works out the joint pot with the method you choose and is shared in real time. Free: budgetfamille.com/en
+  </div>
+
+  <div class="spacer"></div>
+  <footer><span><b>Budget Famille</b> · free template · Excel version with automatic calculations: budgetfamille.com/en/free-budget-template</span><span>2/3</span></footer>
+</section>
+
+<!-- Page 3: year tracker -->
+<section class="page">
+  <header>
+    <div>
+      <h1>Year tracker</h1>
+      <p class="lead">Carry over each month’s totals: you see the trend at a glance.</p>
+    </div>
+    <div class="fields"><label>Year<span></span></label></div>
+  </header>
+
+  <table style="margin-top:5mm">
+    <tr><th>Month</th><th class="n" style="width:24mm">Income</th><th class="n" style="width:24mm">Spending</th><th class="n" style="width:24mm">Savings</th><th class="n" style="width:24mm">Left</th><th class="n" style="width:28mm">Running total</th></tr>
+    <tr><td>January</td><td></td><td></td><td></td><td></td><td></td></tr>
+    <tr><td>February</td><td></td><td></td><td></td><td></td><td></td></tr>
+    <tr><td>March</td><td></td><td></td><td></td><td></td><td></td></tr>
+    <tr><td>April</td><td></td><td></td><td></td><td></td><td></td></tr>
+    <tr><td>May</td><td></td><td></td><td></td><td></td><td></td></tr>
+    <tr><td>June</td><td></td><td></td><td></td><td></td><td></td></tr>
+    <tr><td>July</td><td></td><td></td><td></td><td></td><td></td></tr>
+    <tr><td>August</td><td></td><td></td><td></td><td></td><td></td></tr>
+    <tr><td>September</td><td></td><td></td><td></td><td></td><td></td></tr>
+    <tr><td>October</td><td></td><td></td><td></td><td></td><td></td></tr>
+    <tr><td>November</td><td></td><td></td><td></td><td></td><td></td></tr>
+    <tr><td>December</td><td></td><td></td><td></td><td></td><td></td></tr>
+    <tr class="total"><td>Total for the year</td><td></td><td></td><td></td><td></td><td></td></tr>
+  </table>
+
+  <h2>Goals for the year</h2>
+  <table>
+    <tr><th>Goal</th><th class="n" style="width:24mm">Amount</th><th class="n" style="width:28mm">By when</th><th class="n" style="width:24mm">Per month</th></tr>
+    <tr><td></td><td></td><td></td><td></td></tr>
+    <tr><td></td><td></td><td></td><td></td></tr>
+    <tr><td></td><td></td><td></td><td></td></tr>
+  </table>
+  <p class="note">Per month = (amount − already saved) ÷ number of months left, counting the first and the last.</p>
+
+  <div class="notes"><p>NOTES</p><i></i><i></i><i></i><i></i><i></i></div>
+
+  <footer><span><b>Budget Famille</b> · free template · Excel version with automatic calculations: budgetfamille.com/en/free-budget-template</span><span>3/3</span></footer>
+</section>
+
+</body>
+</html>

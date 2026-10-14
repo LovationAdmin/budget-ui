@@ -12,7 +12,9 @@
 import { Link } from 'react-router-dom';
 import { ArrowRight, Calculator, ShieldCheck, Sparkles } from 'lucide-react';
 import { CurrencyPicker, useCurrency } from '@/components/en/CurrencyPicker';
-import { EnglishFooter, EnglishHeader, EnglishToolLinks } from '@/components/en/EnglishLayout';
+import Navbar from '@/components/Navbar';
+import { Footer } from '@/components/Footer';
+import { EnglishToolLinks } from '@/components/en/EnglishLayout';
 import { Button } from '@/components/ui/button';
 import { MariageCalculator, useMariageCalculator } from '@/components/tools/MariageCalculator';
 import { FaqList, ToolArticle } from '@/components/tools/ToolKit';
@@ -31,7 +33,7 @@ export default function WeddingBudgetCalculatorEn() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary-50 to-purple-50 flex flex-col">
-      <EnglishHeader />
+      <Navbar />
       <main className="flex-1">
         <section className="px-4 pt-12 pb-8 sm:px-6 lg:px-8">
           <div className="mx-auto max-w-3xl text-center">
@@ -223,7 +225,7 @@ export default function WeddingBudgetCalculatorEn() {
           </section>
         </ToolArticle>
       </main>
-      <EnglishFooter />
+      <Footer />
     </div>
   );
 }
