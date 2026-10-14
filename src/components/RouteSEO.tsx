@@ -7,26 +7,31 @@
 import { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { localeOf } from '@/i18n/locales';
-import { setUiLocale } from '@/i18n/preference';
+import { useLocale, usePreference } from '@/i18n/runtime';
 import { applyHead } from '@/seo/head';
 import { pageSEO } from '@/seo/site';
 
 export function RouteSEO() {
   const { pathname } = useLocation();
+  const locale = useLocale();
+  const { setPreference } = usePreference();
   useEffect(() => {
-    if (localeOf(pathname) !== 'fr') setUiLocale(localeOf(pathname));
+    if (localeOf(pathname) !== 'fr') setPreference(localeOf(pathname));
+  }, [pathname, setPreference]);
+  useEffect(() => {
     if (/^\/blog\/[^/]+/.test(pathname)) return;
     const page = pageSEO(pathname);
     if (page) {
-      applyHead({ title: page.title, description: page.description, canonical: page.canonical ?? page.path, noindex: page.noindex });
+      applyHead({ title: page.title, description: page.description, canonical: page.canonical ?? page.path, noindex: page.noindex, locale });
     } else {
       applyHead({
         title: 'Budget Famille',
-        description: 'Votre budget familial.',
+        description: locale === 'en' ? 'Your budget, on your own or together.' : 'Votre budget familial.',
         canonical: pathname,
         noindex: true,
+        locale,
       });
     }
-  }, [pathname]);
+  }, [pathname, locale]);
   return null;
 }

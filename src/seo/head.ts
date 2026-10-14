@@ -13,6 +13,8 @@ export interface HeadMeta {
   noindex?: boolean;
   image?: string;
   type?: 'website' | 'article';
+  /** Language of the screen when it isn't the URL's (screens that follow the visitor's preference). */
+  locale?: Locale;
 }
 
 function setMeta(attr: 'name' | 'property', key: string, content: string) {
@@ -47,7 +49,7 @@ export function applyHead(m: HeadMeta) {
     document.head.appendChild(link);
   }
   link.href = url;
-  const locale = localeOf(m.canonical);
+  const locale = m.locale ?? localeOf(m.canonical);
   document.documentElement.lang = locale;
   setMeta('property', 'og:locale', LOCALES[locale].og);
   document.head.querySelectorAll('link[rel="alternate"][hreflang], meta[property="og:locale:alternate"]').forEach((el) => el.remove());

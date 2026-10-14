@@ -33,6 +33,56 @@ import { useTutorial } from '@/contexts/TutorialContext';
 import { MemberAvatar } from './MemberAvatar';
 import { BudgetLogo } from './BudgetLogo';
 import { HelpCenter } from '@/components/help/HelpCenter';
+import { LanguageToggle } from '@/components/LanguageToggle';
+import { LOCALES } from '@/i18n/locales';
+import { defineMessages, useLocale, useT } from '@/i18n/runtime';
+
+const M = defineMessages({
+  fr: {
+    subtitle: 'Gestion financière',
+    openMenu: 'Ouvrir le menu',
+    closeMenu: 'Fermer le menu',
+    mainNav: 'Navigation principale',
+    navigation: 'Navigation',
+    more: 'Plus',
+    help: 'Aide',
+    notifications: 'Notifications',
+    unread: (n: number) => `Notifications (${n} non lues)`,
+    markAllRead: 'Tout marquer lu',
+    noNotifications: 'Aucune notification',
+    updated: (who: string, budget: string) => <><strong>{who}</strong> a modifié <em>{budget}</em></>,
+    account: 'Mon compte',
+    user: 'Utilisateur',
+    profile: 'Profil',
+    myBudgets: 'Mes budgets',
+    tutorial: 'Voir le tutoriel',
+    logout: 'Déconnexion',
+    login: 'Se connecter',
+    signup: 'Créer un compte',
+  },
+  en: {
+    subtitle: 'Money management',
+    openMenu: 'Open the menu',
+    closeMenu: 'Close the menu',
+    mainNav: 'Main navigation',
+    navigation: 'Navigation',
+    more: 'More',
+    help: 'Help',
+    notifications: 'Notifications',
+    unread: (n: number) => `Notifications (${n} unread)`,
+    markAllRead: 'Mark all as read',
+    noNotifications: 'No notifications',
+    updated: (who: string, budget: string) => <><strong>{who}</strong> updated <em>{budget}</em></>,
+    account: 'My account',
+    user: 'User',
+    profile: 'Profile',
+    myBudgets: 'My budgets',
+    tutorial: 'Watch the tutorial',
+    logout: 'Log out',
+    login: 'Log in',
+    signup: 'Create an account',
+  },
+});
 
 export interface NavItem {
   id: string;
@@ -66,6 +116,8 @@ export const BudgetNavbar = memo(function BudgetNavbar({
   className,
 }: BudgetNavbarProps) {
   const navigate = useNavigate();
+  const t = useT(M);
+  const home = LOCALES[useLocale()].home;
   const { user, logout } = useAuth();
   const { notifications, unreadCount, markAsRead, markAllAsRead } =
     useNotifications();
@@ -82,12 +134,12 @@ export const BudgetNavbar = memo(function BudgetNavbar({
 
   const handleLogout = async () => {
     await logout();
-    navigate('/');
+    navigate(home);
   };
 
   const handleLogoClick = () => {
     if (isAuthenticated) navigate('/dashboard');
-    else navigate('/');
+    else navigate(home);
   };
 
   const handleSectionClick = useCallback(
@@ -134,7 +186,7 @@ export const BudgetNavbar = memo(function BudgetNavbar({
                 size="icon"
                 onClick={handleMenuToggle}
                 className="lg:hidden h-10 w-10 navbar-menu-button"
-                aria-label="Ouvrir le menu"
+                aria-label={t.openMenu}
               >
                 <Menu className="h-5 w-5" />
               </Button>
@@ -149,12 +201,12 @@ export const BudgetNavbar = memo(function BudgetNavbar({
                 <p className="font-display font-semibold text-foreground truncate max-w-[200px]">
                   {budgetTitle}
                 </p>
-                <p className="text-xs text-muted-foreground">Gestion financière</p>
+                <p className="text-xs text-muted-foreground">{t.subtitle}</p>
               </div>
             </button>
           </div>
 
-          <nav className="hidden lg:flex items-center gap-1" aria-label="Navigation principale">
+          <nav className="hidden lg:flex items-center gap-1" aria-label={t.mainNav}>
             {visibleItems.map((item) => {
               const Icon = item.icon;
               const isActive = currentSection === item.id;
@@ -188,7 +240,7 @@ export const BudgetNavbar = memo(function BudgetNavbar({
                     )}
                   >
                     <MoreHorizontal className="h-4 w-4" />
-                    <span>Plus</span>
+                    <span>{t.more}</span>
                   </button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-52">
@@ -215,12 +267,13 @@ export const BudgetNavbar = memo(function BudgetNavbar({
           </nav>
 
           <div className="flex items-center gap-2">
+            <LanguageToggle />
             <Button
               variant="ghost"
               size="icon"
               onClick={handleHelpOpen}
               className="text-muted-foreground hover:text-foreground h-10 w-10"
-              aria-label="Aide"
+              aria-label={t.help}
             >
               <HelpCircle className="h-5 w-5" />
             </Button>
@@ -235,8 +288,8 @@ export const BudgetNavbar = memo(function BudgetNavbar({
                       className="relative text-muted-foreground hover:text-foreground h-10 w-10"
                       aria-label={
                         unreadCount > 0
-                          ? `Notifications (${unreadCount} non lues)`
-                          : 'Notifications'
+                          ? t.unread(unreadCount)
+                          : t.notifications
                       }
                     >
                       <Bell className="h-5 w-5" />
@@ -249,17 +302,17 @@ export const BudgetNavbar = memo(function BudgetNavbar({
                   </PopoverTrigger>
                   <PopoverContent className="w-80 p-0" align="end">
                     <div className="flex items-center justify-between border-b px-4 py-3">
-                      <h3 className="font-semibold">Notifications</h3>
+                      <h3 className="font-semibold">{t.notifications}</h3>
                       {unreadCount > 0 && (
                         <Button variant="ghost" size="sm" onClick={handleMarkAllRead} className="h-auto px-2 py-1 text-xs">
-                          Tout marquer lu
+                          {t.markAllRead}
                         </Button>
                       )}
                     </div>
                     <ScrollArea className="max-h-[400px]">
                       {notifications.length === 0 ? (
                         <div className="p-6 text-center text-sm text-muted-foreground">
-                          Aucune notification
+                          {t.noNotifications}
                         </div>
                       ) : (
                         <ul className="divide-y">
@@ -273,7 +326,7 @@ export const BudgetNavbar = memo(function BudgetNavbar({
                                 )}
                               >
                                 <span className="text-sm flex-1">
-                                  <strong>{n.updatedBy}</strong> a modifié <em>{n.budgetName}</em>
+                                  {t.updated(n.updatedBy, n.budgetName)}
                                 </span>
                               </button>
                             </li>
@@ -286,35 +339,35 @@ export const BudgetNavbar = memo(function BudgetNavbar({
 
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" className="gap-2 pl-2 min-h-[44px]" aria-label="Mon compte">
+                    <Button variant="ghost" className="gap-2 pl-2 min-h-[44px]" aria-label={t.account}>
                       <MemberAvatar
                         name={userName || user?.name || 'User'}
                         image={userAvatar || user?.avatar}
                         size="sm"
                       />
                       <span className="hidden font-medium sm:inline-block max-w-[120px] truncate">
-                        {userName || user?.name || 'Utilisateur'}
+                        {userName || user?.name || t.user}
                       </span>
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-56">
-                    <DropdownMenuLabel>Mon compte</DropdownMenuLabel>
+                    <DropdownMenuLabel>{t.account}</DropdownMenuLabel>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={() => navigate('/profile')} className="min-h-[44px]">
-                      <User className="mr-2 h-4 w-4" /> Profil
+                      <User className="mr-2 h-4 w-4" /> {t.profile}
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => navigate('/dashboard')} className="min-h-[44px]">
-                      <Settings className="mr-2 h-4 w-4" /> Mes budgets
+                      <Settings className="mr-2 h-4 w-4" /> {t.myBudgets}
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <ThemeMenuItems />
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={startTutorial} className="min-h-[44px]">
-                      <HelpCircle className="mr-2 h-4 w-4" /> Voir le tutoriel
+                      <HelpCircle className="mr-2 h-4 w-4" /> {t.tutorial}
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={handleLogout} className="text-destructive min-h-[44px]">
-                      <LogOut className="mr-2 h-4 w-4" /> Déconnexion
+                      <LogOut className="mr-2 h-4 w-4" /> {t.logout}
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
@@ -322,10 +375,10 @@ export const BudgetNavbar = memo(function BudgetNavbar({
             ) : (
               <div className="hidden sm:flex items-center gap-2">
                 <Button variant="ghost" onClick={handleLogin} className="min-h-[44px]">
-                  <LogIn className="h-4 w-4 mr-2" /> Se connecter
+                  <LogIn className="h-4 w-4 mr-2" /> {t.login}
                 </Button>
                 <Button onClick={handleSignup} className="min-h-[44px]">
-                  <UserPlus className="h-4 w-4 mr-2" /> Créer un compte
+                  <UserPlus className="h-4 w-4 mr-2" /> {t.signup}
                 </Button>
               </div>
             )}
@@ -338,11 +391,11 @@ export const BudgetNavbar = memo(function BudgetNavbar({
           <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={handleMenuToggle} />
           <div className="relative bg-background h-full w-72 sm:w-80 shadow-2xl flex flex-col">
             <div className="flex items-center justify-between p-6 border-b bg-background">
-              <h2 className="text-lg font-semibold">Navigation</h2>
+              <h2 className="text-lg font-semibold">{t.navigation}</h2>
               <button
                 onClick={handleMenuToggle}
                 className="p-2 rounded-lg hover:bg-accent transition-colors h-10 w-10 flex items-center justify-center"
-                aria-label="Fermer le menu"
+                aria-label={t.closeMenu}
               >
                 <X className="h-5 w-5" />
               </button>
@@ -376,13 +429,13 @@ export const BudgetNavbar = memo(function BudgetNavbar({
                         onClick={() => { navigate('/profile'); handleMenuToggle(); }}
                         className="flex items-center gap-3 p-3 rounded-xl text-left transition-all duration-200 w-full min-h-[48px] hover:bg-accent"
                       >
-                        <User className="h-5 w-5" /><span className="font-medium">Profil</span>
+                        <User className="h-5 w-5" /><span className="font-medium">{t.profile}</span>
                       </button>
                       <button
                         onClick={() => { handleLogout(); handleMenuToggle(); }}
                         className="flex items-center gap-3 p-3 rounded-xl text-left transition-all duration-200 w-full min-h-[48px] text-destructive hover:bg-destructive/10"
                       >
-                        <LogOut className="h-5 w-5" /><span className="font-medium">Déconnexion</span>
+                        <LogOut className="h-5 w-5" /><span className="font-medium">{t.logout}</span>
                       </button>
                     </>
                   ) : (
@@ -391,13 +444,13 @@ export const BudgetNavbar = memo(function BudgetNavbar({
                         onClick={() => { handleLogin(); handleMenuToggle(); }}
                         className="flex items-center gap-3 p-3 rounded-xl text-left transition-all duration-200 w-full min-h-[48px] hover:bg-accent"
                       >
-                        <LogIn className="h-5 w-5" /><span className="font-medium">Se connecter</span>
+                        <LogIn className="h-5 w-5" /><span className="font-medium">{t.login}</span>
                       </button>
                       <button
                         onClick={() => { handleSignup(); handleMenuToggle(); }}
                         className="flex items-center gap-3 p-3 rounded-xl text-left transition-all duration-200 w-full min-h-[48px] bg-primary text-primary-foreground hover:bg-primary/90"
                       >
-                        <UserPlus className="h-5 w-5" /><span className="font-medium">Créer un compte</span>
+                        <UserPlus className="h-5 w-5" /><span className="font-medium">{t.signup}</span>
                       </button>
                     </>
                   )}

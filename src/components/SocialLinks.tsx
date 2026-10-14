@@ -4,6 +4,7 @@ import type { ComponentType } from 'react';
 import { Facebook, Instagram, Linkedin } from 'lucide-react';
 import { SOCIAL_PROFILES, type SocialNetwork } from '@/seo/site';
 import { cn } from '@/lib/utils';
+import { useLocale } from '@/i18n/runtime';
 
 function XLogo({ className }: { className?: string }) {
   return (
@@ -27,6 +28,7 @@ interface SocialLinksProps {
 }
 
 export function SocialLinks({ withLabels = false, className }: SocialLinksProps) {
+  const locale = useLocale();
   return (
     <ul className={cn('flex flex-wrap items-center gap-2', className)}>
       {SOCIAL_PROFILES.map(({ network, label, url }) => {
@@ -37,7 +39,7 @@ export function SocialLinks({ withLabels = false, className }: SocialLinksProps)
               href={url}
               target="_blank"
               rel="noopener noreferrer me"
-              aria-label={withLabels ? undefined : `Budget Famille sur ${label}`}
+              aria-label={withLabels ? undefined : `Budget Famille ${locale === 'en' ? 'on' : 'sur'} ${label}`}
               className={cn(
                 'inline-flex items-center justify-center rounded-full border border-border bg-background text-muted-foreground transition-colors hover:border-primary hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
                 withLabels ? 'h-11 gap-2 px-4 text-sm font-medium' : 'h-11 w-11'

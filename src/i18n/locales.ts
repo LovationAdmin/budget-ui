@@ -47,6 +47,11 @@ export function alternatesOf(path: string): Partial<Record<Locale, string>> | un
   return BY_PATH.get(normalize(path));
 }
 
+/** The same page in another language when it exists, else the page itself (links that follow the screen's language). */
+export function localizedPath(path: string, locale: Locale): string {
+  return alternatesOf(path)?.[locale] ?? path;
+}
+
 /**
  * hreflang entries of a page (empty when it has no translation). x-default,
  * for readers of any other language, is the English version when there is
