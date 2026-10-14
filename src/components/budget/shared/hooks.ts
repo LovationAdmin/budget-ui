@@ -7,7 +7,7 @@ import { useBudget } from '@/contexts/BudgetContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { addMonths } from '@/lib/budget/months';
 import type { YM } from '@/lib/budget/types';
-import { PRIVATE_CHARGE_LABEL } from '@/lib/budget/types';
+import { PRIVATE_CHARGE_LABEL, privateChargeName } from '@/lib/budget/types';
 
 /** First month that is still open (not closed), from `from` (default: today) on. */
 export function useFirstOpenMonth(from?: YM): YM {
@@ -38,7 +38,10 @@ export function useChargePrivacy() {
   type Item = { id: string; label: string; category?: string; private?: boolean; createdBy?: string };
   const canSee = (c: { private?: boolean; createdBy?: string }) => !c.private || (!!user?.id && c.createdBy === user.id);
   // The real name of a private charge only exists server-side, for its creator.
-  const label = (c: Item) => (!c.private ? c.label : canSee(c) ? privateCharges[c.id]?.label ?? c.label : PRIVATE_CHARGE_LABEL);
+  const label = (c: Item) => {
+    const name = !c.private ? c.label : canSee(c) ? privateCharges[c.id]?.label ?? c.label : PRIVATE_CHARGE_LABEL;
+    return name === PRIVATE_CHARGE_LABEL ? privateChargeName() : name;
+  };
   const category = (c: Item) => (!c.private ? c.category : canSee(c) ? privateCharges[c.id]?.category ?? c.category : undefined);
   return { canSee, label, category };
 }
