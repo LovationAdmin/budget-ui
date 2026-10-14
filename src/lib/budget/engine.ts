@@ -36,7 +36,7 @@ import {
   makeYM,
   monthIndex0,
   monthOf,
-  MONTHS_LOWER,
+  monthNamesLower,
   toYM,
   yearOf,
   ymFromIndex,
@@ -629,10 +629,10 @@ export function customMonthsText(months: number[] | undefined): string {
   if (sorted.length === 12) return 'Tous les mois';
   if (sorted.length >= 7) {
     const excluded: string[] = [];
-    for (let m = 1; m <= 12; m++) if (!sorted.includes(m)) excluded.push(MONTHS_LOWER[m - 1]);
+    for (let m = 1; m <= 12; m++) if (!sorted.includes(m)) excluded.push(monthNamesLower()[m - 1]);
     return `Tous les mois sauf ${joinFr(excluded)}`;
   }
-  return `En ${joinFr(sorted.map((m) => MONTHS_LOWER[m - 1]))}`;
+  return `En ${joinFr(sorted.map((m) => monthNamesLower()[m - 1]))}`;
 }
 
 /** Plain-language description of when a charge applies. */
@@ -642,7 +642,7 @@ export function describeChargeSchedule(c: Charge, today: YM): string {
   if (freq === 'once') return w.start ? `Une seule fois, en ${formatMonthLong(w.start)}` : 'Une seule fois';
   if (freq === 'yearly') {
     const anchor = w.start ?? stepAt(c.amountHistory, today)?.from;
-    let t = anchor ? `Chaque année en ${MONTHS_LOWER[monthIndex0(anchor)]}` : 'Chaque année';
+    let t = anchor ? `Chaque année en ${monthNamesLower()[monthIndex0(anchor)]}` : 'Chaque année';
     if (c.smooth) t += ' · lissée sur 12 mois';
     if (w.end) t += ` · jusqu’en ${yearOf(w.end)}`;
     return t;
@@ -932,7 +932,7 @@ export class BudgetEngine {
       if (def) {
         const w = windowOf(def);
         const f = chargeFrequency(def);
-        if (w.end === prev.ym) text = `terminée en ${MONTHS_LOWER[monthIndex0(prev.ym)]}`;
+        if (w.end === prev.ym) text = `terminée en ${monthNamesLower()[monthIndex0(prev.ym)]}`;
         else if (f === 'custom') text = 'en pause ce mois-ci';
         else if (f === 'once') text = 'ponctuelle, déjà passée';
         else if (f === 'yearly') text = 'échéance passée';

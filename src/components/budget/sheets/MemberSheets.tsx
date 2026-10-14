@@ -30,7 +30,7 @@ import {
   formatMonthTitle,
   maxYM,
   monthIndex0,
-  MONTH_NAMES,
+  monthNames,
   startDateOf,
   deMonth,
 } from '@/lib/budget/months';
@@ -260,7 +260,7 @@ function EditMember({ person, ym, onClose }: { person: Person; ym: YM; onClose: 
             <span className="text-sm font-semibold">Appliquer à…</span>
             {!closed && resolved && (
               <ChoiceCard
-                title={`${MONTH_NAMES[monthIndex0(ym)]} seulement`}
+                title={`${monthNames()[monthIndex0(ym)]} seulement`}
                 help="Une exception (prime, mois sans salaire…) : les autres mois ne changent pas."
                 onClick={() => apply('month')}
               />

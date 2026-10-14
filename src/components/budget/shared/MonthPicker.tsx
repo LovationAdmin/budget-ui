@@ -7,7 +7,7 @@ import { useState } from 'react';
 import { CalendarDays, ChevronLeft, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { YM } from '@/lib/budget/types';
-import { compareYM, formatMonthLong, makeYM, MONTHS_LOWER, MONTHS_SHORT, yearOf } from '@/lib/budget/months';
+import { compareYM, formatMonthLong, makeYM, monthNamesLower, monthNamesShort, yearOf } from '@/lib/budget/months';
 
 interface MonthPickerProps {
   id?: string;
@@ -69,7 +69,7 @@ export function MonthPicker({ id, value, onChange, min, max, prefix, ariaLabel }
             </button>
           </div>
           <div className="grid grid-cols-4 gap-1.5">
-            {MONTHS_SHORT.map((label, i) => {
+            {monthNamesShort().map((label, i) => {
               const ym = makeYM(year, i);
               const disabled = (min && compareYM(ym, min) < 0) || (max && compareYM(ym, max) > 0);
               const selected = ym === value;
@@ -77,7 +77,7 @@ export function MonthPicker({ id, value, onChange, min, max, prefix, ariaLabel }
                 <button
                   key={label}
                   type="button"
-                  aria-label={`${MONTHS_LOWER[i]} ${year}`}
+                  aria-label={`${monthNamesLower()[i]} ${year}`}
                   aria-pressed={selected}
                   disabled={!!disabled}
                   onClick={() => {

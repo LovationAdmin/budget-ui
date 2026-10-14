@@ -41,7 +41,7 @@ import {
   maxYM,
   monthIndex0,
   monthsBetween,
-  MONTH_NAMES,
+  monthNames,
   startDateOf,
   deMonth,
 } from '@/lib/budget/months';
@@ -258,7 +258,7 @@ export function SavingAmountSheet({ sheet, onClose }: SheetProps<'savingAmount'>
       <div className="flex flex-col gap-2">
         {!sheet.fromCatalog && <span className="text-sm font-semibold">Appliquer ce montant à…</span>}
         {canMonthOnly && (
-          <ChoiceCard title={`${MONTH_NAMES[monthIndex0(fromYm)]} seulement`} help={`Une exception : les autres mois restent à ${fmt(r!.planned)}.`} onClick={() => apply('month')} />
+          <ChoiceCard title={`${monthNames()[monthIndex0(fromYm)]} seulement`} help={`Une exception : les autres mois restent à ${fmt(r!.planned)}.`} onClick={() => apply('month')} />
         )}
         <ChoiceCard
           title={`À partir ${deMonth(formatMonthShort(fromYm))}`}

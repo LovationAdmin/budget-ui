@@ -10,7 +10,7 @@ import { cn } from '@/lib/utils';
 import { useBudget } from '@/contexts/BudgetContext';
 import type { MonthChange, ResolvedMonth } from '@/lib/budget/engine';
 import { closeMonth, setMonthComment } from '@/lib/budget/mutations';
-import { addMonths, compareYM, formatMonthTitle, MONTH_NAMES, monthIndex0, monthNameLower } from '@/lib/budget/months';
+import { addMonths, compareYM, formatMonthTitle, monthNames, monthIndex0, monthNameLower } from '@/lib/budget/months';
 import { moneyOut, percent } from '@/lib/budget/format';
 
 export function SummaryCard({ month }: { month: ResolvedMonth }) {
@@ -24,7 +24,7 @@ export function SummaryCard({ month }: { month: ResolvedMonth }) {
   return (
     <section aria-labelledby="resume-title" className="rounded-2xl border border-border/70 bg-card p-5 shadow-card">
       <h2 id="resume-title" className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-        Pot commun · {MONTH_NAMES[monthIndex0(month.ym)]}
+        Pot commun · {monthNames()[monthIndex0(month.ym)]}
       </h2>
       <p className={cn('mt-2 font-display text-4xl font-extrabold tracking-tight tabular-nums', deficit ? 'text-red-700' : 'text-emerald-700')}>{fmt(t.reste)}</p>
       <p className="mt-1 text-sm text-foreground/75">

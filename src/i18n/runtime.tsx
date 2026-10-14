@@ -8,19 +8,17 @@
 //
 // Components read their words with useT(MESSAGES), where MESSAGES holds a `fr`
 // and an `en` object of the same shape (defineMessages): a missing key fails
-// the build. Amounts and dates follow the same language (setNumberLocale).
+// the build. Amounts and dates follow the same language, and code outside
+// components reads it with pick(MESSAGES) (src/i18n/current.ts).
 // ============================================================================
 
 import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from 'react';
 import { useLocation } from 'react-router-dom';
-import { setNumberLocale } from '@/lib/budget/format';
+import { setScreenLocale, type Messages } from './current';
 import { localeOf, type Locale } from './locales';
 import { setUiLocale, uiLocale } from './preference';
 
-export type Messages<T> = { fr: T; en: T };
-
-/** The words of a component in each language; `en` must have the same keys as `fr`. */
-export const defineMessages = <T,>(messages: { fr: T; en: NoInfer<T> }): Messages<T> => messages;
+export { defineMessages, pick, screenLocale, type Messages } from './current';
 
 /** Screens whose language follows the visitor's preference rather than their URL. */
 const PREFERENCE_PATHS = /^\/(login|signup|forgot-password|reset-password|verify-email|404|dashboard|profile)\/?$|^\/(budget|invitation|beta2|admin)(\/|$)/;
@@ -63,8 +61,8 @@ export function useT<T>(messages: Messages<T>): T {
  * Keeps amounts and dates in the language of the current screen. Rendered at
  * the top of the app, before the routes: everything below formats with it.
  */
-export function useNumberLocale(): Locale {
+export function useScreenLocale(): Locale {
   const locale = useLocale();
-  setNumberLocale(locale);
+  setScreenLocale(locale);
   return locale;
 }

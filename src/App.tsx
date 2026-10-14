@@ -26,7 +26,7 @@ import { useTutorial } from './contexts/TutorialContext';
 import PrivateRoute from './components/PrivateRoute';
 import { Toaster } from '@/components/ui/toaster';
 import { RouteSEO } from '@/components/RouteSEO';
-import { useNumberLocale } from '@/i18n/runtime';
+import { useScreenLocale } from '@/i18n/runtime';
 
 // ===== Public pages =====
 import Login from './lib/pages/Login';
@@ -78,12 +78,13 @@ const TutorialModal = lazy(() => import('./components/tutorial/TutorialModal').t
 
 export default function App() {
   const { user } = useAuth();
-  useNumberLocale();
+  // Changing language re-mounts the screen, so labels worked out once (memoized) follow.
+  const locale = useScreenLocale();
 
   return (
     <>
       <Suspense fallback={<PageFallback />}>
-        <Routes>
+        <Routes key={locale}>
           {/* ROOT */}
           <Route
             path="/"

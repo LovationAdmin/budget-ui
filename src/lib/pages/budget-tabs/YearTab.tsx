@@ -12,7 +12,7 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { useBudget } from '@/contexts/BudgetContext';
 import { monthSpent, yearSummary, type MonthTotals } from '@/lib/budget/engine';
-import { makeYM, MONTH_NAMES, MONTHS_SHORT, MONTHS_LETTER, yearOf } from '@/lib/budget/months';
+import { makeYM, monthNames, monthNamesShort, monthLetters, yearOf } from '@/lib/budget/months';
 import { moneySigned } from '@/lib/budget/format';
 import { Pill } from '@/components/budget/shared/primitives';
 import { monthStatus } from '@/components/budget/month/MonthHeader';
@@ -73,7 +73,7 @@ export default function YearTab() {
     });
   const monthUrl = (ym: string) => `/budget/${budgetId}/complete/month?m=${ym}`;
 
-  const rows = MONTH_NAMES.map((name, i) => {
+  const rows = monthNames().map((name, i) => {
     const ym = makeYM(year, i);
     const month = engine.month(ym);
     return { ym, name, i, t: month.totals, spent: monthSpent(month), closed: month.closed, general: engine.generalBalance(ym) };
@@ -176,8 +176,8 @@ export default function YearTab() {
                   ))}
                 </span>
                 <span className={cn('text-[11px] font-semibold', isToday ? 'text-primary' : 'text-muted-foreground')}>
-                  <span className="sm:hidden">{MONTHS_LETTER[r.i]}</span>
-                  <span className="hidden sm:inline">{MONTHS_SHORT[r.i]}</span>
+                  <span className="sm:hidden">{monthLetters()[r.i]}</span>
+                  <span className="hidden sm:inline">{monthNamesShort()[r.i]}</span>
                 </span>
                 <MonthTooltip title={`${r.name} ${year}`} t={r.t} spent={r.spent} fmt={fmt} align={r.i < 2 ? 'left' : r.i > 9 ? 'right' : 'center'} />
               </Link>

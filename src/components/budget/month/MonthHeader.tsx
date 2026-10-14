@@ -12,9 +12,9 @@ import {
   compareYM,
   formatMonthTitle,
   makeYM,
-  MONTH_NAMES,
-  MONTHS_LETTER,
-  MONTHS_SHORT,
+  monthNames,
+  monthLetters,
+  monthNamesShort,
   yearOf,
 } from '@/lib/budget/months';
 import { Pill, type PillTone } from '../shared/primitives';
@@ -44,7 +44,7 @@ export function MonthHeader({ ym, onChange }: MonthHeaderProps) {
   const month = engine.month(ym);
   const status = monthStatus(month.closed, ym, today);
   const year = yearOf(ym);
-  const restes = MONTH_NAMES.map((_, i) => engine.month(makeYM(year, i)).totals.reste);
+  const restes = monthNames().map((_, i) => engine.month(makeYM(year, i)).totals.reste);
   const maxAbs = Math.max(1, ...restes.map((r) => Math.abs(r)));
   const closedAt = formatClosedAt(month.closedAt);
 
@@ -80,7 +80,7 @@ export function MonthHeader({ ym, onChange }: MonthHeaderProps) {
       </div>
 
       <div role="group" aria-label={`Mois de ${year}`} className="grid grid-cols-12 gap-0.5 sm:gap-1 rounded-2xl border border-border/70 bg-card p-1.5 shadow-soft">
-        {MONTH_NAMES.map((name, i) => {
+        {monthNames().map((name, i) => {
           const cell = makeYM(year, i);
           const selected = cell === ym;
           const isToday = cell === today;
@@ -112,8 +112,8 @@ export function MonthHeader({ ym, onChange }: MonthHeaderProps) {
                 />
               </span>
               <span className={cn('text-xs', selected ? 'font-bold text-primary' : 'font-semibold text-muted-foreground')}>
-                <span className="sm:hidden">{MONTHS_LETTER[i]}</span>
-                <span className="hidden sm:inline">{MONTHS_SHORT[i]}</span>
+                <span className="sm:hidden">{monthLetters()[i]}</span>
+                <span className="hidden sm:inline">{monthNamesShort()[i]}</span>
               </span>
               <span className="flex h-3 items-center text-slate-500">{closed && <Lock className="h-2.5 w-2.5" aria-hidden="true" />}</span>
             </button>

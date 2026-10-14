@@ -61,9 +61,9 @@ import {
   monthIndex0,
   monthNameLower,
   monthsBetween,
-  MONTHS_LOWER,
-  MONTHS_SHORT,
-  MONTH_NAMES,
+  monthNamesLower,
+  monthNamesShort,
+  monthNames,
   startDateOf,
   yearOf,
   deMonth,
@@ -221,7 +221,7 @@ export function ChargeAmountSheet({ sheet, onClose }: SheetProps<'chargeAmount'>
       <div className="flex flex-col gap-2">
         {!sheet.fromCatalog && <span className="text-sm font-semibold">Appliquer ce montant à…</span>}
         {canMonthOnly && (
-          <ChoiceCard title={`${MONTH_NAMES[monthIndex0(fromYm)]} seulement`} help={`Une exception : les autres mois restent à ${fmt(r!.planned)}.`} onClick={() => apply('month')} />
+          <ChoiceCard title={`${monthNames()[monthIndex0(fromYm)]} seulement`} help={`Une exception : les autres mois restent à ${fmt(r!.planned)}.`} onClick={() => apply('month')} />
         )}
         <ChoiceCard
           title={`À partir ${deMonth(formatMonthShort(fromYm))}`}
@@ -571,7 +571,7 @@ export function ChargeEditorSheet({ sheet, onClose }: SheetProps<'chargeEditor'>
   let summary: string;
   if (freq === 'once') summary = `${amountText} une seule fois, en ${formatMonthLong(start)}.`;
   else if (freq === 'yearly') {
-    summary = `${amountText} chaque année en ${MONTHS_LOWER[monthIndex0(start)]}, à partir de ${yearOf(start)}${endYm ? ` et jusqu’en ${yearOf(endYm)}` : ''}.`;
+    summary = `${amountText} chaque année en ${monthNamesLower()[monthIndex0(start)]}, à partir de ${yearOf(start)}${endYm ? ` et jusqu’en ${yearOf(endYm)}` : ''}.`;
     if (smooth && Number.isFinite(value) && value > 0) summary += ` Lissée : ${fmt(value / 12)} mis de côté chaque mois.`;
   } else {
     const base = freq === 'custom' ? customMonthsText(months).toLowerCase() : 'tous les mois';
@@ -737,14 +737,14 @@ export function ChargeEditorSheet({ sheet, onClose }: SheetProps<'chargeEditor'>
               Quels mois ? <span className="font-normal text-muted-foreground">(touchez pour retirer)</span>
             </span>
             <div role="group" aria-label="Mois concernés" className="grid grid-cols-6 gap-1.5">
-              {MONTHS_SHORT.map((m, i) => {
+              {monthNamesShort().map((m, i) => {
                 const on = months.includes(i + 1);
                 return (
                   <button
                     key={m}
                     type="button"
                     aria-pressed={on}
-                    aria-label={MONTHS_LOWER[i]}
+                    aria-label={monthNamesLower()[i]}
                     onClick={() => setMonths((prev) => (on ? prev.filter((x) => x !== i + 1) : [...prev, i + 1]))}
                     className={cn(
                       'min-h-[40px] rounded-lg border text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',

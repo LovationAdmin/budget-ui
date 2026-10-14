@@ -11,7 +11,7 @@ import { useBudget } from '@/contexts/BudgetContext';
 import type { ResolvedCharge, ResolvedMonth } from '@/lib/budget/engine';
 import { contributionRuleText, customMonthsText, windowOf } from '@/lib/budget/engine';
 import { removeOneOff, setChargeMonthAmount } from '@/lib/budget/mutations';
-import { formatMonthLong, monthNameLower, MONTHS_SHORT, monthIndex0, deMonth } from '@/lib/budget/months';
+import { formatMonthLong, monthNameLower, monthNamesShort, monthIndex0, deMonth } from '@/lib/budget/months';
 import type { YM } from '@/lib/budget/types';
 import { AddRowButton, Badge, CategoryIcon, IconTile, RowButton, SectionCard, type PillTone } from '../shared/primitives';
 
@@ -225,7 +225,7 @@ export function ChargesCard({ month, prevMonth }: { month: ResolvedMonth; prevMo
 export function SavingsCard({ month }: { month: ResolvedMonth }) {
   const { fmt, openSheet, engine } = useBudget();
   const guard = useClosedGuard(month.ym, month.closed);
-  const short = MONTHS_SHORT[monthIndex0(month.ym)];
+  const short = monthNamesShort()[monthIndex0(month.ym)];
   const reste = month.totals.reste;
   return (
     <SectionCard
