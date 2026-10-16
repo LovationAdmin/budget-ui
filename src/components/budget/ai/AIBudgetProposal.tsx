@@ -1122,7 +1122,8 @@ export default function AIBudgetProposal() {
             t.applyFill(formatMonthLong(start))
           )}
         </p>
-        <div className="flex flex-col sm:flex-row gap-2 sticky bottom-2 bg-background/80 backdrop-blur rounded-xl p-2 border border-border">
+        {/* Sticky on desktop only: below lg the tab bar would cover it, and stacked it is too tall to pin. */}
+        <div className="flex flex-col sm:flex-row gap-2 lg:sticky lg:bottom-2 bg-background/80 backdrop-blur rounded-xl p-2 border border-border">
           <Button className="flex-1" onClick={applyProposal} disabled={feas.status === 'infeasible'}>
             <CheckCircle2 className="h-4 w-4 mr-1" /> {t.apply}
           </Button>

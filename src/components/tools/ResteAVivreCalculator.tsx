@@ -294,7 +294,7 @@ export function ResteAVivreCalculator({ t, format: f, storageKey, example, befor
         </div>
       </section>
 
-      {/* The results card scrolls away while filling the form (html/body clip overflow-x, so sticky is inert): this bar keeps the figure in sight. */}
+      {/* The results card scrolls away while filling the form: this bar keeps the figure in sight. */}
       {hasIncome && !resultsVisible && (
         <div className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-card/95 px-4 py-3 backdrop-blur">
           <div className="mx-auto flex max-w-md items-center justify-between gap-3">
