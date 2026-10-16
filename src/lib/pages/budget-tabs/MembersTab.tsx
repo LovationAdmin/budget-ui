@@ -662,9 +662,12 @@ export default function MembersTab() {
             {t.intro(formatMonthLong(viewYm), <strong className="tabular-nums text-foreground">{fmt(month.totals.contributions)}</strong>, fmt(month.totals.salaries))}
           </p>
         </div>
-        <Button className="min-h-[44px] self-start sm:self-auto" onClick={() => openSheet({ kind: 'member', ym: firstOpen })}>
-          <UserPlus className="h-4 w-4" /> {t.addMember}
-        </Button>
+        {/* Empty page: the empty state below carries the only add button. */}
+        {current.length > 0 && (
+          <Button className="min-h-[44px] self-start sm:self-auto" onClick={() => openSheet({ kind: 'member', ym: firstOpen })}>
+            <UserPlus className="h-4 w-4" /> {t.addMember}
+          </Button>
+        )}
       </div>
 
       {model.people.length > 0 && (

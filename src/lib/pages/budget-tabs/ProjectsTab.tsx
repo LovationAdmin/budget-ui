@@ -202,9 +202,12 @@ export default function ProjectsTab() {
             {t.intro(<strong className="tabular-nums text-foreground">{fmt(total)}</strong>, monthNameLower(today))}
           </p>
         </div>
-        <Button className="min-h-[44px] self-start sm:self-auto" onClick={() => openSheet({ kind: 'savingEditor', ym: firstOpen })}>
-          <Plus className="h-4 w-4" /> {t.newSaving}
-        </Button>
+        {/* Empty page: the empty state below carries the only add button. */}
+        {projects.length > 0 && (
+          <Button className="min-h-[44px] self-start sm:self-auto" onClick={() => openSheet({ kind: 'savingEditor', ym: firstOpen })}>
+            <Plus className="h-4 w-4" /> {t.newSaving}
+          </Button>
+        )}
       </div>
 
       <p className="text-sm text-muted-foreground">
@@ -214,6 +217,18 @@ export default function ProjectsTab() {
           <strong className={cn('tabular-nums', month.totals.reste < 0 ? 'text-red-700' : 'text-foreground')}>{fmt(month.totals.reste)}</strong>,
         )}
       </p>
+
+      {/* Above the general savings card, so its button shows without scrolling. */}
+      {projects.length === 0 && (
+        <div className="flex flex-col items-center gap-3 rounded-2xl border-[1.5px] border-dashed border-border px-5 py-8 text-center">
+          <p className="max-w-md text-sm text-muted-foreground">
+            {t.empty}
+          </p>
+          <Button className="min-h-[44px]" onClick={() => openSheet({ kind: 'savingEditor', ym: firstOpen })}>
+            <Plus className="h-4 w-4" /> {t.create}
+          </Button>
+        </div>
+      )}
 
       <div className="grid gap-4 md:grid-cols-2">
         {current.map((p) => (
@@ -238,17 +253,6 @@ export default function ProjectsTab() {
           </div>
         </article>
       </div>
-
-      {projects.length === 0 && (
-        <div className="flex flex-col items-center gap-3 rounded-2xl border-[1.5px] border-dashed border-border px-5 py-8 text-center">
-          <p className="max-w-md text-sm text-muted-foreground">
-            {t.empty}
-          </p>
-          <Button className="min-h-[44px]" onClick={() => openSheet({ kind: 'savingEditor', ym: firstOpen })}>
-            <Plus className="h-4 w-4" /> {t.create}
-          </Button>
-        </div>
-      )}
 
       {ended.length > 0 && (
         <section aria-label={t.endedAria} className="flex flex-col gap-3">
