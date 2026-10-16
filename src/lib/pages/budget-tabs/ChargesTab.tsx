@@ -240,9 +240,12 @@ export default function ChargesTab() {
             {t.intro}
           </p>
         </div>
-        <Button className="min-h-[44px] self-start sm:self-auto" onClick={() => openSheet({ kind: 'chargeEditor', ym: firstOpen })}>
-          <Plus className="h-4 w-4" /> {t.newCharge}
-        </Button>
+        {/* Empty page: the empty state below carries the only add button. */}
+        {household.length > 0 && (
+          <Button className="min-h-[44px] self-start sm:self-auto" onClick={() => openSheet({ kind: 'chargeEditor', ym: firstOpen })}>
+            <Plus className="h-4 w-4" /> {t.newCharge}
+          </Button>
+        )}
       </div>
 
       <div role="group" aria-label={t.filterAria} className="flex flex-wrap gap-2">
