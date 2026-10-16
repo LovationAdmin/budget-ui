@@ -118,7 +118,7 @@ export function OnboardingCoach({
   return (
     <aside
       className={cn(
-        'fixed bottom-4 left-4 z-30 w-[min(360px,calc(100vw-2rem))]',
+        'fixed bottom-4 left-4 z-30 flex flex-col w-[min(360px,calc(100vw-2rem))]',
         'rounded-2xl border border-border/60 bg-card/95 shadow-floating backdrop-blur-md',
         'transition-[width] duration-300',
         collapsed && 'w-auto',
@@ -199,11 +199,16 @@ export function OnboardingCoach({
 
       {/* Steps */}
       {!collapsed && !isComplete && (
-        <ol className="space-y-1 px-2 pb-3 max-h-[60vh] overflow-y-auto">
+        <ol className="min-h-0 space-y-1 px-2 pb-3 max-h-[60vh] overflow-y-auto">
           {steps.map((step, idx) => (
             <li key={step.id}>
               <button
-                onClick={step.onAction}
+                onClick={() => {
+                  step.onAction?.();
+                  // On phones the open guide hides most of the screen: fold it
+                  // so the page the step leads to is actually visible.
+                  if (window.matchMedia?.('(max-width: 1023px)').matches) setCollapsed(true);
+                }}
                 disabled={!step.onAction}
                 className={cn(
                   'group flex w-full items-start gap-3 rounded-xl px-3 py-2.5 text-left transition-all min-h-[48px]',

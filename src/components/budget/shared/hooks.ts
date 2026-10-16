@@ -25,7 +25,8 @@ export function useHashScroll(hash: string) {
     const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
     const t = setTimeout(() => document.getElementById(hash)?.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' }), 150);
     return () => clearTimeout(t);
-  }, [location.hash, hash]);
+    // location.key: following the same link again scrolls again.
+  }, [location.key, location.hash, hash]);
 }
 
 /**

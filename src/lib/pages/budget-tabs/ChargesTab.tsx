@@ -74,6 +74,7 @@ const M = defineMessages({
     privateAria: 'privée',
     personalEmpty: 'Impôt, envoi d’argent, crédit perso… Ajoutez ici ce qu’un membre paie seul : son argent de poche baissera d’autant dans le Foyer.',
     suggestions: 'Suggestions d’économies',
+    suggestionsSoon: 'L’IA compare vos charges aux offres du marché. Elle se lance toute seule dès votre première charge régulière : loyer, box internet, assurance…',
   },
   en: {
     filters: { active: 'Active', upcoming: 'Upcoming', ended: 'Ended' },
@@ -113,6 +114,7 @@ const M = defineMessages({
     privateAria: 'private',
     personalEmpty: 'Taxes, money sent to family, a personal loan… Add here what a member pays on their own: their spending money goes down by the same amount in the Household tab.',
     suggestions: 'Money-saving suggestions',
+    suggestionsSoon: 'The AI compares your bills with market offers. It starts on its own as soon as you add a recurring bill: rent, broadband, insurance…',
   },
 });
 
@@ -433,11 +435,22 @@ export default function ChargesTab() {
         </section>
       )}
 
-      {suggestionCharges.length > 0 && id && (
-        <section id="suggestions" aria-label={t.suggestions} className="scroll-mt-24">
+      {/* Always there: the setup guide's « Lancer l'analyse IA » lands here. */}
+      <section id="suggestions" aria-label={t.suggestions} className="scroll-mt-24">
+        {suggestionCharges.length > 0 && id ? (
           <EnhancedSuggestions budgetId={id} charges={suggestionCharges} householdSize={householdSize} location={budgetLocation} currency={budgetCurrency} />
-        </section>
-      )}
+        ) : (
+          <div className="flex items-start gap-3 rounded-2xl border border-border/70 bg-card p-4 shadow-soft">
+            <span aria-hidden="true" className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+              <Sparkles className="h-5 w-5" />
+            </span>
+            <div className="min-w-0">
+              <h2 className="text-[15px] font-semibold">{t.suggestions}</h2>
+              <p className="mt-0.5 text-sm text-muted-foreground">{t.suggestionsSoon}</p>
+            </div>
+          </div>
+        )}
+      </section>
     </div>
   );
 }

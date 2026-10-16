@@ -667,7 +667,12 @@ export default function BudgetCompleteLayout() {
           </div>
         )}
 
-        <main id="contenu" tabIndex={-1} className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-5 sm:py-8 pb-32 lg:pb-16 focus:outline-none">
+        {/* Bottom room on phones: the tab bar, plus the setup guide floating above it. */}
+        <main
+          id="contenu"
+          tabIndex={-1}
+          className={`max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-5 sm:pt-8 ${coachDismissed ? 'pb-32' : 'pb-[calc(14rem+env(safe-area-inset-bottom))]'} lg:pb-16 focus:outline-none`}
+        >
           <Suspense fallback={<TabFallback />}>
             <Outlet />
           </Suspense>
@@ -687,7 +692,7 @@ export default function BudgetCompleteLayout() {
         {!coachDismissed && (
           <OnboardingCoach
             steps={onboardingSteps}
-            className="bottom-[calc(9rem+env(safe-area-inset-bottom))] lg:bottom-4"
+            className="bottom-[calc(9rem+env(safe-area-inset-bottom))] max-h-[calc(100dvh_-_13.5rem_-_env(safe-area-inset-bottom))] lg:bottom-4 lg:max-h-[calc(100dvh_-_6rem)]"
             onDismiss={() => {
               setCoachDismissed(true);
               try {
