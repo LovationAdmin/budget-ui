@@ -45,20 +45,76 @@ import { CalendarDays, Receipt, PiggyBank, Users, BarChart3, Sparkles, FlaskConi
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { DEMO_TRANSACTIONS, DEMO_BANK_BALANCE, DEMO_MODE_LIMITS } from '@/constants/demoData';
 import { useAdvisorJob } from '@/lib/ai/advisorJob';
+import { defineMessages, useT } from '@/i18n/runtime';
 
 // ============================================================================
 // NAVIGATION
 // ============================================================================
-export const BUDGET_NAV_ITEMS: NavItem[] = [
-  { id: 'month', label: 'Mois', icon: CalendarDays },
-  { id: 'charges', label: 'Charges', icon: Receipt },
-  { id: 'projects', label: 'Épargne', icon: PiggyBank },
-  { id: 'members', label: 'Foyer', icon: Users },
-  { id: 'year', label: 'Année', icon: BarChart3 },
-  { id: 'ai', label: 'Budget IA', icon: Sparkles },
-  { id: 'reality', label: 'Reality Check', icon: FlaskConical },
+const M = defineMessages({
+  fr: {
+    tabs: { month: 'Mois', charges: 'Charges', projects: 'Épargne', members: 'Foyer', year: 'Année', ai: 'Budget IA', reality: 'Reality Check' },
+    error: 'Erreur',
+    loadFailed: 'Impossible de charger le budget',
+    saveFailed: 'Erreur de sauvegarde',
+    undoChange: 'Annuler cette modification',
+    cannotUndo: 'Impossible d’annuler : le budget a changé depuis.',
+    undo: 'Annuler',
+    updatedBy: (who: string) => `Budget mis à jour par ${who}.`,
+    aiReady: 'Votre budget IA est prêt',
+    aiFailed: 'Budget IA : la génération a échoué',
+    aiReadyText: 'Découvrez la proposition et validez-la si elle vous convient.',
+    aiFailedText: 'Ouvrez l’onglet Budget IA pour réessayer.',
+    openAI: 'Ouvrir Budget IA',
+    view: 'Voir',
+    open: 'Ouvrir',
+    demoOn: 'Mode Démo Banque activé',
+    demoOnText: 'Données bancaires fictives chargées (vos données budgétaires restent inchangées).',
+    loading: 'Chargement du budget',
+    skipToContent: 'Aller au contenu',
+    invited: 'Invitation envoyée',
+    banksTitle: 'Gestion des Connexions Bancaires',
+    banksText: 'Connectez vos comptes via Enable Banking (2500+ banques européennes).',
+    loadingTab: 'Chargement de l’onglet…',
+  },
+  en: {
+    tabs: { month: 'Month', charges: 'Bills', projects: 'Savings', members: 'Household', year: 'Year', ai: 'AI budget', reality: 'Reality Check' },
+    error: 'Error',
+    loadFailed: 'Couldn’t load the budget',
+    saveFailed: 'Save failed',
+    undoChange: 'Undo this change',
+    cannotUndo: 'Can’t undo: the budget has changed since.',
+    undo: 'Undo',
+    updatedBy: (who: string) => `${who} updated the budget.`,
+    aiReady: 'Your AI budget is ready',
+    aiFailed: 'AI budget: generation failed',
+    aiReadyText: 'Take a look at the proposal and approve it if it suits you.',
+    aiFailedText: 'Open the AI budget tab to try again.',
+    openAI: 'Open AI budget',
+    view: 'View',
+    open: 'Open',
+    demoOn: 'Bank demo mode on',
+    demoOnText: 'Fictitious bank data loaded (your budget data stays unchanged).',
+    loading: 'Loading the budget',
+    skipToContent: 'Skip to content',
+    invited: 'Invitation sent',
+    banksTitle: 'Bank connections',
+    banksText: 'Connect your accounts through Enable Banking (2,500+ European banks).',
+    loadingTab: 'Loading the tab…',
+  },
+});
+
+type TabId = keyof typeof M.fr.tabs;
+
+/** The budget's sections; their labels come from M (tabs). */
+export const BUDGET_NAV_ITEMS: Array<Omit<NavItem, 'label'> & { id: TabId }> = [
+  { id: 'month', icon: CalendarDays },
+  { id: 'charges', icon: Receipt },
+  { id: 'projects', icon: PiggyBank },
+  { id: 'members', icon: Users },
+  { id: 'year', icon: BarChart3 },
+  { id: 'ai', icon: Sparkles },
+  { id: 'reality', icon: FlaskConical },
 ];
-const MAIN_TABS = BUDGET_NAV_ITEMS.slice(0, 5);
 
 const EMPTY_MODEL: BudgetModel = {
   budgetTitle: '',
@@ -82,6 +138,9 @@ export default function BudgetCompleteLayout() {
   const { toast } = useToast();
   const { connectToBudget, disconnectFromBudget, onBudgetUpdated } = useNotifications();
   const saveStateMachine = useSaveStatus();
+  const t = useT(M);
+  const navItems = useMemo<NavItem[]>(() => BUDGET_NAV_ITEMS.map((it) => ({ ...it, label: t.tabs[it.id] })), [t]);
+  const mainTabs = useMemo(() => navItems.slice(0, 5), [navItems]);
 
   const [today] = useState<YM>(() => currentYM());
   const [budget, setBudget] = useState<BudgetData | null>(null);
@@ -157,12 +216,12 @@ export default function BudgetCompleteLayout() {
         const status = (err as { response?: { status?: number } })?.response?.status;
         console.error('[BudgetComplete] load error', err);
         if (status === 404) navigate('/404');
-        toast({ title: 'Erreur', description: 'Impossible de charger le budget', variant: 'destructive' });
+        toast({ title: t.error, description: t.loadFailed, variant: 'destructive' });
       } finally {
         if (!silent) setLoading(false);
       }
     },
-    [id, navigate, toast, today],
+    [id, navigate, toast, today, t],
   );
 
   useEffect(() => {
@@ -185,10 +244,10 @@ export default function BudgetCompleteLayout() {
       dirtyRef.current = false;
       saveStateMachine.markSaved();
     } catch (err: unknown) {
-      const message = (err as { response?: { data?: { error?: string } } })?.response?.data?.error || 'Erreur de sauvegarde';
+      const message = (err as { response?: { data?: { error?: string } } })?.response?.data?.error || t.saveFailed;
       saveStateMachine.markError(message);
     }
-  }, [id, today, saveStateMachine]);
+  }, [id, today, saveStateMachine, t]);
 
   const { markAsModified, saveNow } = useAutoSave({
     onSave: performSave,
@@ -227,10 +286,10 @@ export default function BudgetCompleteLayout() {
           description: options.message,
           action: undoable ? (
             <ToastAction
-              altText="Annuler cette modification"
+              altText={t.undoChange}
               onClick={() => {
                 if (modelRef.current !== next) {
-                  toast({ description: 'Impossible d’annuler : le budget a changé depuis.' });
+                  toast({ description: t.cannotUndo });
                   return;
                 }
                 modelRef.current = prev;
@@ -238,13 +297,13 @@ export default function BudgetCompleteLayout() {
                 scheduleSave();
               }}
             >
-              Annuler
+              {t.undo}
             </ToastAction>
           ) : undefined,
         });
       }
     },
-    [scheduleSave, toast],
+    [scheduleSave, toast, t],
   );
 
   // ============================================================================
@@ -327,9 +386,9 @@ export default function BudgetCompleteLayout() {
     return onBudgetUpdated(({ budgetId, user: who }) => {
       if (budgetId !== id || isDemoRef.current) return;
       if (dirtyRef.current) return; // never overwrite local edits; the bell still notifies
-      loadBudget(true).then(() => toast({ description: `Budget mis à jour par ${who}.` }));
+      loadBudget(true).then(() => toast({ description: t.updatedBy(who) }));
     });
-  }, [id, onBudgetUpdated, loadBudget, toast]);
+  }, [id, onBudgetUpdated, loadBudget, toast, t]);
 
   // ============================================================================
   // BUDGET IA: the proposal is generated in the background — tell the user
@@ -345,16 +404,16 @@ export default function BudgetCompleteLayout() {
     if (location.pathname.endsWith('/ai')) return; // the tab shows it
     const ok = aiJobStatus === 'done';
     toast({
-      title: ok ? 'Votre budget IA est prêt' : 'Budget IA : la génération a échoué',
-      description: ok ? 'Découvrez la proposition et validez-la si elle vous convient.' : 'Ouvrez l’onglet Budget IA pour réessayer.',
+      title: ok ? t.aiReady : t.aiFailed,
+      description: ok ? t.aiReadyText : t.aiFailedText,
       variant: ok ? undefined : 'destructive',
       action: (
-        <ToastAction altText="Ouvrir Budget IA" onClick={() => navigate(`/budget/${id}/complete/ai`)}>
-          {ok ? 'Voir' : 'Ouvrir'}
+        <ToastAction altText={t.openAI} onClick={() => navigate(`/budget/${id}/complete/ai`)}>
+          {ok ? t.view : t.open}
         </ToastAction>
       ),
     });
-  }, [aiJobStatus, id, location.pathname, navigate, toast]);
+  }, [aiJobStatus, id, location.pathname, navigate, toast, t]);
 
   // ============================================================================
   // BANKING
@@ -404,8 +463,8 @@ export default function BudgetCompleteLayout() {
     } catch {
       /* ignore */
     }
-    toast({ title: 'Mode Démo Banque activé', description: 'Données bancaires fictives chargées (vos données budgétaires restent inchangées).' });
-  }, [id, getDemoStorageKey, getDemoTimestampKey, toast]);
+    toast({ title: t.demoOn, description: t.demoOnText });
+  }, [id, getDemoStorageKey, getDemoTimestampKey, toast, t]);
 
   const disableDemoMode = useCallback(() => {
     setIsDemoMode(false);
@@ -576,7 +635,7 @@ export default function BudgetCompleteLayout() {
   // ============================================================================
   if (loading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center" role="status" aria-label="Chargement du budget">
+      <div className="min-h-screen bg-background flex items-center justify-center" role="status" aria-label={t.loading}>
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary" />
       </div>
     );
@@ -589,13 +648,13 @@ export default function BudgetCompleteLayout() {
           href="#contenu"
           className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[60] focus:rounded-xl focus:bg-card focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:shadow-floating focus:outline-none focus:ring-2 focus:ring-ring"
         >
-          Aller au contenu
+          {t.skipToContent}
         </a>
         <BudgetNavbar
           budgetTitle={budget?.name}
           userName={user?.name}
           userAvatar={user?.avatar}
-          items={BUDGET_NAV_ITEMS}
+          items={navItems}
           onSectionChange={handleSectionChange}
           currentSection={currentSection}
         />
@@ -614,7 +673,7 @@ export default function BudgetCompleteLayout() {
           </Suspense>
         </main>
 
-        <BudgetTabBar items={MAIN_TABS} currentSection={currentSection} onSectionChange={handleSectionChange} />
+        <BudgetTabBar items={mainTabs} currentSection={currentSection} onSectionChange={handleSectionChange} />
 
         {/* Bottom centre: toasts live bottom-right, the setup coach bottom-left. */}
         <SaveStatusIndicator
@@ -649,7 +708,7 @@ export default function BudgetCompleteLayout() {
             onInvited={() => {
               refreshMembersOnly();
               setShowInviteModal(false);
-              toast({ title: 'Invitation envoyée' });
+              toast({ title: t.invited });
             }}
           />
         )}
@@ -658,8 +717,8 @@ export default function BudgetCompleteLayout() {
         <Dialog open={showBankManager} onOpenChange={handleCloseBankManager}>
           <DialogContent className="sm:max-w-2xl max-h-[80vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>Gestion des Connexions Bancaires</DialogTitle>
-              <DialogDescription>Connectez vos comptes via Enable Banking (2500+ banques européennes).</DialogDescription>
+              <DialogTitle>{t.banksTitle}</DialogTitle>
+              <DialogDescription>{t.banksText}</DialogDescription>
             </DialogHeader>
             <EnableBankingManager budgetId={id!} onUpdate={refreshBankData} />
           </DialogContent>
@@ -688,10 +747,11 @@ export default function BudgetCompleteLayout() {
 
 // Placeholder while a lazily-loaded tab downloads; keeps the layout steady.
 function TabFallback() {
+  const t = useT(M);
   return (
     <div role="status" aria-live="polite" className="flex min-h-[40vh] items-center justify-center">
       <span aria-hidden="true" className="h-6 w-6 animate-spin rounded-full border-2 border-primary/30 border-t-primary motion-reduce:animate-none" />
-      <span className="sr-only">Chargement de l’onglet…</span>
+      <span className="sr-only">{t.loadingTab}</span>
     </div>
   );
 }

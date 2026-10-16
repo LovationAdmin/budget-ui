@@ -3,6 +3,44 @@ import { useSearchParams, useNavigate } from 'react-router-dom';
 import { Card, CardContent } from "@/components/ui/card";
 import { Loader2, CheckCircle, XCircle, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { defineMessages, useT } from '@/i18n/runtime';
+
+const M = defineMessages({
+  fr: {
+    processing: 'Traitement de votre autorisation...',
+    refused: 'Autorisation refusée',
+    authError: 'Erreur d\'autorisation',
+    missingParams: 'Paramètres manquants dans l\'URL de callback',
+    configError: 'Erreur de configuration',
+    success: 'Autorisation réussie ! Fermeture en cours...',
+    parentFailed: 'Impossible de communiquer avec la fenêtre parent',
+    commError: 'Erreur de communication',
+    openFromApp: 'Cette page doit être ouverte depuis l\'application',
+    wrongAccess: 'Accès incorrect',
+    pleaseWait: 'Veuillez patienter pendant que nous finalisons la connexion...',
+    connected: 'Votre banque a été connectée avec succès !',
+    error: 'Erreur',
+    backToDashboard: 'Retour au tableau de bord',
+    autoClose: 'Cette fenêtre se fermera automatiquement...',
+  },
+  en: {
+    processing: 'Processing your authorization...',
+    refused: 'Authorization denied',
+    authError: 'Authorization error',
+    missingParams: 'Parameters missing from the callback URL',
+    configError: 'Configuration error',
+    success: 'Authorization granted! Closing...',
+    parentFailed: 'Couldn’t communicate with the parent window',
+    commError: 'Communication error',
+    openFromApp: 'This page must be opened from the app',
+    wrongAccess: 'Invalid access',
+    pleaseWait: 'Please wait while we finish connecting...',
+    connected: 'Your bank is connected!',
+    error: 'Error',
+    backToDashboard: 'Back to the dashboard',
+    autoClose: 'This window will close automatically...',
+  },
+});
 
 /**
  * Page de callback Enable Banking
@@ -16,9 +54,10 @@ import { Button } from "@/components/ui/button";
 export function EnableBankingCallbackPage() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const t = useT(M);
   
   const [status, setStatus] = useState<'processing' | 'success' | 'error'>('processing');
-  const [message, setMessage] = useState('Traitement de votre autorisation...');
+  const [message, setMessage] = useState(t.processing);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -37,12 +76,12 @@ export function EnableBankingCallbackPage() {
 
     if (errorParam) {
       // Erreur d'autorisation
-      const errorMsg = errorDescription || errorParam || 'Autorisation refusée';
+      const errorMsg = errorDescription || errorParam || t.refused;
       console.error('❌ Authorization error:', errorMsg);
       
       setStatus('error');
       setError(errorMsg);
-      setMessage('Erreur d\'autorisation');
+      setMessage(t.authError);
 
       if (isPopup) {
         // Envoyer l'erreur au parent
@@ -62,8 +101,8 @@ export function EnableBankingCallbackPage() {
     if (!code || !state) {
       console.error('❌ Missing code or state parameter');
       setStatus('error');
-      setError('Paramètres manquants dans l\'URL de callback');
-      setMessage('Erreur de configuration');
+      setError(t.missingParams);
+      setMessage(t.configError);
       return;
     }
 
@@ -82,7 +121,7 @@ export function EnableBankingCallbackPage() {
         console.log('✅ Message sent to parent window');
         
         setStatus('success');
-        setMessage('Autorisation réussie ! Fermeture en cours...');
+        setMessage(t.success);
 
         // Fermer la popup après 1.5 secondes
         setTimeout(() => {
@@ -93,15 +132,15 @@ export function EnableBankingCallbackPage() {
       } catch (err) {
         console.error('❌ Failed to send message to parent:', err);
         setStatus('error');
-        setError('Impossible de communiquer avec la fenêtre parent');
-        setMessage('Erreur de communication');
+        setError(t.parentFailed);
+        setMessage(t.commError);
       }
     } else {
       // Pas dans une popup - peut-être un accès direct
       console.warn('⚠️  Not in a popup window');
       setStatus('error');
-      setError('Cette page doit être ouverte depuis l\'application');
-      setMessage('Accès incorrect');
+      setError(t.openFromApp);
+      setMessage(t.wrongAccess);
       
       // Rediriger vers le dashboard après 3 secondes
       setTimeout(() => {
@@ -147,13 +186,13 @@ export function EnableBankingCallbackPage() {
               
               {status === 'processing' && (
                 <p className="text-sm text-gray-600">
-                  Veuillez patienter pendant que nous finalisons la connexion...
+                  {t.pleaseWait}
                 </p>
               )}
               
               {status === 'success' && (
                 <p className="text-sm text-green-700">
-                  Votre banque a été connectée avec succès !
+                  {t.connected}
                 </p>
               )}
               
@@ -163,7 +202,7 @@ export function EnableBankingCallbackPage() {
                     <AlertCircle className="h-5 w-5 text-red-600 flex-shrink-0 mt-0.5" />
                     <div className="text-left">
                       <p className="text-sm font-medium text-red-900">
-                        Erreur
+                        {t.error}
                       </p>
                       <p className="text-sm text-red-700 mt-1">
                         {error}
@@ -180,14 +219,14 @@ export function EnableBankingCallbackPage() {
                 onClick={() => navigate('/')}
                 className="mt-4"
               >
-                Retour au tableau de bord
+                {t.backToDashboard}
               </Button>
             )}
 
             {/* Indicateur de fermeture automatique */}
             {status === 'success' && (
               <p className="text-xs text-gray-500 mt-4">
-                Cette fenêtre se fermera automatiquement...
+                {t.autoClose}
               </p>
             )}
           </div>

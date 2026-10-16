@@ -22,9 +22,130 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { defineMessages, useLocale, usePreference, useT } from '@/i18n/runtime';
+import type { Locale } from '@/i18n/locales';
+
+const M = defineMessages({
+  fr: {
+    updatedTitle: 'Profil mis à jour',
+    updatedText: 'Vos informations ont été enregistrées.',
+    error: 'Erreur',
+    updateFailed: 'Erreur lors de la mise à jour',
+    mismatch: 'Les mots de passe ne correspondent pas.',
+    tooShort: 'Le mot de passe doit contenir au moins 6 caractères.',
+    changedTitle: 'Mot de passe modifié',
+    changedText: 'Votre mot de passe a été mis à jour avec succès.',
+    wrongCurrent: 'Mot de passe actuel incorrect',
+    enterPassword: 'Veuillez entrer votre mot de passe.',
+    deletedTitle: 'Compte supprimé',
+    deletedText: 'Votre compte sera supprimé définitivement sous 30 jours.',
+    wrongPassword: 'Mot de passe incorrect',
+    exportFile: 'mes-donnees-budgetfamille',
+    exportedTitle: 'Export réussi',
+    exportedText: 'Vos données ont été téléchargées.',
+    exportFailed: "Impossible de générer l'export.",
+    back: 'Retour au tableau de bord',
+    title: 'Mon Profil',
+    info: 'Informations',
+    avatarHint: "Cliquez sur l'avatar pour le modifier",
+    name: 'Nom',
+    email: 'Email',
+    updating: 'Mise à jour...',
+    update: 'Mettre à jour le profil',
+    languageTitle: 'Langue',
+    languageText: 'La langue de l’application et des e-mails que nous vous envoyons.',
+    languageSaved: 'Langue enregistrée',
+    passwordTitle: 'Changer de mot de passe',
+    current: 'Mot de passe actuel',
+    newPassword: 'Nouveau mot de passe',
+    confirm: 'Confirmer le nouveau mot de passe',
+    changing: 'Modification...',
+    change: 'Changer le mot de passe',
+    dataTitle: 'Mes données (RGPD)',
+    dataText: 'Téléchargez une copie complète de toutes vos données personnelles au format JSON.',
+    dataNote: 'Note : Ce fichier contient uniquement VOS informations personnelles. Les données des autres membres sont exclues de cet export.',
+    exporting: "Génération de l'archive...",
+    download: 'Télécharger mes données (JSON)',
+    helpTitle: 'Aide & Tutoriel',
+    helpText: "Besoin d'un rappel sur le fonctionnement de l'application ?",
+    tutorial: 'Revoir le tutoriel',
+    danger: 'Zone de danger',
+    dangerText: 'La suppression de votre compte est irréversible. Toutes vos données seront définitivement effacées de nos serveurs.',
+    deleteAccount: 'Supprimer mon compte',
+    sure: 'Êtes-vous absolument sûr ?',
+    sureText: 'Cette action est irréversible. Toutes vos données seront définitivement supprimées de nos serveurs sous 30 jours.',
+    confirmPassword: 'Confirmez votre mot de passe',
+    yourPassword: 'Votre mot de passe',
+    cancel: 'Annuler',
+    deleting: 'Suppression...',
+    deleteForever: 'Supprimer définitivement',
+  },
+  en: {
+    updatedTitle: 'Profile updated',
+    updatedText: 'Your details have been saved.',
+    error: 'Error',
+    updateFailed: 'Couldn’t update your profile',
+    mismatch: 'The passwords don’t match.',
+    tooShort: 'The password must be at least 6 characters.',
+    changedTitle: 'Password changed',
+    changedText: 'Your password has been updated.',
+    wrongCurrent: 'Current password is incorrect',
+    enterPassword: 'Please enter your password.',
+    deletedTitle: 'Account deleted',
+    deletedText: 'Your account will be permanently deleted within 30 days.',
+    wrongPassword: 'Incorrect password',
+    exportFile: 'my-budgetfamille-data',
+    exportedTitle: 'Export done',
+    exportedText: 'Your data has been downloaded.',
+    exportFailed: 'Couldn’t create the export.',
+    back: 'Back to my budgets',
+    title: 'My profile',
+    info: 'Details',
+    avatarHint: 'Click the avatar to change it',
+    name: 'Name',
+    email: 'Email',
+    updating: 'Updating...',
+    update: 'Update my profile',
+    languageTitle: 'Language',
+    languageText: 'The language of the app and of the emails we send you.',
+    languageSaved: 'Language saved',
+    passwordTitle: 'Change your password',
+    current: 'Current password',
+    newPassword: 'New password',
+    confirm: 'Confirm the new password',
+    changing: 'Changing...',
+    change: 'Change the password',
+    dataTitle: 'My data (GDPR)',
+    dataText: 'Download a full copy of all your personal data as JSON.',
+    dataNote: 'Note: this file only contains YOUR personal information. Other members’ data is not included in this export.',
+    exporting: 'Creating the file...',
+    download: 'Download my data (JSON)',
+    helpTitle: 'Help & tutorial',
+    helpText: 'Need a reminder of how the app works?',
+    tutorial: 'Watch the tutorial again',
+    danger: 'Danger zone',
+    dangerText: 'Deleting your account cannot be undone. All your data will be permanently erased from our servers.',
+    deleteAccount: 'Delete my account',
+    sure: 'Are you absolutely sure?',
+    sureText: 'This cannot be undone. All your data will be permanently deleted from our servers within 30 days.',
+    confirmPassword: 'Confirm your password',
+    yourPassword: 'Your password',
+    cancel: 'Cancel',
+    deleting: 'Deleting...',
+    deleteForever: 'Delete for good',
+  },
+});
+
+const LANGUAGES: Array<{ value: Locale; label: string }> = [
+  { value: 'fr', label: 'Français' },
+  { value: 'en', label: 'English' },
+];
 
 export default function Profile() {
-  const { user, logout, updateUser } = useAuth();
+  const { user, logout, updateUser, saveLocale } = useAuth();
+  const t = useT(M);
+  const locale = useLocale();
+  const { setPreference } = usePreference();
   const navigate = useNavigate();
   const { toast } = useToast();
   const { startTutorial } = useTutorial();
@@ -61,14 +182,14 @@ export default function Profile() {
       updateUser({ name, avatar });
       
       toast({ 
-        title: "Profil mis à jour", 
-        description: "Vos informations ont été enregistrées.", 
+        title: t.updatedTitle, 
+        description: t.updatedText, 
         variant: "default" 
       });
     } catch (err: any) {
       toast({ 
-        title: "Erreur", 
-        description: err.response?.data?.error || 'Erreur lors de la mise à jour', 
+        title: t.error, 
+        description: err.response?.data?.error || t.updateFailed, 
         variant: "destructive" 
       });
     } finally {
@@ -85,8 +206,8 @@ export default function Profile() {
 
     if (newPassword !== confirmPassword) {
       toast({ 
-        title: "Erreur", 
-        description: "Les mots de passe ne correspondent pas.", 
+        title: t.error, 
+        description: t.mismatch, 
         variant: "destructive" 
       });
       return;
@@ -94,8 +215,8 @@ export default function Profile() {
 
     if (newPassword.length < 6) {
       toast({ 
-        title: "Erreur", 
-        description: "Le mot de passe doit contenir au moins 6 caractères.", 
+        title: t.error, 
+        description: t.tooShort, 
         variant: "destructive" 
       });
       return;
@@ -112,14 +233,14 @@ export default function Profile() {
       setNewPassword('');
       setConfirmPassword('');
       toast({ 
-        title: "Mot de passe modifié", 
-        description: "Votre mot de passe a été mis à jour avec succès.", 
+        title: t.changedTitle, 
+        description: t.changedText, 
         variant: "default" 
       });
     } catch (err: any) {
       toast({ 
-        title: "Erreur", 
-        description: err.response?.data?.error || 'Mot de passe actuel incorrect', 
+        title: t.error, 
+        description: err.response?.data?.error || t.wrongCurrent, 
         variant: "destructive" 
       });
     } finally {
@@ -134,8 +255,8 @@ export default function Profile() {
   const handleDeleteAccount = async () => {
     if (!deletePassword.trim()) {
       toast({ 
-        title: "Erreur", 
-        description: "Veuillez entrer votre mot de passe.", 
+        title: t.error, 
+        description: t.enterPassword, 
         variant: "destructive" 
       });
       return;
@@ -146,16 +267,16 @@ export default function Profile() {
     try {
       await userAPI.deleteAccount({ password: deletePassword });
       toast({ 
-        title: "Compte supprimé", 
-        description: "Votre compte sera supprimé définitivement sous 30 jours.", 
+        title: t.deletedTitle, 
+        description: t.deletedText, 
         variant: "default" 
       });
       logout();
       navigate('/login');
     } catch (err: any) {
       toast({ 
-        title: "Erreur", 
-        description: err.response?.data?.error || 'Mot de passe incorrect', 
+        title: t.error, 
+        description: err.response?.data?.error || t.wrongPassword, 
         variant: "destructive" 
       });
       setDeleting(false);
@@ -176,22 +297,22 @@ export default function Profile() {
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = `mes-donnees-budgetfamille-${new Date().toISOString().split('T')[0]}.json`;
+      link.download = `${t.exportFile}-${new Date().toISOString().split('T')[0]}.json`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
       
       toast({ 
-        title: "Export réussi", 
-        description: "Vos données ont été téléchargées.", 
+        title: t.exportedTitle, 
+        description: t.exportedText, 
         variant: "default" 
       });
     } catch (error) {
       console.error(error);
       toast({ 
-        title: "Erreur", 
-        description: "Impossible de générer l'export.", 
+        title: t.error, 
+        description: t.exportFailed, 
         variant: "destructive" 
       });
     } finally {
@@ -214,16 +335,16 @@ export default function Profile() {
           onClick={() => navigate('/')}
         >
           <ArrowLeft className="h-4 w-4" />
-          Retour au tableau de bord
+          {t.back}
         </Button>
 
-        <h1 className="text-3xl font-bold text-gray-900 mb-8">Mon Profil</h1>
+        <h1 className="text-3xl font-bold text-gray-900 mb-8">{t.title}</h1>
 
         {/* ============================================================================ */}
         {/* SECTION 1: PROFILE INFO */}
         {/* ============================================================================ */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-6">Informations</h2>
+          <h2 className="text-xl font-semibold text-gray-900 mb-6">{t.info}</h2>
           <form onSubmit={handleUpdateProfile}>
             <div className="flex flex-col items-center mb-8">
               <AvatarPicker 
@@ -232,13 +353,13 @@ export default function Profile() {
                 onSelect={(newAvatar) => setAvatar(newAvatar)}
               />
               <p className="text-sm text-muted-foreground mt-3">
-                Cliquez sur l'avatar pour le modifier
+                {t.avatarHint}
               </p>
             </div>
 
             <div className="mb-4">
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Nom
+                {t.name}
               </label>
               <Input
                 type="text"
@@ -250,7 +371,7 @@ export default function Profile() {
 
             <div className="mb-4">
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Email
+                {t.email}
               </label>
               <Input
                 type="email"
@@ -261,9 +382,34 @@ export default function Profile() {
             </div>
 
             <Button type="submit" variant="gradient" disabled={updating}>
-              {updating ? 'Mise à jour...' : 'Mettre à jour le profil'}
+              {updating ? t.updating : t.update}
             </Button>
           </form>
+        </div>
+
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
+          <h2 className="text-xl font-semibold text-gray-900 mb-2">{t.languageTitle}</h2>
+          <p className="text-muted-foreground text-sm mb-4">{t.languageText}</p>
+          <div role="radiogroup" aria-label={t.languageTitle} className="inline-flex rounded-xl border border-gray-200 p-1">
+            {LANGUAGES.map((l) => (
+              <button
+                key={l.value}
+                type="button"
+                role="radio"
+                aria-checked={locale === l.value}
+                lang={l.value}
+                onClick={() => {
+                  if (l.value === locale) return;
+                  setPreference(l.value);
+                  saveLocale(l.value);
+                  toast({ title: M[l.value].languageSaved });
+                }}
+                className={`min-h-[44px] rounded-lg px-4 text-sm font-medium transition-colors ${locale === l.value ? 'bg-primary text-primary-foreground' : 'text-gray-700 hover:bg-gray-100'}`}
+              >
+                {l.label}
+              </button>
+            ))}
+          </div>
         </div>
 
         {/* ============================================================================ */}
@@ -271,13 +417,13 @@ export default function Profile() {
         {/* ============================================================================ */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
           <h2 className="text-xl font-semibold text-gray-900 mb-6">
-            Changer de mot de passe
+            {t.passwordTitle}
           </h2>
           <form onSubmit={handleChangePassword}>
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Mot de passe actuel
+                  {t.current}
                 </label>
                 <Input
                   type="password"
@@ -289,7 +435,7 @@ export default function Profile() {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Nouveau mot de passe
+                  {t.newPassword}
                 </label>
                 <Input
                   type="password"
@@ -302,7 +448,7 @@ export default function Profile() {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Confirmer le nouveau mot de passe
+                  {t.confirm}
                 </label>
                 <Input
                   type="password"
@@ -314,7 +460,7 @@ export default function Profile() {
               </div>
 
               <Button type="submit" variant="gradient" disabled={changingPassword}>
-                {changingPassword ? 'Modification...' : 'Changer le mot de passe'}
+                {changingPassword ? t.changing : t.change}
               </Button>
             </div>
           </form>
@@ -325,13 +471,13 @@ export default function Profile() {
         {/* ============================================================================ */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
           <h2 className="text-xl font-semibold text-gray-900 mb-4">
-            Mes données (RGPD)
+            {t.dataTitle}
           </h2>
           <p className="text-muted-foreground text-sm mb-4">
-            Téléchargez une copie complète de toutes vos données personnelles au format JSON.
+            {t.dataText}
             <br/>
             <span className="text-xs font-medium text-blue-600 mt-2 block">
-              Note : Ce fichier contient uniquement VOS informations personnelles. Les données des autres membres sont exclues de cet export.
+              {t.dataNote}
             </span>
           </p>
           <Button 
@@ -341,7 +487,7 @@ export default function Profile() {
             className="w-full sm:w-auto gap-2"
           >
             {exporting ? <Download className="h-4 w-4 animate-bounce" /> : <Download className="h-4 w-4" />}
-            {exporting ? "Génération de l'archive..." : "Télécharger mes données (JSON)"}
+            {exporting ? t.exporting : t.download}
           </Button>
         </div>
 
@@ -350,10 +496,10 @@ export default function Profile() {
         {/* ============================================================================ */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
           <h2 className="text-xl font-semibold text-gray-900 mb-4">
-            Aide & Tutoriel
+            {t.helpTitle}
           </h2>
           <p className="text-muted-foreground text-sm mb-4">
-            Besoin d'un rappel sur le fonctionnement de l'application ?
+            {t.helpText}
           </p>
           <Button 
             variant="outline" 
@@ -361,7 +507,7 @@ export default function Profile() {
             className="w-full sm:w-auto gap-2"
           >
             <HelpCircle className="h-4 w-4" />
-            Revoir le tutoriel
+            {t.tutorial}
           </Button>
         </div>
 
@@ -371,11 +517,10 @@ export default function Profile() {
         <div className="bg-red-50 rounded-xl border border-red-200 p-6">
           <div className="flex items-center gap-3 mb-4">
             <AlertTriangle className="h-6 w-6 text-red-600" />
-            <h2 className="text-xl font-semibold text-red-900">Zone de danger</h2>
+            <h2 className="text-xl font-semibold text-red-900">{t.danger}</h2>
           </div>
           <p className="text-red-700 mb-6 text-sm">
-            La suppression de votre compte est irréversible.
-            Toutes vos données seront définitivement effacées de nos serveurs.
+            {t.dangerText}
           </p>
           <Button 
             variant="destructive" 
@@ -383,7 +528,7 @@ export default function Profile() {
             className="w-full sm:w-auto gap-2"
           >
             <Trash2 className="h-4 w-4" />
-            Supprimer mon compte
+            {t.deleteAccount}
           </Button>
         </div>
       </div>
@@ -394,33 +539,32 @@ export default function Profile() {
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Êtes-vous absolument sûr ?</AlertDialogTitle>
+            <AlertDialogTitle>{t.sure}</AlertDialogTitle>
             <AlertDialogDescription>
-              Cette action est irréversible. Toutes vos données seront définitivement supprimées 
-              de nos serveurs sous 30 jours.
+              {t.sureText}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <div className="my-4">
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Confirmez votre mot de passe
+              {t.confirmPassword}
             </label>
             <Input
               type="password"
               value={deletePassword}
               onChange={(e: ChangeEvent<HTMLInputElement>) => setDeletePassword(e.target.value)}
-              placeholder="Votre mot de passe"
+              placeholder={t.yourPassword}
             />
           </div>
           <AlertDialogFooter>
             <AlertDialogCancel onClick={() => setDeletePassword('')}>
-              Annuler
+              {t.cancel}
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDeleteAccount}
               disabled={deleting}
               className="bg-red-600 hover:bg-red-700"
             >
-              {deleting ? 'Suppression...' : 'Supprimer définitivement'}
+              {deleting ? t.deleting : t.deleteForever}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

@@ -14,6 +14,12 @@
 
 import { Check, X } from 'lucide-react';
 import { validatePassword } from '@/utils/passwordStrength';
+import { defineMessages, useT } from '@/i18n/runtime';
+
+const M = defineMessages({
+  fr: { aria: (label: string) => `Force du mot de passe : ${label}`, strength: (label: string) => `Force : ${label}`, criteria: 'Critères du mot de passe' },
+  en: { aria: (label: string) => `Password strength: ${label}`, strength: (label: string) => `Strength: ${label}`, criteria: 'Password criteria' },
+});
 
 interface PasswordStrengthIndicatorProps {
   password: string;
@@ -47,6 +53,7 @@ export function PasswordStrengthIndicator({
   hideWhenEmpty = true,
   className = '',
 }: PasswordStrengthIndicatorProps) {
+  const t = useT(M);
   if (hideWhenEmpty && !password) return null;
 
   const result = validatePassword(password, email, name);
@@ -61,7 +68,7 @@ export function PasswordStrengthIndicator({
         aria-valuenow={score}
         aria-valuemin={0}
         aria-valuemax={4}
-        aria-label={`Force du mot de passe : ${strengthLabel}`}
+        aria-label={t.aria(strengthLabel)}
       >
         {[1, 2, 3, 4].map((segment) => (
           <div
@@ -75,11 +82,11 @@ export function PasswordStrengthIndicator({
 
       {/* Libellé de force */}
       <p className={`text-xs font-medium ${LABEL_COLORS[score]}`}>
-        Force : {strengthLabel}
+        {t.strength(strengthLabel)}
       </p>
 
       {/* Checklist des critères */}
-      <ul className="space-y-1 text-xs" aria-label="Critères du mot de passe">
+      <ul className="space-y-1 text-xs" aria-label={t.criteria}>
         {checks.map((check, idx) => (
           <li key={idx} className="flex items-center gap-2">
             {check.passed ? (

@@ -23,6 +23,40 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { defineMessages, useT } from '@/i18n/runtime';
+
+const M = defineMessages({
+  fr: {
+    guide: 'Guide de configuration',
+    ready: 'Tout est prêt !',
+    setUp: 'Configurer mon budget',
+    hide: 'Masquer le guide',
+    done: 'Bravo ! Tu peux fermer ce guide.',
+    close: 'Fermer',
+    open: 'Ouvrir',
+    run: 'Lancer',
+    members: ['Ajoute les membres du foyer', 'Leur salaire net, pour calculer la part de chacun'],
+    contributions: ['Choisis qui met quoi dans le pot commun', 'Tout le salaire, un montant fixe ou un pourcentage'],
+    charges: ['Ajoute tes charges', 'Loyer, abonnements, cantine, taxe annuelle…'],
+    savings: ['Crée une épargne', 'Vacances, fonds d’urgence, projets'],
+    ai: ['Lance l’analyse IA', 'Trouve des économies sur tes charges'],
+  },
+  en: {
+    guide: 'Setup guide',
+    ready: 'All set!',
+    setUp: 'Set up my budget',
+    hide: 'Hide the guide',
+    done: 'Well done! You can close this guide.',
+    close: 'Close',
+    open: 'Open',
+    run: 'Run',
+    members: ['Add the household members', 'Their take-home pay, to work out each person’s share'],
+    contributions: ['Choose who puts what into the joint pot', 'All their pay, a fixed amount or a percentage'],
+    charges: ['Add your bills', 'Rent, subscriptions, school lunches, yearly tax…'],
+    savings: ['Create a savings pot', 'Holidays, emergency fund, goals'],
+    ai: ['Run the AI analysis', 'Find savings on your bills'],
+  },
+});
 
 export interface OnboardingStep {
   id: string;
@@ -50,6 +84,7 @@ export function OnboardingCoach({
   className,
   storageKey = 'budget-coach-collapsed',
 }: OnboardingCoachProps) {
+  const t = useT(M);
   // Persisted collapse state
   const [collapsed, setCollapsed] = useState(() => {
     if (typeof window === 'undefined') return defaultCollapsed;
@@ -89,7 +124,7 @@ export function OnboardingCoach({
         collapsed && 'w-auto',
         className
       )}
-      aria-label="Guide de configuration"
+      aria-label={t.guide}
     >
       {/* Header — always visible */}
       <button
@@ -115,7 +150,7 @@ export function OnboardingCoach({
         <div className="flex-1 min-w-0">
           <div className="flex items-center justify-between gap-2">
             <span className="font-medium text-sm">
-              {isComplete ? 'Tout est prêt !' : 'Configurer mon budget'}
+              {isComplete ? t.ready : t.setUp}
             </span>
             {!collapsed && (
               <ChevronDown className="h-4 w-4 text-muted-foreground" />
@@ -155,7 +190,7 @@ export function OnboardingCoach({
               }
             }}
             className="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
-            aria-label="Masquer le guide"
+            aria-label={t.hide}
           >
             <X className="h-3.5 w-3.5" />
           </span>
@@ -215,7 +250,7 @@ export function OnboardingCoach({
       {!collapsed && isComplete && (
         <div className="px-4 pb-4 pt-1">
           <p className="text-xs text-muted-foreground">
-            Bravo ! Tu peux fermer ce guide.
+            {t.done}
           </p>
           {onDismiss && (
             <Button
@@ -224,7 +259,7 @@ export function OnboardingCoach({
               onClick={onDismiss}
               className="mt-2 w-full"
             >
-              Fermer
+              {t.close}
             </Button>
           )}
         </div>
@@ -255,49 +290,50 @@ export function useOnboardingProgress(
     goToSuggestions?: () => void;
   }
 ): OnboardingStep[] {
+  const t = useT(M);
   return useMemo(
     () => [
       {
         id: 'add-member',
-        label: 'Ajoute les membres du foyer',
-        description: 'Leur salaire net, pour calculer la part de chacun',
+        label: t.members[0],
+        description: t.members[1],
         completed: data.peopleCount > 0,
         onAction: actions.goToMembers,
-        actionLabel: 'Ouvrir',
+        actionLabel: t.open,
       },
       {
         id: 'set-contributions',
-        label: 'Choisis qui met quoi dans le pot commun',
-        description: 'Tout le salaire, un montant fixe ou un pourcentage',
+        label: t.contributions[0],
+        description: t.contributions[1],
         completed: data.contributionsSet,
         onAction: actions.goToContributions,
-        actionLabel: 'Ouvrir',
+        actionLabel: t.open,
       },
       {
         id: 'add-charge',
-        label: 'Ajoute tes charges',
-        description: 'Loyer, abonnements, cantine, taxe annuelle…',
+        label: t.charges[0],
+        description: t.charges[1],
         completed: data.chargesCount > 0,
         onAction: actions.goToCharges,
-        actionLabel: 'Ouvrir',
+        actionLabel: t.open,
       },
       {
         id: 'add-project',
-        label: 'Crée une épargne',
-        description: 'Vacances, fonds d’urgence, projets',
+        label: t.savings[0],
+        description: t.savings[1],
         completed: data.projectsCount > 0,
         onAction: actions.goToProjects,
-        actionLabel: 'Ouvrir',
+        actionLabel: t.open,
       },
       {
         id: 'run-ai',
-        label: 'Lance l’analyse IA',
-        description: 'Trouve des économies sur tes charges',
+        label: t.ai[0],
+        description: t.ai[1],
         completed: data.hasRunSuggestions,
         onAction: actions.goToSuggestions,
-        actionLabel: 'Lancer',
+        actionLabel: t.run,
       },
     ],
-    [data, actions]
+    [data, actions, t]
   );
 }

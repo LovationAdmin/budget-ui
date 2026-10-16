@@ -14,6 +14,32 @@ import { Loader2, Check, AlertCircle, CloudOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import type { SaveStatus } from '@/hooks/useSaveStatus';
+import { defineMessages, useT } from '@/i18n/runtime';
+
+const M = defineMessages({
+  fr: {
+    justNow: 'à l’instant',
+    secondsAgo: (n: number) => `il y a ${n}s`,
+    minutesAgo: (n: number) => `il y a ${n}min`,
+    hoursAgo: (n: number) => `il y a ${n}h`,
+    pending: 'Modifications en attente',
+    saving: 'Enregistrement…',
+    saved: (when: string) => `Enregistré${when ? ` ${when}` : ''}`,
+    failed: 'Échec de la sauvegarde',
+    retry: 'Réessayer',
+  },
+  en: {
+    justNow: 'just now',
+    secondsAgo: (n: number) => `${n}s ago`,
+    minutesAgo: (n: number) => `${n} min ago`,
+    hoursAgo: (n: number) => `${n}h ago`,
+    pending: 'Unsaved changes',
+    saving: 'Saving…',
+    saved: (when: string) => `Saved${when ? ` ${when}` : ''}`,
+    failed: 'Save failed',
+    retry: 'Try again',
+  },
+});
 
 interface SaveStatusIndicatorProps {
   status: SaveStatus;
@@ -23,15 +49,15 @@ interface SaveStatusIndicatorProps {
   className?: string;
 }
 
-function formatRelativeTime(date: Date | null): string {
+function formatRelativeTime(date: Date | null, t: typeof M.fr): string {
   if (!date) return '';
   const seconds = Math.floor((Date.now() - date.getTime()) / 1000);
-  if (seconds < 5) return 'à l’instant';
-  if (seconds < 60) return `il y a ${seconds}s`;
+  if (seconds < 5) return t.justNow;
+  if (seconds < 60) return t.secondsAgo(seconds);
   const minutes = Math.floor(seconds / 60);
-  if (minutes < 60) return `il y a ${minutes}min`;
+  if (minutes < 60) return t.minutesAgo(minutes);
   const hours = Math.floor(minutes / 60);
-  return `il y a ${hours}h`;
+  return t.hoursAgo(hours);
 }
 
 export function SaveStatusIndicator({
@@ -41,6 +67,7 @@ export function SaveStatusIndicator({
   onRetry,
   className,
 }: SaveStatusIndicatorProps) {
+  const t = useT(M);
   if (status === 'idle') return null;
 
   return (
@@ -62,14 +89,14 @@ export function SaveStatusIndicator({
       {status === 'pending' && (
         <>
           <CloudOff className="h-3.5 w-3.5" aria-hidden />
-          <span>Modifications en attente</span>
+          <span>{t.pending}</span>
         </>
       )}
 
       {status === 'saving' && (
         <>
           <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden />
-          <span>Enregistrement…</span>
+          <span>{t.saving}</span>
         </>
       )}
 
@@ -77,7 +104,7 @@ export function SaveStatusIndicator({
         <>
           <Check className="h-3.5 w-3.5" aria-hidden />
           <span>
-            Enregistré{lastSavedAt ? ` ${formatRelativeTime(lastSavedAt)}` : ''}
+            {t.saved(lastSavedAt ? formatRelativeTime(lastSavedAt, t) : '')}
           </span>
         </>
       )}
@@ -85,7 +112,7 @@ export function SaveStatusIndicator({
       {status === 'error' && (
         <>
           <AlertCircle className="h-3.5 w-3.5" aria-hidden />
-          <span>{errorMessage ?? 'Échec de la sauvegarde'}</span>
+          <span>{errorMessage ?? t.failed}</span>
           {onRetry && (
             <Button
               size="sm"
@@ -93,7 +120,7 @@ export function SaveStatusIndicator({
               onClick={onRetry}
               className="h-auto px-2 py-0.5 text-xs text-destructive hover:bg-destructive/20"
             >
-              Réessayer
+              {t.retry}
             </Button>
           )}
         </>

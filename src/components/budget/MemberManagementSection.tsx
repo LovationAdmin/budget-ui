@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, type ReactNode } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { MemberAvatar } from "./MemberAvatar";
@@ -16,6 +16,63 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { intlLocale } from '@/lib/budget/format';
+import { defineMessages, useT } from '@/i18n/runtime';
+
+const M = defineMessages({
+  fr: {
+    removedTitle: "Membre retiré",
+    removed: (name: string) => `${name} a été retiré.`,
+    error: "Erreur",
+    removeFailed: "Impossible de retirer le membre.",
+    cancelledTitle: "Invitation annulée",
+    cancelled: "L'invitation a été supprimée.",
+    cancelFailed: "Impossible d'annuler l'invitation.",
+    title: "Membres du Budget",
+    count: (n: number) => `${n} membre${n !== 1 ? 's' : ''}`,
+    refresh: "Actualiser la liste",
+    you: "(vous)",
+    member: "Membre",
+    pending: (n: number) => `Invitations en attente (${n})`,
+    unknownDate: "Date inconnue",
+    sentOn: (date: string) => `Envoyée le ${date}`,
+    waiting: "En attente",
+    removeTitle: "Retirer ce membre ?",
+    removeConfirm: (name: ReactNode): ReactNode => <>Êtes-vous sûr de vouloir retirer {name} ?</>,
+    cancel: "Annuler",
+    remove: "Retirer",
+    cancelTitle: "Annuler cette invitation ?",
+    cancelConfirm: (email: ReactNode): ReactNode => <>Cela révoquera le lien envoyé à {email}.</>,
+    no: "Non",
+    yesCancel: "Oui, annuler",
+  },
+  en: {
+    removedTitle: "Member removed",
+    removed: (name: string) => `${name} has been removed.`,
+    error: "Error",
+    removeFailed: "Couldn’t remove the member.",
+    cancelledTitle: "Invitation cancelled",
+    cancelled: "The invitation has been deleted.",
+    cancelFailed: "Couldn’t cancel the invitation.",
+    title: "Budget members",
+    count: (n: number) => (n === 1 ? '1 member' : `${n} members`),
+    refresh: "Refresh the list",
+    you: "(you)",
+    member: "Member",
+    pending: (n: number) => `Pending invitations (${n})`,
+    unknownDate: "Unknown date",
+    sentOn: (date: string) => `Sent on ${date}`,
+    waiting: "Pending",
+    removeTitle: "Remove this member?",
+    removeConfirm: (name: ReactNode): ReactNode => <>Are you sure you want to remove {name}?</>,
+    cancel: "Cancel",
+    remove: "Remove",
+    cancelTitle: "Cancel this invitation?",
+    cancelConfirm: (email: ReactNode): ReactNode => <>This will revoke the link sent to {email}.</>,
+    no: "No",
+    yesCancel: "Yes, cancel",
+  },
+});
 
 interface BudgetMember {
   id: string;
@@ -59,6 +116,7 @@ export default function MemberManagementSection({
   const [invitationToCancel, setInvitationToCancel] = useState<Invitation | null>(null);
   
   const { toast } = useToast();
+  const t = useT(M);
 
   const memberEmails = new Set(
     budget.members
@@ -102,9 +160,9 @@ export default function MemberManagementSection({
       await budgetAPI.removeMember(budget.id, memberToRemove.id);
       setMemberToRemove(null);
       onMemberChange();
-      toast({ title: "Membre retiré", description: `${memberToRemove.user.name} a été retiré.`, variant: "default" });
+      toast({ title: t.removedTitle, description: t.removed(memberToRemove.user.name), variant: "default" });
     } catch (error) {
-      toast({ title: "Erreur", description: "Impossible de retirer le membre.", variant: "destructive" });
+      toast({ title: t.error, description: t.removeFailed, variant: "destructive" });
     }
   };
 
@@ -114,9 +172,9 @@ export default function MemberManagementSection({
       await budgetAPI.cancelInvitation(budget.id, invitationToCancel.id);
       setInvitationToCancel(null);
       loadInvitations();
-      toast({ title: "Invitation annulée", description: "L'invitation a été supprimée.", variant: "default" });
+      toast({ title: t.cancelledTitle, description: t.cancelled, variant: "default" });
     } catch (error) {
-      toast({ title: "Erreur", description: "Impossible d'annuler l'invitation.", variant: "destructive" });
+      toast({ title: t.error, description: t.cancelFailed, variant: "destructive" });
     }
   };
 
@@ -130,13 +188,13 @@ export default function MemberManagementSection({
                 <Users className="h-5 w-5 text-primary" />
               </div>
               <div>
-                <CardTitle className="font-display">Membres du Budget</CardTitle>
+                <CardTitle className="font-display">{t.title}</CardTitle>
                 <p className="text-sm text-muted-foreground mt-1">
-                  {budget.members.filter(m => m.user).length} membre{budget.members.filter(m => m.user).length !== 1 ? 's' : ''}
+                  {t.count(budget.members.filter(m => m.user).length)}
                 </p>
               </div>
             </div>
-            <Button variant="ghost" size="icon" onClick={handleManualRefresh} title="Actualiser la liste">
+            <Button variant="ghost" size="icon" onClick={handleManualRefresh} title={t.refresh}>
                 <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
             </Button>
           </div>
@@ -151,7 +209,7 @@ export default function MemberManagementSection({
                     
                     <div className="flex-1 min-w-0">
                       <p className="font-medium text-foreground truncate">
-                        {user.name} {user.id === currentUserId && <span className="text-xs text-muted-foreground ml-2">(vous)</span>}
+                        {user.name} {user.id === currentUserId && <span className="text-xs text-muted-foreground ml-2">{t.you}</span>}
                       </p>
                       <p className="text-sm text-muted-foreground truncate">{user.email}</p>
                     </div>
@@ -159,7 +217,7 @@ export default function MemberManagementSection({
                     {/* ✅ MODIFICATION : Badge "Membre" seulement pour les non-propriétaires */}
                     <div className="flex items-center gap-2">
                       {member.role !== 'owner' && (
-                        <Badge variant="secondary" className="gap-1"><UserPlus className="h-3 w-3" />Membre</Badge>
+                        <Badge variant="secondary" className="gap-1"><UserPlus className="h-3 w-3" />{t.member}</Badge>
                       )}
                       {budget.is_owner && user.id !== currentUserId && member.role !== 'owner' && (
                         <Button variant="ghost" size="icon-sm" onClick={() => setMemberToRemove(member)} className="text-destructive hover:bg-destructive/10">
@@ -175,14 +233,14 @@ export default function MemberManagementSection({
           {budget.is_owner && validInvitations.length > 0 && (
             <div className="space-y-2 pt-4 border-t">
               <p className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                <Mail className="h-4 w-4" /> Invitations en attente ({validInvitations.length})
+                <Mail className="h-4 w-4" /> {t.pending(validInvitations.length)}
               </p>
               {validInvitations.map((invitation) => {
-                  let dateDisplay = "Date inconnue";
+                  let dateDisplay = t.unknownDate;
                   try {
                     const date = new Date(invitation.created_at);
                     if (!isNaN(date.getTime()) && date.getFullYear() > 2000) {
-                      dateDisplay = date.toLocaleDateString('fr-FR');
+                      dateDisplay = date.toLocaleDateString(intlLocale());
                     }
                   } catch (e) {}
 
@@ -193,9 +251,9 @@ export default function MemberManagementSection({
                         </div>
                         <div className="flex-1 min-w-0">
                             <p className="font-medium text-foreground truncate">{invitation.email}</p>
-                            <p className="text-xs text-muted-foreground">Envoyée le {dateDisplay}</p>
+                            <p className="text-xs text-muted-foreground">{t.sentOn(dateDisplay)}</p>
                         </div>
-                        <Badge variant="outline" className="text-warning">En attente</Badge>
+                        <Badge variant="outline" className="text-warning">{t.waiting}</Badge>
                         <Button variant="ghost" size="icon-sm" onClick={() => setInvitationToCancel(invitation)} className="text-muted-foreground hover:text-destructive">
                             <Trash2 className="h-4 w-4" />
                         </Button>
@@ -210,12 +268,12 @@ export default function MemberManagementSection({
       <AlertDialog open={!!memberToRemove} onOpenChange={() => setMemberToRemove(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Retirer ce membre ?</AlertDialogTitle>
-            <AlertDialogDescription>Êtes-vous sûr de vouloir retirer <strong>{memberToRemove?.user?.name}</strong> ?</AlertDialogDescription>
+            <AlertDialogTitle>{t.removeTitle}</AlertDialogTitle>
+            <AlertDialogDescription>{t.removeConfirm(<strong>{memberToRemove?.user?.name}</strong>)}</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Annuler</AlertDialogCancel>
-            <AlertDialogAction onClick={handleRemoveMember} className="bg-destructive hover:bg-destructive/90">Retirer</AlertDialogAction>
+            <AlertDialogCancel>{t.cancel}</AlertDialogCancel>
+            <AlertDialogAction onClick={handleRemoveMember} className="bg-destructive hover:bg-destructive/90">{t.remove}</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
@@ -223,12 +281,12 @@ export default function MemberManagementSection({
       <AlertDialog open={!!invitationToCancel} onOpenChange={() => setInvitationToCancel(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Annuler cette invitation ?</AlertDialogTitle>
-            <AlertDialogDescription>Cela révoquera le lien envoyé à <strong>{invitationToCancel?.email}</strong>.</AlertDialogDescription>
+            <AlertDialogTitle>{t.cancelTitle}</AlertDialogTitle>
+            <AlertDialogDescription>{t.cancelConfirm(<strong>{invitationToCancel?.email}</strong>)}</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Non</AlertDialogCancel>
-            <AlertDialogAction onClick={handleCancelInvitation}>Oui, annuler</AlertDialogAction>
+            <AlertDialogCancel>{t.no}</AlertDialogCancel>
+            <AlertDialogAction onClick={handleCancelInvitation}>{t.yesCancel}</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

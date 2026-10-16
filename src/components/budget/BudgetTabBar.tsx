@@ -4,6 +4,12 @@
 
 import type { NavItem } from './BudgetNavbar';
 import { cn } from '@/lib/utils';
+import { defineMessages, useT } from '@/i18n/runtime';
+
+const M = defineMessages({
+  fr: { sections: 'Sections du budget' },
+  en: { sections: 'Budget sections' },
+});
 
 interface BudgetTabBarProps {
   items: NavItem[];
@@ -12,9 +18,10 @@ interface BudgetTabBarProps {
 }
 
 export function BudgetTabBar({ items, currentSection, onSectionChange }: BudgetTabBarProps) {
+  const t = useT(M);
   return (
     <nav
-      aria-label="Sections du budget"
+      aria-label={t.sections}
       className="lg:hidden fixed inset-x-0 bottom-0 z-40 border-t border-border/70 bg-background/95 backdrop-blur-md pb-[env(safe-area-inset-bottom)]"
     >
       <div className="mx-auto grid max-w-lg" style={{ gridTemplateColumns: `repeat(${items.length}, minmax(0, 1fr))` }}>

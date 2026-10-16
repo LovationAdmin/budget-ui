@@ -17,21 +17,61 @@ import {
   monthNamesShort,
   yearOf,
 } from '@/lib/budget/months';
+import { intlLocale } from '@/lib/budget/format';
+import { defineMessages, pick, useT } from '@/i18n/runtime';
 import { Pill, type PillTone } from '../shared/primitives';
 
+const M = defineMessages({
+  fr: {
+    closed: 'Clôturé',
+    current: 'En cours',
+    forecast: 'Prévisionnel',
+    reopened: 'Rouvert',
+    prev: 'Mois précédent',
+    next: 'Mois suivant',
+    backToToday: 'Revenir à aujourd’hui',
+    add: 'Ajouter',
+    yearMonths: (year: number) => `Mois de ${year}`,
+    cell: (name: string, year: number, status: string, reste: string) => `${name} ${year}, ${status}, reste ${reste}`,
+    closedOn: (date: string) => `Mois clôturé${date ? ` le ${date}` : ''}.`,
+    frozen: 'Ses montants sont figés : modifier une charge ou un salaire ne le change plus.',
+    readOnly: 'Il est en lecture seule.',
+    reopen: 'Rouvrir',
+    forecastBanner: 'Mois prévisionnel, rempli automatiquement à partir de vos règles. Tout reste modifiable.',
+  },
+  en: {
+    closed: 'Closed',
+    current: 'Current',
+    forecast: 'Forecast',
+    reopened: 'Reopened',
+    prev: 'Previous month',
+    next: 'Next month',
+    backToToday: 'Back to today',
+    add: 'Add',
+    yearMonths: (year: number) => `Months of ${year}`,
+    cell: (name: string, year: number, status: string, reste: string) => `${name} ${year}, ${status}, ${reste} left`,
+    closedOn: (date: string) => (date ? `Month closed on ${date}.` : 'Month closed.'),
+    frozen: 'Its amounts are locked: changing a bill or someone’s pay no longer affects it.',
+    readOnly: 'It’s read-only.',
+    reopen: 'Reopen',
+    forecastBanner: 'Forecast month, filled in automatically from your rules. You can still change anything.',
+  },
+});
+
 export function monthStatus(closed: boolean, ym: YM, today: YM): { label: string; tone: PillTone } {
-  if (closed) return { label: 'Clôturé', tone: 'grey' };
+  const t = pick(M);
+  if (closed) return { label: t.closed, tone: 'grey' };
   const cmp = compareYM(ym, today);
-  if (cmp === 0) return { label: 'En cours', tone: 'green' };
-  if (cmp > 0) return { label: 'Prévisionnel', tone: 'blue' };
-  return { label: 'Rouvert', tone: 'amber' };
+  if (cmp === 0) return { label: t.current, tone: 'green' };
+  if (cmp > 0) return { label: t.forecast, tone: 'blue' };
+  return { label: t.reopened, tone: 'amber' };
 }
 
 function formatClosedAt(iso?: string): string {
   if (!iso) return '';
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return '';
-  return d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
+  return d.toLocaleDateString(intlLocale(), { day: 'numeric', month: 'long', year: 'numeric' });
 }
 
 interface MonthHeaderProps {
@@ -40,6 +80,7 @@ interface MonthHeaderProps {
 }
 
 export function MonthHeader({ ym, onChange }: MonthHeaderProps) {
+  const t = useT(M);
   const { engine, today, openSheet, fmt } = useBudget();
   const month = engine.month(ym);
   const status = monthStatus(month.closed, ym, today);
@@ -52,13 +93,13 @@ export function MonthHeader({ ym, onChange }: MonthHeaderProps) {
     <div className="flex flex-col gap-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center justify-between gap-2 sm:justify-start">
-          <Button variant="outline" size="icon" className="h-11 w-11 shrink-0" aria-label="Mois précédent" onClick={() => onChange(addMonths(ym, -1))}>
+          <Button variant="outline" size="icon" className="h-11 w-11 shrink-0" aria-label={t.prev} onClick={() => onChange(addMonths(ym, -1))}>
             <ChevronLeft className="h-5 w-5" />
           </Button>
           <h1 className="font-display text-2xl sm:text-3xl font-extrabold tracking-tight tabular-nums text-center sm:min-w-[260px]">
             {formatMonthTitle(ym)}
           </h1>
-          <Button variant="outline" size="icon" className="h-11 w-11 shrink-0" aria-label="Mois suivant" onClick={() => onChange(addMonths(ym, 1))}>
+          <Button variant="outline" size="icon" className="h-11 w-11 shrink-0" aria-label={t.next} onClick={() => onChange(addMonths(ym, 1))}>
             <ChevronRight className="h-5 w-5" />
           </Button>
           <Pill tone={status.tone} className="hidden sm:inline-flex">{status.label}</Pill>
@@ -67,19 +108,19 @@ export function MonthHeader({ ym, onChange }: MonthHeaderProps) {
           <Pill tone={status.tone} className="sm:hidden">{status.label}</Pill>
           {ym !== today && (
             <Button variant="outline" className="min-h-[44px]" onClick={() => onChange(today)}>
-              Revenir à aujourd’hui
+              {t.backToToday}
             </Button>
           )}
           <Button
             className="hidden lg:inline-flex min-h-[44px]"
             onClick={() => (month.closed ? openSheet({ kind: 'reopen', ym }) : openSheet({ kind: 'addMenu', ym }))}
           >
-            <Plus className="h-4 w-4" /> Ajouter
+            <Plus className="h-4 w-4" /> {t.add}
           </Button>
         </div>
       </div>
 
-      <div role="group" aria-label={`Mois de ${year}`} className="grid grid-cols-12 gap-0.5 sm:gap-1 rounded-2xl border border-border/70 bg-card p-1.5 shadow-soft">
+      <div role="group" aria-label={t.yearMonths(year)} className="grid grid-cols-12 gap-0.5 sm:gap-1 rounded-2xl border border-border/70 bg-card p-1.5 shadow-soft">
         {monthNames().map((name, i) => {
           const cell = makeYM(year, i);
           const selected = cell === ym;
@@ -87,7 +128,7 @@ export function MonthHeader({ ym, onChange }: MonthHeaderProps) {
           const closed = engine.isClosed(cell);
           const reste = restes[i];
           const h = Math.max(3, Math.round((Math.abs(reste) / maxAbs) * 26));
-          const label = `${name} ${year}, ${closed ? 'clôturé' : isToday ? 'en cours' : compareYM(cell, today) > 0 ? 'prévisionnel' : 'rouvert'}, reste ${fmt(reste)}`;
+          const label = t.cell(name, year, (closed ? t.closed : isToday ? t.current : compareYM(cell, today) > 0 ? t.forecast : t.reopened).toLowerCase(), fmt(reste));
           return (
             <button
               key={name}
@@ -126,21 +167,21 @@ export function MonthHeader({ ym, onChange }: MonthHeaderProps) {
           <div className="flex items-start gap-3">
             <Lock className="mt-0.5 h-5 w-5 shrink-0 text-stone-600" aria-hidden="true" />
             <p className="text-sm text-stone-800">
-              <strong>Mois clôturé{closedAt ? ` le ${closedAt}` : ''}.</strong>{' '}
+              <strong>{t.closedOn(closedAt)}</strong>{' '}
               {month.frozen
-                ? 'Ses montants sont figés : modifier une charge ou un salaire ne le change plus.'
-                : 'Il est en lecture seule.'}
+                ? t.frozen
+                : t.readOnly}
             </p>
           </div>
           <Button variant="outline" className="min-h-[44px] sm:ml-auto" onClick={() => openSheet({ kind: 'reopen', ym })}>
-            Rouvrir
+            {t.reopen}
           </Button>
         </div>
       )}
       {!month.closed && compareYM(ym, today) > 0 && (
         <div className="flex items-start gap-3 rounded-2xl border border-sky-100 bg-sky-50 p-3 sm:px-4">
           <Info className="mt-0.5 h-5 w-5 shrink-0 text-sky-700" aria-hidden="true" />
-          <p className="text-sm text-sky-950">Mois prévisionnel, rempli automatiquement à partir de vos règles. Tout reste modifiable.</p>
+          <p className="text-sm text-sky-950">{t.forecastBanner}</p>
         </div>
       )}
     </div>

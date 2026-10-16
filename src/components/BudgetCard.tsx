@@ -1,6 +1,35 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { budgetAPI } from '../services/api';
+import { intlLocale } from '@/lib/budget/format';
+import { defineMessages, useT } from '@/i18n/runtime';
+
+const M = defineMessages({
+  fr: {
+    confirmDelete: (name: string) => `Êtes-vous sûr de vouloir supprimer le budget "${name}" ?\n\nCette action est irréversible et supprimera toutes les données associées.`,
+    deleted: 'Budget supprimé avec succès',
+    deleteFailed: 'Erreur lors de la suppression du budget',
+    createdOn: (date: string) => `Créé le ${date}`,
+    owner: '👑 Propriétaire',
+    member: '👥 Membre',
+    members: (n: number) => `${n} membre(s)`,
+    open: 'Ouvrir',
+    simpleView: 'Vue simple',
+    delete: 'Supprimer le budget',
+  },
+  en: {
+    confirmDelete: (name: string) => `Are you sure you want to delete the budget “${name}”?\n\nThis can’t be undone and will delete all its data.`,
+    deleted: 'Budget deleted',
+    deleteFailed: 'Couldn’t delete the budget',
+    createdOn: (date: string) => `Created on ${date}`,
+    owner: '👑 Owner',
+    member: '👥 Member',
+    members: (n: number) => (n === 1 ? '1 member' : `${n} members`),
+    open: 'Open',
+    simpleView: 'Simple view',
+    delete: 'Delete the budget',
+  },
+});
 
 interface Member {
   id: string;
@@ -23,22 +52,23 @@ interface BudgetCardProps {
 
 export default function BudgetCard({ budget, onDeleted }: BudgetCardProps): JSX.Element {
   const [deleting, setDeleting] = useState(false);
+  const t = useT(M);
 
   const handleDelete = async () => {
-    if (!confirm(`Êtes-vous sûr de vouloir supprimer le budget "${budget.name}" ?\n\nCette action est irréversible et supprimera toutes les données associées.`)) {
+    if (!confirm(t.confirmDelete(budget.name))) {
       return;
     }
 
     setDeleting(true);
     try {
       await budgetAPI.delete(budget.id);
-      alert('Budget supprimé avec succès');
+      alert(t.deleted);
       if (onDeleted) {
         onDeleted();
       }
     } catch (error) {
       console.error('Error deleting budget:', error);
-      alert('Erreur lors de la suppression du budget');
+      alert(t.deleteFailed);
     } finally {
       setDeleting(false);
     }
@@ -50,17 +80,17 @@ export default function BudgetCard({ budget, onDeleted }: BudgetCardProps): JSX.
         <div>
           <h3 className="text-xl font-bold text-gray-900 mb-2">{budget.name}</h3>
           <p className="text-sm text-gray-600">
-            Créé le {new Date(budget.created_at).toLocaleDateString('fr-FR')}
+            {t.createdOn(new Date(budget.created_at).toLocaleDateString(intlLocale()))}
           </p>
         </div>
         <div className="flex items-center gap-2">
           {budget.is_owner ? (
             <span className="bg-primary-100 text-primary-700 px-3 py-1 rounded-full text-sm font-medium flex items-center gap-1">
-              👑 Propriétaire
+              {t.owner}
             </span>
           ) : (
             <span className="bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-sm font-medium flex items-center gap-1">
-              👥 Membre
+              {t.member}
             </span>
           )}
         </div>
@@ -69,7 +99,7 @@ export default function BudgetCard({ budget, onDeleted }: BudgetCardProps): JSX.
       {budget.members && budget.members.length > 0 && (
         <div className="mb-4">
           <p className="text-sm text-gray-600">
-            {budget.members.length} membre(s)
+            {t.members(budget.members.length)}
           </p>
         </div>
       )}
@@ -79,13 +109,13 @@ export default function BudgetCard({ budget, onDeleted }: BudgetCardProps): JSX.
           to={`/budget/${budget.id}/complete`}
           className="flex-1 bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-lg font-medium transition text-center"
         >
-          Ouvrir
+          {t.open}
         </Link>
         
         <Link
           to={`/budget/${budget.id}`}
           className="bg-gray-100 hover:bg-gray-200 text-gray-700 p-2 rounded-lg transition flex items-center justify-center"
-          title="Vue simple"
+          title={t.simpleView}
         >
           👁️
         </Link>
@@ -95,7 +125,7 @@ export default function BudgetCard({ budget, onDeleted }: BudgetCardProps): JSX.
             onClick={handleDelete}
             disabled={deleting}
             className="bg-red-50 hover:bg-red-100 text-red-600 p-2 rounded-lg transition flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
-            title="Supprimer le budget"
+            title={t.delete}
           >
             {deleting ? '⏳' : '🗑️'}
           </button>

@@ -27,3 +27,13 @@ export function setUiLocale(locale: Locale) {
     // Private mode: the preference lasts for the visit.
   }
 }
+
+/** Whether the visitor chose a language on this device (an English page, the language switch, their account). */
+export function hasSavedPreference(): boolean {
+  try {
+    const saved = localStorage.getItem(KEY);
+    return !!saved && saved in LOCALES;
+  } catch {
+    return false;
+  }
+}

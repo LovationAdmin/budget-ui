@@ -16,15 +16,86 @@ import { makeYM, monthNames, monthNamesShort, monthLetters, yearOf } from '@/lib
 import { moneySigned } from '@/lib/budget/format';
 import { Pill } from '@/components/budget/shared/primitives';
 import { monthStatus } from '@/components/budget/month/MonthHeader';
+import { defineMessages, useT } from '@/i18n/runtime';
 
 const SERIES = [
-  { key: 'charges', label: 'Charges', swatch: 'bg-orange-500' },
-  { key: 'savings', label: 'Épargne', swatch: 'bg-indigo-500' },
-  { key: 'reste', label: 'Reste', swatch: 'bg-emerald-500' },
+  { key: 'charges', swatch: 'bg-orange-500' },
+  { key: 'savings', swatch: 'bg-indigo-500' },
+  { key: 'reste', swatch: 'bg-emerald-500' },
 ] as const;
+
+type MonthFigures = { income: string; charges: string; savings: string; left: string; spent?: string };
+
+const M = defineMessages({
+  fr: {
+    series: { charges: 'Charges', savings: 'Épargne', reste: 'Reste' },
+    income: 'Entrées',
+    spentFromSavings: 'Dépensé avec l’épargne',
+    previousYear: 'Année précédente',
+    nextYear: 'Année suivante',
+    title: (year: number) => `Année ${year}`,
+    overview: 'Vue d’ensemble. Touchez un mois pour l’ouvrir.',
+    forecast: (year: number) => `Bilan prévisionnel ${year}`,
+    balance: (year: number) => `Bilan ${year}`,
+    netPositive: `mis de côté sur l’année, une fois payées les dépenses faites avec l’épargne.`,
+    netNegative: `sur l’épargne à la fin de l’année : les dépenses dépassent ce qui est mis de côté.`,
+    futureNote: ' Les mois à venir sont comptés tels que prévus.',
+    savingsTerm: (amount: string) => `Épargne ${amount}`,
+    leftTerm: (amount: string) => `reste cumulé ${amount}`,
+    spentTerm: (amount: string) => `dépensé ${amount}`,
+    deletedSpent: (amount: string) => `Non compté : ${amount} payés avec une cagnotte supprimée depuis (son solde n’est plus compté non plus).`,
+    endBalance: 'Épargne disponible fin décembre',
+    endSplit: (pots: string, general: string) => `cagnottes ${pots} · épargne générale ${general}`,
+    chartAria: 'Répartition mois par mois',
+    openMonth: (name: string, year: number, f: MonthFigures) =>
+      `Ouvrir ${name.toLowerCase()} ${year} : entrées ${f.income}, charges ${f.charges}, épargne ${f.savings}, reste ${f.left}${f.spent ? `, dépensé avec l’épargne ${f.spent}` : ''}`,
+    deficit: 'Déficit',
+    detailAria: (year: number) => `Détail de ${year}`,
+    month: 'Mois',
+    left: 'Reste',
+    spent: 'Dépensé',
+    general: 'Épargne générale',
+    state: 'État',
+    phoneLine: (income: string, charges: string) => `Entrées ${income} · charges ${charges}`,
+    phoneSpent: (amount: string) => ` · dépensé ${amount}`,
+  },
+  en: {
+    series: { charges: 'Bills', savings: 'Savings', reste: 'Left over' },
+    income: 'Income',
+    spentFromSavings: 'Spent from savings',
+    previousYear: 'Previous year',
+    nextYear: 'Next year',
+    title: (year: number) => `Year ${year}`,
+    overview: 'Overview. Tap a month to open it.',
+    forecast: (year: number) => `${year} forecast`,
+    balance: (year: number) => `${year} summary`,
+    netPositive: 'set aside over the year, once the expenses paid from savings are taken out.',
+    netNegative: 'from savings by the end of the year: spending is more than what’s set aside.',
+    futureNote: ' Months to come are counted as planned.',
+    savingsTerm: (amount: string) => `Savings ${amount}`,
+    leftTerm: (amount: string) => `total left over ${amount}`,
+    spentTerm: (amount: string) => `spent ${amount}`,
+    deletedSpent: (amount: string) => `Not counted: ${amount} paid from a savings pot deleted since (its balance isn’t counted either).`,
+    endBalance: 'Savings available at the end of December',
+    endSplit: (pots: string, general: string) => `savings pots ${pots} · general savings ${general}`,
+    chartAria: 'Month by month breakdown',
+    openMonth: (name: string, year: number, f: MonthFigures) =>
+      `Open ${name} ${year}: income ${f.income}, bills ${f.charges}, savings ${f.savings}, left over ${f.left}${f.spent ? `, spent from savings ${f.spent}` : ''}`,
+    deficit: 'Deficit',
+    detailAria: (year: number) => `${year} in detail`,
+    month: 'Month',
+    left: 'Left over',
+    spent: 'Spent',
+    general: 'General savings',
+    state: 'Status',
+    phoneLine: (income: string, charges: string) => `Income ${income} · bills ${charges}`,
+    phoneSpent: (amount: string) => ` · spent ${amount}`,
+  },
+});
 
 /** Hover / focus details of one month (values in text ink, identity on the swatch). */
 function MonthTooltip({ title, t, spent, fmt, align }: { title: string; t: MonthTotals; spent: number; fmt: (n: number) => string; align: 'left' | 'center' | 'right' }) {
+  const words = useT(M);
   return (
     <span
       aria-hidden="true"
@@ -37,18 +108,18 @@ function MonthTooltip({ title, t, spent, fmt, align }: { title: string; t: Month
     >
       <span className="mb-1.5 block text-xs font-bold text-foreground">{title}</span>
       <span className="flex items-center justify-between gap-2 text-xs tabular-nums text-muted-foreground">
-        <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-sm bg-emerald-700" />Entrées</span>
+        <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-sm bg-emerald-700" />{words.income}</span>
         <span className="font-semibold text-foreground">{fmt(t.entrees)}</span>
       </span>
       {SERIES.map((s) => (
         <span key={s.key} className="mt-1 flex items-center justify-between gap-2 text-xs tabular-nums text-muted-foreground">
-          <span className="flex items-center gap-1.5"><span className={cn('h-2 w-2 rounded-sm', s.key === 'reste' && t.reste < 0 ? 'bg-red-600' : s.swatch)} />{s.label}</span>
+          <span className="flex items-center gap-1.5"><span className={cn('h-2 w-2 rounded-sm', s.key === 'reste' && t.reste < 0 ? 'bg-red-600' : s.swatch)} />{words.series[s.key]}</span>
           <span className={cn('font-semibold', s.key === 'reste' && t.reste < 0 ? 'text-red-700' : 'text-foreground')}>{fmt(t[s.key])}</span>
         </span>
       ))}
       {spent > 0 && (
         <span className="mt-1 flex items-center justify-between gap-2 border-t border-border/60 pt-1 text-xs tabular-nums text-muted-foreground">
-          <span>Dépensé avec l’épargne</span>
+          <span>{words.spentFromSavings}</span>
           <span className="font-semibold text-foreground">−{fmt(spent)}</span>
         </span>
       )}
@@ -58,6 +129,7 @@ function MonthTooltip({ title, t, spent, fmt, align }: { title: string; t: Month
 
 export default function YearTab() {
   const { engine, today, fmt, budgetId, currencySymbol } = useBudget();
+  const t = useT(M);
   const [params, setParams] = useSearchParams();
   const thisYear = yearOf(today);
   const minYear = Math.min(yearOf(engine.firstMonth), thisYear);
@@ -84,21 +156,21 @@ export default function YearTab() {
   const H = 160;
 
   const kpis = [
-    { label: 'Entrées', value: fmt(sum.entrees), swatch: 'bg-emerald-700' },
-    { label: 'Charges', value: fmt(sum.charges), swatch: 'bg-orange-500' },
-    { label: 'Épargne', value: fmt(sum.savings), swatch: 'bg-indigo-500' },
-    { label: 'Dépensé avec l’épargne', value: sum.spent ? `−${fmt(sum.spent)}` : fmt(0), swatch: 'bg-rose-500' },
+    { label: t.income, value: fmt(sum.entrees), swatch: 'bg-emerald-700' },
+    { label: t.series.charges, value: fmt(sum.charges), swatch: 'bg-orange-500' },
+    { label: t.series.savings, value: fmt(sum.savings), swatch: 'bg-indigo-500' },
+    { label: t.spentFromSavings, value: sum.spent ? `−${fmt(sum.spent)}` : fmt(0), swatch: 'bg-rose-500' },
   ];
 
   return (
     <div className="flex flex-col gap-5 animate-in fade-in duration-200">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="icon" className="h-11 w-11" aria-label="Année précédente" disabled={year <= minYear} onClick={() => setYear(year - 1)}>
+          <Button variant="outline" size="icon" className="h-11 w-11" aria-label={t.previousYear} disabled={year <= minYear} onClick={() => setYear(year - 1)}>
             <ChevronLeft className="h-5 w-5" />
           </Button>
-          <h1 className="min-w-[150px] text-center font-display text-2xl sm:text-3xl font-extrabold tracking-tight tabular-nums">Année {year}</h1>
-          <Button variant="outline" size="icon" className="h-11 w-11" aria-label="Année suivante" disabled={year >= maxYear} onClick={() => setYear(year + 1)}>
+          <h1 className="min-w-[150px] text-center font-display text-2xl sm:text-3xl font-extrabold tracking-tight tabular-nums">{t.title(year)}</h1>
+          <Button variant="outline" size="icon" className="h-11 w-11" aria-label={t.nextYear} disabled={year >= maxYear} onClick={() => setYear(year + 1)}>
             <ChevronRight className="h-5 w-5" />
           </Button>
           {year !== thisYear && (
@@ -107,7 +179,7 @@ export default function YearTab() {
             </Button>
           )}
         </div>
-        <p className="text-sm text-muted-foreground">Vue d’ensemble. Touchez un mois pour l’ouvrir.</p>
+        <p className="text-sm text-muted-foreground">{t.overview}</p>
       </div>
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
@@ -124,33 +196,33 @@ export default function YearTab() {
 
       <section aria-labelledby="year-net-title" className={cn('grid gap-4 rounded-2xl border p-5 shadow-soft sm:grid-cols-[1fr_auto] sm:items-end sm:p-6', sum.net < 0 ? 'border-red-200 bg-red-50/70' : 'border-emerald-200 bg-emerald-50/70')}>
         <div className="min-w-0">
-          <h2 id="year-net-title" className="text-xs font-bold uppercase tracking-wider text-muted-foreground">{hasFuture ? `Bilan prévisionnel ${year}` : `Bilan ${year}`}</h2>
+          <h2 id="year-net-title" className="text-xs font-bold uppercase tracking-wider text-muted-foreground">{hasFuture ? t.forecast(year) : t.balance(year)}</h2>
           <p className={cn('mt-1 font-display text-3xl sm:text-4xl font-extrabold tabular-nums', sum.net < 0 ? 'text-red-700' : 'text-emerald-700')}>{moneySigned(sum.net, currencySymbol)}</p>
           <p className="mt-1 text-sm text-muted-foreground">
             {sum.net >= 0
-              ? `mis de côté sur l’année, une fois payées les dépenses faites avec l’épargne.`
-              : `sur l’épargne à la fin de l’année : les dépenses dépassent ce qui est mis de côté.`}
-            {hasFuture && ' Les mois à venir sont comptés tels que prévus.'}
+              ? t.netPositive
+              : t.netNegative}
+            {hasFuture && t.futureNote}
           </p>
           <p className="mt-2 text-sm tabular-nums text-foreground">
-            Épargne {fmt(sum.savings)} <span className="text-muted-foreground">+</span> reste cumulé {moneySigned(sum.reste, currencySymbol)} <span className="text-muted-foreground">−</span> dépensé {fmt(sum.spent)}
+            {t.savingsTerm(fmt(sum.savings))} <span className="text-muted-foreground">+</span> {t.leftTerm(moneySigned(sum.reste, currencySymbol))} <span className="text-muted-foreground">−</span> {t.spentTerm(fmt(sum.spent))}
           </p>
           {sum.deletedSpent > 0 && (
             <p className="mt-1 text-xs text-muted-foreground">
-              Non compté : {fmt(sum.deletedSpent)} payés avec une cagnotte supprimée depuis (son solde n’est plus compté non plus).
+              {t.deletedSpent(fmt(sum.deletedSpent))}
             </p>
           )}
         </div>
         {sum.endBalance !== sum.net && (
         <div className="rounded-xl bg-card/80 px-4 py-3 sm:text-right">
-          <p className="text-xs font-bold text-muted-foreground">Épargne disponible fin décembre</p>
+          <p className="text-xs font-bold text-muted-foreground">{t.endBalance}</p>
           <p className={cn('font-display text-xl font-extrabold tabular-nums', sum.endBalance < 0 ? 'text-red-700' : 'text-foreground')}>{fmt(sum.endBalance)}</p>
-          <p className="text-xs tabular-nums text-muted-foreground">cagnottes {fmt(sum.endPots)} · épargne générale {fmt(sum.endGeneral)}</p>
+          <p className="text-xs tabular-nums text-muted-foreground">{t.endSplit(fmt(sum.endPots), fmt(sum.endGeneral))}</p>
         </div>
         )}
       </section>
 
-      <section aria-label="Répartition mois par mois" className="rounded-2xl border border-border/70 bg-card p-4 shadow-soft sm:p-5">
+      <section aria-label={t.chartAria} className="rounded-2xl border border-border/70 bg-card p-4 shadow-soft sm:p-5">
         <div className="grid grid-cols-12 items-end gap-0.5 sm:gap-1.5" style={{ height: H + 30 }}>
           {rows.map((r) => {
             // Bottom → top; the top segment carries the 4px rounded data-end.
@@ -164,7 +236,13 @@ export default function YearTab() {
               <Link
                 key={r.ym}
                 to={monthUrl(r.ym)}
-                aria-label={`Ouvrir ${r.name.toLowerCase()} ${year} : entrées ${fmt(r.t.entrees)}, charges ${fmt(r.t.charges)}, épargne ${fmt(r.t.savings)}, reste ${fmt(r.t.reste)}${r.spent ? `, dépensé avec l’épargne ${fmt(r.spent)}` : ''}`}
+                aria-label={t.openMonth(r.name, year, {
+                  income: fmt(r.t.entrees),
+                  charges: fmt(r.t.charges),
+                  savings: fmt(r.t.savings),
+                  left: fmt(r.t.reste),
+                  spent: r.spent ? fmt(r.spent) : undefined,
+                })}
                 className={cn(
                   'group relative flex h-full min-w-0 flex-col items-center justify-end gap-1 rounded-lg pb-0.5 transition-colors hover:bg-muted/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
                   isToday && 'bg-sky-50/70',
@@ -186,25 +264,25 @@ export default function YearTab() {
         </div>
         <div aria-hidden="true" className="mt-3 flex flex-wrap gap-4 text-xs text-muted-foreground">
           {SERIES.map((s) => (
-            <span key={s.key} className="inline-flex items-center gap-1.5"><span className={cn('h-2.5 w-2.5 rounded-sm', s.swatch)} />{s.label}</span>
+            <span key={s.key} className="inline-flex items-center gap-1.5"><span className={cn('h-2.5 w-2.5 rounded-sm', s.swatch)} />{t.series[s.key]}</span>
           ))}
-          <span className="inline-flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-sm bg-red-600" />Déficit</span>
+          <span className="inline-flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-sm bg-red-600" />{t.deficit}</span>
         </div>
       </section>
 
       {/* Desktop: table */}
-      <section aria-label={`Détail de ${year}`} className="hidden overflow-x-auto rounded-2xl border border-border/70 bg-card p-2 shadow-soft md:block">
+      <section aria-label={t.detailAria(year)} className="hidden overflow-x-auto rounded-2xl border border-border/70 bg-card p-2 shadow-soft md:block">
         <table className="w-full text-sm tabular-nums">
           <thead>
             <tr className="text-left text-xs uppercase tracking-wider text-muted-foreground">
-              <th scope="col" className="px-3 py-2 font-bold">Mois</th>
-              <th scope="col" className="px-3 py-2 text-right font-bold">Entrées</th>
-              <th scope="col" className="px-3 py-2 text-right font-bold">Charges</th>
-              <th scope="col" className="px-3 py-2 text-right font-bold">Épargne</th>
-              <th scope="col" className="px-3 py-2 text-right font-bold">Reste</th>
-              <th scope="col" className="px-3 py-2 text-right font-bold">Dépensé</th>
-              <th scope="col" className="px-3 py-2 text-right font-bold">Épargne générale</th>
-              <th scope="col" className="px-3 py-2 font-bold">État</th>
+              <th scope="col" className="px-3 py-2 font-bold">{t.month}</th>
+              <th scope="col" className="px-3 py-2 text-right font-bold">{t.income}</th>
+              <th scope="col" className="px-3 py-2 text-right font-bold">{t.series.charges}</th>
+              <th scope="col" className="px-3 py-2 text-right font-bold">{t.series.savings}</th>
+              <th scope="col" className="px-3 py-2 text-right font-bold">{t.left}</th>
+              <th scope="col" className="px-3 py-2 text-right font-bold">{t.spent}</th>
+              <th scope="col" className="px-3 py-2 text-right font-bold">{t.general}</th>
+              <th scope="col" className="px-3 py-2 font-bold">{t.state}</th>
             </tr>
           </thead>
           <tbody>
@@ -237,7 +315,7 @@ export default function YearTab() {
       </section>
 
       {/* Phone: list */}
-      <section aria-label={`Détail de ${year}`} className="flex flex-col gap-0.5 rounded-2xl border border-border/70 bg-card p-1.5 shadow-soft md:hidden">
+      <section aria-label={t.detailAria(year)} className="flex flex-col gap-0.5 rounded-2xl border border-border/70 bg-card p-1.5 shadow-soft md:hidden">
         {rows.map((r) => {
           const st = monthStatus(r.closed, r.ym, today);
           return (
@@ -249,8 +327,8 @@ export default function YearTab() {
               <span className="flex min-w-0 flex-1 flex-col">
                 <span className="font-bold">{r.name}</span>
                 <span className="text-xs tabular-nums text-muted-foreground">
-                  Entrées {fmt(r.t.entrees)} · charges {fmt(r.t.charges)}
-                  {r.spent > 0 && <> · dépensé {fmt(r.spent)}</>}
+                  {t.phoneLine(fmt(r.t.entrees), fmt(r.t.charges))}
+                  {r.spent > 0 && t.phoneSpent(fmt(r.spent))}
                 </span>
               </span>
               <span className="flex flex-col items-end gap-1">

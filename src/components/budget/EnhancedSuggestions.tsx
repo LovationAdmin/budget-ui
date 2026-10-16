@@ -26,6 +26,113 @@ import { budgetAPI, ChargeSuggestion, Competitor, SuggestionsProgress, Suggestio
 import { Charge } from '@/utils/importConverter';
 import { useNotifications } from '@/contexts/NotificationContext';
 import { Globe, Phone, Mail } from 'lucide-react';
+import { intlLocale } from '@/lib/budget/format';
+import { defineMessages, screenLocale, useT } from '@/i18n/runtime';
+
+const M = defineMessages({
+  fr: {
+    categories: {
+      'ENERGY': '⚡ Énergie',
+      'INTERNET': '🌐 Internet',
+      'MOBILE': '📱 Mobile',
+      'INSURANCE': '🛡️ Assurance',
+      'INSURANCE_AUTO': '🚗 Assurance Auto',
+      'INSURANCE_HOME': '🏠 Assurance Habitation',
+      'INSURANCE_HEALTH': '⚕️ Mutuelle Santé',
+      'LOAN': '💸 Prêt / Crédit',
+      'BANK': '🏛️ Banque',
+      'TRANSPORT': '🚌 Transport',
+      'LEISURE': '⚽ Loisirs',
+      'LEISURE_SPORT': '💪 Sport / Fitness',
+      'LEISURE_STREAMING': '🎬 Streaming',
+      'SUBSCRIPTION': '🔄 Abonnement',
+      'HOUSING': '🏠 Logement'
+    } as Record<string, string>,
+    searching: (people: number, location: string) => `Recherche d'économies pour ${people} personne${people > 1 ? 's' : ''} en ${location}…`,
+    progress: (done: number, total: number) => `${done} / ${total} charge${total > 1 ? 's' : ''} analysée${done > 1 ? 's' : ''}`,
+    preparing: 'Préparation de l’analyse',
+    slow: ' · l’analyse prend plus de temps que prévu',
+    restart: "Relancer l'analyse",
+    failedTitle: "L'analyse des économies n'a pas abouti",
+    noneYet: 'Aucune économie trouvée pour le moment',
+    unavailable: 'Le service IA est momentanément indisponible. Vos charges ne sont pas en cause.',
+    failedCount: (n: number) => `${n} charge${n > 1 ? 's n’ont' : ' n’a'} pas pu être analysée${n > 1 ? 's' : ''}.`,
+    retry: 'Réessayer',
+    greatOffers: "🎉 Vous avez déjà d'excellentes offres !",
+    noCheaper: "Aucune offre équivalente n'est au moins 5 % moins chère que les vôtres.",
+    opportunities: "💡 Opportunités d'économies",
+    totalPossible: (amount: string) => `Économie totale possible : ${amount}/an`,
+    analyzing: (done: number, total: number) => ` · analyse ${done}/${total}…`,
+    householdNote: (people: number) => `Économies calculées pour votre foyer de ${people} personne${people > 1 ? 's' : ''}, sur un an.`,
+    failedRetry: (n: number) => `${n} charge${n > 1 ? 's n’ont' : ' n’a'} pas pu être analysée${n > 1 ? 's' : ''} — relancez l'analyse pour réessayer.`,
+    progressLabel: "Progression de l'analyse",
+    perPerson: 'Prix/personne',
+    upTo: (amount: string) => `Jusqu'à -${amount}/an`,
+    percentSaving: (pct: string) => `-${pct}% d'économie`,
+    perPersonNote: (people: number) => `Prix analysé par personne. L'économie affichée est pour l'ensemble du foyer (${people} personnes).`,
+    best: '🏆 Meilleure offre',
+    alternative: (rank: number) => `${rank === 2 ? '🥈' : '🥉'} Alternative #${rank}`,
+    yearlySaving: (amount: string) => `-${amount}/an`,
+    price: 'Prix :',
+    perMonth: (amount: string) => `${amount}/mois`,
+    pros: 'Avantages',
+    cons: 'Inconvénients',
+    website: 'Voir le site',
+    call: 'Appeler',
+    email: 'Email',
+  },
+  en: {
+    categories: {
+      'ENERGY': '⚡ Energy',
+      'INTERNET': '🌐 Internet',
+      'MOBILE': '📱 Mobile',
+      'INSURANCE': '🛡️ Insurance',
+      'INSURANCE_AUTO': '🚗 Car insurance',
+      'INSURANCE_HOME': '🏠 Home insurance',
+      'INSURANCE_HEALTH': '⚕️ Health insurance',
+      'LOAN': '💸 Loan / credit',
+      'BANK': '🏛️ Bank',
+      'TRANSPORT': '🚌 Transport',
+      'LEISURE': '⚽ Leisure',
+      'LEISURE_SPORT': '💪 Sport / fitness',
+      'LEISURE_STREAMING': '🎬 Streaming',
+      'SUBSCRIPTION': '🔄 Subscription',
+      'HOUSING': '🏠 Housing'
+    },
+    searching: (people: number, location: string) => `Looking for savings for ${people} ${people === 1 ? 'person' : 'people'} in ${location}…`,
+    progress: (done: number, total: number) => `${done} / ${total} bill${total !== 1 ? 's' : ''} analyzed`,
+    preparing: 'Getting the analysis ready',
+    slow: ' · the analysis is taking longer than expected',
+    restart: 'Run the analysis again',
+    failedTitle: 'The savings analysis didn’t go through',
+    noneYet: 'No savings found yet',
+    unavailable: 'The AI service is temporarily unavailable. Your bills aren’t the problem.',
+    failedCount: (n: number) => `${n} bill${n !== 1 ? 's' : ''} couldn’t be analyzed.`,
+    retry: 'Try again',
+    greatOffers: '🎉 You already have great deals!',
+    noCheaper: 'No equivalent offer is at least 5% cheaper than yours.',
+    opportunities: '💡 Savings opportunities',
+    totalPossible: (amount: string) => `Total possible savings: ${amount}/year`,
+    analyzing: (done: number, total: number) => ` · analyzing ${done}/${total}…`,
+    householdNote: (people: number) => `Savings worked out for your household of ${people} ${people === 1 ? 'person' : 'people'}, over a year.`,
+    failedRetry: (n: number) => `${n} bill${n !== 1 ? 's' : ''} couldn’t be analyzed — run the analysis again to retry.`,
+    progressLabel: 'Analysis progress',
+    perPerson: 'Price/person',
+    upTo: (amount: string) => `Save up to ${amount}/year`,
+    percentSaving: (pct: string) => `${pct}% cheaper`,
+    perPersonNote: (people: number) => `Price analyzed per person. The savings shown are for the whole household (${people} people).`,
+    best: '🏆 Best offer',
+    alternative: (rank: number) => `${rank === 2 ? '🥈' : '🥉'} Alternative #${rank}`,
+    yearlySaving: (amount: string) => `-${amount}/year`,
+    price: 'Price:',
+    perMonth: (amount: string) => `${amount}/month`,
+    pros: 'Pros',
+    cons: 'Cons',
+    website: 'Visit the website',
+    call: 'Call',
+    email: 'Email',
+  },
+});
 
 // ============================================================================
 // TYPES
@@ -100,27 +207,15 @@ function getCurrencySymbol(code?: string): string {
 function formatCurrency(amount: number, currencyCode: string, symbol: string): string {
   const isHighDenom = HIGH_DENOMINATION.includes(currencyCode);
   const digits = isHighDenom ? 0 : 2;
-  return `${amount.toLocaleString('fr-FR', { minimumFractionDigits: digits, maximumFractionDigits: digits })}${symbol}`;
+  if (screenLocale() === 'fr') {
+    return `${amount.toLocaleString('fr-FR', { minimumFractionDigits: digits, maximumFractionDigits: digits })}${symbol}`;
+  }
+  // English: "$12.50", "12.50 CHF".
+  const n = amount.toLocaleString(intlLocale(), { minimumFractionDigits: digits, maximumFractionDigits: digits });
+  return [...symbol].length === 1 ? `${symbol}${n}` : `${n} ${symbol}`;
 }
 
-function getCategoryLabel(cat: string): string {
-  const labels: Record<string, string> = {
-    'ENERGY': '⚡ Énergie',
-    'INTERNET': '🌐 Internet',
-    'MOBILE': '📱 Mobile',
-    'INSURANCE': '🛡️ Assurance',
-    'INSURANCE_AUTO': '🚗 Assurance Auto',
-    'INSURANCE_HOME': '🏠 Assurance Habitation',
-    'INSURANCE_HEALTH': '⚕️ Mutuelle Santé',
-    'LOAN': '💸 Prêt / Crédit',
-    'BANK': '🏛️ Banque',
-    'TRANSPORT': '🚌 Transport',
-    'LEISURE': '⚽ Loisirs',
-    'LEISURE_SPORT': '💪 Sport / Fitness',
-    'LEISURE_STREAMING': '🎬 Streaming',
-    'SUBSCRIPTION': '🔄 Abonnement',
-    'HOUSING': '🏠 Logement'
-  };
+function getCategoryLabel(cat: string, labels: Record<string, string>): string {
   return labels[cat.toUpperCase()] || cat;
 }
 
@@ -154,6 +249,7 @@ export default function EnhancedSuggestions({
   location = 'FR',
   currency = 'EUR'
 }: EnhancedSuggestionsProps) {
+  const t = useT(M);
   const relevantCharges = charges.filter(c => c.category && isRelevantCategory(c.category) && !c.ignoreSuggestions);
   const chargesSignature = JSON.stringify(relevantCharges.map(c => ({
     id: c.id,
@@ -304,18 +400,18 @@ export default function EnhancedSuggestions({
               <Loader2 className="h-6 w-6 shrink-0 animate-spin text-blue-600" aria-hidden="true" />
               <div className="min-w-0" aria-live="polite">
                 <p className="font-medium text-sm">
-                  Recherche d'économies pour {householdSize} personne{householdSize > 1 ? 's' : ''} en {location}…
+                  {t.searching(householdSize, location)}
                 </p>
                 <p className="text-xs text-muted-foreground tabular-nums">
-                  {progress.total > 0 ? `${progress.done} / ${progress.total} charge${progress.total > 1 ? 's' : ''} analysée${progress.done > 1 ? 's' : ''}` : 'Préparation de l’analyse'}
-                  {phase === 'slow' && ' · l’analyse prend plus de temps que prévu'}
+                  {progress.total > 0 ? t.progress(progress.done, progress.total) : t.preparing}
+                  {phase === 'slow' && t.slow}
                 </p>
               </div>
             </div>
             <ProgressBar pct={pct} />
             {phase === 'slow' && (
               <Button variant="outline" size="sm" onClick={reanalyze}>
-                <RefreshCw className="h-4 w-4 mr-1" aria-hidden="true" /> Relancer l'analyse
+                <RefreshCw className="h-4 w-4 mr-1" aria-hidden="true" /> {t.restart}
               </Button>
             )}
           </CardContent>
@@ -334,16 +430,16 @@ export default function EnhancedSuggestions({
                   ? <XCircle className="h-6 w-6 shrink-0 text-red-600" aria-hidden="true" />
                   : <AlertTriangle className="h-6 w-6 shrink-0 text-amber-600" aria-hidden="true" />}
                 <div>
-                  <p className="font-medium">{all ? "L'analyse des économies n'a pas abouti" : 'Aucune économie trouvée pour le moment'}</p>
+                  <p className="font-medium">{all ? t.failedTitle : t.noneYet}</p>
                   <p className="text-sm text-muted-foreground">
                     {all
-                      ? 'Le service IA est momentanément indisponible. Vos charges ne sont pas en cause.'
-                      : `${progress.failed} charge${progress.failed > 1 ? 's n’ont' : ' n’a'} pas pu être analysée${progress.failed > 1 ? 's' : ''}.`}
+                      ? t.unavailable
+                      : t.failedCount(progress.failed)}
                   </p>
                 </div>
               </div>
               <Button variant="outline" size="sm" onClick={reanalyze} className="self-start sm:self-auto">
-                <RefreshCw className="h-4 w-4 mr-1" aria-hidden="true" /> Réessayer
+                <RefreshCw className="h-4 w-4 mr-1" aria-hidden="true" /> {t.retry}
               </Button>
             </div>
           </CardContent>
@@ -357,9 +453,9 @@ export default function EnhancedSuggestions({
           <div className="flex items-center gap-3 text-green-700">
             <CheckCircle2 className="h-6 w-6 shrink-0" aria-hidden="true" />
             <div>
-              <p className="font-medium">🎉 Vous avez déjà d'excellentes offres !</p>
+              <p className="font-medium">{t.greatOffers}</p>
               <p className="text-sm text-green-600">
-                Aucune offre équivalente n'est au moins 5 % moins chère que les vôtres.
+                {t.noCheaper}
               </p>
             </div>
           </div>
@@ -385,14 +481,14 @@ export default function EnhancedSuggestions({
               <Sparkles className="h-6 w-6 shrink-0 text-green-600" aria-hidden="true" />
               <span className="flex-1 min-w-0">
                 <span className="flex items-center gap-2">
-                  <span className="text-2xl font-semibold leading-none tracking-tight font-display text-green-900">💡 Opportunités d'économies</span>
+                  <span className="text-2xl font-semibold leading-none tracking-tight font-display text-green-900">{t.opportunities}</span>
                   <Badge variant="outline" className="bg-green-100 text-green-800 border-green-300">
                     {suggestions.length}
                   </Badge>
                 </span>
                 <span className="block text-sm text-green-700 mt-1 tabular-nums" aria-live="polite">
-                  {`Économie totale possible : ${formatCurrency(totalSavings, currency, currencySymbol)}/an`}
-                  {busy && progress.total > 0 && ` · analyse ${progress.done}/${progress.total}…`}
+                  {t.totalPossible(formatCurrency(totalSavings, currency, currencySymbol))}
+                  {busy && progress.total > 0 && t.analyzing(progress.done, progress.total)}
                 </span>
               </span>
               {isExpanded ? <ChevronUp className="h-5 w-5 shrink-0" aria-hidden="true" /> : <ChevronDown className="h-5 w-5 shrink-0" aria-hidden="true" />}
@@ -403,8 +499,8 @@ export default function EnhancedSuggestions({
               size="icon"
               onClick={reanalyze}
               disabled={busy}
-              aria-label="Relancer l'analyse"
-              title="Relancer l'analyse"
+              aria-label={t.restart}
+              title={t.restart}
             >
               <RefreshCw className={`h-4 w-4 ${busy ? 'animate-spin' : ''}`} aria-hidden="true" />
             </Button>
@@ -417,11 +513,11 @@ export default function EnhancedSuggestions({
         <div id="savings-list" className="space-y-2">
           <p className="flex items-center gap-1 px-1 text-xs text-muted-foreground">
             <Users className="h-3 w-3" aria-hidden="true" />
-            Économies calculées pour votre foyer de {householdSize} personne{householdSize > 1 ? 's' : ''}, sur un an.
+            {t.householdNote(householdSize)}
           </p>
           {progress.failed > 0 && !busy && (
             <p className="px-1 text-xs text-amber-700">
-              {progress.failed} charge{progress.failed > 1 ? 's n’ont' : ' n’a'} pas pu être analysée{progress.failed > 1 ? 's' : ''} — relancez l'analyse pour réessayer.
+              {t.failedRetry(progress.failed)}
             </p>
           )}
           {suggestions.map((item) => {
@@ -444,11 +540,12 @@ export default function EnhancedSuggestions({
 }
 
 function ProgressBar({ pct }: { pct: number }) {
+  const t = useT(M);
   return (
     <div
       className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-blue-100"
       role="progressbar"
-      aria-label="Progression de l'analyse"
+      aria-label={t.progressLabel}
       aria-valuemin={0}
       aria-valuemax={100}
       aria-valuenow={pct}
@@ -478,6 +575,7 @@ function SuggestionCard({
   currencySymbol: string;
   originalAmount: number;
 }) {
+  const t = useT(M);
   const { charge_label, suggestion } = chargeSuggestion;
   const competitors = suggestion.competitors.slice(0, 3);
 
@@ -506,10 +604,10 @@ function SuggestionCard({
               <span className="text-lg font-semibold leading-tight tracking-tight font-display truncate">{charge_label}</span>
             </span>
             <span className="flex items-center gap-2 flex-wrap text-sm text-muted-foreground">
-              <span>{getCategoryLabel(suggestion.category)}</span>
+              <span>{getCategoryLabel(suggestion.category, t.categories)}</span>
               {isIndividual && householdSize > 1 && (
                 <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-200">
-                  <Users className="h-3 w-3 mr-1" aria-hidden="true" />Prix/personne
+                  <Users className="h-3 w-3 mr-1" aria-hidden="true" />{t.perPerson}
                 </Badge>
               )}
             </span>
@@ -517,11 +615,11 @@ function SuggestionCard({
 
           <span className="flex flex-col items-end gap-1">
             <Badge className="bg-green-100 text-green-800 border-green-300 whitespace-nowrap tabular-nums">
-                Jusqu'à -{formatCurrency(bestSavings, currency, currencySymbol)}/an
+                {t.upTo(formatCurrency(bestSavings, currency, currencySymbol))}
             </Badge>
             {savingsPercentage > 0 && (
                 <span className="text-xs font-bold text-green-600 tabular-nums">
-                    -{savingsPercentage.toFixed(0)}% d'économie
+                    {t.percentSaving(savingsPercentage.toFixed(0))}
                 </span>
             )}
           </span>
@@ -533,7 +631,7 @@ function SuggestionCard({
             {isIndividual && householdSize > 1 && (
             <div className="flex items-start gap-2 p-3 bg-blue-50 rounded-lg border border-blue-200 text-xs text-blue-700">
                 <Info className="h-4 w-4 flex-shrink-0 mt-0.5" aria-hidden="true" />
-                <span>Prix analysé par personne. L'économie affichée est pour l'ensemble du foyer ({householdSize} personnes).</span>
+                <span>{t.perPersonNote(householdSize)}</span>
             </div>
             )}
 
@@ -557,10 +655,11 @@ function openExternal(url: string) {
 }
 
 function CompetitorCard({ competitor, rank, currency, currencySymbol }: { competitor: Competitor; rank: number; currency: string; currencySymbol: string }) {
+  const t = useT(M);
   const getRankBadge = () => {
-    if (rank === 1) return <Badge className="bg-green-600 text-white border-0">🏆 Meilleure offre</Badge>;
-    if (rank === 2) return <Badge variant="outline" className="border-orange-400 text-orange-700 bg-orange-50">🥈 Alternative #2</Badge>;
-    return <Badge variant="outline" className="border-gray-400 text-gray-700 bg-gray-50">🥉 Alternative #3</Badge>;
+    if (rank === 1) return <Badge className="bg-green-600 text-white border-0">{t.best}</Badge>;
+    if (rank === 2) return <Badge variant="outline" className="border-orange-400 text-orange-700 bg-orange-50">{t.alternative(2)}</Badge>;
+    return <Badge variant="outline" className="border-gray-400 text-gray-700 bg-gray-50">{t.alternative(3)}</Badge>;
   };
 
   const getCardStyle = () => {
@@ -576,7 +675,7 @@ function CompetitorCard({ competitor, rank, currency, currencySymbol }: { compet
       <div className="flex items-center justify-between mb-3">
         {getRankBadge()}
         <span className="text-lg font-bold text-green-700">
-            -{formatCurrency(competitor.potential_savings, currency, currencySymbol)}/an
+            {t.yearlySaving(formatCurrency(competitor.potential_savings, currency, currencySymbol))}
         </span>
       </div>
 
@@ -584,9 +683,9 @@ function CompetitorCard({ competitor, rank, currency, currencySymbol }: { compet
       <p className="text-sm text-gray-600 mb-3">{competitor.best_offer}</p>
 
       <div className="flex items-center gap-2 mb-4">
-        <span className="text-sm text-muted-foreground">Prix :</span>
+        <span className="text-sm text-muted-foreground">{t.price}</span>
         <span className="font-semibold text-primary">
-            {formatCurrency(competitor.typical_price, currency, currencySymbol)}/mois
+            {t.perMonth(formatCurrency(competitor.typical_price, currency, currencySymbol))}
         </span>
       </div>
 
@@ -595,7 +694,7 @@ function CompetitorCard({ competitor, rank, currency, currencySymbol }: { compet
           {competitor.pros?.length > 0 && (
             <div>
               <p className="text-xs font-semibold text-green-700 flex items-center gap-1 mb-1">
-                <CheckCircle2 className="h-3 w-3" aria-hidden="true" />Avantages
+                <CheckCircle2 className="h-3 w-3" aria-hidden="true" />{t.pros}
               </p>
               <ul className="space-y-0.5">
                 {competitor.pros.map((pro, i) => (
@@ -607,7 +706,7 @@ function CompetitorCard({ competitor, rank, currency, currencySymbol }: { compet
           {competitor.cons?.length > 0 && (
             <div>
               <p className="text-xs font-semibold text-red-700 flex items-center gap-1 mb-1">
-                <XCircle className="h-3 w-3" aria-hidden="true" />Inconvénients
+                <XCircle className="h-3 w-3" aria-hidden="true" />{t.cons}
               </p>
               <ul className="space-y-0.5">
                 {competitor.cons.map((con, i) => (
@@ -627,7 +726,7 @@ function CompetitorCard({ competitor, rank, currency, currencySymbol }: { compet
             onClick={() => openExternal(websiteUrl)}
           >
             <Globe className="h-4 w-4 sm:h-3 sm:w-3 mr-2" aria-hidden="true" />
-            Voir le site
+            {t.website}
           </Button>
         )}
 
@@ -643,7 +742,7 @@ function CompetitorCard({ competitor, rank, currency, currencySymbol }: { compet
                 <a href={`tel:${competitor.phone_number.replace(/\s+/g, '')}`}>
                   <Phone className="h-4 w-4 sm:h-3 sm:w-3 mr-1" aria-hidden="true" />
                   <span className="hidden sm:inline">{competitor.phone_number}</span>
-                  <span className="sm:hidden">Appeler</span>
+                  <span className="sm:hidden">{t.call}</span>
                 </a>
               </Button>
             )}
@@ -657,7 +756,7 @@ function CompetitorCard({ competitor, rank, currency, currencySymbol }: { compet
               >
                 <a href={`mailto:${competitor.contact_email}`}>
                   <Mail className="h-4 w-4 sm:h-3 sm:w-3 mr-1" aria-hidden="true" />
-                  Email
+                  {t.email}
                 </a>
               </Button>
             )}

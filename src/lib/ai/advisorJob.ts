@@ -9,6 +9,7 @@
 
 import { useSyncExternalStore } from 'react';
 import { AIProposalError, clearAIAdvisorStorage, streamAIProposal } from '@/services/api';
+import { defineMessages, pick } from '@/i18n/current';
 import type {
   AdvisorErrorCode,
   AdvisorStage,
@@ -36,6 +37,11 @@ interface Job {
   input: HouseholdInput;
   controller?: AbortController;
 }
+
+const M = defineMessages({
+  fr: { failed: "L'IA n'a pas pu proposer de budget. Réessayez dans un instant." },
+  en: { failed: 'The AI couldn’t suggest a budget. Try again in a moment.' },
+});
 
 const jobs = new Map<string, Job>();
 const listeners = new Set<() => void>();
@@ -104,7 +110,7 @@ export function startAdvisorJob(budgetId: string, input: HouseholdInput): void {
       const e =
         err instanceof AIProposalError
           ? err
-          : new AIProposalError("L'IA n'a pas pu proposer de budget. Réessayez dans un instant.", 'http_error', true);
+          : new AIProposalError(pick(M).failed, 'http_error', true);
       setState(budgetId, job, { status: 'error', message: e.message, code: e.code, retryable: e.retryable });
     });
 }

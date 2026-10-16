@@ -16,14 +16,34 @@
 // ============================================================================
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { authAPI, User as APIUser } from '../services/api';
+import api, { authAPI, userAPI, User as APIUser } from '../services/api';
 import { extractRateLimitError } from '@/lib/rateLimitError';
 import { setSentryUser } from '@/lib/sentry';
 import { clearAllAdvisorJobs } from '@/lib/ai/advisorJob';
+import { pick, defineMessages, usePreference } from '@/i18n/runtime';
+import { LOCALES, type Locale } from '@/i18n/locales';
+import { hasSavedPreference, uiLocale } from '@/i18n/preference';
+
+const M = defineMessages({
+  fr: {
+    signupFailed: "La création du compte a échoué. Vérifiez votre connexion et réessayez.",
+    loginFailed: 'E-mail ou mot de passe incorrect.',
+    logoutAllFailed: 'Échec de la déconnexion globale',
+  },
+  en: {
+    signupFailed: 'Account creation failed. Check your connection and try again.',
+    loginFailed: 'Incorrect email or password.',
+    logoutAllFailed: 'Couldn’t sign out of all devices',
+  },
+});
+
+const isLocale = (l: unknown): l is Locale => typeof l === 'string' && l in LOCALES;
 
 export interface User extends APIUser {
   created_at?: string;
   updated_at?: string;
+  /** Language of the account: the app and its emails. Absent on accounts created before it existed. */
+  locale?: Locale;
 }
 
 interface AuthContextType {
@@ -42,6 +62,8 @@ interface AuthContextType {
   logout: () => Promise<void>;
   logoutAll: () => Promise<{ success: boolean; error?: string }>;
   updateUser: (updates: Partial<User>) => void;
+  /** Saves the language of the account (the screen's language is set with usePreference). */
+  saveLocale: (locale: Locale) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -65,6 +87,38 @@ const STORAGE_KEY_USER = 'user';
 export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const { setPreference } = usePreference();
+
+  const saveLocale = (locale: Locale) => {
+    api.put('/user/locale', { locale }).catch((err) => console.warn('[Auth] Saving the language failed', err));
+    setUser((u) => {
+      if (!u) return u;
+      const next = { ...u, locale };
+      localStorage.setItem(STORAGE_KEY_USER, JSON.stringify(next));
+      return next;
+    });
+  };
+
+  /**
+   * The account's language becomes the screen's. An account without one (made
+   * before languages existed) keeps what its owner saw until now: French,
+   * unless they chose a language on this device; that choice is saved.
+   */
+  const applyAccountLocale = (u: User) => {
+    if (isLocale(u.locale)) {
+      setPreference(u.locale);
+      return;
+    }
+    const locale: Locale = hasSavedPreference() ? uiLocale() : 'fr';
+    setPreference(locale);
+    saveLocale(locale);
+  };
+
+  /** A session restored from this device: its cached user may predate the account's language. */
+  const restoreLocale = (u: User) => {
+    if (isLocale(u.locale)) setPreference(u.locale);
+    else userAPI.getProfile().then((r: { data?: { locale?: Locale } }) => applyAccountLocale({ ...u, locale: r.data?.locale })).catch(() => {});
+  };
 
   // Bootstrap depuis localStorage au mount
   useEffect(() => {
@@ -78,6 +132,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           const u = JSON.parse(userData) as User;
           setUser(u);
           setSentryUser(u.id);
+          restoreLocale(u);
         } catch (error) {
           console.error('Error parsing user data:', error);
           localStorage.removeItem(STORAGE_KEY_TOKEN);
@@ -92,6 +147,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           const u = JSON.parse(userData) as User;
           setUser(u);
           setSentryUser(u.id);
+          restoreLocale(u);
         } catch {
           localStorage.removeItem(STORAGE_KEY_USER);
         }
@@ -144,6 +200,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         persistAuth(accessToken, refresh_token, userData);
         setUser(userData as User);
         setSentryUser(userData.id);
+        applyAccountLocale(userData as User);
       }
 
       return { success: true };
@@ -153,7 +210,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       const errorMessage =
         rateLimitMsg ??
         error.response?.data?.error ??
-        "La création du compte a échoué. Vérifiez votre connexion et réessayez.";
+        pick(M).signupFailed;
       return { success: false, error: errorMessage, code: error.response?.data?.code as string | undefined };
     }
   };
@@ -170,6 +227,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       persistAuth(accessToken, refresh_token, userData);
       setUser(userData as User);
       setSentryUser(userData.id);
+      applyAccountLocale(userData as User);
 
       return { success: true };
     } catch (err: any) {
@@ -177,7 +235,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       // Si rate-limited (429), message FR clair plutôt que "mot de passe incorrect"
       const rateLimitMsg = extractRateLimitError(err);
       const data = err.response?.data;
-      const errorMessage = rateLimitMsg ?? data?.error ?? 'E-mail ou mot de passe incorrect.';
+      const errorMessage = rateLimitMsg ?? data?.error ?? pick(M).loginFailed;
       const code = (data?.code as string | undefined) ?? (data?.email_not_verified ? 'email_not_verified' : undefined);
       return { success: false, error: errorMessage, code };
     }
@@ -211,7 +269,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     } catch (error: any) {
       return {
         success: false,
-        error: error.response?.data?.error || 'Échec de la déconnexion globale',
+        error: error.response?.data?.error || pick(M).logoutAllFailed,
       };
     }
 
@@ -230,6 +288,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     persistAuth(accessToken, refreshToken, userData);
     setUser(userData);
     setSentryUser(userData.id);
+    applyAccountLocale(userData);
   };
 
   const updateUser = (updates: Partial<User>) => {
@@ -242,7 +301,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
   return (
     <AuthContext.Provider
-      value={{ user, signup, login, logout, logoutAll, loading, updateUser, startSession }}
+      value={{ user, signup, login, logout, logoutAll, loading, updateUser, startSession, saveLocale }}
     >
       {children}
     </AuthContext.Provider>

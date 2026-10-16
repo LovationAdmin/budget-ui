@@ -8,7 +8,7 @@
 //      confirmation link signs the user in (see VerifyEmail).
 // ============================================================================
 
-import { useEffect, useState, type FormEvent } from 'react';
+import { useEffect, useState, type FormEvent, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { AlertCircle, Check, ExternalLink, Loader2, Mail, MailCheck, RotateCw, ShieldCheck } from 'lucide-react';
 import { BudgetLogo } from '@/components/budget/BudgetLogo';
@@ -23,6 +23,86 @@ import { Footer } from '@/components/Footer';
 import Navbar from '@/components/Navbar';
 import { cn } from '@/lib/utils';
 import { track } from '@/lib/analytics';
+import { defineMessages, useLocale, useT } from '@/i18n/runtime';
+import { localizedPath } from '@/i18n/locales';
+
+const M = defineMessages<{
+  ruleOk: string; ruleNotYet: string; resent: string; resendFailed: string; oneMoreStep: string;
+  sentTo: (email: ReactNode) => ReactNode; open: (mailbox: string) => string; nothing: ReactNode;
+  resendIn: (s: number) => string; resend: string; wrongAddress: string; confirmed: string; signIn: string;
+  failed: string; title: string; subtitle: string; firstName: string; namePlaceholder: string; email: string;
+  emailPlaceholder: string; password: string; ruleLength: string; ruleKinds: string; forgot: string;
+  creating: string; create: string; safe: string; hasAccount: string; legal: (terms: ReactNode, privacy: ReactNode) => ReactNode;
+  terms: string; privacy: string;
+}>({
+  fr: {
+    ruleOk: ' : respecté',
+    ruleNotYet: ' : pas encore',
+    resent: 'Nouvel e-mail envoyé.',
+    resendFailed: 'Impossible de renvoyer l’e-mail pour le moment.',
+    oneMoreStep: 'Plus qu’une étape',
+    sentTo: (email) => <>Nous avons envoyé un lien de confirmation à {email}.
+          Cliquez dessus : vous serez connecté et pourrez créer votre budget.</>,
+    open: (mailbox) => `Ouvrir ${mailbox}`,
+    nothing: <>Rien reçu au bout de quelques minutes ? Regardez dans les <strong>spams</strong> ou l’onglet <strong>Promotions</strong>.</>,
+    resendIn: (s) => `Renvoyer l’e-mail (dans ${s} s)`,
+    resend: 'Renvoyer l’e-mail',
+    wrongAddress: 'Ce n’est pas la bonne adresse ? La modifier',
+    confirmed: 'Déjà confirmé ?',
+    signIn: 'Se connecter',
+    failed: 'La création du compte a échoué.',
+    title: 'Créez votre budget gratuit',
+    subtitle: '1 minute. Gratuit, sans carte bancaire, sans connexion à votre banque.',
+    firstName: 'Prénom',
+    namePlaceholder: 'Ex. : Marie…',
+    email: 'Adresse e-mail',
+    emailPlaceholder: 'marie@exemple.fr',
+    password: 'Mot de passe',
+    ruleLength: 'Au moins 10 caractères',
+    ruleKinds: '3 types parmi : minuscules, majuscules, chiffres, symboles',
+    forgot: 'Mot de passe oublié ?',
+    creating: 'Création…',
+    create: 'Créer mon compte',
+    safe: 'Vos données sont chiffrées et ne sont jamais revendues.',
+    hasAccount: 'Déjà un compte ?',
+    legal: (terms, privacy) => <>En créant un compte, vous acceptez nos{' '}{terms} et notre{' '}{privacy}.</>,
+    terms: 'conditions d’utilisation',
+    privacy: 'politique de confidentialité',
+  },
+  en: {
+    ruleOk: ': done',
+    ruleNotYet: ': not yet',
+    resent: 'New email sent.',
+    resendFailed: 'Couldn’t resend the email right now.',
+    oneMoreStep: 'Just one more step',
+    sentTo: (email) => <>We sent a confirmation link to {email}. Click it: you’ll be signed in and can create your budget.</>,
+    open: (mailbox) => `Open ${mailbox}`,
+    nothing: <>Nothing after a few minutes? Check your <strong>spam</strong> folder or the <strong>Promotions</strong> tab.</>,
+    resendIn: (s) => `Resend the email (in ${s}s)`,
+    resend: 'Resend the email',
+    wrongAddress: 'Wrong address? Change it',
+    confirmed: 'Already confirmed?',
+    signIn: 'Sign in',
+    failed: 'Account creation failed.',
+    title: 'Create your free budget',
+    subtitle: '1 minute. Free, no credit card, no bank connection.',
+    firstName: 'First name',
+    namePlaceholder: 'E.g. Alex…',
+    email: 'Email address',
+    emailPlaceholder: 'alex@example.com',
+    password: 'Password',
+    ruleLength: 'At least 10 characters',
+    ruleKinds: '3 kinds among: lowercase, uppercase, digits, symbols',
+    forgot: 'Forgot your password?',
+    creating: 'Creating…',
+    create: 'Create my account',
+    safe: 'Your data is encrypted and never sold.',
+    hasAccount: 'Already have an account?',
+    legal: (terms, privacy) => <>By creating an account, you accept our{' '}{terms} and our{' '}{privacy}.</>,
+    terms: 'terms of use',
+    privacy: 'privacy policy',
+  },
+});
 
 /** The same rules as the server (utils.ValidatePassword). */
 export function passwordChecks(password: string) {
@@ -49,13 +129,14 @@ function mailboxFor(email: string) {
 const RESEND_COOLDOWN = 120; // seconds, like the server
 
 function Rule({ ok, children }: { ok: boolean; children: React.ReactNode }) {
+  const t = useT(M);
   return (
     <li className={cn('flex items-center gap-2 text-xs', ok ? 'text-success' : 'text-muted-foreground')}>
       <span aria-hidden="true" className={cn('inline-flex h-4 w-4 items-center justify-center rounded-full border', ok ? 'border-success bg-success text-white' : 'border-muted-foreground/40')}>
         {ok && <Check className="h-3 w-3" />}
       </span>
       {children}
-      <span className="sr-only">{ok ? ' : respecté' : ' : pas encore'}</span>
+      <span className="sr-only">{ok ? t.ruleOk : t.ruleNotYet}</span>
     </li>
   );
 }
@@ -65,6 +146,7 @@ function CheckYourEmail({ email, onEdit }: { email: string; onEdit: () => void }
   const [status, setStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle');
   const [message, setMessage] = useState('');
   const mailbox = mailboxFor(email);
+  const t = useT(M);
 
   useEffect(() => {
     if (cooldown <= 0) return;
@@ -77,11 +159,11 @@ function CheckYourEmail({ email, onEdit }: { email: string; onEdit: () => void }
     try {
       await authAPI.resendVerification(email);
       setStatus('sent');
-      setMessage('Nouvel e-mail envoyé.');
+      setMessage(t.resent);
       setCooldown(RESEND_COOLDOWN);
     } catch (err: any) {
       setStatus('error');
-      setMessage(err?.response?.data?.error || 'Impossible de renvoyer l’e-mail pour le moment.');
+      setMessage(err?.response?.data?.error || t.resendFailed);
     }
   };
 
@@ -91,10 +173,9 @@ function CheckYourEmail({ email, onEdit }: { email: string; onEdit: () => void }
         <MailCheck className="h-10 w-10 text-primary" />
       </div>
       <div>
-        <h1 className="text-3xl font-display font-bold">Plus qu’une étape</h1>
+        <h1 className="text-3xl font-display font-bold">{t.oneMoreStep}</h1>
         <p className="mt-3 text-muted-foreground">
-          Nous avons envoyé un lien de confirmation à <strong className="text-foreground [overflow-wrap:anywhere]">{email}</strong>.
-          Cliquez dessus : vous serez connecté et pourrez créer votre budget.
+          {t.sentTo(<strong className="text-foreground [overflow-wrap:anywhere]">{email}</strong>)}
         </p>
       </div>
 
@@ -102,29 +183,29 @@ function CheckYourEmail({ email, onEdit }: { email: string; onEdit: () => void }
         {mailbox && (
           <Button asChild variant="gradient" className="h-11 w-full">
             <a href={mailbox.url} target="_blank" rel="noopener noreferrer">
-              <Mail className="mr-2 h-4 w-4" /> Ouvrir {mailbox.label}
+              <Mail className="mr-2 h-4 w-4" /> {t.open(mailbox.label)}
               <ExternalLink className="ml-2 h-3.5 w-3.5 opacity-70" aria-hidden="true" />
             </a>
           </Button>
         )}
         <p className="text-sm text-muted-foreground">
-          Rien reçu au bout de quelques minutes ? Regardez dans les <strong>spams</strong> ou l’onglet <strong>Promotions</strong>.
+          {t.nothing}
         </p>
         <Button type="button" variant="outline" className="h-11 w-full" onClick={resend} disabled={cooldown > 0 || status === 'sending'}>
           {status === 'sending' ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RotateCw className="mr-2 h-4 w-4" />}
-          {cooldown > 0 ? `Renvoyer l’e-mail (dans ${cooldown} s)` : 'Renvoyer l’e-mail'}
+          {cooldown > 0 ? t.resendIn(cooldown) : t.resend}
         </Button>
         <p role="status" aria-live="polite" className={cn('min-h-[1.25rem] text-sm', status === 'error' ? 'text-destructive' : 'text-success')}>
           {message}
         </p>
         <button type="button" onClick={onEdit} className="text-sm font-medium text-primary hover:underline">
-          Ce n’est pas la bonne adresse ? La modifier
+          {t.wrongAddress}
         </button>
       </div>
 
       <p className="text-sm text-muted-foreground">
-        Déjà confirmé ?{' '}
-        <Link to="/login" className="font-medium text-primary hover:underline">Se connecter</Link>
+        {t.confirmed}{' '}
+        <Link to="/login" className="font-medium text-primary hover:underline">{t.signIn}</Link>
       </p>
     </div>
   );
@@ -138,6 +219,8 @@ export default function Signup() {
   const [loading, setLoading] = useState(false);
   const [sentTo, setSentTo] = useState('');
   const { signup } = useAuth();
+  const t = useT(M);
+  const locale = useLocale();
 
   const checks = passwordChecks(password);
   const canSubmit = name.trim().length >= 2 && /\S+@\S+\.\S+/.test(email) && checks.ok && !loading;
@@ -153,7 +236,7 @@ export default function Signup() {
       track('sign_up', { method: 'email' });
       setSentTo(email.trim());
     }
-    else setError({ message: result.error || 'La création du compte a échoué.', code: result.code });
+    else setError({ message: result.error || t.failed, code: result.code });
   };
 
   return (
@@ -166,28 +249,28 @@ export default function Signup() {
           <div className="w-full max-w-md space-y-6">
             <div className="text-center">
               <BudgetLogo size={64} className="mx-auto mb-4 block" />
-              <h1 className="text-3xl font-display font-bold text-foreground">Créez votre budget gratuit</h1>
-              <p className="text-muted-foreground mt-2">1 minute. Gratuit, sans carte bancaire, sans connexion à votre banque.</p>
+              <h1 className="text-3xl font-display font-bold text-foreground">{t.title}</h1>
+              <p className="text-muted-foreground mt-2">{t.subtitle}</p>
             </div>
 
             <div className="glass-card-elevated p-6 sm:p-8">
               <form onSubmit={handleSubmit} className="space-y-5" noValidate>
                 <div className="space-y-2">
-                  <Label htmlFor="name">Prénom</Label>
-                  <Input id="name" name="given-name" type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="Ex. : Marie…" required autoComplete="given-name" className="h-11" />
+                  <Label htmlFor="name">{t.firstName}</Label>
+                  <Input id="name" name="given-name" type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder={t.namePlaceholder} required autoComplete="given-name" className="h-11" />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="email">Adresse e-mail</Label>
-                  <Input id="email" name="email" type="email" inputMode="email" spellCheck={false} value={email} onChange={(e) => setEmail(e.target.value)} placeholder="marie@exemple.fr" required autoComplete="email" className="h-11" />
+                  <Label htmlFor="email">{t.email}</Label>
+                  <Input id="email" name="email" type="email" inputMode="email" spellCheck={false} value={email} onChange={(e) => setEmail(e.target.value)} placeholder={t.emailPlaceholder} required autoComplete="email" className="h-11" />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="password">Mot de passe</Label>
+                  <Label htmlFor="password">{t.password}</Label>
                   <PasswordInput id="password" name="new-password" value={password} onChange={(e) => setPassword(e.target.value)} required autoComplete="new-password" className="h-11" aria-describedby="password-rules" />
                   <ul id="password-rules" className="space-y-1 pt-1">
-                    <Rule ok={checks.length}>Au moins 10 caractères</Rule>
-                    <Rule ok={checks.kinds}>3 types parmi : minuscules, majuscules, chiffres, symboles</Rule>
+                    <Rule ok={checks.length}>{t.ruleLength}</Rule>
+                    <Rule ok={checks.kinds}>{t.ruleKinds}</Rule>
                   </ul>
                 </div>
 
@@ -198,8 +281,8 @@ export default function Signup() {
                       {error.message}
                       {error.code === 'email_taken' && (
                         <span className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
-                          <Link to="/login" className="font-semibold underline">Se connecter</Link>
-                          <Link to="/forgot-password" className="font-semibold underline">Mot de passe oublié ?</Link>
+                          <Link to="/login" className="font-semibold underline">{t.signIn}</Link>
+                          <Link to="/forgot-password" className="font-semibold underline">{t.forgot}</Link>
                         </span>
                       )}
                     </AlertDescription>
@@ -207,25 +290,26 @@ export default function Signup() {
                 )}
 
                 <Button type="submit" variant="gradient" className="w-full h-11" disabled={!canSubmit}>
-                  {loading ? (<><Loader2 className="mr-2 h-4 w-4 animate-spin" />Création…</>) : 'Créer mon compte'}
+                  {loading ? (<><Loader2 className="mr-2 h-4 w-4 animate-spin" />{t.creating}</>) : t.create}
                 </Button>
 
                 <p className="text-xs text-center text-muted-foreground flex items-center justify-center gap-1.5">
                   <ShieldCheck className="h-3 w-3" aria-hidden="true" />
-                  Vos données sont chiffrées et ne sont jamais revendues.
+                  {t.safe}
                 </p>
               </form>
 
               <p className="mt-6 text-center text-sm text-muted-foreground">
-                Déjà un compte ?{' '}
-                <Link to="/login" className="font-medium text-primary hover:underline">Se connecter</Link>
+                {t.hasAccount}{' '}
+                <Link to="/login" className="font-medium text-primary hover:underline">{t.signIn}</Link>
               </p>
             </div>
 
             <p className="text-xs text-center text-muted-foreground px-4">
-              En créant un compte, vous acceptez nos{' '}
-              <Link to="/terms" className="underline">conditions d’utilisation</Link> et notre{' '}
-              <Link to="/privacy" className="underline">politique de confidentialité</Link>.
+              {t.legal(
+                <Link to={localizedPath('/terms', locale)} className="underline">{t.terms}</Link>,
+                <Link to={localizedPath('/privacy', locale)} className="underline">{t.privacy}</Link>,
+              )}
             </p>
           </div>
         )}

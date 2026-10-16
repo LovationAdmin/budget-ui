@@ -1,6 +1,7 @@
 // src/components/LanguageToggle.tsx
 // ============================================================================
-// Compact language button for the navigation bars. On a translated public page
+// Compact language button for the navigation bars (globe and language code;
+// the full name is its accessible label). On a translated public page
 // it links to the other version (its own URL); on the screens that follow the
 // visitor's preference (sign-in, the app) it switches the preference in place.
 // On a page that exists in French only, there is nothing to switch to: hidden.
@@ -11,8 +12,6 @@ import { Globe } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { LOCALES, alternatesOf, type Locale } from '@/i18n/locales';
 import { followsPreference, useLocale, usePreference } from '@/i18n/runtime';
-
-const NAMES: Record<Locale, string> = { fr: 'Français', en: 'English' };
 
 export function LanguageToggle({ className }: { className?: string }) {
   const { pathname } = useLocation();
@@ -26,7 +25,7 @@ export function LanguageToggle({ className }: { className?: string }) {
   const content = (
     <>
       <Globe className="h-4 w-4" aria-hidden="true" />
-      <span className="hidden sm:inline">{NAMES[other]}</span>
+      <span className="hidden text-xs font-semibold tracking-wide sm:inline">{other.toUpperCase()}</span>
     </>
   );
 

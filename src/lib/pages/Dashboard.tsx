@@ -40,6 +40,8 @@ import {
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { intlLocale } from '@/lib/budget/format';
+import { defineMessages, useT } from '@/i18n/runtime';
 
 interface Budget {
   id: string;
@@ -58,22 +60,119 @@ interface Budget {
 
 // ✅ CONFIGURATION LOCALISATION
 const LOCATION_CONFIGS = [
-  { code: 'FR', name: 'France', currency: 'EUR', symbol: '€' },
-  { code: 'DE', name: 'Allemagne', currency: 'EUR', symbol: '€' },
-  { code: 'ES', name: 'Espagne', currency: 'EUR', symbol: '€' },
-  { code: 'IT', name: 'Italie', currency: 'EUR', symbol: '€' },
-  { code: 'PT', name: 'Portugal', currency: 'EUR', symbol: '€' },
-  { code: 'BE', name: 'Belgique', currency: 'EUR', symbol: '€' },
-  { code: 'NL', name: 'Pays-Bas', currency: 'EUR', symbol: '€' },
-  { code: 'AT', name: 'Autriche', currency: 'EUR', symbol: '€' },
-  { code: 'CH', name: 'Suisse', currency: 'CHF', symbol: 'CHF' },
-  { code: 'GB', name: 'Royaume-Uni', currency: 'GBP', symbol: '£' },
-  { code: 'US', name: 'États-Unis', currency: 'USD', symbol: '$' },
-  { code: 'CA', name: 'Canada', currency: 'CAD', symbol: '$' },
-  { code: 'SN', name: 'Sénégal', currency: 'XOF', symbol: 'CFA' },
-  { code: 'CI', name: "Côte d'Ivoire", currency: 'XOF', symbol: 'CFA' },
-{ code: 'MA', name: 'Maroc', currency: 'MAD', symbol: 'DH' },
-];
+  { code: 'FR', currency: 'EUR', symbol: '€' },
+  { code: 'DE', currency: 'EUR', symbol: '€' },
+  { code: 'ES', currency: 'EUR', symbol: '€' },
+  { code: 'IT', currency: 'EUR', symbol: '€' },
+  { code: 'PT', currency: 'EUR', symbol: '€' },
+  { code: 'BE', currency: 'EUR', symbol: '€' },
+  { code: 'NL', currency: 'EUR', symbol: '€' },
+  { code: 'AT', currency: 'EUR', symbol: '€' },
+  { code: 'CH', currency: 'CHF', symbol: 'CHF' },
+  { code: 'GB', currency: 'GBP', symbol: '£' },
+  { code: 'US', currency: 'USD', symbol: '$' },
+  { code: 'CA', currency: 'CAD', symbol: '$' },
+  { code: 'SN', currency: 'XOF', symbol: 'CFA' },
+  { code: 'CI', currency: 'XOF', symbol: 'CFA' },
+{ code: 'MA', currency: 'MAD', symbol: 'DH' },
+] as const;
+
+const M = defineMessages({
+  fr: {
+    countries: {
+      FR: 'France', DE: 'Allemagne', ES: 'Espagne', IT: 'Italie', PT: 'Portugal', BE: 'Belgique', NL: 'Pays-Bas', AT: 'Autriche',
+      CH: 'Suisse', GB: 'Royaume-Uni', US: 'États-Unis', CA: 'Canada', SN: 'Sénégal', CI: "Côte d'Ivoire", MA: 'Maroc',
+    },
+    createdOn: (date: string) => `Créé le ${date}`,
+    noMembers: 'Aucun membre',
+    open: 'Ouvrir',
+    edit: 'Modifier',
+    delete: 'Supprimer',
+    success: 'Succès',
+    created: 'Budget créé avec succès !',
+    error: 'Erreur',
+    createFailed: 'Impossible de créer le budget',
+    updated: 'Budget mis à jour',
+    saved: 'Les modifications ont été enregistrées.',
+    updateFailed: 'Impossible de mettre à jour le budget',
+    deleted: 'Budget supprimé',
+    deleteFailed: 'Impossible de supprimer le budget',
+    defaultName: 'Mon budget',
+    hello: (name?: string) => `Bonjour, ${name || 'Utilisateur'} 👋`,
+    count: (n: number) => `Vous gérez ${n} budget${n > 1 ? 's' : ''}`,
+    createFirst: 'Créez votre premier budget pour commencer',
+    newBudget: 'Nouveau Budget',
+    emptyTitle: 'Bienvenue ! Créons votre premier budget',
+    emptyText: 'Un nom, votre pays, et c’est parti : vous ajouterez ensuite votre foyer et vos charges en quelques minutes.',
+    emptyCta: 'Créer mon budget',
+    createTitle: 'Nouveau budget',
+    createText: 'Un budget pour le foyer, la coloc ou un projet : vous pourrez en créer d’autres.',
+    name: 'Nom du budget',
+    namePlaceholder: 'Ex. : Foyer, Coloc, Mariage 2027…',
+    location: 'Localisation',
+    currency: (code: string) => <>Devise : <strong>{code}</strong></>,
+    aiTitle: "Laisser l'IA proposer une répartition",
+    aiText: "Après création, décrivez votre situation et l'IA propose un budget mensuel juste et soutenable.",
+    cancel: 'Annuler',
+    creating: 'Création...',
+    createWithAI: 'Créer + IA',
+    create: 'Créer le budget',
+    editTitle: 'Modifier le budget',
+    editText: 'Mettez à jour les informations de votre budget.',
+    updating: 'Mise à jour...',
+    save: 'Enregistrer',
+    deleteTitle: 'Supprimer ce budget ?',
+    deleteText: (name = '') => `Cette action est irréversible. Toutes les données du budget "${name}" seront définitivement supprimées.`,
+    deleting: 'Suppression...',
+  },
+  en: {
+    countries: {
+      FR: 'France', DE: 'Germany', ES: 'Spain', IT: 'Italy', PT: 'Portugal', BE: 'Belgium', NL: 'Netherlands', AT: 'Austria',
+      CH: 'Switzerland', GB: 'United Kingdom', US: 'United States', CA: 'Canada', SN: 'Senegal', CI: 'Côte d’Ivoire', MA: 'Morocco',
+    },
+    createdOn: (date: string) => `Created on ${date}`,
+    noMembers: 'No members',
+    open: 'Open',
+    edit: 'Edit',
+    delete: 'Delete',
+    success: 'Done',
+    created: 'Budget created!',
+    error: 'Error',
+    createFailed: 'Couldn’t create the budget',
+    updated: 'Budget updated',
+    saved: 'Your changes have been saved.',
+    updateFailed: 'Couldn’t update the budget',
+    deleted: 'Budget deleted',
+    deleteFailed: 'Couldn’t delete the budget',
+    defaultName: 'My budget',
+    hello: (name?: string) => (name ? `Hi, ${name} 👋` : 'Hi there 👋'),
+    count: (n: number) => (n === 1 ? 'You manage 1 budget' : `You manage ${n} budgets`),
+    createFirst: 'Create your first budget to get started',
+    newBudget: 'New budget',
+    emptyTitle: 'Welcome! Let’s create your first budget',
+    emptyText: 'A name, your country, and you’re off: then add your household and your bills in a few minutes.',
+    emptyCta: 'Create my budget',
+    createTitle: 'New budget',
+    createText: 'A budget for your household, your roommates or a project: you can create more later.',
+    name: 'Budget name',
+    namePlaceholder: 'E.g. Household, Roommates, Wedding 2027…',
+    location: 'Location',
+    currency: (code: string) => <>Currency: <strong>{code}</strong></>,
+    aiTitle: 'Let the AI suggest a breakdown',
+    aiText: 'Once it’s created, describe your situation and the AI suggests a fair, sustainable monthly budget.',
+    cancel: 'Cancel',
+    creating: 'Creating...',
+    createWithAI: 'Create + AI',
+    create: 'Create budget',
+    editTitle: 'Edit budget',
+    editText: 'Update your budget’s details.',
+    updating: 'Updating...',
+    save: 'Save',
+    deleteTitle: 'Delete this budget?',
+    deleteText: (name = '') => `This can’t be undone. All the data in the budget “${name}” will be permanently deleted.`,
+    deleting: 'Deleting...',
+  },
+});
 
 // ============================================================================
 // SKELETON LOADING COMPONENT
@@ -114,6 +213,7 @@ interface BudgetCardProps {
 }
 
 const BudgetCard = memo(function BudgetCard({ budget, onOpen, onDelete, onEdit }: BudgetCardProps) {
+  const t = useT(M);
   const handleOpen = useCallback(() => onOpen(budget.id), [budget.id, onOpen]);
   
   const handleDelete = useCallback((e: React.MouseEvent) => {
@@ -146,14 +246,14 @@ const BudgetCard = memo(function BudgetCard({ budget, onOpen, onDelete, onEdit }
           
           <div className="flex items-center gap-2 mb-2 text-xs text-muted-foreground bg-secondary/30 w-fit px-2 py-0.5 rounded-full border border-secondary/50">
                <span className="flex items-center gap-1">
-                  <MapPin className="h-3 w-3" /> {locationInfo.name}
+                  <MapPin className="h-3 w-3" /> {t.countries[locationInfo.code]}
                </span>
                <span className="opacity-30">|</span>
                <span className="font-medium">{locationInfo.currency}</span>
           </div>
 
           <p className="text-sm text-muted-foreground">
-            Créé le {new Date(budget.created_at).toLocaleDateString('fr-FR')}
+            {t.createdOn(new Date(budget.created_at).toLocaleDateString(intlLocale()))}
           </p>
         </div>
         
@@ -166,12 +266,12 @@ const BudgetCard = memo(function BudgetCard({ budget, onOpen, onDelete, onEdit }
         {members.length > 0 ? (
           <MemberAvatarGroup members={members} max={3} size="sm" />
         ) : (
-          <div className="text-xs text-muted-foreground">Aucun membre</div>
+          <div className="text-xs text-muted-foreground">{t.noMembers}</div>
         )}
         
         <div className="flex items-center gap-1">
           <Button variant="ghost" size="sm" className="gap-1 px-2 min-h-[44px]">
-            <span className="hidden sm:inline">Ouvrir</span>
+            <span className="hidden sm:inline">{t.open}</span>
             <ArrowRight className="h-4 w-4" />
           </Button>
           
@@ -182,7 +282,7 @@ const BudgetCard = memo(function BudgetCard({ budget, onOpen, onDelete, onEdit }
                   size="icon" 
                   onClick={handleEdit} 
                   className="text-muted-foreground hover:text-primary h-10 w-10" 
-                  title="Modifier"
+                  title={t.edit}
                 >
                    <Pencil className="h-4 w-4" />
                 </Button>
@@ -191,7 +291,7 @@ const BudgetCard = memo(function BudgetCard({ budget, onOpen, onDelete, onEdit }
                   size="icon" 
                   onClick={handleDelete} 
                   className="text-muted-foreground hover:text-destructive h-10 w-10" 
-                  title="Supprimer"
+                  title={t.delete}
                 >
                    <Trash2 className="h-4 w-4" />
                 </Button>
@@ -210,6 +310,7 @@ export default function Dashboard() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { toast } = useToast();
+  const t = useT(M);
   
   const [budgets, setBudgets] = useState<Budget[]>([]);
   const [loading, setLoading] = useState(true);
@@ -276,7 +377,7 @@ export default function Dashboard() {
         location: newBudgetLocation,
         currency: newBudgetCurrency
       });
-      toast({ title: "Succès", description: "Budget créé avec succès !", variant: "default" });
+      toast({ title: t.success, description: t.created, variant: "default" });
       setShowCreateModal(false);
       setNewBudgetName('');
       setNewBudgetLocation('FR');
@@ -291,7 +392,7 @@ export default function Dashboard() {
       }
       loadBudgets();
     } catch (error: any) {
-      toast({ title: "Erreur", description: error.response?.data?.error || "Impossible de créer le budget", variant: "destructive" });
+      toast({ title: t.error, description: error.response?.data?.error || t.createFailed, variant: "destructive" });
     } finally {
       setCreating(false);
     }
@@ -328,11 +429,11 @@ export default function Dashboard() {
               location: editLocation,
               currency: editCurrency
           });
-          toast({ title: "Budget mis à jour", description: "Les modifications ont été enregistrées." });
+          toast({ title: t.updated, description: t.saved });
           closeEditModal();
           loadBudgets();
       } catch (error: any) {
-          toast({ title: "Erreur", description: "Impossible de mettre à jour le budget", variant: "destructive" });
+          toast({ title: t.error, description: t.updateFailed, variant: "destructive" });
       } finally {
           setUpdating(false);
       }
@@ -346,11 +447,11 @@ export default function Dashboard() {
     setDeleting(true);
     try {
       await budgetAPI.delete(budgetToDelete.id);
-      toast({ title: "Succès", description: "Budget supprimé", variant: "default" });
+      toast({ title: t.success, description: t.deleted, variant: "default" });
       setBudgetToDelete(null);
       loadBudgets();
     } catch (error) {
-      toast({ title: "Erreur", description: "Impossible de supprimer le budget", variant: "destructive" });
+      toast({ title: t.error, description: t.deleteFailed, variant: "destructive" });
     } finally {
       setDeleting(false);
     }
@@ -364,7 +465,7 @@ export default function Dashboard() {
   useEffect(() => {
     if (!welcome || loading) return;
     if (budgets.length === 0) {
-      setNewBudgetName((n) => n || 'Mon budget');
+      setNewBudgetName((n) => n || t.defaultName);
       setShowCreateModal(true);
     }
     setParams((p) => {
@@ -372,10 +473,10 @@ export default function Dashboard() {
       copy.delete('bienvenue');
       return copy;
     }, { replace: true });
-  }, [welcome, loading, budgets.length, setParams]);
+  }, [welcome, loading, budgets.length, setParams, t.defaultName]);
 
   const openCreate = () => {
-    if (budgets.length === 0) setNewBudgetName((n) => n || 'Mon budget');
+    if (budgets.length === 0) setNewBudgetName((n) => n || t.defaultName);
     setShowCreateModal(true);
   };
 
@@ -389,12 +490,12 @@ export default function Dashboard() {
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
               <h1 className="font-display text-2xl sm:text-3xl font-bold text-foreground">
-                Bonjour, {user?.name || 'Utilisateur'} 👋
+                {t.hello(user?.name)}
               </h1>
               <p className="mt-1 text-muted-foreground">
                 {budgets.length > 0 
-                  ? `Vous gérez ${budgets.length} budget${budgets.length > 1 ? 's' : ''}`
-                  : 'Créez votre premier budget pour commencer'}
+                  ? t.count(budgets.length)
+                  : t.createFirst}
               </p>
             </div>
             <Button 
@@ -403,7 +504,7 @@ export default function Dashboard() {
               className="gap-2 shadow-lg bg-primary hover:bg-primary/90 min-h-[44px]"
             >
               <Plus className="h-4 w-4" />
-              Nouveau Budget
+              {t.newBudget}
             </Button>
           </div>
         </div>
@@ -414,9 +515,9 @@ export default function Dashboard() {
         ) : budgets.length === 0 ? (
           <EmptyState
             icon={PiggyBank}
-            title="Bienvenue ! Créons votre premier budget"
-            description="Un nom, votre pays, et c’est parti : vous ajouterez ensuite votre foyer et vos charges en quelques minutes."
-            actionLabel="Créer mon budget"
+            title={t.emptyTitle}
+            description={t.emptyText}
+            actionLabel={t.emptyCta}
             onAction={openCreate}
           />
         ) : (
@@ -442,18 +543,18 @@ export default function Dashboard() {
       <Dialog open={showCreateModal} onOpenChange={setShowCreateModal}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Nouveau budget</DialogTitle>
-            <DialogDescription>Un budget pour le foyer, la coloc ou un projet : vous pourrez en créer d’autres.</DialogDescription>
+            <DialogTitle>{t.createTitle}</DialogTitle>
+            <DialogDescription>{t.createText}</DialogDescription>
           </DialogHeader>
           <form onSubmit={handleCreateBudget}>
             <div className="space-y-4 py-4">
               <div className="space-y-2">
-                <Label htmlFor="budget-name">Nom du budget</Label>
+                <Label htmlFor="budget-name">{t.name}</Label>
                 <Input 
                   id="budget-name"
                   value={newBudgetName} 
                   onChange={(e) => setNewBudgetName(e.target.value)} 
-                  placeholder="Ex. : Foyer, Coloc, Mariage 2027…"
+                  placeholder={t.namePlaceholder}
                   autoFocus 
                   className="min-h-[44px]"
                 />
@@ -468,7 +569,7 @@ export default function Dashboard() {
                   <SelectContent>
                     {LOCATION_CONFIGS.map((c) => (
                       <SelectItem key={c.code} value={c.code}>
-                        {c.name} ({c.currency})
+                        {t.countries[c.code]} ({c.currency})
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -477,7 +578,7 @@ export default function Dashboard() {
               
               <div className="flex items-center gap-2 p-3 bg-muted/50 rounded-lg text-sm border">
                 <DollarSign className="h-4 w-4 text-muted-foreground" />
-                <span>Devise : <strong>{newBudgetCurrency}</strong></span>
+                <span>{t.currency(newBudgetCurrency)}</span>
               </div>
 
               <button
@@ -492,9 +593,9 @@ export default function Dashboard() {
               >
                 <Sparkles className={`h-5 w-5 mt-0.5 shrink-0 ${startWithAI ? 'text-primary' : 'text-muted-foreground'}`} />
                 <span className="text-sm">
-                  <span className="font-medium block">Laisser l'IA proposer une répartition</span>
+                  <span className="font-medium block">{t.aiTitle}</span>
                   <span className="text-muted-foreground text-xs">
-                    Après création, décrivez votre situation et l'IA propose un budget mensuel juste et soutenable.
+                    {t.aiText}
                   </span>
                 </span>
                 <span
@@ -514,14 +615,14 @@ export default function Dashboard() {
                 onClick={() => setShowCreateModal(false)}
                 className="min-h-[44px]"
               >
-                Annuler
+                {t.cancel}
               </Button>
               <Button 
                 type="submit" 
                 disabled={creating || !newBudgetName.trim()}
                 className="min-h-[44px]"
               >
-                {creating ? 'Création...' : startWithAI ? 'Créer + IA' : 'Créer le budget'}
+                {creating ? t.creating : startWithAI ? t.createWithAI : t.create}
               </Button>
             </DialogFooter>
           </form>
@@ -534,13 +635,13 @@ export default function Dashboard() {
       <Dialog open={!!budgetToEdit} onOpenChange={(open) => !open && closeEditModal()}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Modifier le budget</DialogTitle>
-            <DialogDescription>Mettez à jour les informations de votre budget.</DialogDescription>
+            <DialogTitle>{t.editTitle}</DialogTitle>
+            <DialogDescription>{t.editText}</DialogDescription>
           </DialogHeader>
           <form onSubmit={handleUpdateBudget}>
             <div className="space-y-4 py-4">
               <div className="space-y-2">
-                <Label htmlFor="edit-name">Nom du budget</Label>
+                <Label htmlFor="edit-name">{t.name}</Label>
                 <Input 
                   id="edit-name"
                   value={editName} 
@@ -558,7 +659,7 @@ export default function Dashboard() {
                   <SelectContent>
                     {LOCATION_CONFIGS.map((c) => (
                       <SelectItem key={c.code} value={c.code}>
-                        {c.name} ({c.currency})
+                        {t.countries[c.code]} ({c.currency})
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -567,7 +668,7 @@ export default function Dashboard() {
               
               <div className="flex items-center gap-2 p-3 bg-blue-50 text-blue-800 rounded-lg text-sm border border-blue-100">
                 <DollarSign className="h-4 w-4" />
-                <span>Devise : <strong>{editCurrency}</strong></span>
+                <span>{t.currency(editCurrency)}</span>
               </div>
             </div>
             
@@ -578,14 +679,14 @@ export default function Dashboard() {
                 onClick={closeEditModal}
                 className="min-h-[44px]"
               >
-                Annuler
+                {t.cancel}
               </Button>
               <Button 
                 type="submit" 
                 disabled={updating || !editName.trim()}
                 className="min-h-[44px]"
               >
-                {updating ? 'Mise à jour...' : 'Enregistrer'}
+                {updating ? t.updating : t.save}
               </Button>
             </DialogFooter>
           </form>
@@ -598,19 +699,19 @@ export default function Dashboard() {
       <AlertDialog open={!!budgetToDelete} onOpenChange={() => setBudgetToDelete(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Supprimer ce budget ?</AlertDialogTitle>
+            <AlertDialogTitle>{t.deleteTitle}</AlertDialogTitle>
             <AlertDialogDescription>
-              Cette action est irréversible. Toutes les données du budget "{budgetToDelete?.name}" seront définitivement supprimées.
+              {t.deleteText(budgetToDelete?.name)}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className="min-h-[44px]">Annuler</AlertDialogCancel>
+            <AlertDialogCancel className="min-h-[44px]">{t.cancel}</AlertDialogCancel>
             <AlertDialogAction 
               onClick={handleDelete} 
               className="bg-destructive hover:bg-destructive/90 min-h-[44px]"
               disabled={deleting}
             >
-              {deleting ? 'Suppression...' : 'Supprimer'}
+              {deleting ? t.deleting : t.delete}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

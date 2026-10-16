@@ -7,6 +7,12 @@ import * as DialogPrimitive from '@radix-ui/react-dialog';
 import { X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { defineMessages, useT } from '@/i18n/runtime';
+
+const M = defineMessages({
+  fr: { panel: 'Panneau d’édition', close: 'Fermer' },
+  en: { panel: 'Edit panel', close: 'Close' },
+});
 
 interface ResponsiveSheetProps {
   open: boolean;
@@ -18,6 +24,7 @@ interface ResponsiveSheetProps {
 
 export function ResponsiveSheet({ open, onOpenChange, title, description, children }: ResponsiveSheetProps) {
   const isMobile = useIsMobile();
+  const t = useT(M);
   return (
     <DialogPrimitive.Root open={open} onOpenChange={onOpenChange}>
       <DialogPrimitive.Portal>
@@ -38,12 +45,12 @@ export function ResponsiveSheet({ open, onOpenChange, title, description, childr
               {description ? (
                 <DialogPrimitive.Description className="mt-1 text-sm text-muted-foreground">{description}</DialogPrimitive.Description>
               ) : (
-                <DialogPrimitive.Description className="sr-only">Panneau d’édition</DialogPrimitive.Description>
+                <DialogPrimitive.Description className="sr-only">{t.panel}</DialogPrimitive.Description>
               )}
             </div>
             <DialogPrimitive.Close
               className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-              aria-label="Fermer"
+              aria-label={t.close}
             >
               <X className="h-5 w-5" />
             </DialogPrimitive.Close>

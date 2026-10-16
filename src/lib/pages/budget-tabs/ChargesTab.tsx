@@ -16,6 +16,7 @@ import { budgetAPI } from '@/services/api';
 import { useBudget } from '@/contexts/BudgetContext';
 import EnhancedSuggestions from '@/components/budget/EnhancedSuggestions';
 import type { Charge, Frequency, YM } from '@/lib/budget/types';
+import { privateChargeName } from '@/lib/budget/types';
 import {
   amountHistoryHint,
   chargeBaseAmount,
@@ -32,25 +33,99 @@ import { addMonths, deMonth, joinFr, monthNameLower } from '@/lib/budget/months'
 import { roundCents } from '@/lib/budget/format';
 import { CategoryIcon, ChipToggle } from '@/components/budget/shared/primitives';
 import { useChargePrivacy, useFirstOpenMonth, useHashScroll } from '@/components/budget/shared/hooks';
+import { defineMessages, useT } from '@/i18n/runtime';
 
-const FILTERS: Array<{ id: ItemStatus; label: string }> = [
-  { id: 'active', label: 'En cours' },
-  { id: 'upcoming', label: 'À venir' },
-  { id: 'ended', label: 'Terminées' },
-];
+const M = defineMessages({
+  fr: {
+    filters: { active: 'En cours', upcoming: 'À venir', ended: 'Terminées' },
+    groups: { monthly: 'Tous les mois', custom: 'Certains mois', yearly: 'Une fois par an', once: 'Ponctuelles' },
+    noneDetected: 'Aucune nouvelle catégorie n’a pu être détectée.',
+    categorized: (n: number) => `${n} charge${n > 1 ? 's' : ''} catégorisée${n > 1 ? 's' : ''}.`,
+    perYear: '/ an',
+    once: 'une fois',
+    perMonth: '/ mois',
+    title: 'Charges',
+    intro: 'Vos règles. Chaque mois se remplit tout seul à partir d’elles ; les exceptions se font depuis le mois concerné.',
+    newCharge: 'Nouvelle charge',
+    filterAria: 'Filtrer les charges',
+    endedInfo: 'Une charge terminée n’apparaît plus dans les mois suivants. Les mois clôturés gardent leur photo : vous pouvez la supprimer sans perdre l’historique.',
+    monthCharges: (month: string) => `Charges ${deMonth(month)}`,
+    thisMonthCount: (n: number) => `${n} charges ce mois-ci`,
+    sameAmount: 'Le même montant chaque mois sur les 12 prochains mois.',
+    average: 'Moyenne sur 12 mois',
+    endingSoon: (items: Array<{ label: string; month: string }>) =>
+      `Plus basse car ${joinFr(items.map(({ label, month }) => `« ${label} » (jusqu’en ${month})`))} ${items.length > 1 ? 's’arrêtent' : 's’arrête'} bientôt.`,
+    lower: 'Plus basse : ce mois-ci compte des charges qui ne reviennent pas tous les mois.',
+    higher: 'Plus haute : des charges annuelles ou ponctuelles arrivent dans les prochains mois.',
+    uncategorized: (n: number) => `${n} charge${n > 1 ? 's' : ''} sans catégorie : les suggestions d’économies ne peuvent pas les comparer.`,
+    detect: 'Détecter les catégories',
+    exceptions: (n: number) => `${n} exception${n > 1 ? 's' : ''}`,
+    linked: (amount: string) => `réel lié : ${amount}`,
+    emptyAll: 'Aucune charge pour l’instant. Commencez par le loyer, l’énergie, les assurances…',
+    emptyEnded: 'Aucune charge terminée.',
+    emptyUpcoming: 'Aucune charge programmée pour plus tard.',
+    emptyActive: 'Aucune charge en cours.',
+    addCharge: 'Ajouter une charge',
+    aiBudget: 'Laisser l’IA proposer un budget',
+    personalTitle: 'Charges perso',
+    personalIntro: 'Payées par un membre sur son argent de poche : elles ne comptent ni dans le pot commun, ni dans la répartition.',
+    personalCharge: 'Charge perso',
+    personTotal: (amount: string, month: string) => `· ${amount} en ${month}`,
+    privateAria: 'privée',
+    personalEmpty: 'Impôt, envoi d’argent, crédit perso… Ajoutez ici ce qu’un membre paie seul : son argent de poche baissera d’autant dans le Foyer.',
+    suggestions: 'Suggestions d’économies',
+  },
+  en: {
+    filters: { active: 'Active', upcoming: 'Upcoming', ended: 'Ended' },
+    groups: { monthly: 'Every month', custom: 'Some months', yearly: 'Once a year', once: 'One-off expenses' },
+    noneDetected: 'No new categories could be detected.',
+    categorized: (n: number) => (n === 1 ? '1 bill categorized.' : `${n} bills categorized.`),
+    perYear: '/ year',
+    once: 'once',
+    perMonth: '/ month',
+    title: 'Bills',
+    intro: 'Your rules. Each month fills itself in from them; exceptions are made from the month itself.',
+    newCharge: 'New bill',
+    filterAria: 'Filter bills',
+    endedInfo: 'An ended bill no longer shows up in the following months. Closed months keep their snapshot: you can delete it without losing the history.',
+    monthCharges: (month: string) => `${month} bills`,
+    thisMonthCount: (n: number) => (n === 1 ? '1 bill this month' : `${n} bills this month`),
+    sameAmount: 'The same amount every month for the next 12 months.',
+    average: '12-month average',
+    endingSoon: (items: Array<{ label: string; month: string }>) =>
+      `Lower because ${joinFr(items.map(({ label, month }) => `“${label}” (until ${month})`))} ${items.length > 1 ? 'end' : 'ends'} soon.`,
+    lower: 'Lower: this month has bills that don’t come back every month.',
+    higher: 'Higher: yearly or one-off bills are coming up in the next few months.',
+    uncategorized: (n: number) => `${n === 1 ? '1 bill' : `${n} bills`} without a category: money-saving suggestions can’t compare them.`,
+    detect: 'Detect categories',
+    exceptions: (n: number) => (n === 1 ? '1 exception' : `${n} exceptions`),
+    linked: (amount: string) => `linked actual: ${amount}`,
+    emptyAll: 'No bills yet. Start with rent, energy, insurance…',
+    emptyEnded: 'No ended bills.',
+    emptyUpcoming: 'No bills scheduled for later.',
+    emptyActive: 'No active bills.',
+    addCharge: 'Add a bill',
+    aiBudget: 'Let the AI suggest a budget',
+    personalTitle: 'Personal expenses',
+    personalIntro: 'Paid by a member out of their spending money: they don’t count in the joint pot or in the split.',
+    personalCharge: 'Personal expense',
+    personTotal: (amount: string, month: string) => `· ${amount} in ${month}`,
+    privateAria: 'private',
+    personalEmpty: 'Taxes, money sent to family, a personal loan… Add here what a member pays on their own: their spending money goes down by the same amount in the Household tab.',
+    suggestions: 'Money-saving suggestions',
+  },
+});
 
-const GROUPS: Array<{ id: Frequency; title: string }> = [
-  { id: 'monthly', title: 'Tous les mois' },
-  { id: 'custom', title: 'Certains mois' },
-  { id: 'yearly', title: 'Une fois par an' },
-  { id: 'once', title: 'Ponctuelles' },
-];
+const FILTERS: ItemStatus[] = ['active', 'upcoming', 'ended'];
+
+const GROUPS: Frequency[] = ['monthly', 'custom', 'yearly', 'once'];
 
 function isFilter(v: string | null): v is ItemStatus {
   return v === 'active' || v === 'upcoming' || v === 'ended';
 }
 
 export default function ChargesTab() {
+  const t = useT(M);
   const { id } = useParams<{ id: string }>();
   const { model, engine, today, fmt, openSheet, commit, mappedTotalsByChargeId, householdSize, budgetLocation, budgetCurrency, markSuggestionsRun } = useBudget();
   const { toast } = useToast();
@@ -86,9 +161,10 @@ export default function ChargesTab() {
     return today;
   };
   const groups = GROUPS.map((g) => ({
-    ...g,
+    id: g,
+    title: t.groups[g],
     items: list
-      .filter((c) => chargeFrequency(c) === g.id)
+      .filter((c) => chargeFrequency(c) === g)
       .map((c) => ({ c, amount: chargeBaseAmount(c, refMonth(c)) }))
       .sort((a, b) => b.amount - a.amount || a.c.label.localeCompare(b.c.label, 'fr')),
   })).filter((g) => g.items.length > 0);
@@ -138,41 +214,41 @@ export default function ChargesTab() {
     setCategorizing(false);
     const n = Object.keys(found).length;
     if (n === 0) {
-      toast({ description: 'Aucune nouvelle catégorie n’a pu être détectée.' });
+      toast({ description: t.noneDetected });
       return;
     }
     commit((m) => Object.entries(found).reduce((acc, [cid, cat]) => updateCharge(acc, cid, { category: cat }), m), {
-      message: `${n} charge${n > 1 ? 's' : ''} catégorisée${n > 1 ? 's' : ''}.`,
+      message: t.categorized(n),
     });
   };
 
   const perText = (c: Charge) => {
     const f = chargeFrequency(c);
-    if (f === 'yearly') return '/ an';
-    if (f === 'once') return 'une fois';
-    return '/ mois';
+    if (f === 'yearly') return t.perYear;
+    if (f === 'once') return t.once;
+    return t.perMonth;
   };
 
   return (
     <div className="flex flex-col gap-5 animate-in fade-in duration-200">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="font-display text-2xl sm:text-3xl font-extrabold tracking-tight">Charges</h1>
+          <h1 className="font-display text-2xl sm:text-3xl font-extrabold tracking-tight">{t.title}</h1>
           <p className="mt-1 max-w-xl text-sm text-muted-foreground">
-            Vos règles. Chaque mois se remplit tout seul à partir d’elles ; les exceptions se font depuis le mois concerné.
+            {t.intro}
           </p>
         </div>
         <Button className="min-h-[44px] self-start sm:self-auto" onClick={() => openSheet({ kind: 'chargeEditor', ym: firstOpen })}>
-          <Plus className="h-4 w-4" /> Nouvelle charge
+          <Plus className="h-4 w-4" /> {t.newCharge}
         </Button>
       </div>
 
-      <div role="group" aria-label="Filtrer les charges" className="flex flex-wrap gap-2">
+      <div role="group" aria-label={t.filterAria} className="flex flex-wrap gap-2">
         {FILTERS.map((f) => (
-          <ChipToggle key={f.id} pressed={filter === f.id} onClick={() => setFilter(f.id)}>
-            {f.label}
-            <span className={cn('inline-flex h-5 min-w-[20px] items-center justify-center rounded-full px-1.5 text-xs tabular-nums', filter === f.id ? 'bg-white/20' : 'bg-muted')}>
-              {counts[f.id]}
+          <ChipToggle key={f} pressed={filter === f} onClick={() => setFilter(f)}>
+            {t.filters[f]}
+            <span className={cn('inline-flex h-5 min-w-[20px] items-center justify-center rounded-full px-1.5 text-xs tabular-nums', filter === f ? 'bg-white/20' : 'bg-muted')}>
+              {counts[f]}
             </span>
           </ChipToggle>
         ))}
@@ -181,7 +257,7 @@ export default function ChargesTab() {
       {filter === 'ended' && counts.ended > 0 && (
         <p className="flex items-start gap-2.5 rounded-2xl bg-stone-100 px-4 py-3 text-sm text-stone-800">
           <Info className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
-          Une charge terminée n’apparaît plus dans les mois suivants. Les mois clôturés gardent leur photo : vous pouvez la supprimer sans perdre l’historique.
+          {t.endedInfo}
         </p>
       )}
       {filter === 'active' && counts.active > 0 && (
@@ -190,25 +266,25 @@ export default function ChargesTab() {
             to={`/budget/${id}/complete/month?m=${today}`}
             className="group flex flex-col gap-1 rounded-2xl border border-border/70 bg-card p-4 shadow-soft transition-colors hover:border-primary/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
-            <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Charges {deMonth(monthNameLower(today))}</span>
+            <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">{t.monthCharges(monthNameLower(today))}</span>
             <span className="font-display text-3xl font-extrabold tracking-tight tabular-nums">{fmt(thisMonth.totals.charges)}</span>
             <span className="flex items-center gap-1 text-sm text-muted-foreground">
-              {thisMonth.charges.filter((c) => c.amount !== 0).length} charges ce mois-ci
+              {t.thisMonthCount(thisMonth.charges.filter((c) => c.amount !== 0).length)}
               <ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
             </span>
           </Link>
           {Math.abs(avg - thisMonth.totals.charges) < 0.5 ? (
-            <p className="self-center text-sm text-muted-foreground">Le même montant chaque mois sur les 12 prochains mois.</p>
+            <p className="self-center text-sm text-muted-foreground">{t.sameAmount}</p>
           ) : (
           <div className="flex flex-col gap-1 rounded-2xl border border-border/70 bg-card p-4 shadow-soft">
-            <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Moyenne sur 12 mois</span>
+            <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">{t.average}</span>
             <span className="font-display text-3xl font-extrabold tracking-tight tabular-nums">{fmt(avg)}</span>
             <span className="text-sm text-muted-foreground">
               {ending.length > 0
-                ? `Plus basse car ${joinFr(ending.map(({ charge, last }) => `« ${charge.label} » (jusqu’en ${monthNameLower(last)})`))} ${ending.length > 1 ? 's’arrêtent' : 's’arrête'} bientôt.`
+                ? t.endingSoon(ending.map(({ charge, last }) => ({ label: charge.label, month: monthNameLower(last) })))
                 : avg < thisMonth.totals.charges
-                  ? 'Plus basse : ce mois-ci compte des charges qui ne reviennent pas tous les mois.'
-                  : 'Plus haute : des charges annuelles ou ponctuelles arrivent dans les prochains mois.'}
+                  ? t.lower
+                  : t.higher}
             </span>
           </div>
           )}
@@ -217,10 +293,10 @@ export default function ChargesTab() {
       {filter !== 'ended' && uncategorized.length > 0 && (
         <div className="flex flex-col gap-2 rounded-2xl border border-sky-100 bg-sky-50 px-4 py-3 sm:flex-row sm:items-center">
           <p className="flex-1 text-sm text-sky-950">
-            {uncategorized.length} charge{uncategorized.length > 1 ? 's' : ''} sans catégorie : les suggestions d’économies ne peuvent pas les comparer.
+            {t.uncategorized(uncategorized.length)}
           </p>
           <Button variant="outline" className="min-h-[40px] bg-card" onClick={categorizeAll} disabled={categorizing}>
-            {categorizing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wand2 className="h-4 w-4" />} Détecter les catégories
+            {categorizing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wand2 className="h-4 w-4" />} {t.detect}
           </Button>
         </div>
       )}
@@ -233,8 +309,8 @@ export default function ChargesTab() {
               const exceptions = Object.keys(c.overrides ?? {}).length;
               const hint = [
                 amountHistoryHint(c.amountHistory, refMonth(c), fmt),
-                exceptions ? `${exceptions} exception${exceptions > 1 ? 's' : ''}` : '',
-                mappedTotalsByChargeId[c.id] ? `réel lié : ${fmt(mappedTotalsByChargeId[c.id])}` : '',
+                exceptions ? t.exceptions(exceptions) : '',
+                mappedTotalsByChargeId[c.id] ? t.linked(fmt(mappedTotalsByChargeId[c.id])) : '',
               ]
                 .filter(Boolean)
                 .join(' · ');
@@ -267,21 +343,21 @@ export default function ChargesTab() {
         <div className="flex flex-col items-center gap-3 rounded-2xl border-[1.5px] border-dashed border-border px-5 py-10 text-center">
           <p className="text-sm text-muted-foreground">
             {household.length === 0
-              ? 'Aucune charge pour l’instant. Commencez par le loyer, l’énergie, les assurances…'
+              ? t.emptyAll
               : filter === 'ended'
-                ? 'Aucune charge terminée.'
+                ? t.emptyEnded
                 : filter === 'upcoming'
-                  ? 'Aucune charge programmée pour plus tard.'
-                  : 'Aucune charge en cours.'}
+                  ? t.emptyUpcoming
+                  : t.emptyActive}
           </p>
           {household.length === 0 && (
             <div className="flex flex-wrap justify-center gap-2">
               <Button className="min-h-[44px]" onClick={() => openSheet({ kind: 'chargeEditor', ym: firstOpen })}>
-                <Plus className="h-4 w-4" /> Ajouter une charge
+                <Plus className="h-4 w-4" /> {t.addCharge}
               </Button>
               <Button asChild variant="outline" className="min-h-[44px]">
                 <Link to={`/budget/${id}/complete/ai`}>
-                  <Sparkles className="h-4 w-4" /> Laisser l’IA proposer un budget
+                  <Sparkles className="h-4 w-4" /> {t.aiBudget}
                 </Link>
               </Button>
             </div>
@@ -293,11 +369,11 @@ export default function ChargesTab() {
         <section aria-labelledby="perso-title" className="flex flex-col gap-2">
           <div className="flex flex-wrap items-end justify-between gap-2 px-1">
             <div>
-              <h2 id="perso-title" className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Charges perso</h2>
-              <p className="text-xs text-muted-foreground">Payées par un membre sur son argent de poche : elles ne comptent ni dans le pot commun, ni dans la répartition.</p>
+              <h2 id="perso-title" className="text-xs font-bold uppercase tracking-wider text-muted-foreground">{t.personalTitle}</h2>
+              <p className="text-xs text-muted-foreground">{t.personalIntro}</p>
             </div>
             <Button variant="ghost" className="min-h-[40px] text-primary" onClick={() => openSheet({ kind: 'chargeEditor', ym: firstOpen, ownerId: model.people[0]?.id })}>
-              <Plus className="h-4 w-4" /> Charge perso
+              <Plus className="h-4 w-4" /> {t.personalCharge}
             </Button>
           </div>
           {personalGroups.map(({ person, items }) => (
@@ -305,7 +381,7 @@ export default function ChargesTab() {
               <p className="px-2.5 pb-1 pt-1.5 text-sm font-semibold">
                 {person.name}{' '}
                 <span className="font-normal text-muted-foreground">
-                  · {fmt(thisMonth.people.find((p) => p.id === person.id)?.personalCharges ?? 0)} en {monthNameLower(today)}
+                  {t.personTotal(fmt(thisMonth.people.find((p) => p.id === person.id)?.personalCharges ?? 0), monthNameLower(today))}
                 </span>
               </p>
               {items.map((c) => {
@@ -317,7 +393,7 @@ export default function ChargesTab() {
                         <Lock className="h-4 w-4" />
                       </span>
                       <span className="flex min-w-0 flex-1 flex-col">
-                        <span className="text-[15px] font-semibold text-muted-foreground">Charge privée</span>
+                        <span className="text-[15px] font-semibold text-muted-foreground">{privateChargeName()}</span>
                         <span className="text-[13px] text-muted-foreground">{describeChargeSchedule(c, today)}</span>
                       </span>
                       <span className="whitespace-nowrap text-[15px] font-bold tabular-nums">{fmt(amount)}</span>
@@ -335,7 +411,7 @@ export default function ChargesTab() {
                     <span className="flex min-w-0 flex-1 flex-col gap-0.5">
                       <span className="flex items-center gap-1.5 truncate text-[15px] font-semibold">
                         {privacy.label(c)}
-                        {c.private && <Lock className="h-3.5 w-3.5 shrink-0 text-muted-foreground" aria-label="privée" />}
+                        {c.private && <Lock className="h-3.5 w-3.5 shrink-0 text-muted-foreground" aria-label={t.privateAria} />}
                       </span>
                       <span className="text-[13px] text-muted-foreground">{describeChargeSchedule(c, today)}</span>
                     </span>
@@ -351,14 +427,14 @@ export default function ChargesTab() {
           ))}
           {personalGroups.length === 0 && (
             <p className="rounded-2xl border-[1.5px] border-dashed border-border px-4 py-4 text-center text-sm text-muted-foreground">
-              Impôt, envoi d’argent, crédit perso… Ajoutez ici ce qu’un membre paie seul : son argent de poche baissera d’autant dans le Foyer.
+              {t.personalEmpty}
             </p>
           )}
         </section>
       )}
 
       {suggestionCharges.length > 0 && id && (
-        <section id="suggestions" aria-label="Suggestions d’économies" className="scroll-mt-24">
+        <section id="suggestions" aria-label={t.suggestions} className="scroll-mt-24">
           <EnhancedSuggestions budgetId={id} charges={suggestionCharges} householdSize={householdSize} location={budgetLocation} currency={budgetCurrency} />
         </section>
       )}

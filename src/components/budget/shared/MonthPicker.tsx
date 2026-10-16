@@ -8,6 +8,20 @@ import { CalendarDays, ChevronLeft, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { YM } from '@/lib/budget/types';
 import { compareYM, formatMonthLong, makeYM, monthNamesLower, monthNamesShort, yearOf } from '@/lib/budget/months';
+import { defineMessages, useT } from '@/i18n/runtime';
+
+const M = defineMessages({
+  fr: {
+    field: (label: string, month: string) => `${label} : ${month}`,
+    prevYear: 'Année précédente',
+    nextYear: 'Année suivante',
+  },
+  en: {
+    field: (label: string, month: string) => `${label}: ${month}`,
+    prevYear: 'Previous year',
+    nextYear: 'Next year',
+  },
+});
 
 interface MonthPickerProps {
   id?: string;
@@ -21,6 +35,7 @@ interface MonthPickerProps {
 }
 
 export function MonthPicker({ id, value, onChange, min, max, prefix, ariaLabel }: MonthPickerProps) {
+  const t = useT(M);
   const [open, setOpen] = useState(false);
   const [year, setYear] = useState(yearOf(value));
   const minYear = min ? yearOf(min) : yearOf(value) - 10;
@@ -32,7 +47,7 @@ export function MonthPicker({ id, value, onChange, min, max, prefix, ariaLabel }
         id={id}
         type="button"
         aria-expanded={open}
-        aria-label={ariaLabel ? `${ariaLabel} : ${formatMonthLong(value)}` : undefined}
+        aria-label={ariaLabel ? t.field(ariaLabel, formatMonthLong(value)) : undefined}
         onClick={() => {
           setYear(yearOf(value));
           setOpen((o) => !o);
@@ -50,7 +65,7 @@ export function MonthPicker({ id, value, onChange, min, max, prefix, ariaLabel }
           <div className="mb-2 flex items-center justify-between">
             <button
               type="button"
-              aria-label="Année précédente"
+              aria-label={t.prevYear}
               disabled={year <= minYear}
               onClick={() => setYear((y) => y - 1)}
               className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-border hover:bg-muted disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
@@ -60,7 +75,7 @@ export function MonthPicker({ id, value, onChange, min, max, prefix, ariaLabel }
             <span className="font-display text-base font-bold tabular-nums">{year}</span>
             <button
               type="button"
-              aria-label="Année suivante"
+              aria-label={t.nextYear}
               disabled={year >= maxYear}
               onClick={() => setYear((y) => y + 1)}
               className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-border hover:bg-muted disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"

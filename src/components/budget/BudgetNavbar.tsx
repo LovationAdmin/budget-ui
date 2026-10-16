@@ -78,8 +78,8 @@ const M = defineMessages({
     profile: 'Profile',
     myBudgets: 'My budgets',
     tutorial: 'Watch the tutorial',
-    logout: 'Log out',
-    login: 'Log in',
+    logout: 'Sign out',
+    login: 'Sign in',
     signup: 'Create an account',
   },
 });
@@ -201,7 +201,7 @@ export const BudgetNavbar = memo(function BudgetNavbar({
                 <p className="font-display font-semibold text-foreground truncate max-w-[200px]">
                   {budgetTitle}
                 </p>
-                <p className="text-xs text-muted-foreground">{t.subtitle}</p>
+                <p className="whitespace-nowrap text-xs text-muted-foreground">{t.subtitle}</p>
               </div>
             </button>
           </div>
@@ -210,20 +210,26 @@ export const BudgetNavbar = memo(function BudgetNavbar({
             {visibleItems.map((item) => {
               const Icon = item.icon;
               const isActive = currentSection === item.id;
+              // A full bar (the budget's tabs) keeps one line on narrow
+              // desktops: the other tabs show their icon only below xl.
+              const dense = visibleItems.length >= MAX_VISIBLE_DESKTOP;
               return (
                 <button
                   key={item.id}
                   onClick={() => handleSectionClick(item.id)}
                   aria-current={isActive ? 'page' : undefined}
+                  aria-label={dense && !isActive ? item.label : undefined}
+                  title={dense && !isActive ? item.label : undefined}
                   className={cn(
-                    'flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium transition-all duration-200 min-h-[44px]',
+                    'flex items-center gap-2 whitespace-nowrap rounded-xl py-2 text-sm font-medium transition-all duration-200 min-h-[44px]',
+                    dense ? 'px-3 2xl:px-4' : 'px-4',
                     isActive
                       ? 'bg-primary text-primary-foreground shadow-soft'
                       : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
                   )}
                 >
                   <Icon className="h-4 w-4" />
-                  {item.label}
+                  <span className={dense && !isActive ? 'hidden xl:inline' : undefined}>{item.label}</span>
                 </button>
               );
             })}
@@ -233,7 +239,7 @@ export const BudgetNavbar = memo(function BudgetNavbar({
                 <DropdownMenuTrigger asChild>
                   <button
                     className={cn(
-                      'flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium transition-all duration-200 min-h-[44px]',
+                      'flex items-center gap-2 whitespace-nowrap rounded-xl px-3 py-2 text-sm font-medium transition-all duration-200 min-h-[44px] xl:px-4',
                       overflowItems.some((it) => it.id === currentSection)
                         ? 'bg-primary text-primary-foreground shadow-soft'
                         : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
