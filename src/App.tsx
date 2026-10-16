@@ -132,6 +132,8 @@ export default function App() {
           <Route path="/outils-ia" element={<SmartTools />} />
           <Route path="/blog" element={<Blog />} />
           <Route path="/blog/:slug" element={<BlogArticle />} />
+          <Route path="/en/blog" element={<Blog />} />
+          <Route path="/en/blog/:slug" element={<BlogArticle />} />
 
           {/* AUTHENTICATED — top level */}
           <Route

@@ -8,6 +8,8 @@
 // sitemap) and the language switch links them.
 // ============================================================================
 
+import { BLOG_PAIRS } from '@/data/blog-pairs';
+
 export type Locale = 'fr' | 'en';
 
 export const DEFAULT_LOCALE: Locale = 'fr';
@@ -41,6 +43,8 @@ export const TRANSLATIONS: ReadonlyArray<Partial<Record<Locale, string>>> = [
   { fr: '/about', en: '/en/about' },
   { fr: '/privacy', en: '/en/privacy' },
   { fr: '/terms', en: '/en/terms' },
+  { fr: '/blog', en: '/en/blog' },
+  ...BLOG_PAIRS.map((p) => ({ fr: `/blog/${p.fr}`, en: `/en/blog/${p.en}` })),
 ];
 
 const normalize = (path: string) => (path.length > 1 ? path.replace(/\/+$/, '') || '/' : path);

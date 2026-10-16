@@ -17,6 +17,9 @@ import { computeColocation } from '@/lib/tools/colocation';
 import { exampleResult } from '@/lib/tools/mariage';
 import { computeResteAVivre } from '@/lib/tools/resteAVivre';
 import { PAGES } from '@/seo/site';
+import { BLOG_PAIRS } from '@/data/blog-pairs';
+import { blogArticles } from '@/data/blog-articles';
+import { blogArticlesEn } from '@/data/blog-articles-en';
 
 type Fn = () => void;
 const tests: Array<{ name: string; fn: Fn }> = [];
@@ -51,8 +54,12 @@ test('language of a path', () => {
   eq(localeOf('/entreprise'), 'fr', 'a French path starting with "en"');
 });
 
-test('every translated page: in its language, indexable, in the sitemap', () => {
-  const indexed = new Set(PAGES.filter((p) => !p.noindex && !p.canonical).map((p) => p.path));
+test('every translated page: in its language, indexable, in the sitemap (pages and articles)', () => {
+  const indexed = new Set([
+    ...PAGES.filter((p) => !p.noindex && !p.canonical).map((p) => p.path),
+    ...blogArticles.map((a) => `/blog/${a.slug}`),
+    ...blogArticlesEn.map((a) => `/en/blog/${a.slug}`),
+  ]);
   for (const t of TRANSLATIONS) {
     for (const [l, path] of Object.entries(t) as Array<[Locale, string]>) {
       eq(localeOf(path), l, path);
@@ -72,7 +79,7 @@ test('hreflang: reciprocal, own version included, x-default in English', () => {
       eq(h.find((x) => x.hreflang === 'x-default')?.path, t.en, path);
     }
   }
-  eq(hreflangsOf('/blog'), [], 'untranslated page');
+  eq(hreflangsOf('/blog/gerer-budget-familial-senegal-dakar'), [], 'untranslated page');
 });
 
 test('each language home is a page of the site', () => {
@@ -145,5 +152,18 @@ test('English calculators: each one listed, translated and indexable', () => {
     eq(localeOf(tool.path), 'en', tool.path);
     eq(!!alternatesOf(tool.path)?.fr, true, `${tool.path} has a French version`);
     eq(indexed.has(tool.path), true, tool.path);
+  }
+});
+
+test('English blog: every article adapts a French one, both paired in BLOG_PAIRS', () => {
+  const fr = new Set(blogArticles.map((a) => a.slug));
+  const en = new Set(blogArticlesEn.map((a) => a.slug));
+  eq(BLOG_PAIRS.length, blogArticlesEn.length, 'one pair per English article');
+  for (const a of blogArticlesEn) {
+    const pair = BLOG_PAIRS.find((p) => p.en === a.slug);
+    eq(pair?.fr, a.translationOf, a.slug);
+    eq(fr.has(a.translationOf ?? ''), true, `${a.slug} → ${a.translationOf} exists in French`);
+    for (const r of a.related ?? []) eq(en.has(r), true, `${a.slug} related ${r}`);
+    eq(alternatesOf(`/en/blog/${a.slug}`)?.fr, `/blog/${a.translationOf}`, a.slug);
   }
 });

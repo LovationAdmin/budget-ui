@@ -19,7 +19,7 @@ export function RouteSEO() {
     if (localeOf(pathname) !== 'fr') setPreference(localeOf(pathname));
   }, [pathname, setPreference]);
   useEffect(() => {
-    if (/^\/blog\/[^/]+/.test(pathname)) return;
+    if (/^(\/en)?\/blog\/[^/]+/.test(pathname)) return;
     const page = pageSEO(pathname);
     if (page) {
       applyHead({ title: page.title, description: page.description, canonical: page.canonical ?? page.path, noindex: page.noindex, locale });

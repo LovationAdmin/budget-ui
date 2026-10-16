@@ -178,7 +178,11 @@ const M = defineMessages({
     blogIntro: 'Personal, couple and family budgets, savings and goals: our practical guides.',
     allArticles: 'All articles →',
     guide: 'Guide',
-    latest: [] as Array<{ title: string; to: string; readTime: string }>,
+    latest: [
+      { title: 'Joint Account as a Couple: How Much Each Pays, and Spending Money', to: '/en/blog/joint-account-couples-spending-money', readTime: '7 min' },
+      { title: 'How Much to Save Each Month to Reach a Goal by a Date', to: '/en/blog/how-much-to-save-each-month-for-a-goal', readTime: '5 min' },
+      { title: 'Monthly Budget for a Family of Four: A Worked Example', to: '/en/blog/family-of-four-budget-example', readTime: '8 min' },
+    ],
     finalTitle: 'Your budget, finally simple',
     finalText: 'Free, no credit card. Start on your own, invite whoever you like later.',
   },

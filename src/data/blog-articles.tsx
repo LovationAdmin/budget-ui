@@ -20,6 +20,8 @@ export interface BlogArticleContent {
   featured?: boolean;
   /** Slugs shown first under « À lire aussi » (then by shared tags). */
   related?: string[];
+  /** English articles: the slug of the French article they adapt (hreflang pair). */
+  translationOf?: string;
 }
 
 export const blogArticles: BlogArticleContent[] = [
