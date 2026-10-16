@@ -146,6 +146,10 @@ export const BudgetNavbar = memo(function BudgetNavbar({
   const { startTutorial } = useTutorial();
 
   const isAuthenticated = !!user;
+  /** Public pages: many sections plus the sign-in buttons on one bar. */
+  const publicBar = !isAuthenticated && items.length >= 5;
+  /** The bar already links to the help page: no second help button. */
+  const helpInBar = items.some((item) => item.id === 'help');
   const [helpOpen, setHelpOpen] = useState(false);
   const [internalMenuOpen, setInternalMenuOpen] = useState(false);
   const menuOpen = externalMenuOpen ?? internalMenuOpen;
@@ -200,7 +204,7 @@ export const BudgetNavbar = memo(function BudgetNavbar({
           className
         )}
       >
-        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
+        <div className={cn('mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8', publicBar && 'min-[1360px]:max-w-[1440px]')}>
           <div className="flex items-center gap-4 min-w-0">
             {items.length > 0 && (
               <Button
@@ -223,7 +227,7 @@ export const BudgetNavbar = memo(function BudgetNavbar({
                 <p className="font-display font-semibold text-foreground truncate max-w-[200px]">
                   {budgetTitle}
                 </p>
-                <p className="whitespace-nowrap text-xs text-muted-foreground">{t.subtitle}</p>
+                <p className="truncate max-w-[200px] text-xs text-muted-foreground">{t.subtitle}</p>
               </div>
             </button>
           </div>
@@ -232,9 +236,11 @@ export const BudgetNavbar = memo(function BudgetNavbar({
             {visibleItems.map((item) => {
               const Icon = item.icon;
               const isActive = currentSection === item.id;
-              // A full bar (the budget's tabs) keeps one line on narrow
-              // desktops: the other tabs show their icon only below xl.
-              const dense = visibleItems.length >= MAX_VISIBLE_DESKTOP;
+              // A full bar keeps one line on narrow desktops: the other tabs
+              // show their icon only below xl (the budget's tabs), or below
+              // 1360px when the sign-in buttons share the bar (public pages,
+              // whose bar then widens to fit every label).
+              const dense = visibleItems.length >= MAX_VISIBLE_DESKTOP || publicBar;
               return (
                 <button
                   key={item.id}
@@ -244,14 +250,15 @@ export const BudgetNavbar = memo(function BudgetNavbar({
                   title={dense && !isActive ? item.label : undefined}
                   className={cn(
                     'flex items-center gap-2 whitespace-nowrap rounded-xl py-2 text-sm font-medium transition-all duration-200 min-h-[44px]',
-                    dense ? 'px-3 2xl:px-4' : 'px-4',
+                    dense ? (publicBar ? 'px-3' : 'px-3 2xl:px-4') : 'px-4',
+                    dense && !isActive && 'min-w-[44px] justify-center',
                     isActive
                       ? 'bg-primary text-primary-foreground shadow-soft'
                       : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
                   )}
                 >
                   <Icon className="h-4 w-4" />
-                  <span className={dense && !isActive ? 'hidden xl:inline' : undefined}>{item.label}</span>
+                  <span className={dense && !isActive ? (publicBar ? 'hidden min-[1360px]:inline' : 'hidden xl:inline') : undefined}>{item.label}</span>
                 </button>
               );
             })}
@@ -296,15 +303,17 @@ export const BudgetNavbar = memo(function BudgetNavbar({
 
           <div className="flex items-center gap-2">
             <LanguageToggle />
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={handleHelpOpen}
-              className="text-muted-foreground hover:text-foreground h-10 w-10"
-              aria-label={t.help}
-            >
-              <HelpCircle className="h-5 w-5" />
-            </Button>
+            {!(helpInBar && !isAuthenticated) && (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={handleHelpOpen}
+                className="text-muted-foreground hover:text-foreground h-10 w-10"
+                aria-label={t.help}
+              >
+                <HelpCircle className="h-5 w-5" />
+              </Button>
+            )}
 
             {isAuthenticated ? (
               <>

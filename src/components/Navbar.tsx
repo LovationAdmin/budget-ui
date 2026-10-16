@@ -11,6 +11,7 @@ import { APP_LOCALES, LOCALES, alternatesOf, localizedPath } from '@/i18n/locale
 import { defineMessages, useLocale, useT } from '@/i18n/runtime';
 import {
   LayoutDashboard,
+  LayoutGrid,
   Newspaper,
   Sparkles,
   HelpCircle,
@@ -82,7 +83,7 @@ export default function Navbar() {
         user
           ? { id: 'dashboard', label: t.dashboard, icon: LayoutDashboard }
           : { id: 'home', label: t.home, icon: Home },
-        { id: 'features', label: t.features, icon: Sparkles },
+        { id: 'features', label: t.features, icon: LayoutGrid },
         { id: 'smart-tools', label: t.smartTools, icon: Sparkles },
         { id: 'premium', label: t.premium, icon: Crown },
         { id: 'blog', label: t.blog, icon: Newspaper },

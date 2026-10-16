@@ -26,10 +26,13 @@ type Icon = typeof Users;
 const STEP_ICONS: Icon[] = [Users, Wallet, Scale];
 const USE_ICONS: Icon[] = [User, Heart, Home, KeyRound, Plane, Layers];
 const FEATURE_VISUALS: Array<{ icon: Icon; img: string }> = [
-  { icon: Scale, img: '/images/app/foyer.jpg' },
-  { icon: Lock, img: '/images/app/charge-sheet.jpg' },
-  { icon: Target, img: '/images/app/saving.jpg' },
+  { icon: Scale, img: 'foyer.jpg' },
+  { icon: Lock, img: 'charge-sheet.jpg' },
+  { icon: Target, img: 'saving.jpg' },
 ];
+
+/** Screenshots of the app in the page's language: French demo household in euros, English one in dollars. */
+const shotOf = (file: string, locale: string) => `/images/app/${locale === 'en' ? 'en/' : ''}${file}`;
 
 interface Feature { kicker: string; title: string; text: string; points: string[]; alt: string }
 
@@ -144,21 +147,21 @@ const M = defineMessages({
         title: 'Joint pot and spending money, finally clear',
         text: 'For each person: their pay, what they put into the joint pot and what they really have left. The assistant works out a fair split on the actual month.',
         points: ['50/50, in proportion to income, or the same spending money for both', 'Worked out on the current month, not an average', 'Each member’s history, month by month'],
-        alt: 'Household tab: pay, joint pot contribution and spending money of Camille and Mehdi',
+        alt: 'Household tab: take-home pay, joint pot contribution and spending money of Alex and Sam',
       },
       {
         kicker: 'Privacy',
         title: 'Personal expenses, without revealing everything',
         text: 'A tax bill, money sent to family, a personal loan: it comes out of your spending money, never out of the joint pot.',
         points: ['Personal expense public or private', 'When private, its name is encrypted and visible to you only', 'The amount stays fair for the whole household'],
-        alt: 'New personal expense “Income tax”, paid by Mehdi, set to private',
+        alt: 'New personal expense “Student loan”, paid by Sam, set to private',
       },
       {
         kicker: 'Goals and savings',
         title: 'A target, a date: the amount works itself out',
         text: 'A holiday, a wedding, renovations, a down payment, a car: say how much you need and by when. Budget Famille works out what to set aside each month and checks that it fits.',
         points: ['Savings pots with a target and progress', 'Spending paid from savings, tracked', 'The year in review, net of what was spent'],
-        alt: 'Savings pot “Summer holiday 2027”: 500 saved, 17% of the target',
+        alt: 'Savings pot “Summer vacation 2027”: $600 saved, 20% of the target',
       },
     ] as Feature[],
     aiKicker: 'AI budget',
@@ -242,7 +245,7 @@ export default function LandingPage() {
             </div>
             <div className="relative mx-auto flex justify-center">
               <img
-                src="/images/app/month-light.jpg"
+                src={shotOf('month-light.jpg', locale)}
                 alt={t.heroAlt}
                 width={390}
                 height={640}
@@ -250,7 +253,7 @@ export default function LandingPage() {
                 className="h-auto w-full max-w-[320px] rounded-[32px] border border-border/70 shadow-elevated"
               />
               <img
-                src="/images/app/month-dark.jpg"
+                src={shotOf('month-dark.jpg', locale)}
                 alt=""
                 aria-hidden="true"
                 width={390}
@@ -332,7 +335,7 @@ export default function LandingPage() {
                       </ul>
                     </div>
                     <div className={`flex justify-center ${i % 2 ? 'md:order-1' : ''}`}>
-                      <Screenshot src={img} alt={f.alt} />
+                      <Screenshot src={shotOf(img, locale)} alt={f.alt} />
                     </div>
                   </article>
                 );

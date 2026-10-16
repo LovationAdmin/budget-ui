@@ -28,7 +28,7 @@ const M = defineMessages<{
   xlsxLabel: string; pdfLabel: string; sizes: string; orApp: string; insideTitle: string;
   tab: (title: string) => string; tabs: Array<{ title: string; text: string }>;
   stepsTitle: string; steps: Array<[string, string]>; further: ReactNode;
-  appTitle: string; appPoints: string[]; appCta: string; appImageAlt: string; faqTitle: string;
+  appTitle: string; appPoints: string[]; appCta: string; appImageAlt: string; appImage: string; faqTitle: string;
   faq: Array<{ q: string; a: string }>;
 }>({
   fr: {
@@ -75,6 +75,7 @@ const M = defineMessages<{
     ],
     appCta: 'Essayer Budget Famille gratuitement',
     appImageAlt: 'Le budget du mois dans l’application Budget Famille',
+    appImage: '/images/app/month-light.jpg',
     faqTitle: 'Questions fréquentes',
     faq: TEMPLATE_FAQ,
   },
@@ -121,6 +122,7 @@ const M = defineMessages<{
     ],
     appCta: 'Try Budget Famille for free',
     appImageAlt: 'The monthly budget in the Budget Famille app',
+    appImage: '/images/app/en/month-light.jpg',
     faqTitle: 'Frequently asked questions',
     faq: TEMPLATE_FAQ_EN,
   },
@@ -208,7 +210,7 @@ export default function BudgetTemplate() {
                 <Link to="/signup">{t.appCta} <ArrowRight className="ml-2 h-4 w-4" aria-hidden="true" /></Link>
               </Button>
             </div>
-            <img src="/images/app/month-light.jpg" alt={t.appImageAlt} width={390} height={640} loading="lazy" className="mx-auto h-auto w-full max-w-[240px] rounded-[26px] border border-white/10" />
+            <img src={t.appImage} alt={t.appImageAlt} width={390} height={640} loading="lazy" className="mx-auto h-auto w-full max-w-[240px] rounded-[26px] border border-white/10" />
           </div>
         </section>
 
