@@ -22,6 +22,8 @@
 // ============================================================================
 
 /** A calendar month, `YYYY-MM`. */
+import { defineMessages, pick } from '@/i18n/current';
+
 export type YM = string;
 
 /** An effective-dated value: applies from `from` until the next step. */
@@ -161,6 +163,11 @@ export const GENERAL_SAVINGS_ID = 'epargne';
  * category and note live server-side, readable by their creator only.
  */
 export const PRIVATE_CHARGE_LABEL = 'Charge privée';
+
+const PRIVATE_NAME = defineMessages({ fr: PRIVATE_CHARGE_LABEL, en: 'Private expense' });
+
+/** What a private charge is called on screen, in the screen's language (the stored name stays PRIVATE_CHARGE_LABEL). */
+export const privateChargeName = (): string => pick(PRIVATE_NAME);
 
 /** What the creator of a private personal charge keeps server-side. */
 export interface PrivateChargeDetails {

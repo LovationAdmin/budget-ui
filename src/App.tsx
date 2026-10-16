@@ -26,6 +26,7 @@ import { useTutorial } from './contexts/TutorialContext';
 import PrivateRoute from './components/PrivateRoute';
 import { Toaster } from '@/components/ui/toaster';
 import { RouteSEO } from '@/components/RouteSEO';
+import { useScreenLocale } from '@/i18n/runtime';
 
 // ===== Public pages =====
 import Login from './lib/pages/Login';
@@ -61,6 +62,12 @@ const BudgetPersonnel = lazy(() => import('./lib/pages/BudgetPersonnel'));
 const BudgetCalculatorEn = lazy(() => import('./lib/pages/en/BudgetCalculator'));
 const RentSplitCalculatorEn = lazy(() => import('./lib/pages/en/RentSplitCalculator'));
 const WeddingBudgetCalculatorEn = lazy(() => import('./lib/pages/en/WeddingBudgetCalculator'));
+const LeftoverIncomeCalculatorEn = lazy(() => import('./lib/pages/en/LeftoverIncomeCalculator'));
+const HomeZh = lazy(() => import('./lib/pages/zh/Home'));
+const BudgetCalculatorZh = lazy(() => import('./lib/pages/zh/BudgetCalculator'));
+const RentSplitCalculatorZh = lazy(() => import('./lib/pages/zh/RentSplitCalculator'));
+const WeddingBudgetCalculatorZh = lazy(() => import('./lib/pages/zh/WeddingBudgetCalculator'));
+const LeftoverIncomeCalculatorZh = lazy(() => import('./lib/pages/zh/LeftoverIncomeCalculator'));
 const Profile = lazy(() => import('./lib/pages/Profile'));
 const AcceptInvitation = lazy(() => import('./lib/pages/AcceptInvitation'));
 const EnableBankingCallbackPage = lazy(() => import('./lib/pages/EnableBankingCallbackPage'));
@@ -76,16 +83,19 @@ const TutorialModal = lazy(() => import('./components/tutorial/TutorialModal').t
 
 export default function App() {
   const { user } = useAuth();
+  // Changing language re-mounts the screen, so labels worked out once (memoized) follow.
+  const locale = useScreenLocale();
 
   return (
     <>
       <Suspense fallback={<PageFallback />}>
-        <Routes>
+        <Routes key={locale}>
           {/* ROOT */}
           <Route
             path="/"
             element={user ? <Navigate to="/dashboard" replace /> : <LandingPage />}
           />
+          <Route path="/en" element={user ? <Navigate to="/dashboard" replace /> : <LandingPage />} />
 
           <Route path="/admin/stats" element={
             <AdminRoute>
@@ -111,6 +121,20 @@ export default function App() {
           <Route path="/en/50-30-20-budget-calculator" element={<BudgetCalculatorEn />} />
           <Route path="/en/rent-split-calculator" element={<RentSplitCalculatorEn />} />
           <Route path="/en/wedding-budget-calculator" element={<WeddingBudgetCalculatorEn />} />
+          <Route path="/en/leftover-income-calculator" element={<LeftoverIncomeCalculatorEn />} />
+          <Route path="/en/free-budget-template" element={<BudgetTemplate />} />
+          <Route path="/en/features" element={<Features />} />
+          <Route path="/en/ai-tools" element={<SmartTools />} />
+          <Route path="/en/premium" element={<PremiumPage />} />
+          <Route path="/en/help" element={<Help />} />
+          <Route path="/en/about" element={<About />} />
+          <Route path="/en/privacy" element={<PrivacyPolicy />} />
+          <Route path="/en/terms" element={<Terms />} />
+          <Route path="/zh" element={<HomeZh />} />
+          <Route path="/zh/50-30-20-budget-calculator" element={<BudgetCalculatorZh />} />
+          <Route path="/zh/rent-split-calculator" element={<RentSplitCalculatorZh />} />
+          <Route path="/zh/wedding-budget-calculator" element={<WeddingBudgetCalculatorZh />} />
+          <Route path="/zh/leftover-income-calculator" element={<LeftoverIncomeCalculatorZh />} />
           <Route path="/about" element={<About />} />
           <Route path="/help" element={<Help />} />
           <Route path="/premium" element={<PremiumPage />} />
@@ -118,6 +142,8 @@ export default function App() {
           <Route path="/outils-ia" element={<SmartTools />} />
           <Route path="/blog" element={<Blog />} />
           <Route path="/blog/:slug" element={<BlogArticle />} />
+          <Route path="/en/blog" element={<Blog />} />
+          <Route path="/en/blog/:slug" element={<BlogArticle />} />
 
           {/* AUTHENTICATED — top level */}
           <Route

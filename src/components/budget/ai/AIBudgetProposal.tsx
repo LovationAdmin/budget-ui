@@ -10,7 +10,7 @@
 // household pot is set from the proposal (salary ≠ contribution).
 // ============================================================================
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -71,7 +71,7 @@ import {
   type ContributionRule,
 } from '@/lib/budget/mutations';
 import { compareYM, formatMonthLong, monthsBetween, startDateOf, deMonth } from '@/lib/budget/months';
-import { roundCents } from '@/lib/budget/format';
+import { money, moneySigned, roundCents } from '@/lib/budget/format';
 import { useFirstOpenMonth } from '@/components/budget/shared/hooks';
 import {
   AdvisorStage,
@@ -82,6 +82,7 @@ import {
   Feasibility,
 } from '@/types/aiBudget';
 import { clearAdvisorJob, retryAdvisorJob, startAdvisorJob, useAdvisorJob } from '@/lib/ai/advisorJob';
+import { defineMessages, useT } from '@/i18n/runtime';
 
 function currencySymbol(code?: string): string {
   switch (code) {
@@ -95,10 +96,10 @@ function currencySymbol(code?: string): string {
   }
 }
 
-const FEASIBILITY_STYLES: Record<Feasibility, { ring: string; badge: string; label: string }> = {
-  ok: { ring: 'border-emerald-200 bg-emerald-50/40', badge: 'bg-emerald-100 text-emerald-700', label: 'Soutenable' },
-  tight: { ring: 'border-amber-200 bg-amber-50/50', badge: 'bg-amber-100 text-amber-700', label: 'Serré' },
-  infeasible: { ring: 'border-red-200 bg-red-50/50', badge: 'bg-red-100 text-red-700', label: 'Intenable' },
+const FEASIBILITY_STYLES: Record<Feasibility, { ring: string; badge: string }> = {
+  ok: { ring: 'border-emerald-200 bg-emerald-50/40', badge: 'bg-emerald-100 text-emerald-700' },
+  tight: { ring: 'border-amber-200 bg-amber-50/50', badge: 'bg-amber-100 text-amber-700' },
+  infeasible: { ring: 'border-red-200 bg-red-50/50', badge: 'bg-red-100 text-red-700' },
 };
 
 const norm = (s: string) => s.trim().toLowerCase();
@@ -144,30 +145,334 @@ function mergeProposal(
 
 // Generation steps. The server reports the real one as the answer is written;
 // `at` (seconds) is only used when it cannot (older API without streaming).
-const LOADING_STEPS: { key: AdvisorStage; at: number; label: string }[] = [
-  { key: 'analyzing', at: 0, label: 'Analyse de votre situation et de vos revenus' },
-  { key: 'method', at: 8, label: 'Choix de la méthode de répartition la plus juste' },
-  { key: 'allocation', at: 16, label: 'Répartition des charges, poste par poste' },
-  { key: 'members', at: 24, label: 'Contribution et reste à vivre de chaque membre' },
-  { key: 'savings', at: 32, label: "Calcul des enveloppes d'épargne (sécurité, projets, vacances)" },
-  { key: 'feasibility', at: 40, label: 'Vérification de la faisabilité pour chaque membre' },
-  { key: 'summary', at: 48, label: 'Rédaction du résumé et finalisation' },
+type LoadingStage = Exclude<AdvisorStage, 'retry'>;
+
+const LOADING_STEPS: { key: LoadingStage; at: number }[] = [
+  { key: 'analyzing', at: 0 },
+  { key: 'method', at: 8 },
+  { key: 'allocation', at: 16 },
+  { key: 'members', at: 24 },
+  { key: 'savings', at: 32 },
+  { key: 'feasibility', at: 40 },
+  { key: 'summary', at: 48 },
 ];
 
-const METHOD_LABELS: Record<Method, string> = {
-  prorata: 'Au prorata des revenus',
-  equal: 'Parts égales (50/50)',
-  equalized_reste: 'Reste-à-vivre égal',
-  all_common: 'Tout commun',
-};
+interface Words {
+  feasibility: Record<Feasibility, string>;
+  steps: Record<LoadingStage, string>;
+  methods: Record<Method, string>;
+  errorTitles: Partial<Record<string, string>>;
+  errorTitle: string;
+  /** Amounts as the proposal shows them; `tight`: no space before the symbol. */
+  amount: (n: number, sym: string, tight?: boolean) => string;
+  memberFallback: string;
+  noMembersTitle: string;
+  noMembersDesc: string;
+  describeTitle: string;
+  describeDesc: string;
+  unusableTitle: string;
+  unusableDesc: string;
+  undoneTitle: string;
+  undoneDesc: string;
+  rejectedTitle: string;
+  rejectedDesc: string;
+  building: string;
+  elapsed: (seconds: number) => string;
+  retrying: string;
+  progressLabel: string;
+  switchTabs: string;
+  cancel: string;
+  editRequest: string;
+  retry: string;
+  created: string;
+  updated: string;
+  appliedSummary: (charges: number, savings: number, fresh: boolean, month: string, contributions: boolean) => string;
+  seeMonth: string;
+  seeSavings: string;
+  undo: string;
+  stale: string;
+  regenerate: string;
+  appliedBar: string;
+  infeasible: string;
+  tight: string;
+  bindingMember: (name: string) => string;
+  levers: string;
+  proposalTitle: string;
+  contribution: string;
+  pocketMoney: string;
+  resteAVivre: string;
+  personalSavings: string;
+  monthlyAllocation: string;
+  item: string;
+  amountHeader: string;
+  fundedBy: string;
+  envelopes: string;
+  simulator: string;
+  perMonth: string;
+  totalSavings: string;
+  savingsDelta: (delta: number, sym: string) => string;
+  assumptions: string;
+  openQuestions: string;
+  lifeEvents: string;
+  variableIncome: string;
+  separation: string;
+  applyMerge: (month: string) => ReactNode;
+  applyFill: (month: string) => ReactNode;
+  apply: string;
+  openSimulator: string;
+  reject: string;
+  infeasibleHint: string;
+  intakeTitle: string;
+  intakeIntro: string;
+  householdType: string;
+  householdTypes: Record<HouseholdType, string>;
+  preferredMethod: string;
+  letAIChoose: string;
+  personalSavingsQuestion: string;
+  topUpQuestion: string;
+  membersTitle: string;
+  emptyBudget: string;
+  name: string;
+  salary: (sym: string) => string;
+  add: string;
+  freeTextLabel: string;
+  freeTextPlaceholder: string;
+  freeTextHint: string;
+  dataUsed: (members: number, charges: number, goals: number, strong: (text: string) => ReactNode) => ReactNode;
+  refineLater: string;
+  noRetype: ReactNode;
+  generate: string;
+  addMemberFirst: ReactNode;
+}
 
-const ERROR_TITLES: Partial<Record<string, string>> = {
-  ai_timeout: "L'IA a mis trop de temps",
-  ai_busy: 'Service IA très sollicité',
-  ai_refused: 'Demande non traitée',
-  unauthorized: 'Session expirée',
-  connection_lost: 'Connexion interrompue',
-};
+const M = defineMessages<Words>({
+  fr: {
+    feasibility: { ok: 'Soutenable', tight: 'Serré', infeasible: 'Intenable' },
+    steps: {
+      analyzing: 'Analyse de votre situation et de vos revenus',
+      method: 'Choix de la méthode de répartition la plus juste',
+      allocation: 'Répartition des charges, poste par poste',
+      members: 'Contribution et reste à vivre de chaque membre',
+      savings: "Calcul des enveloppes d'épargne (sécurité, projets, vacances)",
+      feasibility: 'Vérification de la faisabilité pour chaque membre',
+      summary: 'Rédaction du résumé et finalisation',
+    },
+    methods: {
+      prorata: 'Au prorata des revenus',
+      equal: 'Parts égales (50/50)',
+      equalized_reste: 'Reste-à-vivre égal',
+      all_common: 'Tout commun',
+    },
+    errorTitles: {
+      ai_timeout: "L'IA a mis trop de temps",
+      ai_busy: 'Service IA très sollicité',
+      ai_refused: 'Demande non traitée',
+      unauthorized: 'Session expirée',
+      connection_lost: 'Connexion interrompue',
+    },
+    errorTitle: 'La génération a échoué',
+    amount: (n, sym, tight) => `${n.toLocaleString()}${tight ? '' : ' '}${sym}`,
+    memberFallback: 'Membre',
+    noMembersTitle: 'Aucun membre',
+    noMembersDesc: "Ajoutez d'abord les membres du foyer (onglet Foyer).",
+    describeTitle: 'Décrivez votre situation',
+    describeDesc: 'Écrivez quelques phrases sur vos objectifs et contraintes pour guider l’IA.',
+    unusableTitle: 'Proposition inexploitable',
+    unusableDesc: "La proposition ne contient ni charge ni épargne à appliquer (répartition vide). Réessayez une génération.",
+    undoneTitle: 'Annulé',
+    undoneDesc: 'Votre budget précédent a été restauré.',
+    rejectedTitle: 'Proposition rejetée',
+    rejectedDesc: 'Aucune modification apportée à votre budget.',
+    building: "L'IA construit votre budget…",
+    elapsed: (seconds) => `${seconds} s · généralement 20 à 60 secondes`,
+    retrying: 'La première réponse était incomplète : nouvelle tentative en cours.',
+    progressLabel: 'Progression de la génération',
+    switchTabs: "Vous pouvez changer d'onglet : la proposition vous attendra ici.",
+    cancel: 'Annuler',
+    editRequest: 'Modifier ma demande',
+    retry: 'Réessayer',
+    created: 'Budget créé',
+    updated: 'Budget mis à jour',
+    appliedSummary: (charges, savings, fresh, month, contributions) =>
+      `${charges} charge(s) et ${savings} épargne(s)${fresh ? ' créées' : ' mises à jour'} à partir ${deMonth(month)}${contributions ? ', avec la contribution de chacun au pot commun' : ''}. Les mois d’avant ne changent pas.`,
+    seeMonth: 'Voir le mois',
+    seeSavings: "Voir l'épargne",
+    undo: 'Annuler',
+    stale: 'Votre budget a changé depuis cette proposition (foyer, revenus, charges ou objectifs). Régénérez-la pour en tenir compte.',
+    regenerate: 'Régénérer',
+    appliedBar: 'Un budget IA a été appliqué.',
+    infeasible: 'Budget intenable en l’état',
+    tight: 'Budget soutenable mais serré',
+    bindingMember: (name) => `· membre contraignant : ${name}`,
+    levers: 'Leviers proposés :',
+    proposalTitle: "Proposition de l'IA",
+    contribution: 'Contribution',
+    pocketMoney: 'Argent de poche',
+    resteAVivre: 'Reste à vivre',
+    personalSavings: 'Épargne perso',
+    monthlyAllocation: 'Répartition mensuelle',
+    item: 'Poste',
+    amountHeader: 'Montant',
+    fundedBy: 'Financé par',
+    envelopes: "Enveloppes d'épargne",
+    simulator: 'Simulateur',
+    perMonth: '/ mois',
+    totalSavings: 'Total épargne / mois',
+    savingsDelta: (delta, sym) => `(${delta > 0 ? '+' : ''}${delta.toLocaleString()} ${sym} vs poche)`,
+    assumptions: 'Hypothèses',
+    openQuestions: 'Questions ouvertes',
+    lifeEvents: 'Événements de vie',
+    variableIncome: 'Revenus variables :',
+    separation: 'Séparation :',
+    applyMerge: (month) => <>Valider <strong>fusionne</strong> la proposition dans ce budget à partir {deMonth(month)} : charges et épargnes mises à jour, les mois d’avant et l’historique conservés.</>,
+    applyFill: (month) => <>Valider <strong>remplit</strong> ce budget à partir {deMonth(month)} : charges, épargnes et contributions générées à partir de la proposition.</>,
+    apply: 'Valider',
+    openSimulator: 'Ouvrir le simulateur',
+    reject: 'Rejeter',
+    infeasibleHint: 'Ajustez la situation ou passez par le simulateur avant de valider un budget intenable.',
+    intakeTitle: "Budget proposé par l'IA",
+    intakeIntro: "Décrivez votre situation : l'IA propose une répartition mensuelle claire, juste et soutenable, que vous pourrez valider, ajuster dans le simulateur, ou rejeter.",
+    householdType: 'Type de foyer',
+    householdTypes: { couple: 'Couple', family: 'Famille', friends: 'Amis', roommates: 'Colocataires' },
+    preferredMethod: 'Méthode préférée (optionnel)',
+    letAIChoose: "Laisser l'IA choisir",
+    personalSavingsQuestion: 'Épargne perso par membre ?',
+    topUpQuestion: "Un membre peut compléter l'autre ?",
+    membersTitle: 'Membres du foyer & revenus',
+    emptyBudget: "Ce budget est vide : ajoutez au moins un membre pour que l'IA puisse répartir.",
+    name: 'Nom',
+    salary: (sym) => `Salaire net (${sym})`,
+    add: 'Ajouter',
+    freeTextLabel: 'Décrivez votre situation, en toutes lettres',
+    freeTextPlaceholder: "Ex : On est en couple, on veut fusionner nos comptes. On vise un apport pour un appart d'ici 3-4 ans, un mariage l'an prochain, et un gros voyage l'été. Léa a une prime annuelle. On aimerait garder chacun un peu d'argent de poche…",
+    freeTextHint: 'Objectifs, contraintes, événements de vie à venir, argent de poche souhaité, primes… Plus vous détaillez, plus la proposition sera juste. Traitement côté serveur.',
+    dataUsed: (members, charges, goals, strong) => (
+      <>
+        L'IA s'appuie aussi sur les données de votre budget —{' '}
+        {strong(`${members} membre(s)`)} et leurs revenus,{' '}
+        {strong(`${charges} charge(s)`)},{' '}
+        {strong(`${goals} objectif(s)`)}.{' '}
+      </>
+    ),
+    refineLater: 'Vous pourrez affiner charges et objectifs dans leurs onglets après la proposition.',
+    noRetype: <>Pas besoin de les ressaisir ici : ajustez-les dans les onglets <em>Foyer</em>, <em>Charges</em> et <em>Épargne</em> si nécessaire.</>,
+    generate: 'Générer la proposition',
+    addMemberFirst: <>Ajoutez d'abord au moins un membre dans l'onglet <em>Foyer</em>.</>,
+  },
+  en: {
+    feasibility: { ok: 'Sustainable', tight: 'Tight', infeasible: 'Not sustainable' },
+    steps: {
+      analyzing: 'Analyzing your situation and income',
+      method: 'Choosing the fairest way to split',
+      allocation: 'Splitting the bills, line by line',
+      members: 'Each member’s contribution and leftover income',
+      savings: 'Working out the savings envelopes (safety net, goals, holidays)',
+      feasibility: 'Checking it works for each member',
+      summary: 'Writing the summary and wrapping up',
+    },
+    methods: {
+      prorata: 'In proportion to income',
+      equal: 'Equal shares (50/50)',
+      equalized_reste: 'Equal leftover income',
+      all_common: 'Everything shared',
+    },
+    errorTitles: {
+      ai_timeout: 'The AI took too long',
+      ai_busy: 'The AI service is very busy',
+      ai_refused: 'Request not processed',
+      unauthorized: 'Session expired',
+      connection_lost: 'Connection lost',
+    },
+    errorTitle: 'Generation failed',
+    amount: (n, sym) => money(n, sym),
+    memberFallback: 'Member',
+    noMembersTitle: 'No members',
+    noMembersDesc: 'Add the members of your household first (Household tab).',
+    describeTitle: 'Describe your situation',
+    describeDesc: 'Write a few sentences about your goals and constraints to guide the AI.',
+    unusableTitle: 'Unusable proposal',
+    unusableDesc: 'The proposal has no bills or savings to apply (empty breakdown). Try generating it again.',
+    undoneTitle: 'Undone',
+    undoneDesc: 'Your previous budget has been restored.',
+    rejectedTitle: 'Proposal rejected',
+    rejectedDesc: 'No changes were made to your budget.',
+    building: 'The AI is building your budget…',
+    elapsed: (seconds) => `${seconds} s · usually 20 to 60 seconds`,
+    retrying: 'The first answer was incomplete: trying again.',
+    progressLabel: 'Generation progress',
+    switchTabs: 'You can switch tabs: the proposal will be waiting for you here.',
+    cancel: 'Cancel',
+    editRequest: 'Edit my request',
+    retry: 'Try again',
+    created: 'Budget created',
+    updated: 'Budget updated',
+    appliedSummary: (charges, savings, fresh, month, contributions) =>
+      `${charges} bill${charges !== 1 ? 's' : ''} and ${savings} savings pot${savings !== 1 ? 's' : ''} ${fresh ? 'created' : 'updated'} from ${month}${contributions ? ', with each person’s contribution to the joint pot' : ''}. Earlier months don’t change.`,
+    seeMonth: 'See the month',
+    seeSavings: 'See savings',
+    undo: 'Undo',
+    stale: 'Your budget has changed since this proposal (household, income, bills or goals). Regenerate it to take the changes into account.',
+    regenerate: 'Regenerate',
+    appliedBar: 'An AI budget was applied.',
+    infeasible: 'Budget not sustainable as it stands',
+    tight: 'Budget sustainable but tight',
+    bindingMember: (name) => `· limiting member: ${name}`,
+    levers: 'Ways to make it work:',
+    proposalTitle: 'AI proposal',
+    contribution: 'Contribution',
+    pocketMoney: 'Spending money',
+    resteAVivre: 'Leftover income',
+    personalSavings: 'Personal savings',
+    monthlyAllocation: 'Monthly breakdown',
+    item: 'Item',
+    amountHeader: 'Amount',
+    fundedBy: 'Paid by',
+    envelopes: 'Savings envelopes',
+    simulator: 'Simulator',
+    perMonth: '/ month',
+    totalSavings: 'Total savings / month',
+    savingsDelta: (delta, sym) => `(${moneySigned(delta, sym)} vs spending money)`,
+    assumptions: 'Assumptions',
+    openQuestions: 'Open questions',
+    lifeEvents: 'Life events',
+    variableIncome: 'Variable income:',
+    separation: 'If you separate:',
+    applyMerge: (month) => <>Applying <strong>merges</strong> the proposal into this budget from {month}: bills and savings pots are updated, earlier months and history are kept.</>,
+    applyFill: (month) => <>Applying <strong>fills</strong> this budget from {month}: bills, savings pots and contributions are generated from the proposal.</>,
+    apply: 'Apply',
+    openSimulator: 'Open the simulator',
+    reject: 'Reject',
+    infeasibleHint: 'Adjust your situation or use the simulator before applying a budget that isn’t sustainable.',
+    intakeTitle: 'AI-suggested budget',
+    intakeIntro: 'Describe your situation: the AI suggests a clear, fair and sustainable monthly breakdown that you can apply, adjust in the simulator or reject.',
+    householdType: 'Household type',
+    householdTypes: { couple: 'Couple', family: 'Family', friends: 'Friends', roommates: 'Roommates' },
+    preferredMethod: 'Preferred method (optional)',
+    letAIChoose: 'Let the AI choose',
+    personalSavingsQuestion: 'Personal savings for each member?',
+    topUpQuestion: 'Can one member top up the other?',
+    membersTitle: 'Household members & income',
+    emptyBudget: 'This budget is empty: add at least one member so the AI can split it.',
+    name: 'Name',
+    salary: (sym) => `Take-home pay (${sym})`,
+    add: 'Add',
+    freeTextLabel: 'Describe your situation in your own words',
+    freeTextPlaceholder: 'E.g. We’re a couple and want to merge our accounts. We’re saving for a home in 3–4 years, a wedding next year and a big summer trip. Sam gets a yearly bonus. We’d each like to keep a bit of spending money…',
+    freeTextHint: 'Goals, constraints, upcoming life events, the spending money you’d like, bonuses… The more detail you give, the better the proposal. Processed on the server.',
+    dataUsed: (members, charges, goals, strong) => (
+      <>
+        The AI also uses your budget’s data —{' '}
+        {strong(`${members} member${members !== 1 ? 's' : ''}`)} and their income,{' '}
+        {strong(`${charges} bill${charges !== 1 ? 's' : ''}`)},{' '}
+        {strong(`${goals} goal${goals !== 1 ? 's' : ''}`)}.{' '}
+      </>
+    ),
+    refineLater: 'You can fine-tune bills and goals in their tabs after the proposal.',
+    noRetype: <>No need to enter them again here: adjust them in the <em>Household</em>, <em>Bills</em> and <em>Savings</em> tabs if needed.</>,
+    generate: 'Generate the proposal',
+    addMemberFirst: <>Add at least one member in the <em>Household</em> tab first.</>,
+  },
+});
 
 type View = 'intake' | 'loading' | 'result' | 'error' | 'applied';
 
@@ -195,6 +500,7 @@ export default function AIBudgetProposal() {
   const navigate = useNavigate();
   const { id: budgetId } = useParams<{ id: string }>();
   const { toast } = useToast();
+  const t = useT(M);
   const sym = currencySymbol(budgetCurrency);
   const start = useFirstOpenMonth();
 
@@ -282,7 +588,7 @@ export default function AIBudgetProposal() {
     country: budgetLocation || 'FR',
     members: people.map((p) => ({
       id: p.id,
-      label: p.name || 'Membre',
+      label: p.name || t.memberFallback,
       netIncome: resolvePerson(p, start)?.salary ?? p.salary ?? 0,
       // Personal charges (tax, money sent abroad…) the member pays from their pocket money.
       ...((engine.month(start).people.find((x) => x.id === p.id)?.personalCharges ?? 0) > 0
@@ -321,16 +627,16 @@ export default function AIBudgetProposal() {
     if (!budgetId) return;
     if (people.length === 0) {
       toast({
-        title: 'Aucun membre',
-        description: "Ajoutez d'abord les membres du foyer (onglet Foyer).",
+        title: t.noMembersTitle,
+        description: t.noMembersDesc,
         variant: 'destructive',
       });
       return;
     }
     if (freeText.trim().length < 20) {
       toast({
-        title: 'Décrivez votre situation',
-        description: 'Écrivez quelques phrases sur vos objectifs et contraintes pour guider l’IA.',
+        title: t.describeTitle,
+        description: t.describeDesc,
         variant: 'destructive',
       });
       return;
@@ -424,9 +730,8 @@ export default function AIBudgetProposal() {
 
     if (chargeLines.length === 0 && savingLines.length === 0) {
       toast({
-        title: 'Proposition inexploitable',
-        description:
-          "La proposition ne contient ni charge ni épargne à appliquer (répartition vide). Réessayez une génération.",
+        title: t.unusableTitle,
+        description: t.unusableDesc,
         variant: 'destructive',
       });
       return;
@@ -451,12 +756,12 @@ export default function AIBudgetProposal() {
     const previous = undoModel;
     commit(() => previous, { saveNow: true, undoable: false });
     setUndoModel(null);
-    toast({ title: 'Annulé', description: 'Votre budget précédent a été restauré.' });
+    toast({ title: t.undoneTitle, description: t.undoneDesc });
   };
 
   const reject = () => {
     if (budgetId) clearAdvisorJob(budgetId);
-    toast({ title: 'Proposition rejetée', description: 'Aucune modification apportée à votre budget.' });
+    toast({ title: t.rejectedTitle, description: t.rejectedDesc });
   };
 
   // Members come straight from the budget (People tab); labels resolve from there.
@@ -474,18 +779,18 @@ export default function AIBudgetProposal() {
         <CardContent className="flex flex-col items-center py-12 gap-5">
           <div className="flex flex-col items-center gap-2 text-center">
             <Loader2 className="h-9 w-9 animate-spin text-primary" aria-hidden="true" />
-            <p className="text-sm font-medium">L'IA construit votre budget…</p>
-            <p className="text-xs text-muted-foreground tabular-nums">{elapsed} s · généralement 20 à 60 secondes</p>
+            <p className="text-sm font-medium">{t.building}</p>
+            <p className="text-xs text-muted-foreground tabular-nums">{t.elapsed(elapsed)}</p>
             {job.attempt > 1 && (
               <p className="text-xs text-amber-700 dark:text-amber-400">
-                La première réponse était incomplète : nouvelle tentative en cours.
+                {t.retrying}
               </p>
             )}
           </div>
           <div
             className="h-1.5 w-full max-w-sm overflow-hidden rounded-full bg-muted"
             role="progressbar"
-            aria-label="Progression de la génération"
+            aria-label={t.progressLabel}
             aria-valuemin={0}
             aria-valuemax={100}
             aria-valuenow={progress}
@@ -515,9 +820,9 @@ export default function AIBudgetProposal() {
                     <span className="mt-0.5 h-4 w-4 shrink-0 rounded-full border border-muted-foreground/30" aria-hidden="true" />
                   )}
                   <span>
-                    {step.label}
+                    {t.steps[step.key]}
                     {step.key === 'method' && job.method && (
-                      <span className="block text-xs font-medium text-primary">→ {METHOD_LABELS[job.method]}</span>
+                      <span className="block text-xs font-medium text-primary">→ {t.methods[job.method]}</span>
                     )}
                   </span>
                 </li>
@@ -525,10 +830,10 @@ export default function AIBudgetProposal() {
             })}
           </ol>
           <p className="max-w-sm text-center text-xs text-muted-foreground">
-            Vous pouvez changer d'onglet : la proposition vous attendra ici.
+            {t.switchTabs}
           </p>
           <Button variant="ghost" size="sm" onClick={() => budgetId && clearAdvisorJob(budgetId)}>
-            <X className="h-4 w-4 mr-1" aria-hidden="true" /> Annuler
+            <X className="h-4 w-4 mr-1" aria-hidden="true" /> {t.cancel}
           </Button>
         </CardContent>
       </Card>
@@ -545,13 +850,13 @@ export default function AIBudgetProposal() {
             <AlertTriangle className="h-6 w-6" aria-hidden="true" />
           </div>
           <div role="alert">
-            <p className="font-medium">{ERROR_TITLES[job.code] ?? 'La génération a échoué'}</p>
+            <p className="font-medium">{t.errorTitles[job.code] ?? t.errorTitle}</p>
             <p className="text-sm text-muted-foreground max-w-sm mt-1">{job.message}</p>
           </div>
           <div className="flex flex-col-reverse sm:flex-row gap-2">
-            <Button variant={job.retryable ? 'outline' : 'default'} onClick={edit}>Modifier ma demande</Button>
+            <Button variant={job.retryable ? 'outline' : 'default'} onClick={edit}>{t.editRequest}</Button>
             <Button variant={job.retryable ? 'default' : 'outline'} onClick={retry}>
-              <RotateCcw className="h-4 w-4 mr-1" aria-hidden="true" /> Réessayer
+              <RotateCcw className="h-4 w-4 mr-1" aria-hidden="true" /> {t.retry}
             </Button>
           </div>
         </CardContent>
@@ -568,22 +873,20 @@ export default function AIBudgetProposal() {
             <CheckCircle2 className="h-6 w-6" />
           </div>
           <div>
-            <p className="font-medium">{fresh ? 'Budget créé' : 'Budget mis à jour'}</p>
+            <p className="font-medium">{fresh ? t.created : t.updated}</p>
             <p className="text-sm text-muted-foreground max-w-sm mt-1">
-              {appliedSummary?.charges || 0} charge(s) et {appliedSummary?.projects || 0} épargne(s)
-              {fresh ? ' créées' : ' mises à jour'} à partir {deMonth(formatMonthLong(start))}
-              {appliedSummary?.contributions ? ', avec la contribution de chacun au pot commun' : ''}. Les mois d’avant ne changent pas.
+              {t.appliedSummary(appliedSummary?.charges || 0, appliedSummary?.projects || 0, !!fresh, formatMonthLong(start), !!appliedSummary?.contributions)}
             </p>
           </div>
           <div className="flex flex-col sm:flex-row gap-2">
             <Button onClick={() => goToMonth(start)}>
-              <CalendarDays className="h-4 w-4 mr-1" /> Voir le mois
+              <CalendarDays className="h-4 w-4 mr-1" /> {t.seeMonth}
             </Button>
             <Button variant="outline" onClick={() => budgetId && navigate(`/budget/${budgetId}/complete/projects`)}>
-              <PiggyBank className="h-4 w-4 mr-1" /> Voir l'épargne
+              <PiggyBank className="h-4 w-4 mr-1" /> {t.seeSavings}
             </Button>
             <Button variant="ghost" onClick={() => { undoApply(); setAppliedSummary(null); setApplied(false); }}>
-              <RotateCcw className="h-4 w-4 mr-1" /> Annuler
+              <RotateCcw className="h-4 w-4 mr-1" /> {t.undo}
             </Button>
           </div>
         </CardContent>
@@ -602,18 +905,18 @@ export default function AIBudgetProposal() {
         {stale && (
           <div className="flex flex-col sm:flex-row sm:items-center gap-3 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900 dark:bg-amber-950/40 dark:text-amber-100" role="status">
             <AlertTriangle className="h-4 w-4 shrink-0" aria-hidden="true" />
-            <span className="flex-1">Votre budget a changé depuis cette proposition (foyer, revenus, charges ou objectifs). Régénérez-la pour en tenir compte.</span>
+            <span className="flex-1">{t.stale}</span>
             <Button size="sm" variant="outline" onClick={generate}>
-              <RotateCcw className="h-4 w-4 mr-1" aria-hidden="true" /> Régénérer
+              <RotateCcw className="h-4 w-4 mr-1" aria-hidden="true" /> {t.regenerate}
             </Button>
           </div>
         )}
         {/* Undo bar */}
         {undoModel !== null && (
           <div className="flex items-center justify-between rounded-lg border border-border bg-muted/40 px-3 py-2 text-sm">
-            <span>Un budget IA a été appliqué.</span>
+            <span>{t.appliedBar}</span>
             <Button size="sm" variant="ghost" onClick={undoApply}>
-              <RotateCcw className="h-4 w-4 mr-1" /> Annuler
+              <RotateCcw className="h-4 w-4 mr-1" /> {t.undo}
             </Button>
           </div>
         )}
@@ -627,10 +930,10 @@ export default function AIBudgetProposal() {
           >
             <div className="flex items-center gap-2 font-semibold text-sm mb-2">
               <AlertTriangle className={`h-5 w-5 ${feas.status === 'infeasible' ? 'text-red-600' : 'text-amber-600'}`} />
-              {feas.status === 'infeasible' ? 'Budget intenable en l’état' : 'Budget soutenable mais serré'}
+              {feas.status === 'infeasible' ? t.infeasible : t.tight}
               {feas.bindingMemberId && (
                 <span className="font-normal text-muted-foreground">
-                  · membre contraignant : {memberLabel(feas.bindingMemberId)}
+                  {t.bindingMember(memberLabel(feas.bindingMemberId))}
                 </span>
               )}
             </div>
@@ -641,7 +944,7 @@ export default function AIBudgetProposal() {
             )}
             {feas.suggestedLevers.length > 0 && (
               <div className="text-sm">
-                <span className="font-medium flex items-center gap-1"><Lightbulb className="h-4 w-4" /> Leviers proposés :</span>
+                <span className="font-medium flex items-center gap-1"><Lightbulb className="h-4 w-4" /> {t.levers}</span>
                 <ul className="list-disc pl-5 space-y-0.5 mt-1">
                   {feas.suggestedLevers.map((l, k) => <li key={k}>{l}</li>)}
                 </ul>
@@ -654,8 +957,8 @@ export default function AIBudgetProposal() {
         <Card className="border-primary/20 bg-gradient-to-br from-primary/5 to-transparent">
           <CardHeader className="pb-2">
             <CardTitle className="flex items-center gap-2 text-base">
-              <Sparkles className="h-5 w-5 text-primary" /> Proposition de l'IA
-              <Badge variant="secondary" className="ml-auto text-[11px]">{METHOD_LABELS[proposal.methodChosen] ?? proposal.methodChosen}</Badge>
+              <Sparkles className="h-5 w-5 text-primary" /> {t.proposalTitle}
+              <Badge variant="secondary" className="ml-auto text-[11px]">{t.methods[proposal.methodChosen] ?? proposal.methodChosen}</Badge>
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
@@ -672,13 +975,13 @@ export default function AIBudgetProposal() {
               <div key={m.memberId} className={`rounded-xl border p-4 ${st.ring}`}>
                 <div className="flex items-center justify-between mb-2">
                   <span className="font-semibold">{memberLabel(m.memberId)}</span>
-                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${st.badge}`}>{st.label}</span>
+                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${st.badge}`}>{t.feasibility[m.feasibility]}</span>
                 </div>
                 <div className="grid grid-cols-2 gap-2 text-sm">
-                  <Stat label="Contribution" value={`${m.monthlyContribution.toLocaleString()} ${sym}`} />
-                  <Stat label="Argent de poche" value={`${m.pocketMoney.toLocaleString()} ${sym}`} />
-                  <Stat label="Reste à vivre" value={`${m.resteAVivre.toLocaleString()} ${sym}`} />
-                  <Stat label="Épargne perso" value={`${m.personalSavingsCapacity.toLocaleString()} ${sym}`} />
+                  <Stat label={t.contribution} value={t.amount(m.monthlyContribution, sym)} />
+                  <Stat label={t.pocketMoney} value={t.amount(m.pocketMoney, sym)} />
+                  <Stat label={t.resteAVivre} value={t.amount(m.resteAVivre, sym)} />
+                  <Stat label={t.personalSavings} value={t.amount(m.personalSavingsCapacity, sym)} />
                 </div>
               </div>
             );
@@ -687,15 +990,15 @@ export default function AIBudgetProposal() {
 
         {/* ALLOCATION TABLE */}
         <Card>
-          <CardHeader className="pb-2"><CardTitle className="text-sm flex items-center gap-2"><Wallet className="h-4 w-4" /> Répartition mensuelle</CardTitle></CardHeader>
+          <CardHeader className="pb-2"><CardTitle className="text-sm flex items-center gap-2"><Wallet className="h-4 w-4" /> {t.monthlyAllocation}</CardTitle></CardHeader>
           <CardContent className="p-0">
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead className="bg-muted/40 text-xs text-muted-foreground">
                   <tr>
-                    <th className="text-left px-3 py-2">Poste</th>
-                    <th className="text-right px-3 py-2">Montant</th>
-                    <th className="text-left px-3 py-2 hidden sm:table-cell">Financé par</th>
+                    <th className="text-left px-3 py-2">{t.item}</th>
+                    <th className="text-right px-3 py-2">{t.amountHeader}</th>
+                    <th className="text-left px-3 py-2 hidden sm:table-cell">{t.fundedBy}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border/60">
@@ -705,9 +1008,9 @@ export default function AIBudgetProposal() {
                         <div className="font-medium">{l.label}</div>
                         {l.notes && <div className="text-[11px] text-muted-foreground">{l.notes}</div>}
                       </td>
-                      <td className="px-3 py-2 text-right font-mono font-semibold whitespace-nowrap">{l.amount.toLocaleString()} {sym}</td>
+                      <td className="px-3 py-2 text-right font-mono font-semibold whitespace-nowrap">{t.amount(l.amount, sym)}</td>
                       <td className="px-3 py-2 hidden sm:table-cell text-xs text-muted-foreground">
-                        {l.fundedBy.map((f) => `${memberLabel(f.memberId)}: ${f.amount.toLocaleString()}${sym}`).join(' · ')}
+                        {l.fundedBy.map((f) => `${memberLabel(f.memberId)}: ${t.amount(f.amount, sym, true)}`).join(' · ')}
                       </td>
                     </tr>
                   ))}
@@ -720,9 +1023,9 @@ export default function AIBudgetProposal() {
         {/* SAVINGS ENVELOPES + SIMULATOR */}
         <Card>
           <CardHeader className="pb-2 flex flex-row items-center justify-between">
-            <CardTitle className="text-sm flex items-center gap-2"><PiggyBank className="h-4 w-4" /> Enveloppes d'épargne</CardTitle>
+            <CardTitle className="text-sm flex items-center gap-2"><PiggyBank className="h-4 w-4" /> {t.envelopes}</CardTitle>
             <Button size="sm" variant={simulating ? 'default' : 'outline'} onClick={() => setSimulating((s) => !s)}>
-              <SlidersHorizontal className="h-4 w-4 mr-1" /> Simulateur
+              <SlidersHorizontal className="h-4 w-4 mr-1" /> {t.simulator}
             </Button>
           </CardHeader>
           <CardContent className="space-y-3">
@@ -739,8 +1042,8 @@ export default function AIBudgetProposal() {
                       )}
                     </div>
                     <div className="text-right shrink-0">
-                      <span className="font-mono font-semibold">{val.toLocaleString()} {sym}</span>
-                      <span className="text-[10px] text-muted-foreground block">/ mois</span>
+                      <span className="font-mono font-semibold">{t.amount(val, sym)}</span>
+                      <span className="text-[10px] text-muted-foreground block">{t.perMonth}</span>
                     </div>
                   </div>
                   {simulating && (
@@ -758,12 +1061,12 @@ export default function AIBudgetProposal() {
             })}
             {simulating && (
               <div className="flex items-center justify-between rounded-lg bg-muted/40 px-3 py-2 text-sm">
-                <span className="text-muted-foreground">Total épargne / mois</span>
+                <span className="text-muted-foreground">{t.totalSavings}</span>
                 <span className="font-mono font-semibold">
-                  {totalSavings.toLocaleString()} {sym}
+                  {t.amount(totalSavings, sym)}
                   {savingsDelta !== 0 && (
                     <span className={savingsDelta > 0 ? 'text-emerald-600 ml-2' : 'text-amber-600 ml-2'}>
-                      ({savingsDelta > 0 ? '+' : ''}{savingsDelta.toLocaleString()} {sym} vs poche)
+                      {t.savingsDelta(savingsDelta, sym)}
                     </span>
                   )}
                 </span>
@@ -776,12 +1079,12 @@ export default function AIBudgetProposal() {
         {(proposal.assumptionsMade.length > 0 || proposal.openQuestions.length > 0) && (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {proposal.assumptionsMade.length > 0 && (
-              <Card><CardHeader className="pb-2"><CardTitle className="text-xs uppercase text-muted-foreground">Hypothèses</CardTitle></CardHeader>
+              <Card><CardHeader className="pb-2"><CardTitle className="text-xs uppercase text-muted-foreground">{t.assumptions}</CardTitle></CardHeader>
                 <CardContent><ul className="list-disc pl-4 text-sm space-y-1">{proposal.assumptionsMade.map((a, k) => <li key={k}>{a}</li>)}</ul></CardContent>
               </Card>
             )}
             {proposal.openQuestions.length > 0 && (
-              <Card><CardHeader className="pb-2"><CardTitle className="text-xs uppercase text-muted-foreground flex items-center gap-1"><HelpCircle className="h-3 w-3" /> Questions ouvertes</CardTitle></CardHeader>
+              <Card><CardHeader className="pb-2"><CardTitle className="text-xs uppercase text-muted-foreground flex items-center gap-1"><HelpCircle className="h-3 w-3" /> {t.openQuestions}</CardTitle></CardHeader>
                 <CardContent><ul className="list-disc pl-4 text-sm space-y-1">{proposal.openQuestions.map((q, k) => <li key={k}>{q}</li>)}</ul></CardContent>
               </Card>
             )}
@@ -794,15 +1097,15 @@ export default function AIBudgetProposal() {
             <CardContent className="pt-4 space-y-3 text-sm">
               {proposal.lifeEventNotes.length > 0 && (
                 <div>
-                  <div className="font-medium mb-1">Événements de vie</div>
+                  <div className="font-medium mb-1">{t.lifeEvents}</div>
                   <ul className="list-disc pl-4 space-y-1 text-muted-foreground">{proposal.lifeEventNotes.map((n, k) => <li key={k}>{n}</li>)}</ul>
                 </div>
               )}
               {proposal.variableIncomePolicy && (
-                <p className="text-muted-foreground"><span className="font-medium text-foreground">Revenus variables :</span> {proposal.variableIncomePolicy}</p>
+                <p className="text-muted-foreground"><span className="font-medium text-foreground">{t.variableIncome}</span> {proposal.variableIncomePolicy}</p>
               )}
               {proposal.separationHandling?.note && (
-                <p className="text-muted-foreground"><span className="font-medium text-foreground">Séparation :</span> {proposal.separationHandling.note}</p>
+                <p className="text-muted-foreground"><span className="font-medium text-foreground">{t.separation}</span> {proposal.separationHandling.note}</p>
               )}
             </CardContent>
           </Card>
@@ -814,24 +1117,24 @@ export default function AIBudgetProposal() {
         {/* ACTIONS */}
         <p className="text-[11px] text-muted-foreground text-center">
           {charges.length > 0 || projects.length > 0 ? (
-            <>Valider <strong>fusionne</strong> la proposition dans ce budget à partir {deMonth(formatMonthLong(start))} : charges et épargnes mises à jour, les mois d’avant et l’historique conservés.</>
+            t.applyMerge(formatMonthLong(start))
           ) : (
-            <>Valider <strong>remplit</strong> ce budget à partir {deMonth(formatMonthLong(start))} : charges, épargnes et contributions générées à partir de la proposition.</>
+            t.applyFill(formatMonthLong(start))
           )}
         </p>
         <div className="flex flex-col sm:flex-row gap-2 sticky bottom-2 bg-background/80 backdrop-blur rounded-xl p-2 border border-border">
           <Button className="flex-1" onClick={applyProposal} disabled={feas.status === 'infeasible'}>
-            <CheckCircle2 className="h-4 w-4 mr-1" /> Valider
+            <CheckCircle2 className="h-4 w-4 mr-1" /> {t.apply}
           </Button>
           <Button className="flex-1" variant="outline" onClick={() => setSimulating(true)}>
-            <SlidersHorizontal className="h-4 w-4 mr-1" /> Ouvrir le simulateur
+            <SlidersHorizontal className="h-4 w-4 mr-1" /> {t.openSimulator}
           </Button>
           <Button className="flex-1" variant="ghost" onClick={reject}>
-            <XCircle className="h-4 w-4 mr-1" /> Rejeter
+            <XCircle className="h-4 w-4 mr-1" /> {t.reject}
           </Button>
         </div>
         {feas.status === 'infeasible' && (
-          <p className="text-xs text-red-600 text-center -mt-2">Ajustez la situation ou passez par le simulateur avant de valider un budget intenable.</p>
+          <p className="text-xs text-red-600 text-center -mt-2">{t.infeasibleHint}</p>
         )}
       </div>
     );
@@ -842,37 +1145,36 @@ export default function AIBudgetProposal() {
     <div className="space-y-5 animate-in fade-in duration-200">
       <Card className="border-primary/20 bg-gradient-to-br from-primary/5 to-transparent">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-base"><Sparkles className="h-5 w-5 text-primary" /> Budget proposé par l'IA</CardTitle>
+          <CardTitle className="flex items-center gap-2 text-base"><Sparkles className="h-5 w-5 text-primary" /> {t.intakeTitle}</CardTitle>
           <p className="text-sm text-muted-foreground">
-            Décrivez votre situation : l'IA propose une répartition mensuelle claire, juste et soutenable, que vous pourrez
-            valider, ajuster dans le simulateur, ou rejeter.
+            {t.intakeIntro}
           </p>
         </CardHeader>
         <CardContent className="space-y-5">
           {/* Household type + options */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <Label htmlFor="ai-household-type" className="text-xs">Type de foyer</Label>
+              <Label htmlFor="ai-household-type" className="text-xs">{t.householdType}</Label>
               <Select value={householdType} onValueChange={(v) => setHouseholdType(v as HouseholdType)}>
                 <SelectTrigger id="ai-household-type"><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="couple">Couple</SelectItem>
-                  <SelectItem value="family">Famille</SelectItem>
-                  <SelectItem value="friends">Amis</SelectItem>
-                  <SelectItem value="roommates">Colocataires</SelectItem>
+                  <SelectItem value="couple">{t.householdTypes.couple}</SelectItem>
+                  <SelectItem value="family">{t.householdTypes.family}</SelectItem>
+                  <SelectItem value="friends">{t.householdTypes.friends}</SelectItem>
+                  <SelectItem value="roommates">{t.householdTypes.roommates}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="ai-method" className="text-xs">Méthode préférée (optionnel)</Label>
+              <Label htmlFor="ai-method" className="text-xs">{t.preferredMethod}</Label>
               <Select value={preferredMethod} onValueChange={(v) => setPreferredMethod(v as Method | 'auto')}>
                 <SelectTrigger id="ai-method"><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="auto">Laisser l'IA choisir</SelectItem>
-                  <SelectItem value="prorata">Au prorata des revenus</SelectItem>
-                  <SelectItem value="equal">Parts égales (50/50)</SelectItem>
-                  <SelectItem value="equalized_reste">Reste-à-vivre égal</SelectItem>
-                  <SelectItem value="all_common">Tout commun</SelectItem>
+                  <SelectItem value="auto">{t.letAIChoose}</SelectItem>
+                  <SelectItem value="prorata">{t.methods.prorata}</SelectItem>
+                  <SelectItem value="equal">{t.methods.equal}</SelectItem>
+                  <SelectItem value="equalized_reste">{t.methods.equalized_reste}</SelectItem>
+                  <SelectItem value="all_common">{t.methods.all_common}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -880,11 +1182,11 @@ export default function AIBudgetProposal() {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <label className="flex items-center justify-between rounded-lg border border-border/60 p-3 cursor-pointer">
-              <span className="text-sm">Épargne perso par membre ?</span>
+              <span className="text-sm">{t.personalSavingsQuestion}</span>
               <Switch checked={wantsPersonalSavings} onCheckedChange={setWantsPersonalSavings} />
             </label>
             <label className="flex items-center justify-between rounded-lg border border-border/60 p-3 cursor-pointer">
-              <span className="text-sm">Un membre peut compléter l'autre ?</span>
+              <span className="text-sm">{t.topUpQuestion}</span>
               <Switch checked={allowInterMemberTopUp} onCheckedChange={setAllowInterMemberTopUp} />
             </label>
           </div>
@@ -892,15 +1194,15 @@ export default function AIBudgetProposal() {
           {/* Member setup — only when the budget has no members yet */}
           {memberSetup && (
             <div className="space-y-2 rounded-lg border border-primary/30 bg-primary/5 p-3">
-              <Label className="text-sm font-medium">Membres du foyer & revenus</Label>
+              <Label className="text-sm font-medium">{t.membersTitle}</Label>
               <p className="text-[11px] text-muted-foreground -mt-1">
-                Ce budget est vide : ajoutez au moins un membre pour que l'IA puisse répartir.
+                {t.emptyBudget}
               </p>
               {people.map((p) => (
                 <div key={p.id} className="flex items-center justify-between gap-2 rounded-md bg-background border border-border/50 px-3 py-2">
                   <span className="text-sm font-medium truncate">{p.name}</span>
                   <div className="flex items-center gap-2 shrink-0">
-                    <span className="text-sm font-mono">{(resolvePerson(p, start)?.salary ?? p.salary ?? 0).toLocaleString()} {sym}</span>
+                    <span className="text-sm font-mono">{t.amount(resolvePerson(p, start)?.salary ?? p.salary ?? 0, sym)}</span>
                     <Button type="button" size="icon" variant="ghost" onClick={() => removeBudgetMember(p.id)} className="h-7 w-7 text-muted-foreground hover:text-red-500">
                       <Trash2 className="h-4 w-4" />
                     </Button>
@@ -909,7 +1211,7 @@ export default function AIBudgetProposal() {
               ))}
               <div className="flex flex-col sm:flex-row gap-2 items-stretch sm:items-end">
                 <div className="flex-1 space-y-1">
-                  <Label className="text-[10px] text-muted-foreground">Nom</Label>
+                  <Label className="text-[10px] text-muted-foreground">{t.name}</Label>
                   <Input
                     name="member-name"
                     autoComplete="off"
@@ -921,7 +1223,7 @@ export default function AIBudgetProposal() {
                   />
                 </div>
                 <div className="w-full sm:w-36 space-y-1">
-                  <Label className="text-[10px] text-muted-foreground">Salaire net ({sym})</Label>
+                  <Label className="text-[10px] text-muted-foreground">{t.salary(sym)}</Label>
                   <Input
                     name="member-salary"
                     autoComplete="off"
@@ -935,7 +1237,7 @@ export default function AIBudgetProposal() {
                   />
                 </div>
                 <Button type="button" onClick={addBudgetMember} disabled={!newMemberName.trim()} className="h-9 gap-1">
-                  <Plus className="h-4 w-4" /> Ajouter
+                  <Plus className="h-4 w-4" /> {t.add}
                 </Button>
               </div>
             </div>
@@ -943,38 +1245,34 @@ export default function AIBudgetProposal() {
 
           {/* Free text — the primary input */}
           <div className="space-y-1.5">
-            <Label htmlFor="ai-free-text" className="text-sm font-medium">Décrivez votre situation, en toutes lettres</Label>
+            <Label htmlFor="ai-free-text" className="text-sm font-medium">{t.freeTextLabel}</Label>
             <Textarea
               id="ai-free-text"
               name="situation"
               value={freeText}
               onChange={(e) => setFreeText(e.target.value)}
               rows={8}
-              placeholder="Ex : On est en couple, on veut fusionner nos comptes. On vise un apport pour un appart d'ici 3-4 ans, un mariage l'an prochain, et un gros voyage l'été. Léa a une prime annuelle. On aimerait garder chacun un peu d'argent de poche…"
+              placeholder={t.freeTextPlaceholder}
             />
             <p className="text-[11px] text-muted-foreground">
-              Objectifs, contraintes, événements de vie à venir, argent de poche souhaité, primes… Plus vous détaillez,
-              plus la proposition sera juste. Traitement côté serveur.
+              {t.freeTextHint}
             </p>
           </div>
 
           {/* Transparency: the AI also uses the budget's own data */}
           <div className="rounded-lg border border-border/60 bg-muted/30 p-3 text-xs text-muted-foreground">
-            L'IA s'appuie aussi sur les données de votre budget —{' '}
-            <span className="font-medium text-foreground">{people.length} membre(s)</span> et leurs revenus,{' '}
-            <span className="font-medium text-foreground">{charges.length} charge(s)</span>,{' '}
-            <span className="font-medium text-foreground">{projects.length} objectif(s)</span>.{' '}
+            {t.dataUsed(people.length, charges.length, projects.length, (text) => <span className="font-medium text-foreground">{text}</span>)}
             {memberSetup
-              ? 'Vous pourrez affiner charges et objectifs dans leurs onglets après la proposition.'
-              : <>Pas besoin de les ressaisir ici : ajustez-les dans les onglets <em>Foyer</em>, <em>Charges</em> et <em>Épargne</em> si nécessaire.</>}
+              ? t.refineLater
+              : t.noRetype}
           </div>
 
           <Button onClick={generate} className="w-full" size="lg" disabled={people.length === 0}>
-            <Sparkles className="h-4 w-4 mr-2" /> Générer la proposition
+            <Sparkles className="h-4 w-4 mr-2" /> {t.generate}
           </Button>
           {people.length === 0 && (
             <p className="text-xs text-muted-foreground text-center -mt-2">
-              Ajoutez d'abord au moins un membre dans l'onglet <em>Foyer</em>.
+              {t.addMemberFirst}
             </p>
           )}
         </CardContent>

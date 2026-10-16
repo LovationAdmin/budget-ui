@@ -17,22 +17,44 @@ import { PremiumDemo } from '@/components/premium/PremiumDemo';
 import { PREMIUM_ENABLED } from '@/lib/premium';
 import { Link } from 'react-router-dom';
 import { ArrowRight, Crown, Info } from 'lucide-react';
+import { localizedPath } from '@/i18n/locales';
+import { defineMessages, useLocale, useT } from '@/i18n/runtime';
+
+const M = defineMessages({
+  fr: {
+    soonBadge: 'Bientôt avec Premium',
+    soonIntro: 'Bientôt, vos comptes bancaires se synchroniseront pour comparer chaque mois ce que votre budget prévoit et ce que vous avez vraiment dépensé, charge par charge. En attendant, essayez la démonstration ci-dessous : les données sont fictives et votre budget n’est pas modifié.',
+    learnMore: 'En savoir plus sur Premium',
+    liveIntro: 'Comparez l’épargne prévue par votre budget avec l’argent réellement présent sur vos comptes.',
+    demoActive: 'Mode Démo Banque actif',
+    demoScope: 'Seules les données bancaires sont fictives. Vos membres, charges et projets restent vos vraies données.',
+  },
+  en: {
+    soonBadge: 'Coming soon with Premium',
+    soonIntro: 'Soon, your bank accounts will sync so you can compare, every month, what your budget planned with what you actually spent, bill by bill. Meanwhile, try the demo below: the data is fictitious and your budget isn’t changed.',
+    learnMore: 'Learn more about Premium',
+    liveIntro: 'Compare the savings your budget planned with the money actually in your accounts.',
+    demoActive: 'Bank demo mode on',
+    demoScope: 'Only the bank data is fictitious. Your members, bills and goals are still your real data.',
+  },
+});
 
 /** Until Premium launches: what it will do, and the demo on fictitious data. */
 function RealitySoon() {
+  const t = useT(M);
+  const locale = useLocale();
   return (
     <div className="space-y-6 animate-in fade-in duration-200">
       <div>
         <span className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
-          <Crown className="h-3.5 w-3.5" aria-hidden="true" /> Bientôt avec Premium
+          <Crown className="h-3.5 w-3.5" aria-hidden="true" /> {t.soonBadge}
         </span>
         <h1 className="mt-3 font-display text-2xl sm:text-3xl font-extrabold tracking-tight">Reality Check</h1>
         <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
-          Bientôt, vos comptes bancaires se synchroniseront pour comparer chaque mois ce que votre budget prévoit et ce que vous avez vraiment dépensé,
-          charge par charge. En attendant, essayez la démonstration ci-dessous : les données sont fictives et votre budget n’est pas modifié.
+          {t.soonIntro}
         </p>
         <Button asChild variant="outline" className="mt-3 min-h-[44px]">
-          <Link to="/premium">En savoir plus sur Premium <ArrowRight className="ml-2 h-4 w-4" aria-hidden="true" /></Link>
+          <Link to={localizedPath('/premium', locale)}>{t.learnMore} <ArrowRight className="ml-2 h-4 w-4" aria-hidden="true" /></Link>
         </Button>
       </div>
       <PremiumDemo />
@@ -45,6 +67,7 @@ export default function RealityTab() {
 }
 
 function RealityLive() {
+  const t = useT(M);
   const {
     totalGlobalRealized,
     realBankBalance,
@@ -60,7 +83,7 @@ function RealityLive() {
       <div>
         <h1 className="font-display text-2xl sm:text-3xl font-extrabold tracking-tight">Reality Check</h1>
         <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
-          Comparez l’épargne prévue par votre budget avec l’argent réellement présent sur vos comptes.
+          {t.liveIntro}
         </p>
       </div>
       {/* Clear scope notice — fixes P1 #10 */}
@@ -69,9 +92,7 @@ function RealityLive() {
           <p className="text-sm text-indigo-900 flex items-start gap-2">
             <Info className="h-4 w-4 mt-0.5 shrink-0" aria-hidden />
             <span>
-              <strong>Mode Démo Banque actif</strong> — Seules les données
-              bancaires sont fictives. Tes membres, charges et projets restent
-              tes vraies données.
+              <strong>{t.demoActive}</strong> — {t.demoScope}
             </span>
           </p>
         </Card>

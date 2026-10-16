@@ -1,6 +1,20 @@
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { AlertTriangle, X, Sparkles } from "lucide-react";
+import { defineMessages, useT } from "@/i18n/runtime";
+
+const M = defineMessages({
+  fr: {
+    title: "Mode Démonstration Actif",
+    text: "Vous utilisez des données bancaires fictives pour tester Reality Check. Toutes les fonctionnalités sont disponibles avec des transactions de démo.",
+    close: "Fermer le mode démo",
+  },
+  en: {
+    title: "Demo mode on",
+    text: "You’re using fictitious bank data to try Reality Check. Every feature works with demo transactions.",
+    close: "Turn off demo mode",
+  },
+});
 
 interface DemoBannerProps {
   onDisable: () => void;
@@ -8,6 +22,7 @@ interface DemoBannerProps {
 }
 
 export function DemoBanner({ onDisable }: DemoBannerProps) {
+  const t = useT(M);
   return (
     <Alert className="bg-gradient-to-r from-amber-50 to-orange-50 border-2 border-amber-300 shadow-md relative animate-in slide-in-from-top-2 duration-300">
       <div className="flex items-start gap-3 pr-8">
@@ -16,10 +31,9 @@ export function DemoBanner({ onDisable }: DemoBannerProps) {
           <AlertDescription className="text-amber-900">
             <div className="flex flex-col sm:flex-row sm:items-center gap-3">
               <div className="flex-1">
-                <strong className="font-bold">Mode Démonstration Actif</strong>
+                <strong className="font-bold">{t.title}</strong>
                 <p className="text-sm mt-1">
-                  Vous utilisez des données bancaires fictives pour tester Reality Check.
-                  Toutes les fonctionnalités sont disponibles avec des transactions de démo.
+                  {t.text}
                 </p>
               </div>
             </div>
@@ -30,7 +44,7 @@ export function DemoBanner({ onDisable }: DemoBannerProps) {
         <button
           onClick={onDisable}
           className="absolute top-3 right-3 p-1 hover:bg-amber-100 rounded-full transition-colors"
-          aria-label="Fermer le mode démo"
+          aria-label={t.close}
         >
           <X className="h-4 w-4 text-amber-700" />
         </button>

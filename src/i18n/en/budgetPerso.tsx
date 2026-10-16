@@ -100,7 +100,7 @@ export const BUDGET_PERSO_EN: BudgetPersoCopy = {
   currentReached: 'That’s at least the suggestion: well done.',
   signup: {
     title: 'Track this budget every month, on your own or together',
-    text: 'Budget Famille fills in each month from your bills (monthly, some months or once a year), with savings pots that have a target and a date. Invite your partner or roommates later. Free, no bank connection. The app is in French for now.',
+    text: 'Budget Famille fills in each month from your bills (monthly, some months or once a year), with savings pots that have a target and a date. Invite your partner or roommates later. Free, no bank connection.',
     cta: 'Create my free budget',
   },
   reset: 'Clear',

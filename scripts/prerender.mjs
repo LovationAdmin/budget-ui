@@ -32,7 +32,7 @@ function setTag(html, re, tag) {
 function render(template, page) {
   const title = page.title.includes('Budget Famille') || page.title.length > 50 ? page.title : `${page.title} – Budget Famille`;
   let html = template;
-  html = setTag(html, /<html lang="[^"]*">/, `<html lang="${page.locale}">`);
+  html = setTag(html, /<html lang="[^"]*">/, `<html lang="${page.lang}">`);
   html = setTag(html, /<meta property="og:locale"[^>]*>/, [
     `<meta property="og:locale" content="${page.ogLocale}" />`,
     ...page.ogLocaleAlternates.map((l) => `<meta property="og:locale:alternate" content="${l}" />`),

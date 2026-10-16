@@ -2,15 +2,40 @@
 // Calendar-month helpers. Budgets work at month precision: a `YM` string
 // (`YYYY-MM`) is the only unit the engine reasons about.
 
+import { defineMessages, pick, screenLocale } from '@/i18n/current';
 import type { YM } from './types';
 
+/**
+ * French month names as stored in budgets (keys of per-month maps, see
+ * codec.ts): data, never translated. On screen, use the functions below,
+ * which follow the screen's language.
+ */
 export const MONTH_NAMES = [
   'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
   'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre',
 ];
-export const MONTHS_LOWER = MONTH_NAMES.map((m) => m.toLowerCase());
-export const MONTHS_SHORT = ['janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin', 'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.'];
-export const MONTHS_LETTER = ['J', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O', 'N', 'D'];
+
+const NAMES = defineMessages({
+  fr: {
+    long: MONTH_NAMES,
+    short: ['janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin', 'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.'],
+    letter: ['J', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O', 'N', 'D'],
+  },
+  en: {
+    long: ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'],
+    short: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+    letter: ['J', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O', 'N', 'D'],
+  },
+});
+
+/** "Septembre", "September": month names in the screen's language, January first. */
+export const monthNames = (): string[] => pick(NAMES).long;
+/** "septembre" in French, "September" in English (English month names keep their capital). */
+export const monthNamesLower = (): string[] => (screenLocale() === 'fr' ? NAMES.fr.long.map((m) => m.toLowerCase()) : NAMES.en.long);
+/** "sept.", "Sep" */
+export const monthNamesShort = (): string[] => pick(NAMES).short;
+/** "S" */
+export const monthLetters = (): string[] => pick(NAMES).letter;
 
 const YM_RE = /^(\d{4})-(\d{2})$/;
 
@@ -72,23 +97,24 @@ export function endDateOf(ym: YM): string {
   return `${ym}-${last < 10 ? '0' : ''}${last}`;
 }
 
-/** "septembre 2026" */
-export const formatMonthLong = (ym: YM): string => `${MONTHS_LOWER[monthIndex0(ym)]} ${yearOf(ym)}`;
-/** "Septembre 2026" */
-export const formatMonthTitle = (ym: YM): string => `${MONTH_NAMES[monthIndex0(ym)]} ${yearOf(ym)}`;
-/** "sept. 2026" */
-export const formatMonthShort = (ym: YM): string => `${MONTHS_SHORT[monthIndex0(ym)]} ${yearOf(ym)}`;
-/** "septembre" */
-export const monthNameLower = (ym: YM): string => MONTHS_LOWER[monthIndex0(ym)];
+/** "septembre 2026", "September 2026" */
+export const formatMonthLong = (ym: YM): string => `${monthNamesLower()[monthIndex0(ym)]} ${yearOf(ym)}`;
+/** "Septembre 2026", "September 2026" */
+export const formatMonthTitle = (ym: YM): string => `${monthNames()[monthIndex0(ym)]} ${yearOf(ym)}`;
+/** "sept. 2026", "Sep 2026" */
+export const formatMonthShort = (ym: YM): string => `${monthNamesShort()[monthIndex0(ym)]} ${yearOf(ym)}`;
+/** "septembre", "September" */
+export const monthNameLower = (ym: YM): string => monthNamesLower()[monthIndex0(ym)];
 
-/** French elision before a month label: "de septembre 2026" / "d’octobre 2026". */
+/** French elision before a month label: "de septembre 2026" / "d’octobre 2026". French sentences only. */
 export function deMonth(label: string): string {
   return /^[aeiouyàâäéèêëîïôöûüh]/i.test(label) ? `d’${label}` : `de ${label}`;
 }
 
+/** "a, b et c" / "a, b and c", in the screen's language. */
 export function joinFr(parts: string[]): string {
   if (parts.length <= 1) return parts.join('');
-  return `${parts.slice(0, -1).join(', ')} et ${parts[parts.length - 1]}`;
+  return `${parts.slice(0, -1).join(', ')} ${screenLocale() === 'fr' ? 'et' : 'and'} ${parts[parts.length - 1]}`;
 }
 
 /** Normalises month-name keys, including legacy mojibake variants. */

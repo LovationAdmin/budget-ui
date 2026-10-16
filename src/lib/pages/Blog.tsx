@@ -1,7 +1,8 @@
 // src/pages/Blog.tsx
-// Blog index: every article of src/data/blog-articles.tsx (one source of
-// truth with the article pages and the prerender), each card a real link so
-// readers and search engines reach all articles.
+// Blog index (/blog in French, /en/blog in English): every article of the
+// language (src/data/blog-articles*.tsx, one source of truth with the article
+// pages and the prerender), each card a real link so readers and search
+// engines reach all articles.
 
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
@@ -25,9 +26,10 @@ import {
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { articlesByDate } from '@/data/blog-related';
-
-const blogPosts = articlesByDate();
+import { articlePath, articlesByDate } from '@/data/blog-related';
+import { localizedPath } from '@/i18n/locales';
+import { defineMessages, useLocale, useT } from '@/i18n/runtime';
+import { intlLocale } from '@/lib/budget/format';
 
 const CATEGORY_ICONS: Record<string, typeof TrendingUp> = {
   Méthodes: Target,
@@ -37,20 +39,62 @@ const CATEGORY_ICONS: Record<string, typeof TrendingUp> = {
   Technologie: Lightbulb,
   International: Globe2,
   Étudiants: GraduationCap,
+  Method: Target,
+  Couples: Users,
+  Savings: TrendingUp,
 };
 
-const categories = [
-  { name: 'Tous', icon: TrendingUp },
-  ...[...new Set(blogPosts.map((p) => p.category))].map((name) => ({ name, icon: CATEGORY_ICONS[name] ?? Tag })),
-];
+const M = defineMessages({
+  fr: {
+    all: 'Tous',
+    back: 'Retour',
+    badge: 'Conseils & Astuces',
+    title: 'Blog Budget Famille',
+    intro: 'Guides pratiques pour gérer son budget, seul ou à plusieurs : famille, couple, budget perso, épargne pour un projet, économies.',
+    search: 'Rechercher un article...',
+    featured: 'Articles en vedette',
+    read: 'Lire →',
+    allArticles: 'Tous les articles',
+    none: 'Aucun article trouvé',
+    by: (author: string) => `Par ${author}`,
+    nextTitle: 'Passez de la lecture à votre budget',
+    nextText: 'Un tableau gratuit à télécharger, ou l’application qui calcule chaque mois pour vous.',
+    template: 'Tableau budget familial gratuit',
+    signup: 'Créer mon budget gratuit',
+  },
+  en: {
+    all: 'All',
+    back: 'Back',
+    badge: 'Tips & guides',
+    title: 'The Budget Famille blog',
+    intro: 'Practical guides to manage your budget, on your own or together: family, couple, personal budget, saving for a goal, cutting costs.',
+    search: 'Search an article...',
+    featured: 'Featured articles',
+    read: 'Read →',
+    allArticles: 'All articles',
+    none: 'No article found',
+    by: (author: string) => `By ${author}`,
+    nextTitle: 'From reading to your own budget',
+    nextText: 'A free template to download, or the app that does the math for you every month.',
+    template: 'Free family budget template',
+    signup: 'Create my free budget',
+  },
+});
 
 const formatDate = (iso: string, month: 'long' | 'short') =>
-  new Date(iso).toLocaleDateString('fr-FR', { day: 'numeric', month, year: 'numeric' });
+  new Date(iso).toLocaleDateString(intlLocale(), { day: 'numeric', month, year: 'numeric' });
 
 export default function Blog() {
   const navigate = useNavigate();
+  const t = useT(M);
+  const locale = useLocale();
+  const blogPosts = articlesByDate(locale);
+  const categories = [
+    { name: t.all, icon: TrendingUp },
+    ...[...new Set(blogPosts.map((p) => p.category))].map((name) => ({ name, icon: CATEGORY_ICONS[name] ?? Tag })),
+  ];
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('Tous');
+  const [selectedCategory, setSelectedCategory] = useState(t.all);
 
   const filteredPosts = blogPosts.filter(post => {
     const matchesSearch = 
@@ -59,7 +103,7 @@ export default function Blog() {
       post.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()));
     
     const matchesCategory = 
-      selectedCategory === 'Tous' || post.category === selectedCategory;
+      selectedCategory === t.all || post.category === selectedCategory;
     
     return matchesSearch && matchesCategory;
   });
@@ -77,21 +121,20 @@ export default function Blog() {
           className="flex items-center gap-2 text-primary-600 hover:text-primary-700 mb-8 font-medium"
         >
           <ArrowLeft className="h-4 w-4" />
-          Retour
+          {t.back}
         </button>
 
         {/* Hero */}
         <div className="text-center mb-16">
           <div className="inline-flex items-center gap-2 bg-primary/10 text-primary px-4 py-2 rounded-full text-sm font-medium mb-6">
             <Lightbulb className="h-4 w-4" />
-            Conseils & Astuces
+            {t.badge}
           </div>
           <h1 className="text-4xl md:text-5xl font-display font-bold text-gray-900 mb-6">
-            Blog Budget Famille
+            {t.title}
           </h1>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-            Guides pratiques pour gérer son budget, seul ou à plusieurs : famille, couple,
-            budget perso, épargne pour un projet, économies.
+            {t.intro}
           </p>
         </div>
 
@@ -102,7 +145,7 @@ export default function Blog() {
               <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
               <Input
                 type="text"
-                placeholder="Rechercher un article..."
+                placeholder={t.search}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-12 h-12 text-base"
@@ -134,16 +177,16 @@ export default function Blog() {
         </div>
 
         {/* Featured Posts */}
-        {selectedCategory === 'Tous' && searchQuery === '' && (
+        {selectedCategory === t.all && searchQuery === '' && (
           <section className="mb-16">
             <h2 className="text-2xl font-display font-bold text-gray-900 mb-6">
-              Articles en vedette
+              {t.featured}
             </h2>
             <div className="grid md:grid-cols-3 gap-8">
               {featuredPosts.map((post) => (
                 <Link
                   key={post.id}
-                  to={`/blog/${post.slug}`}
+                  to={articlePath(post)}
                   className="block bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition-all hover:-translate-y-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 >
                   <div className="h-48 bg-gradient-to-br from-primary to-purple-600 flex items-center justify-center">
@@ -172,7 +215,7 @@ export default function Blog() {
                         <Calendar className="h-4 w-4" />
                         {formatDate(post.updatedAt ?? post.publishedAt, 'long')}
                       </div>
-                      <span className="text-sm font-semibold text-primary">Lire →</span>
+                      <span className="text-sm font-semibold text-primary">{t.read}</span>
                     </div>
                   </div>
                 </Link>
@@ -184,13 +227,13 @@ export default function Blog() {
         {/* All Posts */}
         <section>
           <h2 className="text-2xl font-display font-bold text-gray-900 mb-6">
-            {filteredPosts.length > 0 ? 'Tous les articles' : 'Aucun article trouvé'}
+            {filteredPosts.length > 0 ? t.allArticles : t.none}
           </h2>
           <div className="grid md:grid-cols-2 gap-8">
             {filteredPosts.map((post) => (
               <Link
                 key={post.id}
-                to={`/blog/${post.slug}`}
+                to={articlePath(post)}
                 className="block bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition-all hover:-translate-y-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
                 <div className="flex items-start justify-between mb-4">
@@ -221,7 +264,7 @@ export default function Blog() {
                 </div>
                 <div className="flex items-center justify-between pt-4 border-t border-gray-100">
                   <div className="text-sm text-gray-500">
-                    Par {post.author}
+                    {t.by(post.author)}
                   </div>
                   <div className="flex items-center gap-2 text-sm text-gray-500">
                     <Calendar className="h-4 w-4" />
@@ -236,20 +279,20 @@ export default function Blog() {
         {/* Next steps */}
         <section className="mt-20 bg-gradient-to-r from-primary to-purple-600 rounded-3xl p-8 sm:p-12 text-center text-white">
           <h2 className="text-3xl font-display font-bold mb-4">
-            Passez de la lecture à votre budget
+            {t.nextTitle}
           </h2>
           <p className="text-xl mb-8 opacity-90 max-w-2xl mx-auto">
-            Un tableau gratuit à télécharger, ou l’application qui calcule chaque mois pour vous.
+            {t.nextText}
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <Button asChild size="lg" className="bg-white text-primary hover:bg-gray-100 font-semibold">
-              <Link to="/tableau-budget-familial-gratuit">
-                <FileSpreadsheet className="mr-2 h-5 w-5" aria-hidden="true" /> Tableau budget familial gratuit
+              <Link to={localizedPath('/tableau-budget-familial-gratuit', locale)}>
+                <FileSpreadsheet className="mr-2 h-5 w-5" aria-hidden="true" /> {t.template}
               </Link>
             </Button>
             <Button asChild size="lg" variant="outline" className="border-2 border-white bg-transparent text-white hover:bg-white/10 font-semibold">
               <Link to="/signup">
-                Créer mon budget gratuit <ArrowRight className="ml-2 h-5 w-5" aria-hidden="true" />
+                {t.signup} <ArrowRight className="ml-2 h-5 w-5" aria-hidden="true" />
               </Link>
             </Button>
           </div>

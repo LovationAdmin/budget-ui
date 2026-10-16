@@ -10,8 +10,11 @@
 // ============================================================================
 
 import { Calculator, ShieldCheck } from 'lucide-react';
-import { CurrencyPicker, useCurrency } from '@/components/en/CurrencyPicker';
-import { EnglishFooter, EnglishHeader, EnglishToolLinks } from '@/components/en/EnglishLayout';
+import { CurrencyPicker, useCurrency } from '@/components/tools/CurrencyPicker';
+import { scaleAmounts } from '@/lib/tools/scaleAmounts';
+import Navbar from '@/components/Navbar';
+import { Footer } from '@/components/Footer';
+import { EnglishToolLinks } from '@/components/en/EnglishLayout';
 import { ColocationCalculator } from '@/components/tools/ColocationCalculator';
 import { FaqList, ToolArticle } from '@/components/tools/ToolKit';
 import { COLOCATION_EN, colocExampleEn } from '@/i18n/en/colocation';
@@ -24,13 +27,14 @@ export default function RentSplitCalculatorEn() {
   const { code, setCode, currency, format } = useCurrency();
   const { moneyExact: money, pct } = format;
   const unit = currency.area;
-  const example = colocExampleEn(unit);
+  // The fictitious example in the visitor's currency (bedroom sizes stay as they are).
+  const example = scaleAmounts(colocExampleEn(unit), format.example, ['room']);
   const examples = (['egal', 'chambre', 'revenus'] as const).map((m) => computeColocation({ ...example, method: m }));
   const sizes = example.roommates.map((m) => m.room);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary-50 to-purple-50 flex flex-col">
-      <EnglishHeader />
+      <Navbar />
       <main className="flex-1">
         <section className="px-4 pt-12 pb-8 sm:px-6 lg:px-8">
           <div className="mx-auto max-w-3xl text-center">
@@ -149,7 +153,7 @@ export default function RentSplitCalculatorEn() {
           </section>
         </ToolArticle>
       </main>
-      <EnglishFooter />
+      <Footer />
     </div>
   );
 }

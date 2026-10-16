@@ -11,6 +11,7 @@ import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { AlertTriangle, CheckCircle2, ChevronDown, Info, RotateCcw, Share2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import type { ToolFormat } from '@/i18n/format';
+import { useCalculatorUsed } from '@/lib/analytics';
 import { MoneyInput, Panel, SignupCard, Tile } from '@/components/tools/ToolKit';
 import {
   FULL_SAVINGS_MAX_NEEDS_SHARE, INCOME_FIELDS, NEED_FIELDS, RULE, computeBudgetPerso,
@@ -206,6 +207,7 @@ export function BudgetPersoCalculator({ t, format: f, storageKey, beforeIncomes 
 
   const set = (key: string) => (v: string) => setValues((prev) => ({ ...prev, [key]: v }));
   const hasIncome = r.revenus > 0;
+  useCalculatorUsed('budget_503020', hasIncome, r);
   const deficit = r.status === 'deficit';
   const needsShare = r.besoinsShare ?? 0;
 

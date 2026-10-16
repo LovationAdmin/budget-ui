@@ -15,6 +15,24 @@
 
 import axios, { AxiosError, InternalAxiosRequestConfig, AxiosResponse } from 'axios';
 import type { HouseholdInput, BudgetProposal, AdvisorProgress, AdvisorErrorCode } from '@/types/aiBudget';
+import { defineMessages, pick, screenLocale } from '@/i18n/current';
+
+const M = defineMessages({
+  fr: {
+    sessionExpired: 'Votre session a expiré. Reconnectez-vous.',
+    proposalFailed: "L'IA n'a pas pu proposer de budget. Réessayez dans un instant.",
+    connectionLost: 'La connexion avec le serveur a été interrompue. Réessayez.',
+    aiTimeout: "L'IA a mis trop de temps à répondre. Réessayez dans un instant.",
+    offline: 'Impossible de joindre le serveur. Vérifiez votre connexion puis réessayez.',
+  },
+  en: {
+    sessionExpired: 'Your session has expired. Please sign in again.',
+    proposalFailed: 'The AI couldn’t suggest a budget. Try again in a moment.',
+    connectionLost: 'The connection to the server was interrupted. Try again.',
+    aiTimeout: 'The AI took too long to answer. Try again in a moment.',
+    offline: 'Can’t reach the server. Check your connection and try again.',
+  },
+});
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api/v1';
 
@@ -50,7 +68,7 @@ async function callRefresh(): Promise<string> {
   const response = await axios.post<{ access_token: string; expires_in?: number }>(
     `${API_URL}/auth/refresh`,
     {},
-    { withCredentials: true },
+    { withCredentials: true, headers: { 'Accept-Language': screenLocale() } },
   );
   const { access_token } = response.data;
   if (!access_token) throw new Error('Refresh response missing access_token');
@@ -87,6 +105,8 @@ api.interceptors.request.use((config: InternalAxiosRequestConfig) => {
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
+  // Language of the screen, so the API answers in it (messages, AI text).
+  config.headers['Accept-Language'] = screenLocale();
   return config;
 });
 
@@ -422,7 +442,7 @@ export const budgetAPI = {
     input: HouseholdInput,
     config?: { timeout?: number; signal?: AbortSignal },
   ): Promise<AxiosResponse<BudgetProposal>> =>
-    api.post('/budgets/ai-proposal', input, config),
+    api.post('/budgets/ai-proposal', { ...input, language: screenLocale() }, config),
 
   // Market Suggestions — bulk (async, retour via WS)
   bulkAnalyzeSuggestions: (
@@ -444,6 +464,8 @@ export const budgetAPI = {
     budget_id?: string;
     country?: string;
     currency?: string;
+    /** Language of the answer (offer descriptions, pros). */
+    language?: string;
   }): Promise<AxiosResponse<MarketSuggestion>> =>
     api.post('/public/suggestions/analyze', {
       // Mapper current_amount (front) → amount (backend)
@@ -455,6 +477,7 @@ export const budgetAPI = {
       budget_id: data.budget_id,
       country: data.country,
       currency: data.currency,
+      language: data.language,
     }),
 
   // Cached suggestions par catégorie
@@ -593,9 +616,11 @@ export async function streamAIProposal(
       headers: {
         'Content-Type': 'application/json',
         Accept: 'text/event-stream',
+        'Accept-Language': screenLocale(),
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
       },
-      body: JSON.stringify(input),
+      // language: the AI answers in the language of the screen.
+      body: JSON.stringify({ ...input, language: screenLocale() }),
       credentials: 'include',
       signal: ctrl.signal,
     });
@@ -606,7 +631,7 @@ export async function streamAIProposal(
       const token = await refreshAccessToken();
       if (!token) {
         forceLogout();
-        throw new AIProposalError('Votre session a expiré. Reconnectez-vous.', 'unauthorized', false);
+        throw new AIProposalError(pick(M).sessionExpired, 'unauthorized', false);
       }
       res = await post(token);
     }
@@ -622,7 +647,7 @@ export async function streamAIProposal(
     if (!res.ok || !res.body) {
       const body = (await res.json().catch(() => ({}))) as { error?: string; code?: AdvisorErrorCode; retryable?: boolean };
       throw new AIProposalError(
-        body.error || "L'IA n'a pas pu proposer de budget. Réessayez dans un instant.",
+        body.error || pick(M).proposalFailed,
         body.code || 'http_error',
         body.retryable ?? res.status >= 500,
       );
@@ -651,14 +676,14 @@ export async function streamAIProposal(
       }
     }
     throw new AIProposalError(
-      'La connexion avec le serveur a été interrompue. Réessayez.',
+      pick(M).connectionLost,
       'connection_lost',
       true,
     );
   } catch (err) {
     if (err instanceof AIProposalError) throw err;
     if (timedOut) {
-      throw new AIProposalError("L'IA a mis trop de temps à répondre. Réessayez dans un instant.", 'ai_timeout', true);
+      throw new AIProposalError(pick(M).aiTimeout, 'ai_timeout', true);
     }
     if (opts.signal?.aborted) throw err; // annulation voulue par l'utilisateur
     const axiosErr = err as AxiosError<{ error?: string; code?: AdvisorErrorCode; retryable?: boolean }>;
@@ -667,7 +692,7 @@ export async function streamAIProposal(
       throw new AIProposalError(d.error!, d.code || 'http_error', d.retryable ?? true);
     }
     throw new AIProposalError(
-      'Impossible de joindre le serveur. Vérifiez votre connexion puis réessayez.',
+      pick(M).offline,
       'connection_lost',
       true,
     );

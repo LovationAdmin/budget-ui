@@ -248,10 +248,12 @@ export function savingPlan(total: number, saved: number, weddingMonth: string, t
   };
 }
 
-/** The worked example of the article: same amounts as the button, wedding EXAMPLE.monthsAhead months away. */
-export function exampleResult() {
-  const r = computeMariage(EXAMPLE.guests, EXAMPLE.amounts);
-  const months = EXAMPLE.monthsAhead;
-  const remaining = cents(Math.max(0, r.total - EXAMPLE.saved));
-  return { ...r, fewerGuests: withFewerGuests(r), saved: EXAMPLE.saved, months, remaining, monthly: Math.ceil(cents(remaining / months)) };
+export type MariageExample = typeof EXAMPLE;
+
+/** The worked example of the article: same amounts as the button, wedding EXAMPLE.monthsAhead months away (another currency: its scaled example). */
+export function exampleResult(example: MariageExample = EXAMPLE) {
+  const r = computeMariage(example.guests, example.amounts);
+  const months = example.monthsAhead;
+  const remaining = cents(Math.max(0, r.total - example.saved));
+  return { ...r, fewerGuests: withFewerGuests(r), saved: example.saved, months, remaining, monthly: Math.ceil(cents(remaining / months)) };
 }

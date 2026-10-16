@@ -14,10 +14,11 @@ import { AlertTriangle, CheckCircle2, ChevronDown, Info, RotateCcw, Share2, Spar
 import { Button } from '@/components/ui/button';
 import { MoneyInput, Panel, SignupCard, Stepper, Tile } from '@/components/tools/ToolKit';
 import type { ToolFormat } from '@/i18n/format';
+import { useCalculatorUsed } from '@/lib/analytics';
 import {
-  DEFAULT_GUESTS, EXAMPLE, MAX_GUESTS, MIN_GUESTS, POSTE_FIELDS, addMonths, clampGuests, computeMariage,
+  DEFAULT_GUESTS, EXAMPLE as DEFAULT_EXAMPLE, MAX_GUESTS, MIN_GUESTS, POSTE_FIELDS, addMonths, clampGuests, computeMariage,
   formatMonthValue, parseMonth, savingPlan, toYearMonth, withFewerGuests,
-  type Amounts, type PosteField, type PosteKey, type YearMonth,
+  type Amounts, type MariageExample, type PosteField, type PosteKey, type YearMonth,
 } from '@/lib/tools/mariage';
 
 interface FieldCopy {
@@ -68,6 +69,8 @@ export interface MariageCopy {
   past: string;
   noDateAction: string;
   noDateRest: string;
+  /** Where two pieces of text meet: end of sentence and space after it (". " by default; "。" and none in Chinese). */
+  joints?: { stop: string; space: string };
   fillExampleShort: string;
   breakdownTitle: string;
   perGuestRate: (rate: string) => string;
@@ -115,13 +118,21 @@ const positive = (parse: ToolFormat['parse'], raw: string | undefined) => {
   return Number.isFinite(n) && n > 0 ? n : 0;
 };
 
-/** The example as the form shows it. */
-const EXAMPLE_VALUES: Record<string, string> = Object.fromEntries(
-  Object.entries(EXAMPLE.amounts).map(([k, v]) => [k, String(v)]),
-);
-
 /** State and actions of the calculator, for the component and for the page around it. */
-export function useMariageCalculator({ t, format: f, storageKey }: { t: MariageCopy; format: ToolFormat; storageKey: string }) {
+const JOINTS = { stop: '.', space: ' ' };
+
+export function useMariageCalculator({ t, format: f, storageKey, example: EXAMPLE = DEFAULT_EXAMPLE }: {
+  t: MariageCopy;
+  format: ToolFormat;
+  storageKey: string;
+  /** The fictitious example in the visitor's currency (default: the reference one). */
+  example?: MariageExample;
+}) {
+  /** The example as the form shows it. */
+  const EXAMPLE_VALUES: Record<string, string> = useMemo(
+    () => Object.fromEntries(Object.entries(EXAMPLE.amounts).map(([k, v]) => [k, String(v)])),
+    [EXAMPLE],
+  );
   const saved = useMemo(() => load(storageKey), [storageKey]);
   const today = useMemo(() => new Date(), []);
   const thisMonth = toYearMonth(today);
@@ -150,6 +161,7 @@ export function useMariageCalculator({ t, format: f, storageKey }: { t: MariageC
   const plan = useMemo(() => savingPlan(r.total, positive(parse, already), date, today), [r.total, already, date, today, parse]);
 
   const hasTotal = r.total > 0;
+  useCalculatorUsed('wedding', hasTotal, r);
   const isExampleValue = (key: string) => example && EXAMPLE_VALUES[key] !== undefined && values[key] === EXAMPLE_VALUES[key];
   const alreadyIsExample = example && already === String(EXAMPLE.saved);
   const exampleLeft = POSTE_FIELDS.some((p) => isExampleValue(p.key)) || alreadyIsExample;
@@ -320,7 +332,7 @@ export function MariageCalculator({ calc, t, format: f, beforeWedding }: {
                 <p className="flex items-start gap-2 py-3 text-sm text-foreground">
                   <Info className="mt-0.5 h-4 w-4 shrink-0 text-warning" aria-hidden="true" />
                   <span>
-                    <strong>{t.exampleNote}.</strong> {t.exampleExplain}
+                    <strong>{t.exampleNote}{(t.joints ?? JOINTS).stop}</strong>{(t.joints ?? JOINTS).space}{t.exampleExplain}
                   </span>
                 </p>
               )}
@@ -423,7 +435,7 @@ export function MariageCalculator({ calc, t, format: f, beforeWedding }: {
                         <p className="mt-1 text-sm text-muted-foreground">
                           <button type="button" onClick={() => dateRef.current?.focus()} className="font-medium text-primary hover:underline">
                             {t.noDateAction}
-                          </button>{' '}
+                          </button>{(t.joints ?? JOINTS).space}
                           {t.noDateRest}
                         </p>
                       )}

@@ -30,6 +30,12 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { defineMessages, useT } from '@/i18n/runtime';
+
+const M = defineMessages({
+  fr: { confirm: 'Confirmer', cancel: 'Annuler', delete: 'Supprimer' },
+  en: { confirm: 'Confirm', cancel: 'Cancel', delete: 'Delete' },
+});
 
 interface ConfirmOptions {
   title: string;
@@ -45,6 +51,7 @@ interface UseDeleteConfirmReturn {
 }
 
 export function useDeleteConfirm(): UseDeleteConfirmReturn {
+  const t = useT(M);
   const [open, setOpen] = useState(false);
   const [options, setOptions] = useState<ConfirmOptions | null>(null);
   const resolverRef = useRef<((value: boolean) => void) | null>(null);
@@ -74,14 +81,14 @@ export function useDeleteConfirm(): UseDeleteConfirmReturn {
     >
       <AlertDialogContent className="max-w-md">
         <AlertDialogHeader>
-          <AlertDialogTitle>{options?.title ?? 'Confirmer'}</AlertDialogTitle>
+          <AlertDialogTitle>{options?.title ?? t.confirm}</AlertDialogTitle>
           {options?.description && (
             <AlertDialogDescription>{options.description}</AlertDialogDescription>
           )}
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel onClick={() => handleResolve(false)}>
-            {options?.cancelLabel ?? 'Annuler'}
+            {options?.cancelLabel ?? t.cancel}
           </AlertDialogCancel>
           <AlertDialogAction
             onClick={() => handleResolve(true)}
@@ -91,7 +98,7 @@ export function useDeleteConfirm(): UseDeleteConfirmReturn {
                 : undefined
             }
           >
-            {options?.confirmLabel ?? 'Supprimer'}
+            {options?.confirmLabel ?? t.delete}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

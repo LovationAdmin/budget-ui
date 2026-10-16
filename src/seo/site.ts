@@ -4,8 +4,15 @@
 // browser by <RouteSEO /> (title/description/canonical on navigation) and at
 // build time by scripts/prerender.mjs, which writes one HTML file per page
 // with its own head, structured data and readable content. Pages under /en/
-// are in English; src/i18n/locales.ts pairs each with its French version.
+// are in English, under /zh/ in simplified Chinese (src/seo/zh/);
+// src/i18n/locales.ts pairs each with its French version.
 // ============================================================================
+
+import { HOME_PAGE_ZH } from './zh/home';
+import { BUDGET_503020_PAGE_ZH } from './zh/budget-503020';
+import { RENT_SPLIT_PAGE_ZH } from './zh/rent-split';
+import { WEDDING_PAGE_ZH } from './zh/wedding';
+import { LEFTOVER_INCOME_PAGE_ZH } from './zh/leftover-income';
 
 /** Canonical host: the bare domain redirects here. */
 export const SITE = 'https://www.budgetfamille.com';
@@ -30,6 +37,7 @@ export interface PageSEO {
 }
 
 const CTA = { href: '/signup', label: 'Créer mon budget gratuit' };
+const CTA_EN = { href: '/signup', label: 'Create my free budget' };
 
 export const PAGES: PageSEO[] = [
   {
@@ -257,6 +265,134 @@ export const PAGES: PageSEO[] = [
     priority: 0.8,
     changefreq: 'monthly',
   },
+  {
+    path: '/en',
+    title: 'Free Budget App for Families, Couples and Roommates',
+    description: 'Free budgeting app for your family, your couple, roommates or just you: bills, a joint pot, savings and goals with a date. No bank connection required.',
+    h1: 'The free budget app for families, couples, roommates and your goals',
+    intro: 'On your own or together, budget the month and plan what matters: bills, a joint pot, savings, a trip, a wedding, renovations. No bank connection required, no ads, in real time.',
+    links: [CTA_EN, { href: '/en/free-budget-template', label: 'Free budget template (Excel and PDF)' }, { href: '/en/50-30-20-budget-calculator', label: '50/30/20 budget calculator' }, { href: '/en/leftover-income-calculator', label: 'Leftover income calculator' }, { href: '/en/rent-split-calculator', label: 'Rent split calculator' }, { href: '/en/wedding-budget-calculator', label: 'Wedding budget calculator' }, { href: '/en/features', label: 'All features' }],
+    sections: [
+      { h2: 'Not just for families', text: '“Famille” (family) in the broad sense: on your own for a personal budget, as a couple with a joint pot, as a family, with roommates or friends, and for a goal (a trip, a wedding, renovations, a car, a down payment) with a target and a date. Create as many budgets as you need, each with its own members and currency.' },
+    ],
+    priority: 0.9,
+    changefreq: 'weekly',
+  },
+  {
+    path: '/en/free-budget-template',
+    title: 'Free Family Budget Template: Excel and Printable PDF',
+    description: 'Free family budget template: Excel with automatic calculations (works in Google Sheets) or a printable PDF. Monthly budget, savings, joint account. Any currency.',
+    h1: 'Free family budget template',
+    intro: 'A simple template to track your household’s monthly budget: income, spending, savings, and how a couple splits the joint account. In Excel the math is already done; the PDF prints out and fills in with a pen.',
+    links: [
+      { href: '/telechargements/budget-template.xlsx', label: 'Excel template (.xlsx)' },
+      { href: '/telechargements/budget-template-printable.pdf', label: 'Printable PDF (A4, 3 pages)' },
+      { href: '/en/50-30-20-budget-calculator', label: '50/30/20 budget calculator' },
+      { href: '/en/leftover-income-calculator', label: 'Leftover income calculator' },
+      CTA_EN,
+    ],
+    priority: 0.8,
+    changefreq: 'monthly',
+  },
+  {
+    path: '/en/leftover-income-calculator',
+    title: 'Leftover Income Calculator: What’s Left After Bills',
+    description: 'Free leftover income calculator: your take-home income minus fixed bills, per person, per day and per adult equivalent. In your currency, no sign-up.',
+    h1: 'Leftover income calculator',
+    intro: 'Your income minus your fixed bills: see what your household has left each month, per person and per day. Free, no sign-up, nothing is sent.',
+    sections: [
+      { h2: 'How to calculate your leftover income', text: 'Leftover income = monthly take-home income − monthly fixed bills. Income: take-home pay, benefits and tax credits, pension, child support received, rental income. Fixed bills: rent or mortgage, other loans, energy, water, insurance, internet, phone, subscriptions, transport, childcare, taxes not taken from pay. Groceries, clothes and fun aren’t fixed bills: they’re what leftover income pays for.' },
+      { h2: 'An example', text: 'In our example, a couple with two children aged 6 and 10 brings home 6,000 a month. Rent 1,800, car loan 400, energy 250, insurance 300, internet and phone 150, transport 200, childcare 600: 3,700 of fixed bills. Leftover income: 2,300 a month, or 575 per person and about 77 a day.' },
+      { h2: 'Per person or per adult equivalent?', text: 'To compare households of different sizes, statisticians divide by adult equivalents on the OECD-modified scale: 1 for the first adult, 0.5 for each other person aged 14 or over, 0.3 for each child under 14.' },
+      { h2: 'How much should be left?', text: 'There’s no universal minimum. A common rule of thumb keeps housing under about 30% of income; the 50/30/20 rule keeps needs to about half of take-home pay.' },
+    ],
+    priority: 0.8,
+    changefreq: 'monthly',
+  },
+  {
+    path: '/en/features',
+    title: 'Features: Joint Pot, Goals, AI Budget – Budget Famille',
+    description: 'Monthly view, joint pot, spending money, private personal expenses, savings goals with a date, several budgets, AI budget: everything Budget Famille does, on your own or together.',
+    h1: 'Budget Famille features',
+    intro: 'Everything you need to budget and plan, on your own or together (couple, family, roommates): the month at a glance, a fair split, private personal expenses and goals that move forward.',
+    links: [CTA_EN],
+    sections: [
+      { h2: 'The month at a glance', text: 'Each month shows what goes into the joint pot, the bills, the savings and what’s left. Bills repeat by themselves: every month, some months (school meals), every year (property tax) or just once. A finished month is closed and frozen: changing an amount never rewrites the past.' },
+      { h2: 'Joint pot and spending money', text: 'For each member of the household: their pay, what they put into the joint pot and the spending money they keep. The “Split the joint pot” assistant works out a fair contribution, 50/50, in proportion to pay or to keep the same spending money, on the actual month.' },
+      { h2: 'Personal expenses, public or private', text: 'A tax, money sent to family, a personal loan come out of their owner’s spending money, never out of the joint pot. When private, the expense’s name is encrypted on our servers and visible to its creator only; the amount stays fair for the household.' },
+      { h2: 'Goals and savings with a target', text: 'A trip, a wedding, renovations, a car: create a savings pot with a target and a date. The monthly amount is worked out and the app checks it fits in your budget, looking at the tightest month.' },
+      { h2: 'Several budgets', text: 'One budget for the household, one for the shared flat, one for a project: each has its own name, members, country and currency.' },
+      { h2: 'AI budget', text: 'Describe your situation (couple, family, friends, roommates) and your goals: the AI suggests a split, ways to save and a plan to reach your goals on time. Nothing changes until you approve.' },
+    ],
+    priority: 0.7,
+    changefreq: 'monthly',
+  },
+  {
+    path: '/en/ai-tools',
+    title: 'Free AI Tools to Lower Your Bills – Budget Famille',
+    description: 'Estimate in 30 seconds what you could save on energy, internet, your phone plan or insurance, with no account.',
+    h1: 'AI tools to lower your bills',
+    links: [CTA_EN],
+    sections: [
+      { h2: 'Energy, internet, phone, insurance', text: 'Pick a bill, enter what you pay now and the size of your household: the tool estimates in 30 seconds what you could save and suggests alternatives, with no account.' },
+      { h2: 'In your budget', text: 'Once your budget is set up, the analysis runs bill by bill and possible savings show up next to each expense.' },
+    ],
+    priority: 0.5,
+    changefreq: 'monthly',
+  },
+  {
+    path: '/en/premium',
+    title: 'Premium (Coming Soon): Bank Sync – Budget Famille',
+    description: 'Coming soon: your bank accounts synced to compare your planned budget with what you actually spent. Try the demo with sample data.',
+    h1: 'Budget Famille Premium',
+    intro: 'Coming soon: your bank accounts synced to compare, every month, what you planned with what you really spent. Price announced at launch.',
+    sections: [
+      { h2: 'What’s free today', text: 'Budgets, members, bills, savings and goals, the AI budget and sharing with others are free, with no bank connection.' },
+    ],
+    priority: 0.4,
+    changefreq: 'monthly',
+  },
+  {
+    path: '/en/help',
+    title: 'Help and FAQ – Budget Famille',
+    description: 'How to create your budget, on your own or together, invite members, split the joint pot, handle personal expenses, savings and goals: all the answers.',
+    h1: 'Help center',
+    links: [CTA_EN],
+    sections: [
+      { h2: 'Creating your budget', text: 'Create a free account, confirm your email address, then create your budget: a name (“Home”, “Flat share”, “Wedding 2027”…) and your country are enough. Then add the members with their take-home pay (or just you), and your bills. You can create several budgets.' },
+      { h2: 'Splitting the joint pot', text: 'In the Household tab, the “Split the joint pot” assistant suggests what each person pays in: equal shares, in proportion to pay or to keep the same spending money. Nothing changes until you apply it.' },
+      { h2: 'Closed months', text: 'At the end of a month, its amounts are frozen: changing a bill or a salary afterwards only changes the future. You can reopen a month if needed.' },
+    ],
+    priority: 0.5,
+    changefreq: 'monthly',
+  },
+  {
+    path: '/en/about',
+    title: 'About – Budget Famille',
+    description: 'Budget Famille is an independent French app to budget and plan, on your own or together: family, couple, roommates and goals.',
+    h1: 'About Budget Famille',
+    sections: [
+      { h2: 'Why Budget Famille', text: 'Managing money, on your own or together, means juggling bills, everyone’s own money and plans. Spreadsheets do it badly and banking apps know nothing about a joint pot or your goals: Budget Famille was made for that.' },
+      { h2: 'Our commitments', text: 'A simple app, free for the essentials, with no ads. Data hosted in Europe, encrypted, never sold, with privacy at the core: personal expenses can stay private.' },
+    ],
+    priority: 0.3,
+    changefreq: 'yearly',
+  },
+  {
+    path: '/en/blog',
+    title: 'Budgeting Tips for Families, Couples and Goals – Budget Famille Blog',
+    description: 'Practical guides to manage your budget, on your own or together: family budget, couples and joint accounts, saving for a goal, worked examples.',
+    h1: 'Budgeting tips: family, couples, personal and goals',
+    priority: 0.7,
+    changefreq: 'weekly',
+  },
+  { path: '/en/privacy', title: 'Privacy Policy – Budget Famille', description: 'How Budget Famille protects your data: hosting in Europe, encryption, never sold.', priority: 0.2, changefreq: 'yearly' },
+  { path: '/en/terms', title: 'Terms of Use – Budget Famille', description: 'The terms of use of Budget Famille.', priority: 0.2, changefreq: 'yearly' },
+  HOME_PAGE_ZH,
+  BUDGET_503020_PAGE_ZH,
+  RENT_SPLIT_PAGE_ZH,
+  WEDDING_PAGE_ZH,
+  LEFTOVER_INCOME_PAGE_ZH,
   { path: '/signup', title: 'Créer un compte gratuit – Budget Famille', description: 'Créez votre budget gratuit en 1 minute, seul ou à plusieurs : sans carte bancaire, sans connexion à votre banque.', priority: 0.7, changefreq: 'yearly', h1: 'Créez votre budget gratuit' },
   { path: '/privacy', title: 'Politique de confidentialité – Budget Famille', description: 'Comment Budget Famille protège vos données : hébergement en Europe, chiffrement, aucune revente.', priority: 0.3, changefreq: 'yearly' },
   { path: '/terms', title: 'Conditions d’utilisation – Budget Famille', description: 'Les conditions générales d’utilisation de Budget Famille.', priority: 0.2, changefreq: 'yearly' },
@@ -291,6 +427,18 @@ export const ORGANIZATION_LD = {
   url: `${SITE}/`,
   logo: `${SITE}/icon-512.png`,
   sameAs: SOCIAL_PROFILES.map((p) => p.url),
+};
+
+export const SOFTWARE_LD_EN = {
+  '@context': 'https://schema.org',
+  '@type': 'SoftwareApplication',
+  name: SITE_NAME,
+  applicationCategory: 'FinanceApplication',
+  operatingSystem: 'Web, iOS, Android (browser)',
+  url: `${SITE}/en`,
+  description: 'Free budgeting app, on your own or together (family, couple, roommates): joint pot, spending money, bills, savings, goals with a date and an AI budget.',
+  inLanguage: 'en',
+  offers: { '@type': 'Offer', price: '0', priceCurrency: 'EUR' },
 };
 
 export const SOFTWARE_LD = {

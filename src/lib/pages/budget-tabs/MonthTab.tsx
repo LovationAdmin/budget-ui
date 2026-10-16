@@ -15,8 +15,15 @@ import type { YM } from '@/lib/budget/types';
 import { MonthHeader } from '@/components/budget/month/MonthHeader';
 import { ChargesCard, IncomeCard, SavingsCard } from '@/components/budget/month/MonthSections';
 import { ChangesCard, NoteCard, SummaryCard } from '@/components/budget/month/MonthSidebar';
+import { defineMessages, useT } from '@/i18n/runtime';
+
+const M = defineMessages({
+  fr: { addToMonth: 'Ajouter au mois' },
+  en: { addToMonth: 'Add to this month' },
+});
 
 export default function MonthTab() {
+  const t = useT(M);
   const { engine, today, openSheet } = useBudget();
   const [params, setParams] = useSearchParams();
   const requested = params.get('m');
@@ -62,7 +69,7 @@ export default function MonthTab() {
       {!month.closed && (
         <button
           type="button"
-          aria-label="Ajouter au mois"
+          aria-label={t.addToMonth}
           onClick={() => openSheet({ kind: 'addMenu', ym })}
           className="lg:hidden fixed right-4 bottom-[calc(5rem+env(safe-area-inset-bottom))] z-40 inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-floating transition-transform active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
         >

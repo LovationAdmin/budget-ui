@@ -31,6 +31,93 @@ import {
   AlertDescription,
   AlertTitle,
 } from "@/components/ui/alert";
+import { intlLocale } from "@/lib/budget/format";
+import { defineMessages, useT } from "@/i18n/runtime";
+
+const M = defineMessages({
+  fr: {
+    error: "Erreur",
+    banksFailed: "Impossible de charger les banques.",
+    popupBlocked: "Impossible d'ouvrir la fenêtre d'autorisation. Vérifiez que les popups ne sont pas bloquées.",
+    connectedTitle: "✅ Connexion réussie !",
+    accountsSynced: (n: number) => `${n} compte(s) synchronisé(s)`,
+    syncErrorTitle: "Erreur de synchronisation",
+    syncFailed: "Échec de la synchronisation",
+    connectErrorTitle: "Erreur de connexion",
+    connectFailed: "Impossible de se connecter.",
+    refreshedTitle: "✅ Soldes mis à jour",
+    accountsUpdated: (n: number) => `${n} compte(s) mis à jour`,
+    refreshFailed: "Échec de la mise à jour",
+    confirmDelete: "Êtes-vous sûr de vouloir supprimer cette connexion bancaire ?",
+    deletedTitle: "✅ Connexion supprimée",
+    deletedDesc: "La connexion bancaire a été supprimée avec succès",
+    deleteFailed: "Échec de la suppression",
+    accountFailed: "Impossible de modifier le compte",
+    title: "Connexions Bancaires",
+    subtitle: "Connectez vos comptes bancaires pour synchroniser automatiquement vos transactions",
+    addBank: "Ajouter une banque",
+    betaTitle: "Mode Beta 2 - Enable Banking",
+    betaBefore: "Connectez-vous à plus de 2500 banques européennes. Pour les tests, utilisez ",
+    betaAfter: " qui fournit des données réalistes sans credentials.",
+    connectedOn: (date: string) => `Connecté le ${date}`,
+    updating: "Mise à jour...",
+    refresh: "Actualiser",
+    savings: "Épargne",
+    current: "Courant",
+    savingsQuestion: "Compte Épargne ?",
+    included: "Inclus dans Reality Check",
+    ignored: "Ignoré",
+    noAccounts: "Aucun compte trouvé. Essayez d'actualiser.",
+    noConnection: "Aucune connexion bancaire",
+    firstBank: "Connectez votre première banque pour commencer à synchroniser vos transactions automatiquement",
+    connectBank: "Connecter une banque",
+    pickBank: "Sélectionnez votre banque",
+    banksAvailable: "Plus de 2500 banques européennes disponibles",
+    searchPlaceholder: "Rechercher une banque...",
+    noBank: "Aucune banque trouvée",
+  },
+  en: {
+    error: "Error",
+    banksFailed: "Couldn’t load the banks.",
+    popupBlocked: "Couldn’t open the authorization window. Make sure pop-ups aren’t blocked.",
+    connectedTitle: "✅ Connected!",
+    accountsSynced: (n: number) => `${n} account${n !== 1 ? 's' : ''} synced`,
+    syncErrorTitle: "Sync error",
+    syncFailed: "Sync failed",
+    connectErrorTitle: "Connection error",
+    connectFailed: "Couldn’t connect.",
+    refreshedTitle: "✅ Balances updated",
+    accountsUpdated: (n: number) => `${n} account${n !== 1 ? 's' : ''} updated`,
+    refreshFailed: "Update failed",
+    confirmDelete: "Are you sure you want to delete this bank connection?",
+    deletedTitle: "✅ Connection deleted",
+    deletedDesc: "The bank connection was deleted",
+    deleteFailed: "Couldn’t delete it",
+    accountFailed: "Couldn’t edit the account",
+    title: "Bank connections",
+    subtitle: "Connect your bank accounts to sync your transactions automatically",
+    addBank: "Add a bank",
+    betaTitle: "Beta 2 mode - Enable Banking",
+    betaBefore: "Connect to more than 2,500 European banks. For testing, use ",
+    betaAfter: ", which provides realistic data without credentials.",
+    connectedOn: (date: string) => `Connected on ${date}`,
+    updating: "Updating...",
+    refresh: "Refresh",
+    savings: "Savings",
+    current: "Current",
+    savingsQuestion: "Savings account?",
+    included: "Included in Reality Check",
+    ignored: "Ignored",
+    noAccounts: "No accounts found. Try refreshing.",
+    noConnection: "No bank connections",
+    firstBank: "Connect your first bank to start syncing your transactions automatically",
+    connectBank: "Connect a bank",
+    pickBank: "Select your bank",
+    banksAvailable: "More than 2,500 European banks available",
+    searchPlaceholder: "Search for a bank...",
+    noBank: "No banks found",
+  },
+});
 
 // ============================================================================
 // TYPES
@@ -76,6 +163,7 @@ interface EnableBankingManagerProps {
 
 export function EnableBankingManager({ budgetId, onUpdate }: EnableBankingManagerProps) {
   const { toast } = useToast();
+  const t = useT(M);
   
   // États
   const [banks, setBanks] = useState<Bank[]>([]);
@@ -114,8 +202,8 @@ export function EnableBankingManager({ budgetId, onUpdate }: EnableBankingManage
       }
     } catch (error: any) {
       toast({ 
-        title: "Erreur", 
-        description: "Impossible de charger les banques.", 
+        title: t.error, 
+        description: t.banksFailed, 
         variant: "destructive" 
       });
       console.error('Failed to load banks:', error);
@@ -165,7 +253,7 @@ export function EnableBankingManager({ budgetId, onUpdate }: EnableBankingManage
       );
 
       if (!authWindow) {
-        throw new Error("Impossible d'ouvrir la fenêtre d'autorisation. Vérifiez que les popups ne sont pas bloquées.");
+        throw new Error(t.popupBlocked);
       }
 
       // 3. Écouter le message de callback
@@ -212,8 +300,8 @@ export function EnableBankingManager({ budgetId, onUpdate }: EnableBankingManage
             console.log('✅ Sync response:', syncRes.data);
 
             toast({
-              title: "✅ Connexion réussie !",
-              description: `${syncRes.data.accounts_synced || 0} compte(s) synchronisé(s)`,
+              title: t.connectedTitle,
+              description: t.accountsSynced(syncRes.data.accounts_synced || 0),
               variant: "default"
             });
 
@@ -224,8 +312,8 @@ export function EnableBankingManager({ budgetId, onUpdate }: EnableBankingManage
           } catch (error: any) {
             console.error('❌ Sync error:', error);
             toast({
-              title: "Erreur de synchronisation",
-              description: error.response?.data?.error || error.message || "Échec de la synchronisation",
+              title: t.syncErrorTitle,
+              description: error.response?.data?.error || error.message || t.syncFailed,
               variant: "destructive"
             });
           } finally {
@@ -251,8 +339,8 @@ export function EnableBankingManager({ budgetId, onUpdate }: EnableBankingManage
     } catch (error: any) {
       console.error('❌ Connection error:', error);
       toast({ 
-        title: "Erreur de connexion", 
-        description: error.response?.data?.error || error.message || "Impossible de se connecter.",
+        title: t.connectErrorTitle, 
+        description: error.response?.data?.error || error.message || t.connectFailed,
         variant: "destructive" 
       });
       setConnecting(false);
@@ -272,8 +360,8 @@ export function EnableBankingManager({ budgetId, onUpdate }: EnableBankingManage
       });
 
       toast({
-        title: "✅ Soldes mis à jour",
-        description: `${res.data.accounts_updated || 0} compte(s) mis à jour`,
+        title: t.refreshedTitle,
+        description: t.accountsUpdated(res.data.accounts_updated || 0),
         variant: "default"
       });
 
@@ -281,8 +369,8 @@ export function EnableBankingManager({ budgetId, onUpdate }: EnableBankingManage
       onUpdate();
     } catch (error: any) {
       toast({
-        title: "Erreur",
-        description: error.response?.data?.error || "Échec de la mise à jour",
+        title: t.error,
+        description: error.response?.data?.error || t.refreshFailed,
         variant: "destructive"
       });
     } finally {
@@ -295,7 +383,7 @@ export function EnableBankingManager({ budgetId, onUpdate }: EnableBankingManage
   // ============================================================================
 
   const handleDelete = async (connectionId: string) => {
-    if (!confirm("Êtes-vous sûr de vouloir supprimer cette connexion bancaire ?")) {
+    if (!confirm(t.confirmDelete)) {
       return;
     }
 
@@ -303,8 +391,8 @@ export function EnableBankingManager({ budgetId, onUpdate }: EnableBankingManage
       await api.delete(`/banking/enablebanking/connections/${connectionId}`);
       
       toast({
-        title: "✅ Connexion supprimée",
-        description: "La connexion bancaire a été supprimée avec succès",
+        title: t.deletedTitle,
+        description: t.deletedDesc,
         variant: "default"
       });
 
@@ -312,8 +400,8 @@ export function EnableBankingManager({ budgetId, onUpdate }: EnableBankingManage
       onUpdate();
     } catch (error: any) {
       toast({
-        title: "Erreur",
-        description: error.response?.data?.error || "Échec de la suppression",
+        title: t.error,
+        description: error.response?.data?.error || t.deleteFailed,
         variant: "destructive"
       });
     }
@@ -333,7 +421,7 @@ export function EnableBankingManager({ budgetId, onUpdate }: EnableBankingManage
         await api.put(`/banking/accounts/${accountId}`, { is_savings_pool: !currentStatus });
         onUpdate(); // Update Reality Check totals immediately
     } catch (error) {
-        toast({ title: "Erreur", description: "Impossible de modifier le compte", variant: "destructive" });
+        toast({ title: t.error, description: t.accountFailed, variant: "destructive" });
         loadConnections(); // Revert on error
     }
   };
@@ -357,10 +445,10 @@ export function EnableBankingManager({ budgetId, onUpdate }: EnableBankingManage
         <div>
           <h2 className="text-2xl font-bold flex items-center gap-2">
             <Building2 className="h-6 w-6 text-primary" />
-            Connexions Bancaires
+            {t.title}
           </h2>
           <p className="text-sm text-muted-foreground mt-1">
-            Connectez vos comptes bancaires pour synchroniser automatiquement vos transactions
+            {t.subtitle}
           </p>
         </div>
         
@@ -371,16 +459,16 @@ export function EnableBankingManager({ budgetId, onUpdate }: EnableBankingManage
           disabled={connecting}
         >
           <Sparkles className="h-4 w-4" />
-          Ajouter une banque
+          {t.addBank}
         </Button>
       </div>
 
       {/* Alert informatif */}
       <Alert>
         <AlertCircle className="h-4 w-4" />
-        <AlertTitle>Mode Beta 2 - Enable Banking</AlertTitle>
+        <AlertTitle>{t.betaTitle}</AlertTitle>
         <AlertDescription>
-          Connectez-vous à plus de 2500 banques européennes. Pour les tests, utilisez <strong>Mock ASPSP</strong> qui fournit des données réalistes sans credentials.
+          {t.betaBefore}<strong>Mock ASPSP</strong>{t.betaAfter}
         </AlertDescription>
       </Alert>
 
@@ -399,7 +487,7 @@ export function EnableBankingManager({ budgetId, onUpdate }: EnableBankingManage
                       <CardTitle className="text-base">{conn.institution_name}</CardTitle>
                       <CardDescription className="flex items-center gap-2 text-xs">
                         <Clock className="h-3 w-3" />
-                        Connecté le {new Date(conn.created_at).toLocaleDateString('fr-FR')}
+                        {t.connectedOn(new Date(conn.created_at).toLocaleDateString(intlLocale()))}
                       </CardDescription>
                     </div>
                   </div>
@@ -415,12 +503,12 @@ export function EnableBankingManager({ budgetId, onUpdate }: EnableBankingManage
                       {refreshing === conn.id ? (
                         <>
                           <Loader2 className="h-3 w-3 animate-spin" />
-                          Mise à jour...
+                          {t.updating}
                         </>
                       ) : (
                         <>
                           <RefreshCw className="h-3 w-3" />
-                          Actualiser
+                          {t.refresh}
                         </>
                       )}
                     </Button>
@@ -450,18 +538,18 @@ export function EnableBankingManager({ budgetId, onUpdate }: EnableBankingManage
                                     </div>
                                     <div className="flex items-center gap-2 mt-1">
                                         <span className="font-bold text-gray-900">
-                                            {account.balance.toLocaleString('fr-FR', { style: 'currency', currency: account.currency })}
+                                            {account.balance.toLocaleString(intlLocale(), { style: 'currency', currency: account.currency })}
                                         </span>
                                         <Badge variant={account.is_savings_pool ? "default" : "secondary"} className="text-[10px] h-5">
-                                            {account.is_savings_pool ? "Épargne" : "Courant"}
+                                            {account.is_savings_pool ? t.savings : t.current}
                                         </Badge>
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-3">
                                     <div className="text-right hidden sm:block">
-                                        <span className="text-xs font-medium block">Compte Épargne ?</span>
+                                        <span className="text-xs font-medium block">{t.savingsQuestion}</span>
                                         <span className="text-[10px] text-muted-foreground block">
-                                            {account.is_savings_pool ? "Inclus dans Reality Check" : "Ignoré"}
+                                            {account.is_savings_pool ? t.included : t.ignored}
                                         </span>
                                     </div>
                                     <Switch 
@@ -473,7 +561,7 @@ export function EnableBankingManager({ budgetId, onUpdate }: EnableBankingManage
                         ))
                     ) : (
                         <div className="p-4 text-center text-sm text-muted-foreground">
-                            Aucun compte trouvé. Essayez d'actualiser.
+                            {t.noAccounts}
                         </div>
                     )}
                 </div>
@@ -487,13 +575,13 @@ export function EnableBankingManager({ budgetId, onUpdate }: EnableBankingManage
             <div className="h-16 w-16 rounded-full bg-muted flex items-center justify-center mb-4">
               <Building2 className="h-8 w-8 text-muted-foreground" />
             </div>
-            <h3 className="font-semibold text-lg mb-2">Aucune connexion bancaire</h3>
+            <h3 className="font-semibold text-lg mb-2">{t.noConnection}</h3>
             <p className="text-sm text-muted-foreground mb-4 max-w-sm">
-              Connectez votre première banque pour commencer à synchroniser vos transactions automatiquement
+              {t.firstBank}
             </p>
             <Button onClick={() => setShowBankList(true)} size="lg" className="gap-2">
               <Sparkles className="h-4 w-4" />
-              Connecter une banque
+              {t.connectBank}
             </Button>
           </CardContent>
         </Card>
@@ -505,10 +593,10 @@ export function EnableBankingManager({ budgetId, onUpdate }: EnableBankingManage
           <DialogHeader>
             <DialogTitle className="text-2xl flex items-center gap-2">
               <Building2 className="h-6 w-6" />
-              Sélectionnez votre banque
+              {t.pickBank}
             </DialogTitle>
             <DialogDescription>
-              Plus de 2500 banques européennes disponibles
+              {t.banksAvailable}
             </DialogDescription>
           </DialogHeader>
 
@@ -516,7 +604,7 @@ export function EnableBankingManager({ budgetId, onUpdate }: EnableBankingManage
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Rechercher une banque..."
+              placeholder={t.searchPlaceholder}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10"
@@ -541,7 +629,7 @@ export function EnableBankingManager({ budgetId, onUpdate }: EnableBankingManage
               </div>
             ) : filteredBanks.length === 0 ? (
               <div className="text-center py-12">
-                <p className="text-muted-foreground">Aucune banque trouvée</p>
+                <p className="text-muted-foreground">{t.noBank}</p>
               </div>
             ) : (
               <div className="space-y-2">

@@ -9,24 +9,32 @@
 // ============================================================================
 
 import { Calculator, ShieldCheck } from 'lucide-react';
-import { CurrencyPicker, useCurrency } from '@/components/en/CurrencyPicker';
-import { EnglishFooter, EnglishHeader, EnglishToolLinks } from '@/components/en/EnglishLayout';
+import { useMemo } from 'react';
+import { CurrencyPicker, useCurrency } from '@/components/tools/CurrencyPicker';
+import { scaleAmounts } from '@/lib/tools/scaleAmounts';
+import Navbar from '@/components/Navbar';
+import { Footer } from '@/components/Footer';
+import { EnglishToolLinks } from '@/components/en/EnglishLayout';
 import { BudgetPersoCalculator } from '@/components/tools/BudgetPersoCalculator';
 import { FaqList, ToolArticle } from '@/components/tools/ToolKit';
 import { BUDGET_PERSO_EN, EXAMPLE_EN, EXAMPLE_EN_HIGH_RENT } from '@/i18n/en/budgetPerso';
 import { FULL_SAVINGS_MAX_NEEDS_SHARE, NEED_FIELDS, computeBudgetPerso } from '@/lib/tools/budgetPerso';
 import { BUDGET_503020_FAQ_EN } from '@/seo/faq-503020-en';
 
-const example = computeBudgetPerso(EXAMPLE_EN.incomes, EXAMPLE_EN.needs);
-const exampleHigh = computeBudgetPerso(EXAMPLE_EN_HIGH_RENT.incomes, EXAMPLE_EN_HIGH_RENT.needs);
 
 export default function BudgetCalculatorEn() {
   const { code, setCode, format } = useCurrency();
   const { money, moneyExact, pct } = format;
+  // The fictitious example in the visitor's currency (scaled for rupees, naira…).
+  const ex = useMemo(() => scaleAmounts(EXAMPLE_EN, format.example), [format]);
+  const exHigh = useMemo(() => scaleAmounts(EXAMPLE_EN_HIGH_RENT, format.example), [format]);
+  const copy = useMemo(() => ({ ...BUDGET_PERSO_EN, example: ex }), [ex]);
+  const example = computeBudgetPerso(ex.incomes, ex.needs);
+  const exampleHigh = computeBudgetPerso(exHigh.incomes, exHigh.needs);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary-50 to-purple-50 flex flex-col">
-      <EnglishHeader />
+      <Navbar />
       <main className="flex-1">
         <section className="px-4 pt-12 pb-8 sm:px-6 lg:px-8">
           <div className="mx-auto max-w-3xl text-center">
@@ -46,7 +54,7 @@ export default function BudgetCalculatorEn() {
           </div>
         </section>
 
-        <BudgetPersoCalculator t={BUDGET_PERSO_EN} format={format} storageKey="bf:503020-calculator:v1" beforeIncomes={<CurrencyPicker value={code} onChange={setCode} />} />
+        <BudgetPersoCalculator t={copy} format={format} storageKey="bf:503020-calculator:v1" beforeIncomes={<CurrencyPicker value={code} onChange={setCode} />} />
 
         <ToolArticle>
           <section>
@@ -135,8 +143,8 @@ export default function BudgetCalculatorEn() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border/60">
-                  {NEED_FIELDS.filter((f) => EXAMPLE_EN.needs[f.key]).map((f) => (
-                    <tr key={f.key}><td className="py-2">{BUDGET_PERSO_EN.needs[f.key].label}</td><td className="py-2 text-right tabular-nums">{money(EXAMPLE_EN.needs[f.key] ?? 0)}</td></tr>
+                  {NEED_FIELDS.filter((f) => ex.needs[f.key]).map((f) => (
+                    <tr key={f.key}><td className="py-2">{BUDGET_PERSO_EN.needs[f.key].label}</td><td className="py-2 text-right tabular-nums">{money(ex.needs[f.key] ?? 0)}</td></tr>
                   ))}
                   <tr className="font-semibold text-foreground"><td className="py-2">Total needs</td><td className="py-2 text-right tabular-nums">{money(example.besoins)}</td></tr>
                 </tbody>
@@ -150,7 +158,7 @@ export default function BudgetCalculatorEn() {
               {moneyExact(example.enviesParJour)} a day.
             </p>
             <p className="mt-4">
-              If Sam’s rent were {money(EXAMPLE_EN_HIGH_RENT.needs.logement ?? 0)} instead of {money(EXAMPLE_EN.needs.logement ?? 0)},
+              If Sam’s rent were {money(exHigh.needs.logement ?? 0)} instead of {money(ex.needs.logement ?? 0)},
               needs would rise to {money(exampleHigh.besoins)} ({pct(exampleHigh.besoinsShare ?? 0)}). What’s left,{' '}
               {money(exampleHigh.reste)}, would be split into {money(exampleHigh.envies)} for wants and{' '}
               {money(exampleHigh.epargne)} for savings.
@@ -165,9 +173,9 @@ export default function BudgetCalculatorEn() {
               every month.
             </p>
             <ul className="mt-4 list-disc space-y-2 pl-5">
-              <li><strong>Start small.</strong> An automatic transfer of {money(25)} or {money(50)} on payday already builds the habit. Raise it with each pay rise or when a loan ends.</li>
+              <li><strong>Start small.</strong> An automatic transfer of {money(format.example(25))} or {money(format.example(50))} on payday already builds the habit. Raise it with each pay rise or when a loan ends.</li>
               <li><strong>Emergency fund first.</strong> A cushion for the unexpected: a breakdown, a repair, medical bills, a drop in income. A common benchmark is three to six months of essential expenses; set your own target and get there step by step.</li>
-              <li><strong>Then your goals.</strong> A trip, a car, a down payment: divide the amount by the number of months until the date. For {money(1200)} in 12 months, that’s {money(100)} a month.</li>
+              <li><strong>Then your goals.</strong> A trip, a car, a down payment: divide the amount by the number of months until the date. For {money(format.example(1200))} in 12 months, that’s {money(format.example(1200) / 12)} a month.</li>
             </ul>
             <p className="mt-4">
               In Budget Famille, a savings pot can have a target and an end date: the amount to set aside each month is
@@ -188,7 +196,7 @@ export default function BudgetCalculatorEn() {
           </section>
         </ToolArticle>
       </main>
-      <EnglishFooter />
+      <Footer />
     </div>
   );
 }

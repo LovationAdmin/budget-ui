@@ -11,10 +11,51 @@ import { Footer } from '@/components/Footer';
 import { PasswordStrengthIndicator } from '@/components/PasswordStrengthIndicator';
 import { validatePassword } from '@/utils/passwordStrength';
 import { extractRateLimitError } from '@/lib/rateLimitError';
+import { defineMessages, useT } from '@/i18n/runtime';
+
+const M = defineMessages({
+  fr: {
+    missingToken: 'Token manquant ou invalide',
+    invalid: 'Mot de passe invalide',
+    mismatch: 'Les mots de passe ne correspondent pas',
+    genericError: 'Une erreur est survenue',
+    title: 'Nouveau mot de passe',
+    subtitle: 'Choisissez un nouveau mot de passe sécurisé',
+    done: 'Mot de passe réinitialisé !',
+    doneText: 'Votre mot de passe a été changé avec succès. Vous allez être redirigé vers la page de connexion...',
+    signInNow: 'Se connecter maintenant',
+    newPassword: 'Nouveau mot de passe',
+    confirm: 'Confirmer le mot de passe',
+    show: 'Afficher le mot de passe',
+    hide: 'Masquer le mot de passe',
+    resetting: 'Réinitialisation...',
+    reset: 'Réinitialiser le mot de passe',
+    back: 'Retour à la connexion',
+  },
+  en: {
+    missingToken: 'Missing or invalid link',
+    invalid: 'Invalid password',
+    mismatch: 'The passwords don’t match',
+    genericError: 'Something went wrong',
+    title: 'New password',
+    subtitle: 'Choose a new, secure password',
+    done: 'Password reset!',
+    doneText: 'Your password has been changed. Taking you to the sign-in page...',
+    signInNow: 'Sign in now',
+    newPassword: 'New password',
+    confirm: 'Confirm the password',
+    show: 'Show the password',
+    hide: 'Hide the password',
+    resetting: 'Resetting...',
+    reset: 'Reset the password',
+    back: 'Back to sign in',
+  },
+});
 
 export default function ResetPassword() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const t = useT(M);
   
   const [token, setToken] = useState('');
   const [newPassword, setNewPassword] = useState('');
@@ -31,7 +72,7 @@ export default function ResetPassword() {
     if (tokenFromUrl) {
       setToken(tokenFromUrl);
     } else {
-      setError('Token manquant ou invalide');
+      setError(t.missingToken);
     }
   }, [searchParams]);
 
@@ -44,12 +85,12 @@ export default function ResetPassword() {
     // on appelle sans contexte — le backend re-vérifiera avec email+nom.
     const validation = validatePassword(newPassword);
     if (!validation.isValid) {
-      setError(validation.errors[0] ?? 'Mot de passe invalide');
+      setError(validation.errors[0] ?? t.invalid);
       return;
     }
 
     if (newPassword !== confirmPassword) {
-      setError('Les mots de passe ne correspondent pas');
+      setError(t.mismatch);
       return;
     }
 
@@ -69,7 +110,7 @@ export default function ResetPassword() {
       const errorMessage =
         rateLimitMsg ??
         err.response?.data?.error ??
-        'Une erreur est survenue';
+        t.genericError;
       setError(errorMessage);
     } finally {
       setLoading(false);
@@ -92,10 +133,10 @@ export default function ResetPassword() {
           <div className="text-center mb-8 animate-slide-up">
             <BudgetLogo size={64} className="mx-auto mb-4 block" />
             <h1 className="font-display text-3xl font-bold text-foreground mb-2">
-              Nouveau mot de passe
+              {t.title}
             </h1>
             <p className="text-muted-foreground">
-              Choisissez un nouveau mot de passe sécurisé
+              {t.subtitle}
             </p>
           </div>
 
@@ -105,10 +146,9 @@ export default function ResetPassword() {
                 <Alert className="border-green-200 bg-green-50">
                   <CheckCircle2 className="h-5 w-5 text-green-600 mx-auto" />
                   <AlertDescription className="text-green-800 mt-3">
-                    <p className="font-medium mb-2">Mot de passe réinitialisé !</p>
+                    <p className="font-medium mb-2">{t.done}</p>
                     <p className="text-sm">
-                      Votre mot de passe a été changé avec succès.
-                      Vous allez être redirigé vers la page de connexion...
+                      {t.doneText}
                     </p>
                   </AlertDescription>
                 </Alert>
@@ -118,14 +158,14 @@ export default function ResetPassword() {
                   className="w-full"
                   onClick={() => navigate('/login')}
                 >
-                  Se connecter maintenant
+                  {t.signInNow}
                 </Button>
               </div>
             ) : (
               <form onSubmit={handleSubmit} className="space-y-6">
                 
                 <div className="space-y-2">
-                  <Label htmlFor="newPassword">Nouveau mot de passe</Label>
+                  <Label htmlFor="newPassword">{t.newPassword}</Label>
                   <div className="relative">
                     <Input
                       id="newPassword"
@@ -141,6 +181,7 @@ export default function ResetPassword() {
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
+                      aria-label={showPassword ? t.hide : t.show}
                       className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                     >
                       {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -150,7 +191,7 @@ export default function ResetPassword() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="confirmPassword">Confirmer le mot de passe</Label>
+                  <Label htmlFor="confirmPassword">{t.confirm}</Label>
                   <div className="relative">
                     <Input
                       id="confirmPassword"
@@ -166,6 +207,7 @@ export default function ResetPassword() {
                     <button
                       type="button"
                       onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      aria-label={showConfirmPassword ? t.hide : t.show}
                       className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                     >
                       {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -189,10 +231,10 @@ export default function ResetPassword() {
                   {loading ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Réinitialisation...
+                      {t.resetting}
                     </>
                   ) : (
-                    'Réinitialiser le mot de passe'
+                    t.reset
                   )}
                 </Button>
 
@@ -201,7 +243,7 @@ export default function ResetPassword() {
                     to="/login"
                     className="text-sm text-muted-foreground hover:text-primary transition-colors"
                   >
-                    Retour à la connexion
+                    {t.back}
                   </Link>
                 </div>
               </form>

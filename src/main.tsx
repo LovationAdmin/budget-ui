@@ -16,6 +16,7 @@ import App from './App';
 import { AuthProvider } from './contexts/AuthContext';
 import { NotificationProvider } from './contexts/NotificationContext';
 import { TutorialProvider } from './contexts/TutorialContext';
+import { LocaleProvider } from './i18n/runtime';
 import './index.css';
 
 // ============================================================================
@@ -52,6 +53,7 @@ const updateSW = registerSW({
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <BrowserRouter>
+      <LocaleProvider>
       <AppThemeProvider>
       <AuthProvider>
         <NotificationProvider>
@@ -61,6 +63,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
         </NotificationProvider>
       </AuthProvider>
       </AppThemeProvider>
+      </LocaleProvider>
     </BrowserRouter>
   </React.StrictMode>
 );

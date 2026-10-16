@@ -1,30 +1,69 @@
 // src/pages/BlogArticle.tsx
-// Page dynamique pour afficher un article de blog
+// Page dynamique pour afficher un article de blog : /blog/:slug en français,
+// /en/blog/:slug en anglais (src/data/blog-articles-en.tsx).
 
 import { useEffect } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import { applyHead } from '@/seo/head';
-import { blogArticles } from '@/data/blog-articles';
-import { relatedArticles } from '@/data/blog-related';
+import { articlePath, articlesOf, relatedArticles } from '@/data/blog-related';
+import { localizedPath } from '@/i18n/locales';
+import { defineMessages, useLocale, useT } from '@/i18n/runtime';
+import { intlLocale } from '@/lib/budget/format';
 import Navbar from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
 import { ArrowLeft, ArrowRight, Calendar, Clock, FileSpreadsheet, Tag, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
+const M = defineMessages({
+  fr: {
+    notFoundTitle: 'Article introuvable',
+    notFoundText: 'Cet article n’existe pas.',
+    notFound: 'Article non trouvé',
+    sorry: "Désolé, cet article n'existe pas ou a été supprimé.",
+    back: 'Retour au blog',
+    updated: 'Mis à jour le ',
+    tags: 'Tags',
+    related: 'À lire aussi',
+    template: 'Tableau de budget familial gratuit',
+    templateText: 'Excel avec calculs automatiques, ou PDF à imprimer. Sans inscription.',
+    ctaTitle: 'Votre budget et vos projets, calculés chaque mois',
+    ctaText: 'Gratuit, sans carte bancaire. Seul ou à plusieurs : famille, couple, coloc.',
+    cta: 'Créer mon budget gratuit',
+  },
+  en: {
+    notFoundTitle: 'Article not found',
+    notFoundText: 'This article doesn’t exist.',
+    notFound: 'Article not found',
+    sorry: 'Sorry, this article doesn’t exist or has been removed.',
+    back: 'Back to the blog',
+    updated: 'Updated on ',
+    tags: 'Tags',
+    related: 'Keep reading',
+    template: 'Free family budget template',
+    templateText: 'Excel with automatic calculations, or a printable PDF. No sign-up.',
+    ctaTitle: 'Your budget and your goals, worked out every month',
+    ctaText: 'Free, no credit card. On your own or together: family, couple, roommates.',
+    cta: 'Create my free budget',
+  },
+});
+
 export default function BlogArticle() {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
+  const t = useT(M);
+  const locale = useLocale();
+  const blogHome = localizedPath('/blog', locale);
 
-  // Trouver l'article correspondant au slug
-  const article = blogArticles.find(a => a.slug === slug);
+  // Trouver l'article correspondant au slug, dans la langue de l'URL
+  const article = articlesOf(locale).find(a => a.slug === slug);
 
   useEffect(() => {
     if (article) {
-      applyHead({ title: article.title, description: article.excerpt, canonical: `/blog/${article.slug}`, type: 'article' });
+      applyHead({ title: article.title, description: article.excerpt, canonical: articlePath(article), type: 'article' });
     } else {
-      applyHead({ title: 'Article introuvable', description: 'Cet article n’existe pas.', canonical: `/blog/${slug ?? ''}`, noindex: true });
+      applyHead({ title: t.notFoundTitle, description: t.notFoundText, canonical: `${blogHome}/${slug ?? ''}`, noindex: true });
     }
-  }, [article, slug]);
+  }, [article, slug, t, blogHome]);
 
   // Si l'article n'existe pas, afficher une erreur
   if (!article) {
@@ -34,11 +73,11 @@ export default function BlogArticle() {
         <Navbar />
         
         <div className="max-w-4xl mx-auto px-4 py-20 text-center">
-          <h1 className="text-3xl font-bold text-gray-900 mb-4">Article non trouvé</h1>
-          <p className="text-gray-600 mb-8">Désolé, cet article n'existe pas ou a été supprimé.</p>
-          <Button onClick={() => navigate('/blog')} variant="gradient">
+          <h1 className="text-3xl font-bold text-gray-900 mb-4">{t.notFound}</h1>
+          <p className="text-gray-600 mb-8">{t.sorry}</p>
+          <Button onClick={() => navigate(blogHome)} variant="gradient">
             <ArrowLeft className="mr-2 h-4 w-4" />
-            Retour au blog
+            {t.back}
           </Button>
         </div>
         <Footer />
@@ -54,11 +93,11 @@ export default function BlogArticle() {
       <article className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {/* Bouton retour */}
         <button
-          onClick={() => navigate('/blog')}
+          onClick={() => navigate(blogHome)}
           className="flex items-center gap-2 text-primary-600 hover:text-primary-700 mb-8 font-medium"
         >
           <ArrowLeft className="h-4 w-4" />
-          Retour au blog
+          {t.back}
         </button>
 
         {/* En-tête article */}
@@ -94,8 +133,8 @@ export default function BlogArticle() {
 
             <div className="flex items-center gap-2 text-sm text-gray-500">
               <Calendar className="h-4 w-4" />
-              {article.updatedAt ? 'Mis à jour le ' : ''}
-              {new Date(article.updatedAt ?? article.publishedAt).toLocaleDateString('fr-FR', {
+              {article.updatedAt ? t.updated : ''}
+              {new Date(article.updatedAt ?? article.publishedAt).toLocaleDateString(intlLocale(), {
                 day: 'numeric',
                 month: 'long',
                 year: 'numeric'
@@ -111,7 +150,7 @@ export default function BlogArticle() {
 
         {/* Tags */}
         <div className="mb-12">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Tags</h3>
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">{t.tags}</h3>
           <div className="flex flex-wrap gap-2">
             {article.tags.map((tag) => (
               <span 
@@ -127,12 +166,12 @@ export default function BlogArticle() {
 
         {/* Related reading: internal links for readers and crawlers */}
         <section className="mb-12" aria-labelledby="related-title">
-          <h2 id="related-title" className="text-2xl font-display font-bold text-gray-900 mb-6">À lire aussi</h2>
+          <h2 id="related-title" className="text-2xl font-display font-bold text-gray-900 mb-6">{t.related}</h2>
           <div className="grid gap-4 md:grid-cols-2">
             {relatedArticles(article).map((a) => (
               <Link
                 key={a.slug}
-                to={`/blog/${a.slug}`}
+                to={articlePath(a)}
                 className="group block rounded-xl border border-gray-200 bg-white p-5 transition hover:border-primary/40 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
                 <span className="text-xs font-semibold uppercase tracking-wide text-primary">{a.category}</span>
@@ -141,13 +180,13 @@ export default function BlogArticle() {
               </Link>
             ))}
             <Link
-              to="/tableau-budget-familial-gratuit"
+              to={localizedPath('/tableau-budget-familial-gratuit', locale)}
               className="group flex items-start gap-3 rounded-xl border border-gray-200 bg-white p-5 transition hover:border-primary/40 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               <FileSpreadsheet className="mt-0.5 h-6 w-6 shrink-0 text-success" aria-hidden="true" />
               <span>
-                <span className="block font-bold text-gray-900 group-hover:text-primary">Tableau de budget familial gratuit</span>
-                <span className="mt-1 block text-sm text-gray-600">Excel avec calculs automatiques, ou PDF à imprimer. Sans inscription.</span>
+                <span className="block font-bold text-gray-900 group-hover:text-primary">{t.template}</span>
+                <span className="mt-1 block text-sm text-gray-600">{t.templateText}</span>
               </span>
             </Link>
           </div>
@@ -156,14 +195,14 @@ export default function BlogArticle() {
         {/* CTA */}
         <div className="bg-gradient-to-r from-primary to-purple-600 rounded-2xl p-8 text-center text-white">
           <h2 className="text-2xl font-bold mb-4">
-            Votre budget et vos projets, calculés chaque mois
+            {t.ctaTitle}
           </h2>
           <p className="text-lg mb-6 opacity-90">
-            Gratuit, sans carte bancaire. Seul ou à plusieurs : famille, couple, coloc.
+            {t.ctaText}
           </p>
           <Button asChild size="lg" className="bg-white text-primary hover:bg-gray-100 font-semibold">
             <Link to="/signup">
-              Créer mon budget gratuit <ArrowRight className="ml-2 h-4 w-4" aria-hidden="true" />
+              {t.cta} <ArrowRight className="ml-2 h-4 w-4" aria-hidden="true" />
             </Link>
           </Button>
         </div>

@@ -19,6 +19,50 @@ import { useToast } from '@/hooks/use-toast';
 import { Footer } from '@/components/Footer';
 import Navbar from '@/components/Navbar';
 import { authAPI } from '../../services/api';
+import { defineMessages, useT } from '@/i18n/runtime';
+
+const M = defineMessages({
+  fr: {
+    failed: 'La connexion a échoué.',
+    sentTitle: 'E-mail envoyé',
+    sentText: 'Cliquez sur le lien reçu pour confirmer votre adresse (pensez aux spams).',
+    error: 'Erreur',
+    resendFailed: 'Impossible de renvoyer.',
+    title: 'Content de vous revoir',
+    subtitle: 'Connectez-vous pour retrouver vos budgets',
+    email: 'Adresse e-mail',
+    emailPlaceholder: 'marie@exemple.fr',
+    password: 'Mot de passe',
+    forgot: 'Mot de passe oublié ?',
+    sending: 'Envoi…',
+    resend: "Renvoyer l'email de validation",
+    signingIn: 'Connexion…',
+    signIn: 'Se connecter',
+    session: 'Session sécurisée pendant 30 jours sur cet appareil',
+    noAccount: 'Pas encore de compte ?',
+    createAccount: 'Créer un compte',
+  },
+  en: {
+    failed: 'Sign-in failed.',
+    sentTitle: 'Email sent',
+    sentText: 'Click the link we sent you to confirm your address (check your spam folder).',
+    error: 'Error',
+    resendFailed: 'Couldn’t resend the email.',
+    title: 'Welcome back',
+    subtitle: 'Sign in to get back to your budgets',
+    email: 'Email address',
+    emailPlaceholder: 'alex@example.com',
+    password: 'Password',
+    forgot: 'Forgot your password?',
+    sending: 'Sending…',
+    resend: 'Resend the confirmation email',
+    signingIn: 'Signing in…',
+    signIn: 'Sign in',
+    session: 'Stay signed in for 30 days on this device',
+    noAccount: 'No account yet?',
+    createAccount: 'Create an account',
+  },
+});
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -32,6 +76,7 @@ export default function Login() {
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
+  const t = useT(M);
 
   const from = (location.state as any)?.from?.pathname || '/dashboard';
 
@@ -48,7 +93,7 @@ export default function Login() {
     if (result.success) {
       navigate(from, { replace: true });
     } else {
-      const errMsg = result.error || 'La connexion a échoué.';
+      const errMsg = result.error || t.failed;
       setError(errMsg);
       if (result.code === 'email_not_verified') setShowResend(true);
     }
@@ -60,13 +105,13 @@ export default function Login() {
     try {
       await authAPI.resendVerification?.(email);
       toast({
-        title: 'E-mail envoyé',
-        description: 'Cliquez sur le lien reçu pour confirmer votre adresse (pensez aux spams).',
+        title: t.sentTitle,
+        description: t.sentText,
       });
     } catch (err: any) {
       toast({
-        title: 'Erreur',
-        description: err?.response?.data?.error || 'Impossible de renvoyer.',
+        title: t.error,
+        description: err?.response?.data?.error || t.resendFailed,
         variant: 'destructive',
       });
     } finally {
@@ -83,23 +128,23 @@ export default function Login() {
           <div className="text-center">
             <BudgetLogo size={64} className="mx-auto mb-4 block" />
             <h1 className="text-3xl font-display font-bold text-gray-900">
-              Content de vous revoir
+              {t.title}
             </h1>
             <p className="text-muted-foreground mt-2">
-              Connectez-vous pour retrouver vos budgets
+              {t.subtitle}
             </p>
           </div>
 
           <div className="glass-card-elevated p-6 sm:p-8 animate-scale-in">
             <form onSubmit={handleSubmit} className="space-y-5">
               <div className="space-y-2">
-                <Label htmlFor="email">Adresse e-mail</Label>
+                <Label htmlFor="email">{t.email}</Label>
                 <Input
                   id="email"
                   type="email"
                   value={email}
                   onChange={(e: ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)}
-                  placeholder="marie@exemple.fr"
+                  placeholder={t.emailPlaceholder}
                   inputMode="email"
                   spellCheck={false}
                   required
@@ -111,12 +156,12 @@ export default function Login() {
 
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <Label htmlFor="password">Mot de passe</Label>
+                  <Label htmlFor="password">{t.password}</Label>
                   <Link
                     to="/forgot-password"
                     className="text-xs text-primary hover:underline"
                   >
-                    Mot de passe oublié ?
+                    {t.forgot}
                   </Link>
                 </div>
                 <PasswordInput
@@ -152,7 +197,7 @@ export default function Login() {
                         ) : (
                           <Mail className="h-3 w-3" />
                         )}
-                        {resendLoading ? 'Envoi…' : "Renvoyer l'email de validation"}
+                        {resendLoading ? t.sending : t.resend}
                       </Button>
                     )}
                   </AlertDescription>
@@ -168,28 +213,28 @@ export default function Login() {
                 {loading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Connexion…
+                    {t.signingIn}
                   </>
                 ) : (
-                  'Se connecter'
+                  t.signIn
                 )}
               </Button>
 
               {/* P1 #9: small reassurance about session length */}
               <p className="text-xs text-center text-muted-foreground flex items-center justify-center gap-1.5">
                 <ShieldCheck className="h-3 w-3" />
-                Session sécurisée pendant 30 jours sur cet appareil
+                {t.session}
               </p>
             </form>
 
             <div className="mt-6 text-center">
               <p className="text-sm text-muted-foreground">
-                Pas encore de compte ?{' '}
+                {t.noAccount}{' '}
                 <Link
                   to="/signup"
                   className="font-medium text-primary hover:underline"
                 >
-                  Créer un compte
+                  {t.createAccount}
                 </Link>
               </p>
             </div>

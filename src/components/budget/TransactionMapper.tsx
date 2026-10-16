@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, type ReactNode } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,6 +9,67 @@ import { Loader2, Search, Link as LinkIcon, Layers, Trash2, AlertCircle } from "
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import api from '@/services/api';
 import { cn } from "@/lib/utils";
+import { money } from "@/lib/budget/format";
+import { defineMessages, useT } from "@/i18n/runtime";
+
+const M = defineMessages<{
+    title: string;
+    intro: (label: string, amount: string) => ReactNode;
+    amount: (n: number) => string;
+    linkedCount: (n: number) => string;
+    linkedRest: string;
+    futureImports: string;
+    searchPlaceholder: string;
+    allSources: string;
+    bridgeOnly: string;
+    enableBankingOnly: string;
+    noTransactions: string;
+    count: (n: number) => string;
+    total: (amount: string) => string;
+    average: (amount: string) => string;
+    selected: (n: number) => string;
+    cancel: string;
+    save: (n: number) => string;
+}>({
+    fr: {
+        title: 'Lier des transactions',
+        intro: (label, amount) => <>Associez des dépenses réelles à la charge : <strong>{label}</strong> ({amount}).</>,
+        amount: (n) => `${n.toLocaleString('fr-FR', { minimumFractionDigits: 2 })}€`,
+        linkedCount: (n) => `${n} transaction(s)`,
+        linkedRest: 'actuellement liée(s). Les descriptions cochées ci-dessous seront automatiquement incluses lors des prochaines synchronisations.',
+        futureImports: 'Les transactions identiques seront automatiquement incluses dans les prochains imports.',
+        searchPlaceholder: 'Rechercher une description...',
+        allSources: 'Toutes sources',
+        bridgeOnly: 'Bridge uniquement',
+        enableBankingOnly: 'Enable Banking uniquement',
+        noTransactions: 'Aucune transaction trouvée',
+        count: (n) => `${n} transaction${n > 1 ? 's' : ''}`,
+        total: (amount) => `Total: ${amount}`,
+        average: (amount) => `Moyenne: ${amount}`,
+        selected: (n) => `${n} transaction${n !== 1 ? 's' : ''} sélectionnée${n !== 1 ? 's' : ''}`,
+        cancel: 'Annuler',
+        save: (n) => `Enregistrer (${n})`,
+    },
+    en: {
+        title: 'Link transactions',
+        intro: (label, amount) => <>Match real spending to the bill: <strong>{label}</strong> ({amount}).</>,
+        amount: (n) => money(n),
+        linkedCount: (n) => `${n} transaction${n !== 1 ? 's' : ''}`,
+        linkedRest: 'linked right now. The descriptions checked below will be included automatically in future syncs.',
+        futureImports: 'Matching transactions will be included automatically in future imports.',
+        searchPlaceholder: 'Search descriptions...',
+        allSources: 'All sources',
+        bridgeOnly: 'Bridge only',
+        enableBankingOnly: 'Enable Banking only',
+        noTransactions: 'No transactions found',
+        count: (n) => `${n} transaction${n !== 1 ? 's' : ''}`,
+        total: (amount) => `Total: ${amount}`,
+        average: (amount) => `Average: ${amount}`,
+        selected: (n) => `${n} transaction${n !== 1 ? 's' : ''} selected`,
+        cancel: 'Cancel',
+        save: (n) => `Save (${n})`,
+    },
+});
 
 // ============================================================================
 // TYPES
@@ -61,6 +122,7 @@ export function TransactionMapper({
     budgetId,
     demoTransactions
 }: TransactionMapperProps) {
+    const t = useT(M);
     const [rawTransactions, setRawTransactions] = useState<BridgeTransaction[]>([]);
     const [loading, setLoading] = useState(false);
     const [search, setSearch] = useState("");
@@ -217,23 +279,22 @@ export function TransactionMapper({
                 <DialogHeader>
                     <DialogTitle className="flex items-center gap-2">
                         <LinkIcon className="h-5 w-5 text-indigo-600" />
-                        Lier des transactions
+                        {t.title}
                     </DialogTitle>
                     <DialogDescription className="space-y-2">
                         <div>
-                            Associez des dépenses réelles à la charge : <strong>{charge.label}</strong> ({charge.amount.toLocaleString('fr-FR', { minimumFractionDigits: 2 })}€).
+                            {t.intro(charge.label, t.amount(charge.amount))}
                         </div>
                         {alreadyMappedCount > 0 && (
                             <Alert className="bg-indigo-50 border-indigo-200">
                                 <AlertCircle className="h-4 w-4 text-indigo-600" />
                                 <AlertDescription className="text-xs text-indigo-700">
-                                    <strong>{alreadyMappedCount} transaction(s)</strong> actuellement liée(s). 
-                                    Les descriptions cochées ci-dessous seront automatiquement incluses lors des prochaines synchronisations.
+                                    <strong>{t.linkedCount(alreadyMappedCount)}</strong> {t.linkedRest}
                                 </AlertDescription>
                             </Alert>
                         )}
                         <p className="text-xs text-muted-foreground">
-                            Les transactions identiques seront automatiquement incluses dans les prochains imports.
+                            {t.futureImports}
                         </p>
                     </DialogDescription>
                 </DialogHeader>
@@ -243,7 +304,7 @@ export function TransactionMapper({
                     <div className="relative flex-1">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                         <Input 
-                            placeholder="Rechercher une description..." 
+                            placeholder={t.searchPlaceholder}
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
                             className="pl-10"
@@ -256,9 +317,9 @@ export function TransactionMapper({
                             onChange={(e) => setSource(e.target.value as 'all' | 'bridge' | 'enablebanking')}
                             className="border rounded-md px-3 py-2 text-sm"
                         >
-                            <option value="all">Toutes sources</option>
-                            <option value="bridge">Bridge uniquement</option>
-                            <option value="enablebanking">Enable Banking uniquement</option>
+                            <option value="all">{t.allSources}</option>
+                            <option value="bridge">{t.bridgeOnly}</option>
+                            <option value="enablebanking">{t.enableBankingOnly}</option>
                         </select>
                     )}
                 </div>
@@ -272,7 +333,7 @@ export function TransactionMapper({
                     ) : groupedTransactions.length === 0 ? (
                         <div className="flex flex-col items-center justify-center h-40 text-gray-500">
                             <Layers className="h-12 w-12 mb-2 opacity-30" />
-                            <p className="text-sm">Aucune transaction trouvée</p>
+                            <p className="text-sm">{t.noTransactions}</p>
                         </div>
                     ) : (
                         <div className="p-4 space-y-2">
@@ -295,14 +356,14 @@ export function TransactionMapper({
                                         </div>
                                         <div className="flex items-center gap-2 mt-1">
                                             <Badge variant="outline" className="text-xs">
-                                                {group.count} transaction{group.count > 1 ? 's' : ''}
+                                                {t.count(group.count)}
                                             </Badge>
                                             <span className="text-xs text-gray-500">
-                                                Total: {group.totalAmount.toLocaleString('fr-FR', { minimumFractionDigits: 2 })}€
+                                                {t.total(t.amount(group.totalAmount))}
                                             </span>
                                         </div>
                                         <div className="text-xs text-gray-400 mt-1">
-                                            Moyenne: {group.averageAmount.toLocaleString('fr-FR', { minimumFractionDigits: 2 })}€
+                                            {t.average(t.amount(group.averageAmount))}
                                         </div>
                                     </div>
                                 </label>
@@ -315,16 +376,16 @@ export function TransactionMapper({
                 <div className="border-t pt-3">
                     <div className="flex justify-between items-center mb-3 text-sm">
                         <span className="text-gray-600">
-                            {selectedCount} transaction{selectedCount !== 1 ? 's' : ''} sélectionnée{selectedCount !== 1 ? 's' : ''}
+                            {t.selected(selectedCount)}
                         </span>
                         <span className="font-semibold text-indigo-600">
-                            Total: {selectedTotal.toLocaleString('fr-FR', { minimumFractionDigits: 2 })}€
+                            {t.total(t.amount(selectedTotal))}
                         </span>
                     </div>
                     
                     <DialogFooter className="gap-2">
                         <Button variant="outline" onClick={handleCancel}>
-                            Annuler
+                            {t.cancel}
                         </Button>
                         <Button 
                             onClick={handleSave}
@@ -332,7 +393,7 @@ export function TransactionMapper({
                             className="bg-indigo-600 hover:bg-indigo-700"
                         >
                             <LinkIcon className="h-4 w-4 mr-2" />
-                            Enregistrer ({selectedCount})
+                            {t.save(selectedCount)}
                         </Button>
                     </DialogFooter>
                 </div>

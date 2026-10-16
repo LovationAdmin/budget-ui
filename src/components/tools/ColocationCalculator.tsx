@@ -13,6 +13,7 @@ import { Info, RotateCcw, Share2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { MoneyInput, Panel, Segmented, SignupCard, Stepper, Tile } from '@/components/tools/ToolKit';
 import type { ToolFormat } from '@/i18n/format';
+import { useCalculatorUsed } from '@/lib/analytics';
 import { COMMON_SHARE, computeColocation, type ColocFallback, type ColocInput, type SplitMethod } from '@/lib/tools/colocation';
 
 export const BILL_KEYS = ['energie', 'internet', 'assurance', 'courses', 'autres'] as const;
@@ -127,6 +128,7 @@ export function ColocationCalculator({ t, format: f, storageKey, example, areaUn
   const setMate = (i: number, patch: Partial<Mate>) => setMates((ms) => ms.map((m, j) => (j === i ? { ...m, ...patch } : m)));
   const setCount = (n: number) => setMates((ms) => (n > ms.length ? [...ms, ...Array.from({ length: n - ms.length }, (_, k) => mate(ms.length + k))] : ms.slice(0, n)));
   const hasData = r.total > 0;
+  useCalculatorUsed('rent_split', hasData, r);
   const maxShare = Math.max(0, ...r.shares.map((s) => s.total));
   const perMonth = `${f.symbol}${t.perMonth}`;
 

@@ -6,28 +6,45 @@
 // search engines, social networks and AI crawlers see the page without
 // running JavaScript. React replaces the content as soon as the app loads.
 // The language (lang, og:locale, hreflang) follows from the path: pages under
-// /en/ are in English, and src/i18n/locales.ts pairs translated pages.
+// /en/ are in English, under /zh/ in simplified Chinese, and
+// src/i18n/locales.ts pairs translated pages.
 // ============================================================================
 
 import { renderToStaticMarkup } from 'react-dom/server';
 import { blogArticles } from '@/data/blog-articles';
-import { articlesByDate, relatedArticles } from '@/data/blog-related';
+import { blogArticlesEn } from '@/data/blog-articles-en';
+import { articlePath, articlesByDate, relatedArticles } from '@/data/blog-related';
 import { LOCALES, alternatesOf, hreflangsOf, localeOf, type Locale } from '@/i18n/locales';
 import { HOME_FAQ, RAV_FAQ, TEMPLATE_FAQ, type FaqItem } from './faq';
 import { EN_TOOLS } from '@/i18n/en/tools';
+import { ZH_TOOLS } from '@/i18n/zh/tools';
 import { BUDGET_503020_FAQ_EN } from './faq-503020-en';
+import { HOME_FAQ_EN } from './faq-home-en';
+import { LEFTOVER_INCOME_FAQ_EN } from './faq-leftover-income-en';
+import { TEMPLATE_FAQ_EN } from './faq-template-en';
 import { RENT_SPLIT_FAQ_EN } from './faq-rent-split-en';
 import { WEDDING_FAQ_EN } from './faq-wedding-en';
 import { COLOC_FAQ } from './faq-colocation';
 import { MARIAGE_FAQ } from './faq-mariage';
 import { PERSO_FAQ } from './faq-budget-personnel';
+import { HOME_FAQ_ZH } from './zh/faq-home';
+import { BUDGET_503020_FAQ_ZH } from './zh/faq-budget-503020';
+import { BUDGET_503020_TOOL_ZH } from './zh/budget-503020';
+import { RENT_SPLIT_FAQ_ZH } from './zh/faq-rent-split';
+import { RENT_SPLIT_TOOL_ZH } from './zh/rent-split';
+import { WEDDING_FAQ_ZH } from './zh/faq-wedding';
+import { WEDDING_TOOL_ZH } from './zh/wedding';
+import { LEFTOVER_INCOME_FAQ_ZH } from './zh/faq-leftover-income';
+import { LEFTOVER_INCOME_TOOL_ZH } from './zh/leftover-income';
 import {
-  ORGANIZATION_LD, PAGES, SITE_NAME, SOFTWARE_LD, absolute, breadcrumbLD, faqLD, type PageSEO,
+  ORGANIZATION_LD, PAGES, SITE_NAME, SOFTWARE_LD, SOFTWARE_LD_EN, absolute, breadcrumbLD, faqLD, type PageSEO,
 } from './site';
 
 export interface BuiltPage {
   path: string;
   locale: Locale;
+  /** html lang: "fr", "en", "zh-Hans". */
+  lang: string;
   /** Open Graph locale of the page, then of its other versions. */
   ogLocale: string;
   ogLocaleAlternates: string[];
@@ -51,20 +68,40 @@ function LanguageLinks({ path }: { path: string }) {
   return (
     <>
       {(Object.keys(LOCALES) as Locale[]).filter((l) => l !== current && alts[l]).map((l) => (
-        <a key={l} href={alts[l]} hrefLang={l} lang={l} className="font-semibold text-primary">{LOCALES[l].switchLabel}</a>
+        <a key={l} href={alts[l]} hrefLang={LOCALES[l].tag} lang={LOCALES[l].tag} className="font-semibold text-primary">{LOCALES[l].switchLabel}</a>
       ))}
     </>
   );
 }
 
 function Shell({ path, children }: { path: string; children: React.ReactNode }) {
+  if (localeOf(path) === 'zh') {
+    return (
+      <div className="min-h-screen bg-background">
+        <header className="border-b border-border/60 px-4 py-4">
+          <nav aria-label="主导航" className="mx-auto flex max-w-5xl flex-wrap items-center gap-x-5 gap-y-2 text-sm">
+            <a href={LOCALES.zh.home} className="font-display text-lg font-bold text-foreground">{SITE_NAME}</a>
+            {ZH_TOOLS.map((tool) => <a key={tool.path} href={tool.path} className="text-muted-foreground">{tool.label}</a>)}
+            <a href="/signup" className="font-semibold text-primary">免费注册</a>
+            <LanguageLinks path={path} />
+          </nav>
+        </header>
+        <main className="mx-auto max-w-3xl px-4 py-12">{children}</main>
+      </div>
+    );
+  }
   if (localeOf(path) === 'en') {
     return (
       <div className="min-h-screen bg-background">
         <header className="border-b border-border/60 px-4 py-4">
           <nav aria-label="Main navigation" className="mx-auto flex max-w-5xl flex-wrap items-center gap-x-5 gap-y-2 text-sm">
             <a href={LOCALES.en.home} className="font-display text-lg font-bold text-foreground">{SITE_NAME}</a>
+            <a href="/en/features" className="text-muted-foreground">Features</a>
+            <a href="/en/free-budget-template" className="text-muted-foreground">Free template</a>
             {EN_TOOLS.map((tool) => <a key={tool.path} href={tool.path} className="text-muted-foreground">{tool.label}</a>)}
+            <a href="/en/blog" className="text-muted-foreground">Blog</a>
+            <a href="/en/help" className="text-muted-foreground">Help</a>
+            <a href="/signup" className="font-semibold text-primary">Create my free budget</a>
             <LanguageLinks path={path} />
           </nav>
         </header>
@@ -117,10 +154,13 @@ function StaticPage({ page, extra }: { page: PageSEO; extra?: React.ReactNode })
   );
 }
 
+const FAQ_TITLE: Record<Locale, string> = { fr: 'Questions fréquentes', en: 'Frequently asked questions', zh: '常见问题' };
+const HOME_WORD: Record<Locale, string> = { fr: 'Accueil', en: 'Home', zh: '首页' };
+
 function FaqBlock({ items, locale = 'fr' }: { items: Array<{ q: string; a: string }>; locale?: Locale }) {
   return (
     <section className="mt-12">
-      <h2 className="font-display text-2xl font-bold text-foreground">{locale === 'en' ? 'Frequently asked questions' : 'Questions fréquentes'}</h2>
+      <h2 className="font-display text-2xl font-bold text-foreground">{FAQ_TITLE[locale]}</h2>
       <dl className="mt-4 space-y-4">
         {items.map((f) => (
           <div key={f.q}>
@@ -133,13 +173,13 @@ function FaqBlock({ items, locale = 'fr' }: { items: Array<{ q: string; a: strin
   );
 }
 
-function BlogIndex() {
+function BlogIndex({ locale = 'fr' }: { locale?: Locale }) {
   return (
     <section className="mt-10">
       <ul className="space-y-6">
-        {articlesByDate().map((a) => (
+        {articlesByDate(locale).map((a) => (
           <li key={a.slug}>
-            <h2 className="text-xl font-bold"><a href={`/blog/${a.slug}`} className="text-foreground underline">{a.title}</a></h2>
+            <h2 className="text-xl font-bold"><a href={articlePath(a)} className="text-foreground underline">{a.title}</a></h2>
             <p className="mt-1 text-muted-foreground">{a.excerpt}</p>
           </li>
         ))}
@@ -157,14 +197,20 @@ const TOOLS: Record<string, { name: string; crumb: string; faq: FaqItem[] }> = {
   '/en/50-30-20-budget-calculator': { name: '50/30/20 Budget Calculator', crumb: '50/30/20 budget calculator', faq: BUDGET_503020_FAQ_EN },
   '/en/rent-split-calculator': { name: 'Rent Split Calculator', crumb: 'Rent split calculator', faq: RENT_SPLIT_FAQ_EN },
   '/en/wedding-budget-calculator': { name: 'Wedding Budget Calculator', crumb: 'Wedding budget calculator', faq: WEDDING_FAQ_EN },
+  '/en/leftover-income-calculator': { name: 'Leftover Income Calculator', crumb: 'Leftover income calculator', faq: LEFTOVER_INCOME_FAQ_EN },
+  '/zh/50-30-20-budget-calculator': { ...BUDGET_503020_TOOL_ZH, faq: BUDGET_503020_FAQ_ZH },
+  '/zh/rent-split-calculator': { ...RENT_SPLIT_TOOL_ZH, faq: RENT_SPLIT_FAQ_ZH },
+  '/zh/wedding-budget-calculator': { ...WEDDING_TOOL_ZH, faq: WEDDING_FAQ_ZH },
+  '/zh/leftover-income-calculator': { ...LEFTOVER_INCOME_TOOL_ZH, faq: LEFTOVER_INCOME_FAQ_ZH },
 };
 
 /** Language fields of a built page: its locale, Open Graph locales and hreflang versions. */
-function languageOf(path: string): Pick<BuiltPage, 'locale' | 'ogLocale' | 'ogLocaleAlternates' | 'hreflang'> {
+function languageOf(path: string): Pick<BuiltPage, 'locale' | 'lang' | 'ogLocale' | 'ogLocaleAlternates' | 'hreflang'> {
   const locale = localeOf(path);
   const alts = alternatesOf(path) ?? {};
   return {
     locale,
+    lang: LOCALES[locale].tag,
     ogLocale: LOCALES[locale].og,
     ogLocaleAlternates: (Object.keys(alts) as Locale[]).filter((l) => l !== locale).map((l) => LOCALES[l].og),
     hreflang: hreflangsOf(path).map((h) => ({ hreflang: h.hreflang, href: absolute(h.path) })),
@@ -182,6 +228,19 @@ export function buildPages(): BuiltPage[] {
         '@context': 'https://schema.org', '@type': 'WebSite', name: SITE_NAME, url: absolute('/'), inLanguage: 'fr',
       });
       extra = <FaqBlock items={HOME_FAQ} />;
+    } else if (page.path === '/en') {
+      jsonLd.push(SOFTWARE_LD_EN, faqLD(HOME_FAQ_EN), {
+        '@context': 'https://schema.org', '@type': 'WebSite', name: SITE_NAME, url: absolute('/en'), inLanguage: 'en',
+      });
+      extra = <FaqBlock items={HOME_FAQ_EN} locale="en" />;
+    } else if (page.path === '/zh') {
+      jsonLd.push(faqLD(HOME_FAQ_ZH), {
+        '@context': 'https://schema.org', '@type': 'WebSite', name: SITE_NAME, url: absolute('/zh'), inLanguage: LOCALES.zh.tag,
+      });
+      extra = <FaqBlock items={HOME_FAQ_ZH} locale="zh" />;
+    } else if (page.path === '/en/free-budget-template') {
+      jsonLd.push(faqLD(TEMPLATE_FAQ_EN), breadcrumbLD([{ name: 'Home', path: '/en' }, { name: 'Free budget template', path: page.path }]));
+      extra = <FaqBlock items={TEMPLATE_FAQ_EN} locale="en" />;
     } else if (page.path === '/tableau-budget-familial-gratuit') {
       jsonLd.push(faqLD(TEMPLATE_FAQ), breadcrumbLD([{ name: 'Accueil', path: '/' }, { name: 'Tableau de budget familial gratuit', path: page.path }]));
       extra = <FaqBlock items={TEMPLATE_FAQ} />;
@@ -196,17 +255,19 @@ export function buildPages(): BuiltPage[] {
           url: absolute(page.path),
           applicationCategory: 'FinanceApplication',
           operatingSystem: 'Web',
-          inLanguage: locale,
+          inLanguage: LOCALES[locale].tag,
           isAccessibleForFree: true,
           offers: { '@type': 'Offer', price: '0', priceCurrency: 'EUR' },
           publisher: ORGANIZATION_LD,
         },
         faqLD(tool.faq),
-        breadcrumbLD([{ name: locale === 'en' ? SITE_NAME : 'Accueil', path: '/' }, { name: tool.crumb, path: page.path }]),
+        breadcrumbLD([{ name: HOME_WORD[locale], path: LOCALES[locale].home }, { name: tool.crumb, path: page.path }]),
       );
       extra = <FaqBlock items={tool.faq} locale={locale} />;
     } else if (page.path === '/blog') {
       extra = <BlogIndex />;
+    } else if (page.path === '/en/blog') {
+      extra = <BlogIndex locale="en" />;
     }
     out.push({
       path: page.path,
@@ -221,8 +282,14 @@ export function buildPages(): BuiltPage[] {
       sitemap: page.noindex || page.canonical ? undefined : { priority: page.priority ?? 0.5, changefreq: page.changefreq ?? 'monthly' },
     });
   }
-  for (const a of blogArticles) {
-    const path = `/blog/${a.slug}`;
+  const ARTICLE_WORDS = {
+    fr: { home: 'Accueil', homePath: '/', blogPath: '/blog', updated: 'mis à jour le ', related: 'À lire aussi', template: 'Tableau de budget familial gratuit (Excel et PDF)', templatePath: '/tableau-budget-familial-gratuit', cta: 'Créer mon budget familial gratuit', dateLocale: 'fr-FR' },
+    en: { home: 'Home', homePath: '/en', blogPath: '/en/blog', updated: 'updated ', related: 'Keep reading', template: 'Free family budget template (Excel and PDF)', templatePath: '/en/free-budget-template', cta: 'Create my free family budget', dateLocale: 'en-US' },
+  } as const;
+  for (const a of [...blogArticles, ...blogArticlesEn]) {
+    const path = articlePath(a);
+    const locale = localeOf(path);
+    const w = ARTICLE_WORDS[locale === 'fr' ? 'fr' : 'en'];
     out.push({
       path,
       ...languageOf(path),
@@ -239,30 +306,30 @@ export function buildPages(): BuiltPage[] {
           description: a.excerpt,
           datePublished: a.publishedAt,
           dateModified: a.updatedAt ?? a.publishedAt,
-          inLanguage: 'fr',
+          inLanguage: locale,
           author: { '@type': 'Organization', name: SITE_NAME },
           publisher: ORGANIZATION_LD,
           mainEntityOfPage: absolute(path),
           keywords: a.tags.join(', '),
         },
-        breadcrumbLD([{ name: 'Accueil', path: '/' }, { name: 'Blog', path: '/blog' }, { name: a.title, path }]),
+        breadcrumbLD([{ name: w.home, path: w.homePath }, { name: 'Blog', path: w.blogPath }, { name: a.title, path }]),
       ],
       body: renderToStaticMarkup(
         <Shell path={path}>
-          <p className="text-sm text-muted-foreground"><a href="/blog" className="underline">Blog</a> · {a.category} · {a.readTime}{a.updatedAt ? ` · mis à jour le ${new Date(a.updatedAt).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}` : ''}</p>
+          <p className="text-sm text-muted-foreground"><a href={w.blogPath} className="underline">Blog</a> · {a.category} · {a.readTime}{a.updatedAt ? ` · ${w.updated}${new Date(a.updatedAt).toLocaleDateString(w.dateLocale, { day: 'numeric', month: 'long', year: 'numeric' })}` : ''}</p>
           <h1 className="mt-2 font-display text-4xl font-bold text-foreground">{a.title}</h1>
           <p className="mt-3 text-lg text-muted-foreground">{a.excerpt}</p>
           <article className="mt-8">{a.content}</article>
           <section className="mt-12">
-            <h2 className="font-display text-2xl font-bold text-foreground">À lire aussi</h2>
+            <h2 className="font-display text-2xl font-bold text-foreground">{w.related}</h2>
             <ul className="mt-4 space-y-2">
               {relatedArticles(a).map((r) => (
-                <li key={r.slug}><a href={`/blog/${r.slug}`} className="text-primary underline">{r.title}</a></li>
+                <li key={r.slug}><a href={articlePath(r)} className="text-primary underline">{r.title}</a></li>
               ))}
-              <li><a href="/tableau-budget-familial-gratuit" className="text-primary underline">Tableau de budget familial gratuit (Excel et PDF)</a></li>
+              <li><a href={w.templatePath} className="text-primary underline">{w.template}</a></li>
             </ul>
           </section>
-          <p className="mt-10"><a href="/signup" className="font-semibold text-primary underline">Créer mon budget familial gratuit</a></p>
+          <p className="mt-10"><a href="/signup" className="font-semibold text-primary underline">{w.cta}</a></p>
         </Shell>,
       ),
       sitemap: { priority: 0.7, changefreq: 'monthly', lastmod: a.updatedAt ?? a.publishedAt },

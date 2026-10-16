@@ -9,6 +9,8 @@
 // côté backend (et vice versa), pour éviter toute confusion utilisateur.
 // ============================================================================
 
+import { defineMessages, pick } from '@/i18n/current';
+
 const COMMON_PASSWORDS = new Set<string>([
   // Top mondial
   'password', 'password1', 'password123', 'password!',
@@ -51,7 +53,34 @@ export interface PasswordValidationResult {
   strengthLabel: string;
 }
 
-const STRENGTH_LABELS = ['Très faible', 'Faible', 'Correct', 'Bon', 'Excellent'] as const;
+const W = defineMessages({
+  fr: {
+    strength: ['Très faible', 'Faible', 'Correct', 'Bon', 'Excellent'],
+    tooShort: (n: number) => `Doit contenir au moins ${n} caractères`,
+    tooLong: (n: number) => `Doit contenir au plus ${n} caractères`,
+    diversity: 'Doit contenir au moins 3 types parmi : majuscule, minuscule, chiffre, caractère spécial',
+    common: 'Mot de passe trop commun et facilement devinable',
+    email: 'Ne doit pas contenir votre adresse email',
+    name: 'Ne doit pas contenir votre nom',
+    checkLength: (n: number) => `${n} caractères minimum`,
+    checkKinds: '3 types de caractères au moins (majuscule, minuscule, chiffre, spécial)',
+    checkCommon: 'Pas un mot de passe trop commun',
+    checkPersonal: 'Ne contient ni votre nom, ni votre email',
+  },
+  en: {
+    strength: ['Very weak', 'Weak', 'Fair', 'Good', 'Excellent'],
+    tooShort: (n: number) => `Must be at least ${n} characters`,
+    tooLong: (n: number) => `Must be at most ${n} characters`,
+    diversity: 'Must contain at least 3 kinds among: uppercase, lowercase, digit, special character',
+    common: 'Too common and easy to guess',
+    email: 'Must not contain your email address',
+    name: 'Must not contain your name',
+    checkLength: (n: number) => `At least ${n} characters`,
+    checkKinds: 'At least 3 kinds of characters (uppercase, lowercase, digit, special)',
+    checkCommon: 'Not a too common password',
+    checkPersonal: 'Contains neither your name nor your email',
+  },
+});
 
 /**
  * Valide un mot de passe contre la politique du backend Budget Famille.
@@ -64,6 +93,7 @@ export function validatePassword(
   email?: string,
   name?: string,
 ): PasswordValidationResult {
+  const w = pick(W);
   const errors: string[] = [];
   const lower = password.toLowerCase();
 
@@ -81,21 +111,21 @@ export function validatePassword(
   if (password.length === 0) {
     // pas d'erreur explicite quand vide, l'UI gère le placeholder
   } else if (password.length < PASSWORD_MIN_LENGTH) {
-    errors.push(`Doit contenir au moins ${PASSWORD_MIN_LENGTH} caractères`);
+    errors.push(w.tooShort(PASSWORD_MIN_LENGTH));
   } else if (password.length > PASSWORD_MAX_LENGTH) {
-    errors.push(`Doit contenir au plus ${PASSWORD_MAX_LENGTH} caractères`);
+    errors.push(w.tooLong(PASSWORD_MAX_LENGTH));
   }
 
   // 3. Diversité
   const diversityOk = classCount >= PASSWORD_REQUIRED_CLASSES;
   if (!diversityOk && password.length > 0) {
-    errors.push('Doit contenir au moins 3 types parmi : majuscule, minuscule, chiffre, caractère spécial');
+    errors.push(w.diversity);
   }
 
   // 4. Mot de passe trop commun
   const notCommon = !COMMON_PASSWORDS.has(lower);
   if (!notCommon) {
-    errors.push('Mot de passe trop commun et facilement devinable');
+    errors.push(w.common);
   }
 
   // 5. Ne contient pas la partie locale de l'email
@@ -104,7 +134,7 @@ export function validatePassword(
     const localPart = (email.toLowerCase().split('@')[0] ?? '').trim();
     if (localPart.length >= 4 && lower.includes(localPart)) {
       notContainsEmail = false;
-      errors.push('Ne doit pas contenir votre adresse email');
+      errors.push(w.email);
     }
   }
 
@@ -115,7 +145,7 @@ export function validatePassword(
     for (const token of tokens) {
       if (lower.includes(token)) {
         notContainsName = false;
-        errors.push('Ne doit pas contenir votre nom');
+        errors.push(w.name);
         break;
       }
     }
@@ -123,10 +153,10 @@ export function validatePassword(
 
   // 7. Construction de la checklist (pour l'UI)
   const checks: PasswordCheck[] = [
-    { passed: lengthOk, label: `${PASSWORD_MIN_LENGTH} caractères minimum` },
-    { passed: diversityOk, label: '3 types de caractères au moins (majuscule, minuscule, chiffre, spécial)' },
-    { passed: notCommon, label: 'Pas un mot de passe trop commun' },
-    { passed: notContainsEmail && notContainsName, label: 'Ne contient ni votre nom, ni votre email' },
+    { passed: lengthOk, label: w.checkLength(PASSWORD_MIN_LENGTH) },
+    { passed: diversityOk, label: w.checkKinds },
+    { passed: notCommon, label: w.checkCommon },
+    { passed: notContainsEmail && notContainsName, label: w.checkPersonal },
   ];
 
   // 8. Score de force (0..4)
@@ -151,6 +181,6 @@ export function validatePassword(
     errors,
     checks,
     score,
-    strengthLabel: STRENGTH_LABELS[score],
+    strengthLabel: w.strength[score],
   };
 }

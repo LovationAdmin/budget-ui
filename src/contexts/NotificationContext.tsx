@@ -1,5 +1,11 @@
 import { createContext, useContext, useState, useEffect, ReactNode, useCallback, useRef } from 'react';
 import { useAuth } from './AuthContext';
+import { defineMessages, pick } from '@/i18n/current';
+
+const M = defineMessages({
+  fr: { someone: 'Un membre' },
+  en: { someone: 'A member' },
+});
 
 export interface Notification {
   id: string;
@@ -92,7 +98,7 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
             // Let the open budget refresh itself (it decides whether it is safe).
             budgetUpdatedCallbacksRef.current.forEach((callback) => {
               try {
-                callback({ budgetId, user: message.user || 'Un membre' });
+                callback({ budgetId, user: message.user || pick(M).someone });
               } catch (err) {
                 console.error('❌ [Notifications] Callback error:', err);
               }
@@ -122,7 +128,7 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
                 id: `${Date.now()}-${budgetId}`,
                 budgetId,
                 budgetName,
-                updatedBy: message.user || 'Un membre',
+                updatedBy: message.user || pick(M).someone,
                 timestamp: new Date().toISOString(),
                 isRead: false
               };
