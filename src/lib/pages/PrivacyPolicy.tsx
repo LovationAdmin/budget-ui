@@ -20,7 +20,7 @@ const M = defineMessages<{
   fr: {
     title: 'Politique de Confidentialité',
     lead: 'Chez Lovation, la sécurité de vos données financières est notre priorité absolue.',
-    encryptionTitle: 'Chiffrement de Bout en Bout',
+    encryptionTitle: 'Chiffré avant d’être enregistré',
     encryption: <>Toutes vos données budgétaires (salaires, charges, projets) sont chiffrées avec le standard militaire <strong>AES-256</strong> avant même d'être enregistrées dans notre base de données.</>,
     accessTitle: 'Accès Restreint et Journalisé',
     access: 'Vos données budgétaires (salaires, charges, projets) sont stockées chiffrées en base avec AES-256-GCM. L\'accès aux données déchiffrées par notre équipe technique est strictement limité aux opérations de support, journalisé, et notifié à l\'utilisateur. Aucun accès commercial, marketing ou analytique n\'est autorisé sur les données de budget.',

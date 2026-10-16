@@ -369,7 +369,7 @@ export const HELP_ARTICLES_EN: HelpArticle[] = [
             Create a saving
           </h4>
           <StepGuide steps={[
-            { title: '“Savings” tab → “New saving”', description: 'Or from the “Add” button in the Month view.' },
+            { title: '“Savings” tab → “New savings pot”', description: 'Or from the “Add” button in the Month view.' },
             { title: 'Name and target', description: 'E.g. “Down payment”: 15,000. Or no target, just a monthly amount.' },
             { title: 'Dates', description: '“Starting” and, if you have a deadline, “For…” or “Until…”.' },
             { title: 'Monthly amount worked out', description: 'With a target and a deadline, the app works out what to set aside each month (15,000 in 10 months → 1,500). You can change it.' },
@@ -605,7 +605,7 @@ export const HELP_ARTICLES_EN: HelpArticle[] = [
             Invite someone
           </h4>
           <StepGuide steps={[
-            { title: 'Click “Invite members”', description: 'The button is in the budget’s header bar.' },
+            { title: 'Tap “Invite a member”', description: 'At the bottom of the budget’s “Household” tab (for the budget’s owner).' },
             { title: 'Enter the email address', description: 'The email of the person you want to invite.' },
             { title: 'The invitation is sent', description: 'They receive an email with a link to join the budget.' },
             { title: 'They create an account (if needed)', description: 'If they don’t have an account, they can create one for free.' },

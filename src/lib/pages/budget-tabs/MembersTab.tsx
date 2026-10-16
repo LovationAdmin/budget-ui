@@ -641,7 +641,7 @@ function SplitAssistant() {
 
 export default function MembersTab() {
   const { user } = useAuth();
-  const { model, engine, fmt, openSheet, budget, refreshMembersOnly, today } = useBudget();
+  const { model, engine, fmt, openSheet, budget, refreshMembersOnly, handleShowInviteModal, today } = useBudget();
   const t = useT(M);
   const firstOpen = useFirstOpenMonth();
   useHashScroll('repartition');
@@ -717,7 +717,7 @@ export default function MembersTab() {
 
       {budget && user && (
         <section aria-label={t.access} className="flex flex-col gap-3">
-          <MemberManagementSection budget={budget} currentUserId={user.id} onMemberChange={refreshMembersOnly} />
+          <MemberManagementSection budget={budget} currentUserId={user.id} onMemberChange={refreshMembersOnly} onInvite={handleShowInviteModal} />
         </section>
       )}
     </div>

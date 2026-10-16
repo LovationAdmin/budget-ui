@@ -27,7 +27,7 @@ const M = defineMessages({
     learnMore: 'En savoir plus sur Premium',
     liveIntro: 'Comparez l’épargne prévue par votre budget avec l’argent réellement présent sur vos comptes.',
     demoActive: 'Mode Démo Banque actif',
-    demoScope: 'Seules les données bancaires sont fictives. Tes membres, charges et projets restent tes vraies données.',
+    demoScope: 'Seules les données bancaires sont fictives. Vos membres, charges et projets restent vos vraies données.',
   },
   en: {
     soonBadge: 'Coming soon with Premium',

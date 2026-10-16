@@ -385,8 +385,7 @@ export const HELP_ARTICLES_FR: HelpArticle[] = [
 
         <div className="bg-green-50 border border-green-200 rounded-lg p-4">
           <p className="text-xs text-green-800">
-            <strong>🎯 Objectif :</strong> Réduire vos charges fixes de 10-30% sans changer vos habitudes de vie. 
-            Les utilisateurs économisent en moyenne <strong>800€/an</strong> grâce aux suggestions.
+            <strong>🎯 Objectif :</strong> réduire vos charges fixes sans changer vos habitudes de vie.
           </p>
         </div>
       </div>
@@ -652,7 +651,7 @@ export const HELP_ARTICLES_FR: HelpArticle[] = [
             Inviter quelqu'un
           </h4>
           <StepGuide steps={[
-            { title: "Cliquez sur 'Inviter des membres'", description: "Le bouton se trouve dans la barre d'en-tête du budget." },
+            { title: "Touchez « Inviter un membre »", description: "En bas de l'onglet « Foyer » du budget (réservé au propriétaire du budget)." },
             { title: "Entrez l'adresse email", description: "L'email de la personne que vous souhaitez inviter." },
             { title: "L'invitation est envoyée", description: "La personne reçoit un email avec un lien pour rejoindre le budget." },
             { title: "Elle crée son compte (si besoin)", description: "Si elle n'a pas de compte, elle peut en créer un gratuitement." }

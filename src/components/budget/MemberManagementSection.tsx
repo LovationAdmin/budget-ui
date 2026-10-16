@@ -31,6 +31,7 @@ const M = defineMessages({
     title: "Membres du Budget",
     count: (n: number) => `${n} membre${n !== 1 ? 's' : ''}`,
     refresh: "Actualiser la liste",
+    invite: "Inviter un membre",
     you: "(vous)",
     member: "Membre",
     pending: (n: number) => `Invitations en attente (${n})`,
@@ -57,6 +58,7 @@ const M = defineMessages({
     title: "Budget members",
     count: (n: number) => (n === 1 ? '1 member' : `${n} members`),
     refresh: "Refresh the list",
+    invite: "Invite a member",
     you: "(you)",
     member: "Member",
     pending: (n: number) => `Pending invitations (${n})`,
@@ -103,12 +105,15 @@ interface MemberManagementSectionProps {
   budget: BudgetData;
   currentUserId: string;
   onMemberChange: () => void;
+  /** Opens the invitation dialog (shown to the budget's owner only). */
+  onInvite?: () => void;
 }
 
 export default function MemberManagementSection({
   budget,
   currentUserId,
   onMemberChange,
+  onInvite,
 }: MemberManagementSectionProps) {
   const [invitations, setInvitations] = useState<Invitation[]>([]);
   const [loading, setLoading] = useState(false);
@@ -194,9 +199,18 @@ export default function MemberManagementSection({
                 </p>
               </div>
             </div>
-            <Button variant="ghost" size="icon" onClick={handleManualRefresh} title={t.refresh}>
+            <div className="flex items-center gap-1">
+              <Button variant="ghost" size="icon" onClick={handleManualRefresh} title={t.refresh} aria-label={t.refresh} className="h-11 w-11">
                 <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
-            </Button>
+              </Button>
+              {budget.is_owner && onInvite && (
+                <Button onClick={onInvite} className="min-h-[44px] gap-2">
+                  <UserPlus className="h-4 w-4" aria-hidden="true" />
+                  <span className="hidden sm:inline">{t.invite}</span>
+                  <span className="sr-only sm:hidden">{t.invite}</span>
+                </Button>
+              )}
+            </div>
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
