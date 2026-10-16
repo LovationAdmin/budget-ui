@@ -31,7 +31,7 @@ import {
   monthlySaving,
   useSavingsSimulator,
 } from '@/hooks/useSavingsSimulator';
-import { defineMessages, useT } from '@/i18n/runtime';
+import { defineMessages, useT, wordsIn } from '@/i18n/runtime';
 
 const M = defineMessages({
   fr: {
@@ -114,7 +114,7 @@ export default function SmartToolsWidget() {
               <SelectContent>
                 {LOCATION_CONFIGS.map((c) => (
                   <SelectItem key={c.code} value={c.code}>
-                    {c.name[locale]} ({c.currency})
+                    {wordsIn(c.name, locale)} ({c.currency})
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -153,7 +153,7 @@ export default function SmartToolsWidget() {
                     <div className={`h-10 w-10 ${cat.color} rounded-lg flex items-center justify-center mb-2 mx-auto text-white`}>
                       <CategoryIcon className="h-5 w-5" aria-hidden="true" />
                     </div>
-                    <div className="text-xs font-semibold text-gray-900">{cat.title[locale]}</div>
+                    <div className="text-xs font-semibold text-gray-900">{wordsIn(cat.title, locale)}</div>
                   </button>
                 );
               })}

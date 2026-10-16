@@ -10,10 +10,14 @@
 
 import { DEFAULT_LOCALE, type Locale } from './locales';
 
-export type Messages<T> = { fr: T; en: T };
+/** French and English always; other languages (Chinese) where written, English otherwise. */
+export type Messages<T> = { fr: T; en: T; zh?: T };
 
-/** The words of a component or module in each language; `en` must have the same keys as `fr`. */
-export const defineMessages = <T,>(messages: { fr: T; en: NoInfer<T> }): Messages<T> => messages;
+/** The words of a component or module in each language; `en` (and `zh`, when given) must have the same keys as `fr`. */
+export const defineMessages = <T,>(messages: { fr: T; en: NoInfer<T>; zh?: NoInfer<T> }): Messages<T> => messages;
+
+/** The words in a language, English when they aren't written in it. */
+export const wordsIn = <T,>(messages: Messages<T>, locale: Locale): T => messages[locale] ?? messages.en;
 
 let current: Locale = DEFAULT_LOCALE;
 
@@ -27,5 +31,5 @@ export function screenLocale(): Locale {
 
 /** The words in the language of the current screen, outside a component (inside one, use useT). */
 export function pick<T>(messages: Messages<T>): T {
-  return messages[current];
+  return wordsIn(messages, current);
 }

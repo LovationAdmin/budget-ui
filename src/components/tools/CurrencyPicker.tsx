@@ -4,13 +4,15 @@
 // shared by every calculator of the language (choose once). French pages offer
 // the euro and the currencies of French-speaking Africa, Switzerland and
 // Canada; English pages the dollar, the pound, the euro and the currencies of
-// English-speaking Africa and Asia (src/i18n/format.ts).
+// English-speaking Africa and Asia; Chinese pages the yuan and the currencies
+// of Chinese-speaking Asia and the diaspora (src/i18n/format.ts).
 
 import { useEffect, useMemo, useState } from 'react';
 import { CURRENCIES_BY_LOCALE, currencyFromBrowser, currencyOf, formatOf, type CurrencyCode } from '@/i18n/format';
 import type { Locale } from '@/i18n/locales';
 
-const KEY: Record<Locale, string> = { en: 'bf:en:currency', fr: 'bf:fr:currency' };
+const KEY: Record<Locale, string> = { en: 'bf:en:currency', fr: 'bf:fr:currency', zh: 'bf:zh:currency' };
+const LABEL: Record<Locale, string> = { en: 'Currency', fr: 'Devise', zh: '货币' };
 
 function initial(locale: Locale): CurrencyCode {
   try {
@@ -38,7 +40,7 @@ export function useCurrency(locale: Locale = 'en') {
 export function CurrencyPicker({ value, onChange, locale = 'en' }: { value: CurrencyCode; onChange: (c: CurrencyCode) => void; locale?: Locale }) {
   return (
     <div className="flex items-center justify-between gap-4 py-2">
-      <label htmlFor="currency" className="font-medium text-foreground">{locale === 'en' ? 'Currency' : 'Devise'}</label>
+      <label htmlFor="currency" className="font-medium text-foreground">{LABEL[locale]}</label>
       <select
         id="currency"
         value={value}
@@ -47,7 +49,7 @@ export function CurrencyPicker({ value, onChange, locale = 'en' }: { value: Curr
       >
         {CURRENCIES_BY_LOCALE[locale].map((code) => {
           const c = currencyOf(code);
-          return <option key={code} value={code}>{locale === 'en' ? c.label : c.labelFr}</option>;
+          return <option key={code} value={code}>{locale === 'fr' ? c.labelFr : locale === 'zh' ? c.labelZh ?? c.label : c.label}</option>;
         })}
       </select>
     </div>

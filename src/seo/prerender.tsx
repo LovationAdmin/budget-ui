@@ -6,7 +6,8 @@
 // search engines, social networks and AI crawlers see the page without
 // running JavaScript. React replaces the content as soon as the app loads.
 // The language (lang, og:locale, hreflang) follows from the path: pages under
-// /en/ are in English, and src/i18n/locales.ts pairs translated pages.
+// /en/ are in English, under /zh/ in simplified Chinese, and
+// src/i18n/locales.ts pairs translated pages.
 // ============================================================================
 
 import { renderToStaticMarkup } from 'react-dom/server';
@@ -16,6 +17,7 @@ import { articlePath, articlesByDate, relatedArticles } from '@/data/blog-relate
 import { LOCALES, alternatesOf, hreflangsOf, localeOf, type Locale } from '@/i18n/locales';
 import { HOME_FAQ, RAV_FAQ, TEMPLATE_FAQ, type FaqItem } from './faq';
 import { EN_TOOLS } from '@/i18n/en/tools';
+import { ZH_TOOLS } from '@/i18n/zh/tools';
 import { BUDGET_503020_FAQ_EN } from './faq-503020-en';
 import { HOME_FAQ_EN } from './faq-home-en';
 import { LEFTOVER_INCOME_FAQ_EN } from './faq-leftover-income-en';
@@ -25,6 +27,15 @@ import { WEDDING_FAQ_EN } from './faq-wedding-en';
 import { COLOC_FAQ } from './faq-colocation';
 import { MARIAGE_FAQ } from './faq-mariage';
 import { PERSO_FAQ } from './faq-budget-personnel';
+import { HOME_FAQ_ZH } from './zh/faq-home';
+import { BUDGET_503020_FAQ_ZH } from './zh/faq-budget-503020';
+import { BUDGET_503020_TOOL_ZH } from './zh/budget-503020';
+import { RENT_SPLIT_FAQ_ZH } from './zh/faq-rent-split';
+import { RENT_SPLIT_TOOL_ZH } from './zh/rent-split';
+import { WEDDING_FAQ_ZH } from './zh/faq-wedding';
+import { WEDDING_TOOL_ZH } from './zh/wedding';
+import { LEFTOVER_INCOME_FAQ_ZH } from './zh/faq-leftover-income';
+import { LEFTOVER_INCOME_TOOL_ZH } from './zh/leftover-income';
 import {
   ORGANIZATION_LD, PAGES, SITE_NAME, SOFTWARE_LD, SOFTWARE_LD_EN, absolute, breadcrumbLD, faqLD, type PageSEO,
 } from './site';
@@ -32,6 +43,8 @@ import {
 export interface BuiltPage {
   path: string;
   locale: Locale;
+  /** html lang: "fr", "en", "zh-Hans". */
+  lang: string;
   /** Open Graph locale of the page, then of its other versions. */
   ogLocale: string;
   ogLocaleAlternates: string[];
@@ -55,13 +68,28 @@ function LanguageLinks({ path }: { path: string }) {
   return (
     <>
       {(Object.keys(LOCALES) as Locale[]).filter((l) => l !== current && alts[l]).map((l) => (
-        <a key={l} href={alts[l]} hrefLang={l} lang={l} className="font-semibold text-primary">{LOCALES[l].switchLabel}</a>
+        <a key={l} href={alts[l]} hrefLang={LOCALES[l].tag} lang={LOCALES[l].tag} className="font-semibold text-primary">{LOCALES[l].switchLabel}</a>
       ))}
     </>
   );
 }
 
 function Shell({ path, children }: { path: string; children: React.ReactNode }) {
+  if (localeOf(path) === 'zh') {
+    return (
+      <div className="min-h-screen bg-background">
+        <header className="border-b border-border/60 px-4 py-4">
+          <nav aria-label="主导航" className="mx-auto flex max-w-5xl flex-wrap items-center gap-x-5 gap-y-2 text-sm">
+            <a href={LOCALES.zh.home} className="font-display text-lg font-bold text-foreground">{SITE_NAME}</a>
+            {ZH_TOOLS.map((tool) => <a key={tool.path} href={tool.path} className="text-muted-foreground">{tool.label}</a>)}
+            <a href="/signup" className="font-semibold text-primary">免费注册</a>
+            <LanguageLinks path={path} />
+          </nav>
+        </header>
+        <main className="mx-auto max-w-3xl px-4 py-12">{children}</main>
+      </div>
+    );
+  }
   if (localeOf(path) === 'en') {
     return (
       <div className="min-h-screen bg-background">
@@ -126,10 +154,13 @@ function StaticPage({ page, extra }: { page: PageSEO; extra?: React.ReactNode })
   );
 }
 
+const FAQ_TITLE: Record<Locale, string> = { fr: 'Questions fréquentes', en: 'Frequently asked questions', zh: '常见问题' };
+const HOME_WORD: Record<Locale, string> = { fr: 'Accueil', en: 'Home', zh: '首页' };
+
 function FaqBlock({ items, locale = 'fr' }: { items: Array<{ q: string; a: string }>; locale?: Locale }) {
   return (
     <section className="mt-12">
-      <h2 className="font-display text-2xl font-bold text-foreground">{locale === 'en' ? 'Frequently asked questions' : 'Questions fréquentes'}</h2>
+      <h2 className="font-display text-2xl font-bold text-foreground">{FAQ_TITLE[locale]}</h2>
       <dl className="mt-4 space-y-4">
         {items.map((f) => (
           <div key={f.q}>
@@ -167,14 +198,19 @@ const TOOLS: Record<string, { name: string; crumb: string; faq: FaqItem[] }> = {
   '/en/rent-split-calculator': { name: 'Rent Split Calculator', crumb: 'Rent split calculator', faq: RENT_SPLIT_FAQ_EN },
   '/en/wedding-budget-calculator': { name: 'Wedding Budget Calculator', crumb: 'Wedding budget calculator', faq: WEDDING_FAQ_EN },
   '/en/leftover-income-calculator': { name: 'Leftover Income Calculator', crumb: 'Leftover income calculator', faq: LEFTOVER_INCOME_FAQ_EN },
+  '/zh/50-30-20-budget-calculator': { ...BUDGET_503020_TOOL_ZH, faq: BUDGET_503020_FAQ_ZH },
+  '/zh/rent-split-calculator': { ...RENT_SPLIT_TOOL_ZH, faq: RENT_SPLIT_FAQ_ZH },
+  '/zh/wedding-budget-calculator': { ...WEDDING_TOOL_ZH, faq: WEDDING_FAQ_ZH },
+  '/zh/leftover-income-calculator': { ...LEFTOVER_INCOME_TOOL_ZH, faq: LEFTOVER_INCOME_FAQ_ZH },
 };
 
 /** Language fields of a built page: its locale, Open Graph locales and hreflang versions. */
-function languageOf(path: string): Pick<BuiltPage, 'locale' | 'ogLocale' | 'ogLocaleAlternates' | 'hreflang'> {
+function languageOf(path: string): Pick<BuiltPage, 'locale' | 'lang' | 'ogLocale' | 'ogLocaleAlternates' | 'hreflang'> {
   const locale = localeOf(path);
   const alts = alternatesOf(path) ?? {};
   return {
     locale,
+    lang: LOCALES[locale].tag,
     ogLocale: LOCALES[locale].og,
     ogLocaleAlternates: (Object.keys(alts) as Locale[]).filter((l) => l !== locale).map((l) => LOCALES[l].og),
     hreflang: hreflangsOf(path).map((h) => ({ hreflang: h.hreflang, href: absolute(h.path) })),
@@ -197,6 +233,11 @@ export function buildPages(): BuiltPage[] {
         '@context': 'https://schema.org', '@type': 'WebSite', name: SITE_NAME, url: absolute('/en'), inLanguage: 'en',
       });
       extra = <FaqBlock items={HOME_FAQ_EN} locale="en" />;
+    } else if (page.path === '/zh') {
+      jsonLd.push(faqLD(HOME_FAQ_ZH), {
+        '@context': 'https://schema.org', '@type': 'WebSite', name: SITE_NAME, url: absolute('/zh'), inLanguage: LOCALES.zh.tag,
+      });
+      extra = <FaqBlock items={HOME_FAQ_ZH} locale="zh" />;
     } else if (page.path === '/en/free-budget-template') {
       jsonLd.push(faqLD(TEMPLATE_FAQ_EN), breadcrumbLD([{ name: 'Home', path: '/en' }, { name: 'Free budget template', path: page.path }]));
       extra = <FaqBlock items={TEMPLATE_FAQ_EN} locale="en" />;
@@ -214,13 +255,13 @@ export function buildPages(): BuiltPage[] {
           url: absolute(page.path),
           applicationCategory: 'FinanceApplication',
           operatingSystem: 'Web',
-          inLanguage: locale,
+          inLanguage: LOCALES[locale].tag,
           isAccessibleForFree: true,
           offers: { '@type': 'Offer', price: '0', priceCurrency: 'EUR' },
           publisher: ORGANIZATION_LD,
         },
         faqLD(tool.faq),
-        breadcrumbLD([{ name: locale === 'en' ? 'Home' : 'Accueil', path: LOCALES[locale].home }, { name: tool.crumb, path: page.path }]),
+        breadcrumbLD([{ name: HOME_WORD[locale], path: LOCALES[locale].home }, { name: tool.crumb, path: page.path }]),
       );
       extra = <FaqBlock items={tool.faq} locale={locale} />;
     } else if (page.path === '/blog') {
@@ -248,7 +289,7 @@ export function buildPages(): BuiltPage[] {
   for (const a of [...blogArticles, ...blogArticlesEn]) {
     const path = articlePath(a);
     const locale = localeOf(path);
-    const w = ARTICLE_WORDS[locale];
+    const w = ARTICLE_WORDS[locale === 'fr' ? 'fr' : 'en'];
     out.push({
       path,
       ...languageOf(path),

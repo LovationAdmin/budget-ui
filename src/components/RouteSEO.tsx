@@ -26,7 +26,7 @@ export function RouteSEO() {
     } else {
       applyHead({
         title: 'Budget Famille',
-        description: locale === 'en' ? 'Your budget, on your own or together.' : 'Votre budget familial.',
+        description: { fr: 'Votre budget familial.', en: 'Your budget, on your own or together.', zh: '你的家庭预算，一个人或和家人一起管理。' }[locale],
         canonical: pathname,
         noindex: true,
         locale,

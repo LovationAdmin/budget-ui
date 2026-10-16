@@ -69,6 +69,8 @@ export interface MariageCopy {
   past: string;
   noDateAction: string;
   noDateRest: string;
+  /** Where two pieces of text meet: end of sentence and space after it (". " by default; "。" and none in Chinese). */
+  joints?: { stop: string; space: string };
   fillExampleShort: string;
   breakdownTitle: string;
   perGuestRate: (rate: string) => string;
@@ -117,6 +119,8 @@ const positive = (parse: ToolFormat['parse'], raw: string | undefined) => {
 };
 
 /** State and actions of the calculator, for the component and for the page around it. */
+const JOINTS = { stop: '.', space: ' ' };
+
 export function useMariageCalculator({ t, format: f, storageKey, example: EXAMPLE = DEFAULT_EXAMPLE }: {
   t: MariageCopy;
   format: ToolFormat;
@@ -328,7 +332,7 @@ export function MariageCalculator({ calc, t, format: f, beforeWedding }: {
                 <p className="flex items-start gap-2 py-3 text-sm text-foreground">
                   <Info className="mt-0.5 h-4 w-4 shrink-0 text-warning" aria-hidden="true" />
                   <span>
-                    <strong>{t.exampleNote}.</strong> {t.exampleExplain}
+                    <strong>{t.exampleNote}{(t.joints ?? JOINTS).stop}</strong>{(t.joints ?? JOINTS).space}{t.exampleExplain}
                   </span>
                 </p>
               )}
@@ -431,7 +435,7 @@ export function MariageCalculator({ calc, t, format: f, beforeWedding }: {
                         <p className="mt-1 text-sm text-muted-foreground">
                           <button type="button" onClick={() => dateRef.current?.focus()} className="font-medium text-primary hover:underline">
                             {t.noDateAction}
-                          </button>{' '}
+                          </button>{(t.joints ?? JOINTS).space}
                           {t.noDateRest}
                         </p>
                       )}

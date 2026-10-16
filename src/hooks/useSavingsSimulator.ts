@@ -10,7 +10,7 @@ import { Home, Smartphone, Wifi, Zap } from 'lucide-react';
 import { budgetAPI, type MarketSuggestion } from '@/services/api';
 import { money } from '@/lib/budget/format';
 import type { Locale } from '@/i18n/locales';
-import { defineMessages, useLocale } from '@/i18n/runtime';
+import { defineMessages, useLocale, wordsIn } from '@/i18n/runtime';
 
 export const LOCATION_CONFIGS = [
   { code: 'FR', name: { fr: 'France', en: 'France' }, currency: 'EUR', symbol: '€' },
@@ -69,11 +69,11 @@ const M = defineMessages({
 
 /** Message shown while the analysis runs, by elapsed seconds. */
 export function loadingMessage(elapsed: number, config: (typeof LOCATION_CONFIGS)[number], locale: Locale): string {
-  return M[locale].loading(elapsed, config.name[locale], config.code);
+  return wordsIn(M, locale).loading(elapsed, wordsIn(config.name, locale), config.code);
 }
 
 function errorMessage(err: unknown, locale: Locale): string {
-  const t = M[locale];
+  const t = wordsIn(M, locale);
   const e = err as AxiosError<{ error?: string; retry_after?: number }>;
   if (e?.response?.status === 429) {
     const minutes = Math.max(1, Math.ceil((e.response.data?.retry_after ?? 600) / 60));
@@ -93,7 +93,7 @@ function defaultLocation(locale: Locale): string {
 
 export function useSavingsSimulator() {
   const locale = useLocale();
-  const t = M[locale];
+  const t = wordsIn(M, locale);
   const [category, setCategoryState] = useState('ENERGY');
   const [currentAmount, setCurrentAmount] = useState('');
   const [householdSize, setHouseholdSize] = useState('4');

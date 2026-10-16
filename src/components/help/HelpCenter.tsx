@@ -11,7 +11,7 @@ import { Search, BookOpen, ChevronRight, HelpCircle, Mail } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from '@/components/ui/button';
 import type { Locale } from '@/i18n/locales';
-import { defineMessages, useLocale, useT } from '@/i18n/runtime';
+import { defineMessages, useLocale, useT, wordsIn, type Messages } from '@/i18n/runtime';
 import { HELP_ARTICLES_EN } from './articles.en';
 import { HELP_ARTICLES_FR } from './articles.fr';
 import type { HelpArticle } from './parts';
@@ -20,7 +20,7 @@ import type { HelpArticle } from './parts';
 // MAIN COMPONENT: HELP CENTER
 // ============================================================================
 
-const ARTICLES: Record<Locale, HelpArticle[]> = { fr: HELP_ARTICLES_FR, en: HELP_ARTICLES_EN };
+const ARTICLES: Messages<HelpArticle[]> = { fr: HELP_ARTICLES_FR, en: HELP_ARTICLES_EN };
 
 const M = defineMessages({
   fr: {
@@ -53,7 +53,7 @@ const M = defineMessages({
 
 export function HelpCenter({ open, onClose }: { open: boolean; onClose: () => void }) {
   const t = useT(M);
-  const HELP_ARTICLES = ARTICLES[useLocale()];
+  const HELP_ARTICLES = wordsIn(ARTICLES, useLocale());
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedArticle, setSelectedArticle] = useState<HelpArticle | null>(null);
 

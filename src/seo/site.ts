@@ -4,8 +4,15 @@
 // browser by <RouteSEO /> (title/description/canonical on navigation) and at
 // build time by scripts/prerender.mjs, which writes one HTML file per page
 // with its own head, structured data and readable content. Pages under /en/
-// are in English; src/i18n/locales.ts pairs each with its French version.
+// are in English, under /zh/ in simplified Chinese (src/seo/zh/);
+// src/i18n/locales.ts pairs each with its French version.
 // ============================================================================
+
+import { HOME_PAGE_ZH } from './zh/home';
+import { BUDGET_503020_PAGE_ZH } from './zh/budget-503020';
+import { RENT_SPLIT_PAGE_ZH } from './zh/rent-split';
+import { WEDDING_PAGE_ZH } from './zh/wedding';
+import { LEFTOVER_INCOME_PAGE_ZH } from './zh/leftover-income';
 
 /** Canonical host: the bare domain redirects here. */
 export const SITE = 'https://www.budgetfamille.com';
@@ -381,6 +388,11 @@ export const PAGES: PageSEO[] = [
   },
   { path: '/en/privacy', title: 'Privacy Policy – Budget Famille', description: 'How Budget Famille protects your data: hosting in Europe, encryption, never sold.', priority: 0.2, changefreq: 'yearly' },
   { path: '/en/terms', title: 'Terms of Use – Budget Famille', description: 'The terms of use of Budget Famille.', priority: 0.2, changefreq: 'yearly' },
+  HOME_PAGE_ZH,
+  BUDGET_503020_PAGE_ZH,
+  RENT_SPLIT_PAGE_ZH,
+  WEDDING_PAGE_ZH,
+  LEFTOVER_INCOME_PAGE_ZH,
   { path: '/signup', title: 'Créer un compte gratuit – Budget Famille', description: 'Créez votre budget gratuit en 1 minute, seul ou à plusieurs : sans carte bancaire, sans connexion à votre banque.', priority: 0.7, changefreq: 'yearly', h1: 'Créez votre budget gratuit' },
   { path: '/privacy', title: 'Politique de confidentialité – Budget Famille', description: 'Comment Budget Famille protège vos données : hébergement en Europe, chiffrement, aucune revente.', priority: 0.3, changefreq: 'yearly' },
   { path: '/terms', title: 'Conditions d’utilisation – Budget Famille', description: 'Les conditions générales d’utilisation de Budget Famille.', priority: 0.2, changefreq: 'yearly' },

@@ -82,7 +82,7 @@ export const MARIAGE_EN: MariageCopy = {
   fewerNoRate: 'Enter the per-guest price of catering and drinks to see what a shorter guest list changes.',
   signup: {
     title: 'Plan your wedding in a savings pot',
-    text: (year) => `In Budget Famille, create a separate “Wedding ${year}” budget or a savings pot with a target and a date: the amount to set aside each month is worked out for you, and you can invite your partner. Free, no need to connect your bank. The app is in French for now.`,
+    text: (year) => `In Budget Famille, create a separate “Wedding ${year}” budget or a savings pot with a target and a date: the amount to set aside each month is worked out for you, and you can invite your partner. Free, no need to connect your bank.`,
     cta: 'Create my free budget',
   },
   reset: 'Clear',

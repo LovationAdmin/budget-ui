@@ -2,19 +2,20 @@
 // ============================================================================
 // Google Analytics events. The tag (index.html) loads on the production site
 // only, so previews and local builds send nothing. Every event carries the
-// language the visitor reads the site in (ui_language, src/i18n/preference.ts).
+// language of the screen the visitor reads (ui_language: the page's language,
+// Chinese included, or their preference in the app; src/i18n/current.ts).
 // In GA: mark calculator_used and sign_up as key events, and register
 // ui_language and calculator as event-scoped custom dimensions.
 // ============================================================================
 
 import { useEffect, useRef } from 'react';
-import { uiLocale } from '@/i18n/preference';
+import { screenLocale } from '@/i18n/current';
 
 type Params = Record<string, string | number | boolean>;
 
 export function track(event: string, params: Params = {}) {
   try {
-    (window as unknown as { gtag?: (...a: unknown[]) => void }).gtag?.('event', event, { ui_language: uiLocale(), ...params });
+    (window as unknown as { gtag?: (...a: unknown[]) => void }).gtag?.('event', event, { ui_language: screenLocale(), ...params });
   } catch {
     // Analytics is optional.
   }

@@ -82,6 +82,28 @@ const M = defineMessages({
     login: 'Sign in',
     signup: 'Create an account',
   },
+  zh: {
+    subtitle: '家庭理财',
+    openMenu: '打开菜单',
+    closeMenu: '关闭菜单',
+    mainNav: '主导航',
+    navigation: '导航',
+    more: '更多',
+    help: '帮助',
+    notifications: '通知',
+    unread: (n: number) => `通知（${n}条未读）`,
+    markAllRead: '全部标为已读',
+    noNotifications: '暂无通知',
+    updated: (who: string, budget: string) => <><strong>{who}</strong>修改了<em>{budget}</em></>,
+    account: '我的账户',
+    user: '用户',
+    profile: '个人资料',
+    myBudgets: '我的预算',
+    tutorial: '查看教程',
+    logout: '退出登录',
+    login: '登录',
+    signup: '免费注册',
+  },
 });
 
 export interface NavItem {

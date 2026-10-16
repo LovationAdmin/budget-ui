@@ -211,7 +211,7 @@ export default function WeddingBudgetCalculatorEn() {
               A shared budget helps. In Budget Famille, create a separate “Wedding {projectYear}” budget with its own members:
               invite your partner, and your parents if you like, by email; everyone sees the same figures in real time. A
               savings pot with a target and a date works out the amount to set aside each month. It’s free, with no need to
-              connect your bank; the app is in French for now.
+              connect your bank.
             </p>
           </section>
 

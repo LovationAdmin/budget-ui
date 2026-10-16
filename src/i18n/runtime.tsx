@@ -14,11 +14,11 @@
 
 import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from 'react';
 import { useLocation } from 'react-router-dom';
-import { setScreenLocale, type Messages } from './current';
-import { localeOf, type Locale } from './locales';
+import { setScreenLocale, wordsIn, type Messages } from './current';
+import { appLocale, localeOf, type Locale } from './locales';
 import { setUiLocale, uiLocale } from './preference';
 
-export { defineMessages, pick, screenLocale, type Messages } from './current';
+export { defineMessages, pick, screenLocale, wordsIn, type Messages } from './current';
 
 /** Screens whose language follows the visitor's preference rather than their URL. */
 const PREFERENCE_PATHS = /^\/(login|signup|forgot-password|reset-password|verify-email|404|dashboard|profile)\/?$|^\/(budget|invitation|beta2|admin)(\/|$)/;
@@ -32,9 +32,10 @@ const PreferenceContext = createContext<{ preference: Locale; setPreference: (lo
 
 export function LocaleProvider({ children }: { children: ReactNode }) {
   const [preference, setState] = useState<Locale>(uiLocale);
+  // The preference is for the app, written in French and English only.
   const setPreference = useCallback((locale: Locale) => {
-    setUiLocale(locale);
-    setState(locale);
+    setUiLocale(appLocale(locale));
+    setState(appLocale(locale));
   }, []);
   const value = useMemo(() => ({ preference, setPreference }), [preference, setPreference]);
   return <PreferenceContext.Provider value={value}>{children}</PreferenceContext.Provider>;
@@ -54,7 +55,7 @@ export function usePreference() {
 
 /** The words of a component in the language of the current screen. */
 export function useT<T>(messages: Messages<T>): T {
-  return messages[useLocale()];
+  return wordsIn(messages, useLocale());
 }
 
 /**

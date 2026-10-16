@@ -4,9 +4,10 @@
 // visitor's currency (from the time zone or the browser's region, changeable).
 // French: "1 180 €", "350 000 FCFA", "1 250,50" typed with a comma. English:
 // "$1,180", "₹60,000", "1,250.50" typed with the comma between thousands.
+// Chinese: "¥15,000", "HK$9,800", the symbol before the amount, as in English.
 // ============================================================================
 
-import { money, moneyIntl, parseAmount, parseAmountEn } from '@/lib/budget/format';
+import { money, moneyBefore, moneyIntl, parseAmount, parseAmountEn } from '@/lib/budget/format';
 import type { Locale } from './locales';
 
 export interface ToolFormat {
@@ -29,19 +30,22 @@ export interface ToolFormat {
 
 export type CurrencyCode =
   | 'USD' | 'GBP' | 'EUR' | 'CAD' | 'AUD' | 'INR' | 'NGN' | 'KES' | 'GHS' | 'ZAR' | 'SGD' | 'MYR' | 'PHP'
-  | 'XOF' | 'XAF' | 'MAD' | 'TND' | 'DZD' | 'CHF';
+  | 'XOF' | 'XAF' | 'MAD' | 'TND' | 'DZD' | 'CHF' | 'CNY' | 'HKD' | 'TWD';
 
 export interface Currency {
   code: CurrencyCode;
-  /** Name in the currency menu of the English pages, then of the French ones. */
+  /** Name in the currency menu of the English pages, then of the French and Chinese ones. */
   label: string;
   labelFr: string;
+  labelZh?: string;
   /** Number format of the country on English pages (separators, symbol position). */
   locale: string;
   /** Symbol after amount fields on English pages ("$/month"). */
   symbol: string;
   /** Symbol after amounts on French pages ("1 180 FCFA"). */
   symbolFr: string;
+  /** Symbol before amounts on Chinese pages ("¥15,000", "US$1,180"): never ambiguous between dollars. */
+  symbolZh?: string;
   /** Usual unit for the size of a room where the currency is used. */
   area: 'sq ft' | 'm²';
   /** Rough order of magnitude of everyday amounts compared with dollars or euros, for the fictitious examples only. */
@@ -51,18 +55,18 @@ export interface Currency {
 }
 
 export const CURRENCIES: ReadonlyArray<Currency> = [
-  { code: 'USD', label: 'US dollar ($)', labelFr: 'Dollar américain ($)', locale: 'en-US', symbol: '$', symbolFr: '$ US', area: 'sq ft', scale: 1 },
-  { code: 'GBP', label: 'Pound sterling (£)', labelFr: 'Livre sterling (£)', locale: 'en-GB', symbol: '£', symbolFr: '£', area: 'sq ft', scale: 1 },
-  { code: 'EUR', label: 'Euro (€)', labelFr: 'Euro (€)', locale: 'en-IE', symbol: '€', symbolFr: '€', area: 'm²', scale: 1 },
-  { code: 'CAD', label: 'Canadian dollar ($)', labelFr: 'Dollar canadien ($)', locale: 'en-CA', symbol: '$', symbolFr: '$', area: 'sq ft', scale: 1 },
-  { code: 'AUD', label: 'Australian dollar ($)', labelFr: 'Dollar australien ($)', locale: 'en-AU', symbol: '$', symbolFr: '$ AU', area: 'm²', scale: 1 },
+  { code: 'USD', label: 'US dollar ($)', labelFr: 'Dollar américain ($)', locale: 'en-US', symbol: '$', symbolFr: '$ US', labelZh: '美元 (US$)', symbolZh: 'US$', area: 'sq ft', scale: 1 },
+  { code: 'GBP', label: 'Pound sterling (£)', labelFr: 'Livre sterling (£)', locale: 'en-GB', symbol: '£', symbolFr: '£', labelZh: '英镑 (£)', symbolZh: '£', area: 'sq ft', scale: 1 },
+  { code: 'EUR', label: 'Euro (€)', labelFr: 'Euro (€)', locale: 'en-IE', symbol: '€', symbolFr: '€', labelZh: '欧元 (€)', symbolZh: '€', area: 'm²', scale: 1 },
+  { code: 'CAD', label: 'Canadian dollar ($)', labelFr: 'Dollar canadien ($)', locale: 'en-CA', symbol: '$', symbolFr: '$', labelZh: '加拿大元 (C$)', symbolZh: 'C$', area: 'sq ft', scale: 1 },
+  { code: 'AUD', label: 'Australian dollar ($)', labelFr: 'Dollar australien ($)', locale: 'en-AU', symbol: '$', symbolFr: '$ AU', labelZh: '澳大利亚元 (A$)', symbolZh: 'A$', area: 'm²', scale: 1 },
   { code: 'INR', label: 'Indian rupee (₹)', labelFr: 'Roupie indienne (₹)', locale: 'en-IN', symbol: '₹', symbolFr: '₹', area: 'sq ft', scale: 15 },
   { code: 'NGN', label: 'Nigerian naira (₦)', labelFr: 'Naira nigérian (₦)', locale: 'en-NG', symbol: '₦', symbolFr: '₦', area: 'm²', scale: 150 },
   { code: 'KES', label: 'Kenyan shilling (Ksh)', labelFr: 'Shilling kényan (Ksh)', locale: 'en-KE', symbol: 'Ksh', symbolFr: 'Ksh', area: 'm²', scale: 30 },
   { code: 'GHS', label: 'Ghanaian cedi (GH₵)', labelFr: 'Cedi ghanéen (GH₵)', locale: 'en-GH', symbol: 'GH₵', symbolFr: 'GH₵', area: 'm²', scale: 2 },
   { code: 'ZAR', label: 'South African rand (R)', labelFr: 'Rand sud-africain (R)', locale: 'en-GB', symbol: 'R', symbolFr: 'R', area: 'm²', scale: 6 },
-  { code: 'SGD', label: 'Singapore dollar ($)', labelFr: 'Dollar de Singapour ($)', locale: 'en-SG', symbol: '$', symbolFr: '$ SG', area: 'sq ft', scale: 1.5 },
-  { code: 'MYR', label: 'Malaysian ringgit (RM)', labelFr: 'Ringgit malaisien (RM)', locale: 'en-MY', symbol: 'RM', symbolFr: 'RM', area: 'sq ft', scale: 2 },
+  { code: 'SGD', label: 'Singapore dollar ($)', labelFr: 'Dollar de Singapour ($)', locale: 'en-SG', symbol: '$', symbolFr: '$ SG', labelZh: '新加坡元 (S$)', symbolZh: 'S$', area: 'sq ft', scale: 1.5 },
+  { code: 'MYR', label: 'Malaysian ringgit (RM)', labelFr: 'Ringgit malaisien (RM)', locale: 'en-MY', symbol: 'RM', symbolFr: 'RM', labelZh: '马来西亚林吉特 (RM)', symbolZh: 'RM', area: 'sq ft', scale: 2 },
   { code: 'PHP', label: 'Philippine peso (₱)', labelFr: 'Peso philippin (₱)', locale: 'en-PH', symbol: '₱', symbolFr: '₱', area: 'm²', scale: 15 },
   { code: 'XOF', label: 'CFA franc (West Africa)', labelFr: 'Franc CFA (UEMOA)', locale: 'en-US', symbol: 'FCFA', symbolFr: 'FCFA', area: 'm²', scale: 150, whole: true },
   { code: 'XAF', label: 'CFA franc (Central Africa)', labelFr: 'Franc CFA (CEMAC)', locale: 'en-US', symbol: 'FCFA', symbolFr: 'FCFA', area: 'm²', scale: 150, whole: true },
@@ -70,12 +74,16 @@ export const CURRENCIES: ReadonlyArray<Currency> = [
   { code: 'TND', label: 'Tunisian dinar (DT)', labelFr: 'Dinar tunisien (DT)', locale: 'en-US', symbol: 'DT', symbolFr: 'DT', area: 'm²', scale: 0.75 },
   { code: 'DZD', label: 'Algerian dinar (DA)', labelFr: 'Dinar algérien (DA)', locale: 'en-US', symbol: 'DA', symbolFr: 'DA', area: 'm²', scale: 30, whole: true },
   { code: 'CHF', label: 'Swiss franc (CHF)', labelFr: 'Franc suisse (CHF)', locale: 'en-US', symbol: 'CHF', symbolFr: 'CHF', area: 'm²', scale: 2.5 },
+  { code: 'CNY', label: 'Chinese yuan (¥)', labelFr: 'Yuan chinois (¥)', labelZh: '人民币 (¥)', locale: 'en-US', symbol: '¥', symbolFr: '¥', symbolZh: '¥', area: 'm²', scale: 3 },
+  { code: 'HKD', label: 'Hong Kong dollar (HK$)', labelFr: 'Dollar de Hong Kong (HK$)', labelZh: '港币 (HK$)', locale: 'en-HK', symbol: 'HK$', symbolFr: 'HK$', symbolZh: 'HK$', area: 'sq ft', scale: 7 },
+  { code: 'TWD', label: 'New Taiwan dollar (NT$)', labelFr: 'Nouveau dollar de Taïwan (NT$)', labelZh: '新台币 (NT$)', locale: 'en-US', symbol: 'NT$', symbolFr: 'NT$', symbolZh: 'NT$', area: 'm²', scale: 20 },
 ];
 
 /** The currencies offered on the pages of each language, the default first. */
 export const CURRENCIES_BY_LOCALE: Record<Locale, ReadonlyArray<CurrencyCode>> = {
   en: ['USD', 'GBP', 'EUR', 'CAD', 'AUD', 'INR', 'NGN', 'KES', 'GHS', 'ZAR', 'SGD', 'MYR', 'PHP', 'XAF', 'XOF'],
   fr: ['EUR', 'XOF', 'XAF', 'MAD', 'TND', 'DZD', 'CHF', 'CAD'],
+  zh: ['CNY', 'SGD', 'MYR', 'HKD', 'TWD', 'USD', 'CAD', 'AUD', 'GBP', 'EUR'],
 };
 
 export const currencyOf = (code: CurrencyCode): Currency => CURRENCIES.find((c) => c.code === code) ?? CURRENCIES[0];
@@ -92,7 +100,7 @@ function currencyOfRegion(region: string): CurrencyCode | undefined {
     US: 'USD', CA: 'CAD', AU: 'AUD', IN: 'INR', NG: 'NGN', KE: 'KES', GH: 'GHS', ZA: 'ZAR', SG: 'SGD', MY: 'MYR', PH: 'PHP',
     SN: 'XOF', CI: 'XOF', ML: 'XOF', BF: 'XOF', NE: 'XOF', TG: 'XOF', BJ: 'XOF', GW: 'XOF',
     CM: 'XAF', GA: 'XAF', CG: 'XAF', CF: 'XAF', TD: 'XAF', GQ: 'XAF',
-    MA: 'MAD', TN: 'TND', DZ: 'DZD', CH: 'CHF', LI: 'CHF',
+    MA: 'MAD', TN: 'TND', DZ: 'DZD', CH: 'CHF', LI: 'CHF', CN: 'CNY', HK: 'HKD', TW: 'TWD',
   };
   return map[r];
 }
@@ -105,7 +113,8 @@ const ZONE_REGIONS: Record<string, string> = {
   'Africa/Lome': 'TG', 'Africa/Porto-Novo': 'BJ', 'Africa/Bissau': 'GW', 'Africa/Douala': 'CM', 'Africa/Libreville': 'GA',
   'Africa/Brazzaville': 'CG', 'Africa/Bangui': 'CF', 'Africa/Ndjamena': 'TD', 'Africa/Malabo': 'GQ',
   'Africa/Casablanca': 'MA', 'Africa/El_Aaiun': 'MA', 'Africa/Tunis': 'TN', 'Africa/Algiers': 'DZ', 'Europe/Zurich': 'CH',
-  'Europe/London': 'GB', 'Indian/Reunion': 'RE', 'America/Martinique': 'MQ', 'America/Guadeloupe': 'GP', 'America/Cayenne': 'GF',
+  'Asia/Shanghai': 'CN', 'Asia/Urumqi': 'CN', 'Asia/Chongqing': 'CN', 'Asia/Harbin': 'CN', 'Asia/Hong_Kong': 'HK',
+  'Asia/Taipei': 'TW', 'Europe/London': 'GB', 'Indian/Reunion': 'RE', 'America/Martinique': 'MQ', 'America/Guadeloupe': 'GP', 'America/Cayenne': 'GF',
 };
 
 function regionOfTimeZone(): string | undefined {
@@ -182,5 +191,19 @@ export function formatEn(code: CurrencyCode): ToolFormat {
   };
 }
 
+export function formatZh(code: CurrencyCode): ToolFormat {
+  const c = currencyOf(code);
+  const symbol = c.symbolZh ?? c.symbol;
+  return {
+    money: (n) => moneyBefore(n, symbol, true),
+    moneyExact: (n) => moneyBefore(n, symbol, !!c.whole),
+    pct: (r) => `${Math.round(r * 100)}%`,
+    parse: parseAmountEn,
+    symbol,
+    example: exampleIn(c),
+  };
+}
+
 /** The format of a currency on the pages of a language. */
-export const formatOf = (code: CurrencyCode, locale: Locale): ToolFormat => (locale === 'en' ? formatEn(code) : formatFr(code));
+export const formatOf = (code: CurrencyCode, locale: Locale): ToolFormat =>
+  locale === 'en' ? formatEn(code) : locale === 'zh' ? formatZh(code) : formatFr(code);

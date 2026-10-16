@@ -1,12 +1,13 @@
 // src/components/Footer.tsx
 // Site footer, in the language of the screen. Links go to the page in that
-// language; in English, only the pages that exist in English are listed (the
-// legal pages are always there).
+// language; in English or Chinese, only the pages that exist in that language
+// are listed (the legal pages are always there, in English for Chinese
+// readers).
 import { Link } from 'react-router-dom';
 import { ShieldCheck, Mail, HelpCircle, FileText, Sparkles, Info } from 'lucide-react';
 import { BudgetLogo } from '@/components/budget/BudgetLogo';
 import { SocialLinks } from '@/components/SocialLinks';
-import { alternatesOf, localizedPath } from '@/i18n/locales';
+import { LOCALES, alternatesOf, localeOf, localizedPath } from '@/i18n/locales';
 import { defineMessages, useLocale, useT } from '@/i18n/runtime';
 
 const M = defineMessages({
@@ -57,6 +58,30 @@ const M = defineMessages({
       '/privacy': 'Privacy',
     },
     legalNote: ' (in French)',
+  },
+  zh: {
+    tagline: '一个人或和家人、伴侣、室友一起，管理预算，规划重要的事。',
+    follow: '关注我们',
+    product: '免费计算器',
+    support: '支持',
+    company: '公司',
+    helpCenter: '帮助中心（英文）',
+    contact: '联系我们',
+    trust: ['数据经 AES-256 加密', '符合 GDPR', '欧洲制造 🇪🇺'],
+    links: {
+      '/features': '功能',
+      '/premium': '高级版（即将推出）',
+      '/tableau-budget-familial-gratuit': '免费预算表格',
+      '/calcul-reste-a-vivre': '每月结余计算器',
+      '/budget-personnel': '50/30/20预算计算器',
+      '/budget-colocation': '合租房租分摊计算器',
+      '/budget-mariage': '婚礼预算计算器',
+      '/blog': '理财建议',
+      '/about': '关于我们',
+      '/terms': '使用条款',
+      '/privacy': '隐私政策',
+    },
+    legalNote: '（英文）',
   },
 });
 
@@ -136,9 +161,11 @@ export function Footer() {
               )}
               {LEGAL.map((fr) => {
                 const to = href(fr);
+                // Not written in this language: the version its readers get in the app.
+                const fallback = localizedPath(fr, locale);
                 return (
                   <li key={fr}>
-                    <Link to={to ?? fr} hrefLang={to ? undefined : 'fr'} className={linkClass}>
+                    <Link to={to ?? fallback} hrefLang={to ? undefined : LOCALES[localeOf(fallback)].tag} className={linkClass}>
                       {fr === '/terms' ? <FileText className="h-4 w-4" /> : <ShieldCheck className="h-4 w-4" />}
                       {t.links[fr]}{to ? '' : t.legalNote}
                     </Link>

@@ -50,7 +50,7 @@ export function applyHead(m: HeadMeta) {
   }
   link.href = url;
   const locale = m.locale ?? localeOf(m.canonical);
-  document.documentElement.lang = locale;
+  document.documentElement.lang = LOCALES[locale].tag;
   setMeta('property', 'og:locale', LOCALES[locale].og);
   document.head.querySelectorAll('link[rel="alternate"][hreflang], meta[property="og:locale:alternate"]').forEach((el) => el.remove());
   for (const alt of hreflangsOf(m.canonical)) {

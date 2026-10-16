@@ -22,7 +22,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { defineMessages, useLocale, usePreference, useT } from '@/i18n/runtime';
+import { defineMessages, useLocale, usePreference, useT, wordsIn } from '@/i18n/runtime';
 import type { Locale } from '@/i18n/locales';
 
 const M = defineMessages({
@@ -402,7 +402,7 @@ export default function Profile() {
                   if (l.value === locale) return;
                   setPreference(l.value);
                   saveLocale(l.value);
-                  toast({ title: M[l.value].languageSaved });
+                  toast({ title: wordsIn(M, l.value).languageSaved });
                 }}
                 className={`min-h-[44px] rounded-lg px-4 text-sm font-medium transition-colors ${locale === l.value ? 'bg-primary text-primary-foreground' : 'text-gray-700 hover:bg-gray-100'}`}
               >

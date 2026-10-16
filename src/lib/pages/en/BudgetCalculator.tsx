@@ -173,9 +173,9 @@ export default function BudgetCalculatorEn() {
               every month.
             </p>
             <ul className="mt-4 list-disc space-y-2 pl-5">
-              <li><strong>Start small.</strong> An automatic transfer of {money(25)} or {money(50)} on payday already builds the habit. Raise it with each pay rise or when a loan ends.</li>
+              <li><strong>Start small.</strong> An automatic transfer of {money(format.example(25))} or {money(format.example(50))} on payday already builds the habit. Raise it with each pay rise or when a loan ends.</li>
               <li><strong>Emergency fund first.</strong> A cushion for the unexpected: a breakdown, a repair, medical bills, a drop in income. A common benchmark is three to six months of essential expenses; set your own target and get there step by step.</li>
-              <li><strong>Then your goals.</strong> A trip, a car, a down payment: divide the amount by the number of months until the date. For {money(1200)} in 12 months, that’s {money(100)} a month.</li>
+              <li><strong>Then your goals.</strong> A trip, a car, a down payment: divide the amount by the number of months until the date. For {money(format.example(1200))} in 12 months, that’s {money(format.example(1200) / 12)} a month.</li>
             </ul>
             <p className="mt-4">
               In Budget Famille, a savings pot can have a target and an end date: the amount to set aside each month is

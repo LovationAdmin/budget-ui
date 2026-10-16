@@ -6,18 +6,18 @@
 // always show the language of their URL; this preference is for what has no
 // language in its URL (sign-up, the app) and for analytics.
 
-import { DEFAULT_LOCALE, LOCALES, preferredLocale, type Locale } from './locales';
+import { APP_LOCALES, DEFAULT_LOCALE, appLocale, preferredLocale, type Locale } from './locales';
 
 const KEY = 'bf:locale';
 
 export function uiLocale(): Locale {
   try {
     const saved = localStorage.getItem(KEY);
-    if (saved && saved in LOCALES) return saved as Locale;
+    if (saved && APP_LOCALES.includes(saved as Locale)) return saved as Locale;
   } catch {
     // Blocked storage: the browser's language.
   }
-  return preferredLocale() ?? DEFAULT_LOCALE;
+  return appLocale(preferredLocale() ?? DEFAULT_LOCALE);
 }
 
 export function setUiLocale(locale: Locale) {
@@ -32,7 +32,7 @@ export function setUiLocale(locale: Locale) {
 export function hasSavedPreference(): boolean {
   try {
     const saved = localStorage.getItem(KEY);
-    return !!saved && saved in LOCALES;
+    return !!saved && APP_LOCALES.includes(saved as Locale);
   } catch {
     return false;
   }

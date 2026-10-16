@@ -63,6 +63,11 @@ const BudgetCalculatorEn = lazy(() => import('./lib/pages/en/BudgetCalculator'))
 const RentSplitCalculatorEn = lazy(() => import('./lib/pages/en/RentSplitCalculator'));
 const WeddingBudgetCalculatorEn = lazy(() => import('./lib/pages/en/WeddingBudgetCalculator'));
 const LeftoverIncomeCalculatorEn = lazy(() => import('./lib/pages/en/LeftoverIncomeCalculator'));
+const HomeZh = lazy(() => import('./lib/pages/zh/Home'));
+const BudgetCalculatorZh = lazy(() => import('./lib/pages/zh/BudgetCalculator'));
+const RentSplitCalculatorZh = lazy(() => import('./lib/pages/zh/RentSplitCalculator'));
+const WeddingBudgetCalculatorZh = lazy(() => import('./lib/pages/zh/WeddingBudgetCalculator'));
+const LeftoverIncomeCalculatorZh = lazy(() => import('./lib/pages/zh/LeftoverIncomeCalculator'));
 const Profile = lazy(() => import('./lib/pages/Profile'));
 const AcceptInvitation = lazy(() => import('./lib/pages/AcceptInvitation'));
 const EnableBankingCallbackPage = lazy(() => import('./lib/pages/EnableBankingCallbackPage'));
@@ -125,6 +130,11 @@ export default function App() {
           <Route path="/en/about" element={<About />} />
           <Route path="/en/privacy" element={<PrivacyPolicy />} />
           <Route path="/en/terms" element={<Terms />} />
+          <Route path="/zh" element={<HomeZh />} />
+          <Route path="/zh/50-30-20-budget-calculator" element={<BudgetCalculatorZh />} />
+          <Route path="/zh/rent-split-calculator" element={<RentSplitCalculatorZh />} />
+          <Route path="/zh/wedding-budget-calculator" element={<WeddingBudgetCalculatorZh />} />
+          <Route path="/zh/leftover-income-calculator" element={<LeftoverIncomeCalculatorZh />} />
           <Route path="/about" element={<About />} />
           <Route path="/help" element={<Help />} />
           <Route path="/premium" element={<PremiumPage />} />

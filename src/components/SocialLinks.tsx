@@ -39,7 +39,7 @@ export function SocialLinks({ withLabels = false, className }: SocialLinksProps)
               href={url}
               target="_blank"
               rel="noopener noreferrer me"
-              aria-label={withLabels ? undefined : `Budget Famille ${locale === 'en' ? 'on' : 'sur'} ${label}`}
+              aria-label={withLabels ? undefined : locale === 'zh' ? `Budget Famille 的 ${label}` : `Budget Famille ${locale === 'en' ? 'on' : 'sur'} ${label}`}
               className={cn(
                 'inline-flex items-center justify-center rounded-full border border-border bg-background text-muted-foreground transition-colors hover:border-primary hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
                 withLabels ? 'h-11 gap-2 px-4 text-sm font-medium' : 'h-11 w-11'

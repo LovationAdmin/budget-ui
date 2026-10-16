@@ -30,8 +30,8 @@ export function LanguageSwitch({ className = '' }: { className?: string }) {
         <Link
           key={l}
           to={alts[l] as string}
-          hrefLang={l}
-          lang={l}
+          hrefLang={LOCALES[l].tag}
+          lang={LOCALES[l].tag}
           onClick={() => setPreference(l)}
           className={`inline-flex min-h-[44px] items-center gap-2 rounded-full px-4 text-sm font-semibold transition ${
             l === preferred ? 'bg-primary text-primary-foreground shadow-sm hover:bg-primary/90' : 'text-primary hover:bg-primary/10'

@@ -69,7 +69,7 @@ export const COLOCATION_EN: ColocCopy = {
   potTip: 'Simplest: everyone pays their share into a shared account or pot at the start of the month, and the rent and bills are paid from there.',
   signup: {
     title: 'Run your shared home in a shared budget',
-    text: 'Create a budget for your place and invite your roommates by email: everyone sees in real time what they put into the shared pot. Free. The app is in French for now.',
+    text: 'Create a budget for your place and invite your roommates by email: everyone sees in real time what they put into the shared pot. Free.',
     cta: 'Create my free budget',
   },
   reset: 'Clear',
