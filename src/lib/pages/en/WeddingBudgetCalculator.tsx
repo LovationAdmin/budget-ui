@@ -11,7 +11,8 @@
 
 import { Link } from 'react-router-dom';
 import { ArrowRight, Calculator, ShieldCheck, Sparkles } from 'lucide-react';
-import { CurrencyPicker, useCurrency } from '@/components/en/CurrencyPicker';
+import { useMemo } from 'react';
+import { CurrencyPicker, useCurrency } from '@/components/tools/CurrencyPicker';
 import Navbar from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
 import { EnglishToolLinks } from '@/components/en/EnglishLayout';
@@ -19,16 +20,19 @@ import { Button } from '@/components/ui/button';
 import { MariageCalculator, useMariageCalculator } from '@/components/tools/MariageCalculator';
 import { FaqList, ToolArticle } from '@/components/tools/ToolKit';
 import { MARIAGE_EN } from '@/i18n/en/mariage';
-import { EXAMPLE, FEWER_GUESTS, POSTE_FIELDS, exampleResult } from '@/lib/tools/mariage';
+import { EXAMPLE as REFERENCE_EXAMPLE, FEWER_GUESTS, POSTE_FIELDS, exampleResult } from '@/lib/tools/mariage';
+import { scaleAmounts } from '@/lib/tools/scaleAmounts';
 import { WEDDING_FAQ_EN } from '@/seo/faq-wedding-en';
 
 const PATH = '/en/wedding-budget-calculator';
-const ex = exampleResult();
 
 export default function WeddingBudgetCalculatorEn() {
   const { code, setCode, format } = useCurrency();
   const { money, moneyExact, pct } = format;
-  const calc = useMariageCalculator({ t: MARIAGE_EN, format, storageKey: 'bf:wedding-budget:v1' });
+  // The fictitious example in the visitor's currency (guests and months stay as they are).
+  const EXAMPLE = useMemo(() => scaleAmounts(REFERENCE_EXAMPLE, format.example, ['guests', 'monthsAhead']), [format]);
+  const ex = exampleResult(EXAMPLE);
+  const calc = useMariageCalculator({ t: MARIAGE_EN, format, storageKey: 'bf:wedding-budget:v1', example: EXAMPLE });
   const { fillExample, scrollToResults, projectYear } = calc;
 
   return (

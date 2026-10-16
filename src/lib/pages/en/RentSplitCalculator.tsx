@@ -10,7 +10,8 @@
 // ============================================================================
 
 import { Calculator, ShieldCheck } from 'lucide-react';
-import { CurrencyPicker, useCurrency } from '@/components/en/CurrencyPicker';
+import { CurrencyPicker, useCurrency } from '@/components/tools/CurrencyPicker';
+import { scaleAmounts } from '@/lib/tools/scaleAmounts';
 import Navbar from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
 import { EnglishToolLinks } from '@/components/en/EnglishLayout';
@@ -26,7 +27,8 @@ export default function RentSplitCalculatorEn() {
   const { code, setCode, currency, format } = useCurrency();
   const { moneyExact: money, pct } = format;
   const unit = currency.area;
-  const example = colocExampleEn(unit);
+  // The fictitious example in the visitor's currency (bedroom sizes stay as they are).
+  const example = scaleAmounts(colocExampleEn(unit), format.example, ['room']);
   const examples = (['egal', 'chambre', 'revenus'] as const).map((m) => computeColocation({ ...example, method: m }));
   const sizes = example.roommates.map((m) => m.room);
 

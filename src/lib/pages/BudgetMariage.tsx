@@ -20,16 +20,21 @@ import { LanguageSwitch } from '@/components/LanguageSwitch';
 import { Button } from '@/components/ui/button';
 import { MariageCalculator, useMariageCalculator } from '@/components/tools/MariageCalculator';
 import { FaqList, ToolArticle } from '@/components/tools/ToolKit';
-import { FORMAT_FR } from '@/i18n/format';
+import { useMemo } from 'react';
+import { CurrencyPicker, useCurrency } from '@/components/tools/CurrencyPicker';
+import { scaleAmounts } from '@/lib/tools/scaleAmounts';
 import { MARIAGE_FR } from '@/i18n/fr/mariage';
 import { MARIAGE_FAQ } from '@/seo/faq-mariage';
-import { EXAMPLE, FEWER_GUESTS, POSTE_FIELDS, exampleResult } from '@/lib/tools/mariage';
+import { EXAMPLE as REFERENCE_EXAMPLE, FEWER_GUESTS, POSTE_FIELDS, exampleResult } from '@/lib/tools/mariage';
 
-const { money: euros, moneyExact: money, pct } = FORMAT_FR;
-const ex = exampleResult();
 
 export default function BudgetMariage() {
-  const calc = useMariageCalculator({ t: MARIAGE_FR, format: FORMAT_FR, storageKey: 'bf:budget-mariage:v1' });
+  const { code, setCode, format } = useCurrency('fr');
+  const { money: euros, moneyExact: money, pct } = format;
+  // L’exemple fictif dans la devise du visiteur (invités et mois ne changent pas).
+  const EXAMPLE = useMemo(() => scaleAmounts(REFERENCE_EXAMPLE, format.example, ['guests', 'monthsAhead']), [format]);
+  const ex = exampleResult(EXAMPLE);
+  const calc = useMariageCalculator({ t: MARIAGE_FR, format, storageKey: 'bf:budget-mariage:v1', example: EXAMPLE });
   const { fillExample, scrollToResults, projectYear } = calc;
 
   return (
@@ -61,7 +66,7 @@ export default function BudgetMariage() {
           </div>
         </section>
 
-        <MariageCalculator calc={calc} t={MARIAGE_FR} format={FORMAT_FR} />
+        <MariageCalculator calc={calc} t={MARIAGE_FR} format={format} beforeWedding={<CurrencyPicker locale="fr" value={code} onChange={setCode} />} />
 
         <ToolArticle>
           <section>

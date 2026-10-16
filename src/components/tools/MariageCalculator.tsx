@@ -16,9 +16,9 @@ import { MoneyInput, Panel, SignupCard, Stepper, Tile } from '@/components/tools
 import type { ToolFormat } from '@/i18n/format';
 import { useCalculatorUsed } from '@/lib/analytics';
 import {
-  DEFAULT_GUESTS, EXAMPLE, MAX_GUESTS, MIN_GUESTS, POSTE_FIELDS, addMonths, clampGuests, computeMariage,
+  DEFAULT_GUESTS, EXAMPLE as DEFAULT_EXAMPLE, MAX_GUESTS, MIN_GUESTS, POSTE_FIELDS, addMonths, clampGuests, computeMariage,
   formatMonthValue, parseMonth, savingPlan, toYearMonth, withFewerGuests,
-  type Amounts, type PosteField, type PosteKey, type YearMonth,
+  type Amounts, type MariageExample, type PosteField, type PosteKey, type YearMonth,
 } from '@/lib/tools/mariage';
 
 interface FieldCopy {
@@ -116,13 +116,19 @@ const positive = (parse: ToolFormat['parse'], raw: string | undefined) => {
   return Number.isFinite(n) && n > 0 ? n : 0;
 };
 
-/** The example as the form shows it. */
-const EXAMPLE_VALUES: Record<string, string> = Object.fromEntries(
-  Object.entries(EXAMPLE.amounts).map(([k, v]) => [k, String(v)]),
-);
-
 /** State and actions of the calculator, for the component and for the page around it. */
-export function useMariageCalculator({ t, format: f, storageKey }: { t: MariageCopy; format: ToolFormat; storageKey: string }) {
+export function useMariageCalculator({ t, format: f, storageKey, example: EXAMPLE = DEFAULT_EXAMPLE }: {
+  t: MariageCopy;
+  format: ToolFormat;
+  storageKey: string;
+  /** The fictitious example in the visitor's currency (default: the reference one). */
+  example?: MariageExample;
+}) {
+  /** The example as the form shows it. */
+  const EXAMPLE_VALUES: Record<string, string> = useMemo(
+    () => Object.fromEntries(Object.entries(EXAMPLE.amounts).map(([k, v]) => [k, String(v)])),
+    [EXAMPLE],
+  );
   const saved = useMemo(() => load(storageKey), [storageKey]);
   const today = useMemo(() => new Date(), []);
   const thisMonth = toYearMonth(today);

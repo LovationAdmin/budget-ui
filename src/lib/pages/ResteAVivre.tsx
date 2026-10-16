@@ -15,16 +15,20 @@ import { Calculator, ShieldCheck } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
 import { ResteAVivreCalculator } from '@/components/tools/ResteAVivreCalculator';
-import { FORMAT_FR } from '@/i18n/format';
-import { RAV_EXAMPLE_FR as EXAMPLE, RESTE_A_VIVRE_FR } from '@/i18n/fr/resteAVivre';
+import { CurrencyPicker, useCurrency } from '@/components/tools/CurrencyPicker';
+import { scaleAmounts } from '@/lib/tools/scaleAmounts';
+import { RAV_EXAMPLE_FR, RESTE_A_VIVRE_FR, RESTE_A_VIVRE_FR_INTL } from '@/i18n/fr/resteAVivre';
 import { money } from '@/lib/budget/format';
 import { RAV_FAQ as FAQ } from '@/seo/faq';
 import { CHARGE_FIELDS, RSA_DATE, computeResteAVivre, rsaFloor } from '@/lib/tools/resteAVivre';
 
-const { money: euros, pct } = FORMAT_FR;
 
 export default function ResteAVivre() {
-  const example = useMemo(() => computeResteAVivre(EXAMPLE.household, EXAMPLE.incomes, EXAMPLE.charges), []);
+  const { code, setCode, format } = useCurrency('fr');
+  const { money: euros, pct } = format;
+  // L’exemple fictif dans la devise du visiteur (le foyer ne change pas).
+  const EXAMPLE = useMemo(() => scaleAmounts(RAV_EXAMPLE_FR, format.example, ['household']), [format]);
+  const example = useMemo(() => computeResteAVivre(EXAMPLE.household, EXAMPLE.incomes, EXAMPLE.charges), [EXAMPLE]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary-50 to-purple-50 flex flex-col">
@@ -48,7 +52,13 @@ export default function ResteAVivre() {
           </div>
         </section>
 
-        <ResteAVivreCalculator t={RESTE_A_VIVRE_FR} format={FORMAT_FR} storageKey="bf:reste-a-vivre:v1" example={EXAMPLE} />
+        <ResteAVivreCalculator
+          t={code === 'EUR' ? RESTE_A_VIVRE_FR : RESTE_A_VIVRE_FR_INTL}
+          format={format}
+          storageKey="bf:reste-a-vivre:v1"
+          example={EXAMPLE}
+          beforeHousehold={<CurrencyPicker locale="fr" value={code} onChange={setCode} />}
+        />
 
         <article className="bg-card px-4 py-16 sm:px-6 lg:px-8">
           <div className="mx-auto max-w-3xl space-y-12 text-muted-foreground [&_h2]:font-display [&_h2]:text-3xl [&_h2]:font-bold [&_h2]:text-foreground [&_strong]:text-foreground">

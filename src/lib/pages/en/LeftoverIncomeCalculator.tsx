@@ -12,11 +12,12 @@ import { Link } from 'react-router-dom';
 import { Calculator, ShieldCheck } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
-import { CurrencyPicker, useCurrency } from '@/components/en/CurrencyPicker';
+import { CurrencyPicker, useCurrency } from '@/components/tools/CurrencyPicker';
 import { EnglishToolLinks } from '@/components/en/EnglishLayout';
 import { ResteAVivreCalculator } from '@/components/tools/ResteAVivreCalculator';
 import { FaqList, ToolArticle } from '@/components/tools/ToolKit';
-import { RAV_EXAMPLE_EN as EXAMPLE, RESTE_A_VIVRE_EN } from '@/i18n/en/resteAVivre';
+import { RAV_EXAMPLE_EN, RESTE_A_VIVRE_EN } from '@/i18n/en/resteAVivre';
+import { scaleAmounts } from '@/lib/tools/scaleAmounts';
 import { CHARGE_FIELDS, computeResteAVivre } from '@/lib/tools/resteAVivre';
 import { LEFTOVER_INCOME_FAQ_EN } from '@/seo/faq-leftover-income-en';
 
@@ -26,6 +27,8 @@ const link = 'font-medium text-primary hover:underline';
 export default function LeftoverIncomeCalculatorEn() {
   const { code, setCode, format } = useCurrency();
   const { money, moneyExact, pct } = format;
+  // The fictitious example in the visitor's currency (the household stays as it is).
+  const EXAMPLE = scaleAmounts(RAV_EXAMPLE_EN, format.example, ['household']);
   const example = computeResteAVivre(EXAMPLE.household, EXAMPLE.incomes, EXAMPLE.charges);
 
   return (

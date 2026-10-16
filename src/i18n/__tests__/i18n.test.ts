@@ -10,7 +10,8 @@ import { MARIAGE_EN } from '../en/mariage';
 import { RAV_EXAMPLE_EN } from '../en/resteAVivre';
 import { RAV_EXAMPLE_FR } from '../fr/resteAVivre';
 import { EN_TOOLS } from '../en/tools';
-import { FORMAT_FR, formatEn } from '../format';
+import { FORMAT_FR, formatEn, formatFr, CURRENCIES_BY_LOCALE, currencyOf } from '../format';
+import { scaleAmounts } from '@/lib/tools/scaleAmounts';
 import { moneyIntl, parseAmountEn } from '@/lib/budget/format';
 import { computeBudgetPerso } from '@/lib/tools/budgetPerso';
 import { computeColocation } from '@/lib/tools/colocation';
@@ -166,4 +167,23 @@ test('English blog: every article adapts a French one, both paired in BLOG_PAIRS
     for (const r of a.related ?? []) eq(en.has(r), true, `${a.slug} related ${r}`);
     eq(alternatesOf(`/en/blog/${a.slug}`)?.fr, `/blog/${a.translationOf}`, a.slug);
   }
+});
+
+test('local currencies: Indian grouping, CFA francs without cents, French symbols after', () => {
+  const nb = (x: string) => x.replace(/[\u00a0\u202f]/g, ' ');
+  eq(formatEn('INR').money(1234567), '₹12,34,567');
+  eq(formatEn('NGN').money(600000), '₦600,000');
+  eq(formatEn('XOF').moneyExact(1234.56), '1,235 FCFA');
+  eq(nb(formatFr('XOF').moneyExact(300000.4)), '300 000 FCFA');
+  eq(nb(formatFr('MAD').money(10000)), '10 000 DH');
+  eq(nb(formatFr('EUR').moneyExact(16.67)), nb(FORMAT_FR.moneyExact(16.67)));
+  for (const l of ['fr', 'en'] as const) for (const c of CURRENCIES_BY_LOCALE[l]) eq(!!currencyOf(c), true, c);
+});
+
+test('examples in other currencies: scaled and rounded, counts and sizes unchanged', () => {
+  eq(formatEn('USD').example(1350), 1350, 'scale 1 keeps the reference example');
+  eq(formatEn('INR').example(4000), 60000);
+  eq(formatFr('XOF').example(1350), 203000);
+  const coloc = scaleAmounts({ rent: 1350, roommates: [{ name: 'A', room: 12, income: 2000 }] }, formatFr('XOF').example, ['room']);
+  eq(coloc, { rent: 203000, roommates: [{ name: 'A', room: 12, income: 300000 }] });
 });

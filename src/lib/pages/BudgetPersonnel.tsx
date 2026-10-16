@@ -17,7 +17,9 @@ import { Footer } from '@/components/Footer';
 import { LanguageSwitch } from '@/components/LanguageSwitch';
 import { BudgetPersoCalculator } from '@/components/tools/BudgetPersoCalculator';
 import { FaqList, ToolArticle } from '@/components/tools/ToolKit';
-import { FORMAT_FR } from '@/i18n/format';
+import { useMemo } from 'react';
+import { CurrencyPicker, useCurrency } from '@/components/tools/CurrencyPicker';
+import { scaleAmounts } from '@/lib/tools/scaleAmounts';
 import { BUDGET_PERSO_FR } from '@/i18n/fr/budgetPerso';
 import { money } from '@/lib/budget/format';
 import { PERSO_FAQ } from '@/seo/faq-budget-personnel';
@@ -25,12 +27,16 @@ import {
   EXAMPLE, EXAMPLE_HIGH_RENT, FULL_SAVINGS_MAX_NEEDS_SHARE, NEED_FIELDS, computeBudgetPerso,
 } from '@/lib/tools/budgetPerso';
 
-const { money: euros, pct } = FORMAT_FR;
-
-const example = computeBudgetPerso(EXAMPLE.incomes, EXAMPLE.needs);
-const exampleHigh = computeBudgetPerso(EXAMPLE_HIGH_RENT.incomes, EXAMPLE_HIGH_RENT.needs);
 
 export default function BudgetPersonnel() {
+  const { code, setCode, format } = useCurrency('fr');
+  const { money: euros, pct } = format;
+  // L’exemple fictif dans la devise du visiteur (mis à l’échelle pour le franc CFA, le dirham…).
+  const ex = useMemo(() => scaleAmounts(EXAMPLE, format.example), [format]);
+  const exHigh = useMemo(() => scaleAmounts(EXAMPLE_HIGH_RENT, format.example), [format]);
+  const copy = useMemo(() => ({ ...BUDGET_PERSO_FR, example: ex }), [ex]);
+  const example = computeBudgetPerso(ex.incomes, ex.needs);
+  const exampleHigh = computeBudgetPerso(exHigh.incomes, exHigh.needs);
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary-50 to-purple-50 flex flex-col">
       <Navbar />
@@ -55,7 +61,7 @@ export default function BudgetPersonnel() {
           </div>
         </section>
 
-        <BudgetPersoCalculator t={BUDGET_PERSO_FR} format={FORMAT_FR} storageKey="bf:budget-personnel:v1" />
+        <BudgetPersoCalculator t={copy} format={format} storageKey="bf:budget-personnel:v1" beforeIncomes={<CurrencyPicker locale="fr" value={code} onChange={setCode} />} />
 
         <ToolArticle>
           <section>
@@ -153,8 +159,8 @@ export default function BudgetPersonnel() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border/60">
-                  {NEED_FIELDS.filter((f) => EXAMPLE.needs[f.key]).map((f) => (
-                    <tr key={f.key}><td className="py-2">{f.label}</td><td className="py-2 text-right tabular-nums">{euros(EXAMPLE.needs[f.key] ?? 0)}</td></tr>
+                  {NEED_FIELDS.filter((f) => ex.needs[f.key]).map((f) => (
+                    <tr key={f.key}><td className="py-2">{f.label}</td><td className="py-2 text-right tabular-nums">{euros(ex.needs[f.key] ?? 0)}</td></tr>
                   ))}
                   <tr className="font-semibold text-foreground"><td className="py-2">Total des besoins</td><td className="py-2 text-right tabular-nums">{euros(example.besoins)}</td></tr>
                 </tbody>
@@ -168,7 +174,7 @@ export default function BudgetPersonnel() {
               {money(example.enviesParJour)} par jour.
             </p>
             <p className="mt-4">
-              Si son loyer était de {euros(EXAMPLE_HIGH_RENT.needs.logement ?? 0)} au lieu de {euros(EXAMPLE.needs.logement ?? 0)}, ses
+              Si son loyer était de {euros(exHigh.needs.logement ?? 0)} au lieu de {euros(ex.needs.logement ?? 0)}, ses
               besoins monteraient à {euros(exampleHigh.besoins)} ({pct(exampleHigh.besoinsShare ?? 0)}). Il resterait{' '}
               {euros(exampleHigh.reste)}, partagés en {euros(exampleHigh.envies)} d’envies et {euros(exampleHigh.epargne)} d’épargne.
             </p>

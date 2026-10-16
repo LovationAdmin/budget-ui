@@ -16,15 +16,19 @@ import { Footer } from '@/components/Footer';
 import { LanguageSwitch } from '@/components/LanguageSwitch';
 import { ColocationCalculator } from '@/components/tools/ColocationCalculator';
 import { FaqList, ToolArticle } from '@/components/tools/ToolKit';
-import { FORMAT_FR } from '@/i18n/format';
+import { CurrencyPicker, useCurrency } from '@/components/tools/CurrencyPicker';
+import { scaleAmounts } from '@/lib/tools/scaleAmounts';
 import { COLOCATION_FR } from '@/i18n/fr/colocation';
-import { COLOC_EXAMPLE, COMMON_SHARE, computeColocation } from '@/lib/tools/colocation';
+import { COLOC_EXAMPLE as REFERENCE_EXAMPLE, COMMON_SHARE, computeColocation } from '@/lib/tools/colocation';
 import { COLOC_FAQ as FAQ } from '@/seo/faq-colocation';
 
-const { moneyExact: euros, pct } = FORMAT_FR;
-const examples = (['egal', 'chambre', 'revenus'] as const).map((m) => computeColocation({ ...COLOC_EXAMPLE, method: m }));
 
 export default function BudgetColocation() {
+  const { code, setCode, format } = useCurrency('fr');
+  const { moneyExact: euros, pct } = format;
+  // L’exemple fictif dans la devise du visiteur (les surfaces des chambres ne changent pas).
+  const COLOC_EXAMPLE = scaleAmounts(REFERENCE_EXAMPLE, format.example, ['room']);
+  const examples = (['egal', 'chambre', 'revenus'] as const).map((m) => computeColocation({ ...COLOC_EXAMPLE, method: m }));
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary-50 to-purple-50 flex flex-col">
       <Navbar />
@@ -48,7 +52,7 @@ export default function BudgetColocation() {
           </div>
         </section>
 
-        <ColocationCalculator t={COLOCATION_FR} format={FORMAT_FR} storageKey="bf:budget-colocation:v1" example={COLOC_EXAMPLE} areaUnit="m²" />
+        <ColocationCalculator t={COLOCATION_FR} format={format} storageKey="bf:budget-colocation:v1" example={COLOC_EXAMPLE} areaUnit="m²" beforeHousehold={<CurrencyPicker locale="fr" value={code} onChange={setCode} />} />
 
         <ToolArticle>
           <section>

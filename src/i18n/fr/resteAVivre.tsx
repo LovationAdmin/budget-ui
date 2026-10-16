@@ -85,3 +85,26 @@ export const RESTE_A_VIVRE_FR: RavCopy = {
   },
   sticky: { label: 'Reste à vivre', details: 'Voir le détail' },
 };
+
+/**
+ * Hors de la zone euro : pas de repère légal français (plancher du
+ * surendettement, norme HCSF, aides françaises), des pistes valables partout.
+ */
+export const RESTE_A_VIVRE_FR_INTL: RavCopy = {
+  ...RESTE_A_VIVRE_FR,
+  deficitHelp: (
+    <>
+      <p className="font-semibold text-foreground">Des pistes pour rééquilibrer</p>
+      <ul className="mt-2 space-y-1.5">
+        <li><Link to="/outils-ia" className="font-medium text-primary hover:underline">Estimer ce que vos factures peuvent baisser</Link></li>
+        <li>Vérifier les aides auxquelles vous avez droit, sur le site officiel de votre pays</li>
+        <li>Demander conseil à un service gratuit d’accompagnement budgétaire près de chez vous</li>
+      </ul>
+    </>
+  ),
+  debt: {
+    title: RESTE_A_VIVRE_FR.debt.title,
+    note: () => ({ tone: 'info', text: 'Chaque banque applique ses propres règles : prenez ce taux comme un repère. Plus il est bas, plus vous avez de marge.' }),
+  },
+  floor: undefined,
+};
