@@ -45,6 +45,109 @@ import {
   monthsBetween,
 } from './months';
 import { roundCents } from './format';
+import { defineMessages, pick } from '@/i18n/current';
+
+/** Words the engine writes on screen (schedules, month-to-month changes), in the screen's language. */
+const E = defineMessages({
+  fr: {
+    deletedSaving: 'Épargne supprimée',
+    noMonth: 'Aucun mois',
+    everyMonth: 'Tous les mois',
+    allBut: (months: string) => `Tous les mois sauf ${months}`,
+    inMonths: (months: string) => `En ${months}`,
+    once: 'Une seule fois',
+    onceIn: (month: string) => `Une seule fois, en ${month}`,
+    yearly: 'Chaque année',
+    yearlyIn: (month: string) => `Chaque année en ${month}`,
+    smoothed: ' · lissée sur 12 mois',
+    untilYear: (year: number) => ` · jusqu’en ${year}`,
+    months: (n: number) => `${n} mois`,
+    until: (month: string) => `jusqu’à ${month}`,
+    Until: (month: string) => `Jusqu’à ${month}`,
+    from: (month: string) => `à partir ${deMonth(month)}`,
+    From: (month: string) => `À partir ${deMonth(month)}`,
+    since: (month: string) => `depuis ${month}`,
+    Since: (month: string) => `Depuis ${month}`,
+    freeAmount: 'Montant libre, choisi mois par mois',
+    monthlyNoEnd: 'Chaque mois, sans échéance',
+    pausedFrom: (month: string) => `En pause à partir ${deMonth(month)}`,
+    resumesIn: (month: string, amount: string) => `Reprend en ${month} : ${amount}`,
+    resumedIn: (month: string) => `Reprise en ${month}`,
+    sinceBefore: (month: string, before: string) => `Depuis ${month} · avant ${before}`,
+    allTheirPay: 'tout son salaire',
+    allThePay: 'tout le salaire',
+    percentOfPay: (pct: number) => `${pct} % du salaire`,
+    fixedAmount: 'montant fixe',
+    removedThisMonth: 'retirée ce mois-ci',
+    oneOff: 'dépense ponctuelle',
+    newBill: 'nouvelle charge',
+    yearlyDue: 'échéance annuelle',
+    backThisMonth: 'reprend ce mois-ci',
+    adjustedThisMonth: 'ajustée ce mois-ci',
+    up: 'hausse',
+    down: 'baisse',
+    absentThisMonth: 'absente ce mois-ci',
+    endedIn: (month: string) => `terminée en ${month}`,
+    pausedThisMonth: 'en pause ce mois-ci',
+    oneOffPast: 'ponctuelle, déjà passée',
+    yearlyPast: 'échéance passée',
+    savingResumed: 'épargne reprise',
+    newSaving: 'nouvelle épargne',
+    nothingSaved: 'rien mis de côté ce mois-ci',
+    savingChanged: 'épargne modifiée',
+    contribution: 'contribution',
+    oneOffIncome: 'revenu ponctuel',
+  },
+  en: {
+    deletedSaving: 'Deleted savings',
+    noMonth: 'No month',
+    everyMonth: 'Every month',
+    allBut: (months: string) => `Every month except ${months}`,
+    inMonths: (months: string) => `In ${months}`,
+    once: 'Just once',
+    onceIn: (month: string) => `Just once, in ${month}`,
+    yearly: 'Every year',
+    yearlyIn: (month: string) => `Every year in ${month}`,
+    smoothed: ' · spread over 12 months',
+    untilYear: (year: number) => ` · until ${year}`,
+    months: (n: number) => (n === 1 ? '1 month' : `${n} months`),
+    until: (month: string) => `until ${month}`,
+    Until: (month: string) => `Until ${month}`,
+    from: (month: string) => `from ${month}`,
+    From: (month: string) => `From ${month}`,
+    since: (month: string) => `since ${month}`,
+    Since: (month: string) => `Since ${month}`,
+    freeAmount: 'Any amount, chosen month by month',
+    monthlyNoEnd: 'Every month, no end date',
+    pausedFrom: (month: string) => `Paused from ${month}`,
+    resumesIn: (month: string, amount: string) => `Resumes in ${month}: ${amount}`,
+    resumedIn: (month: string) => `Resumed in ${month}`,
+    sinceBefore: (month: string, before: string) => `Since ${month} · before: ${before}`,
+    allTheirPay: 'all their pay',
+    allThePay: 'all their pay',
+    percentOfPay: (pct: number) => `${pct}% of pay`,
+    fixedAmount: 'fixed amount',
+    removedThisMonth: 'removed this month',
+    oneOff: 'one-off expense',
+    newBill: 'new bill',
+    yearlyDue: 'yearly bill due',
+    backThisMonth: 'back this month',
+    adjustedThisMonth: 'adjusted this month',
+    up: 'up',
+    down: 'down',
+    absentThisMonth: 'not this month',
+    endedIn: (month: string) => `ended in ${month}`,
+    pausedThisMonth: 'paused this month',
+    oneOffPast: 'one-off, already past',
+    yearlyPast: 'yearly bill past',
+    savingResumed: 'savings resumed',
+    newSaving: 'new savings',
+    nothingSaved: 'nothing set aside this month',
+    savingChanged: 'savings changed',
+    contribution: 'contribution',
+    oneOffIncome: 'one-off income',
+  },
+});
 
 // ---------------------------------------------------------------------------
 // Resolved shapes
@@ -522,7 +625,7 @@ function monthFromSnapshot(model: BudgetModel, ym: YM, snap: MonthSnapshot, reco
     const def = projectById.get(pid);
     savings.push({
       id: pid,
-      label: def?.label ?? 'Épargne supprimée',
+      label: def?.label ?? pick(E).deletedSaving,
       recurring: def ? isRecurringProject(def) : false,
       active: false,
       allocation: 0,
@@ -625,32 +728,34 @@ export function projectStatus(p: Project, today: YM): ItemStatus {
 
 export function customMonthsText(months: number[] | undefined): string {
   const sorted = (months ?? []).slice().sort((a, b) => a - b);
-  if (sorted.length === 0) return 'Aucun mois';
-  if (sorted.length === 12) return 'Tous les mois';
+  const e = pick(E);
+  if (sorted.length === 0) return e.noMonth;
+  if (sorted.length === 12) return e.everyMonth;
   if (sorted.length >= 7) {
     const excluded: string[] = [];
     for (let m = 1; m <= 12; m++) if (!sorted.includes(m)) excluded.push(monthNamesLower()[m - 1]);
-    return `Tous les mois sauf ${joinFr(excluded)}`;
+    return e.allBut(joinFr(excluded));
   }
-  return `En ${joinFr(sorted.map((m) => monthNamesLower()[m - 1]))}`;
+  return e.inMonths(joinFr(sorted.map((m) => monthNamesLower()[m - 1])));
 }
 
 /** Plain-language description of when a charge applies. */
 export function describeChargeSchedule(c: Charge, today: YM): string {
   const w = windowOf(c);
   const freq = chargeFrequency(c);
-  if (freq === 'once') return w.start ? `Une seule fois, en ${formatMonthLong(w.start)}` : 'Une seule fois';
+  const e = pick(E);
+  if (freq === 'once') return w.start ? e.onceIn(formatMonthLong(w.start)) : e.once;
   if (freq === 'yearly') {
     const anchor = w.start ?? stepAt(c.amountHistory, today)?.from;
-    let t = anchor ? `Chaque année en ${monthNamesLower()[monthIndex0(anchor)]}` : 'Chaque année';
-    if (c.smooth) t += ' · lissée sur 12 mois';
-    if (w.end) t += ` · jusqu’en ${yearOf(w.end)}`;
+    let t = anchor ? e.yearlyIn(monthNamesLower()[monthIndex0(anchor)]) : e.yearly;
+    if (c.smooth) t += e.smoothed;
+    if (w.end) t += e.untilYear(yearOf(w.end));
     return t;
   }
-  const base = freq === 'custom' ? customMonthsText(c.months) : 'Tous les mois';
-  if (w.start && w.end) return `${base} · ${formatMonthShort(w.start)} → ${formatMonthShort(w.end)} (${monthsBetween(w.start, w.end)} mois)`;
-  if (w.end) return `${base} · jusqu’à ${formatMonthShort(w.end)}`;
-  if (w.start) return `${base} · ${compareYM(w.start, today) > 0 ? `à partir ${deMonth(formatMonthShort(w.start))}` : `depuis ${formatMonthShort(w.start)}`}`;
+  const base = freq === 'custom' ? customMonthsText(c.months) : e.everyMonth;
+  if (w.start && w.end) return `${base} · ${formatMonthShort(w.start)} → ${formatMonthShort(w.end)} (${e.months(monthsBetween(w.start, w.end))})`;
+  if (w.end) return `${base} · ${e.until(formatMonthShort(w.end))}`;
+  if (w.start) return `${base} · ${compareYM(w.start, today) > 0 ? e.from(formatMonthShort(w.start)) : e.since(formatMonthShort(w.start))}`;
   return base;
 }
 
@@ -669,12 +774,13 @@ function monthlyStart(p: Project): YM | undefined {
 /** Plain-language description of a recurring saving. */
 export function describeProjectSchedule(p: Project, today: YM): string {
   const w = windowOf(p);
-  if (!isRecurringProject(p)) return 'Montant libre, choisi mois par mois';
+  const e = pick(E);
+  if (!isRecurringProject(p)) return e.freeAmount;
   const start = monthlyStart(p);
   if (start && w.end) return `${formatMonthShort(start)} → ${formatMonthShort(w.end)}`;
-  if (w.end) return `Jusqu’à ${formatMonthShort(w.end)}`;
-  if (start) return compareYM(start, today) > 0 ? `À partir ${deMonth(formatMonthShort(start))}` : `Depuis ${formatMonthShort(start)}`;
-  return 'Chaque mois, sans échéance';
+  if (w.end) return e.Until(formatMonthShort(w.end));
+  if (start) return compareYM(start, today) > 0 ? e.From(formatMonthShort(start)) : e.Since(formatMonthShort(start));
+  return e.monthlyNoEnd;
 }
 
 /** "1 250 € à partir d’oct. 2026" / "Depuis sept. 2026 · avant 1 150 €" */
@@ -690,29 +796,31 @@ export function amountHistoryHint(
   const next = sorted[i + 1];
   // A leading 0 step is not a pause: it is the time before the amount existed
   // (e.g. a free saving turned into a monthly one).
+  const e = pick(E);
   if (next) {
-    if (roundCents(next.amount) === 0) return `En pause à partir ${deMonth(formatMonthShort(next.from))}`;
-    if (roundCents(cur.amount) === 0 && i > 0) return `Reprend en ${formatMonthShort(next.from)} : ${fmt(next.amount)}`;
-    return `${fmt(next.amount)} à partir ${deMonth(formatMonthShort(next.from))}`;
+    if (roundCents(next.amount) === 0) return e.pausedFrom(formatMonthShort(next.from));
+    if (roundCents(cur.amount) === 0 && i > 0) return e.resumesIn(formatMonthShort(next.from), fmt(next.amount));
+    return `${fmt(next.amount)} ${e.from(formatMonthShort(next.from))}`;
   }
   if (i > 0) {
     const before = sorted[i - 1];
-    if (roundCents(before.amount) === 0) return i - 1 === 0 ? '' : `Reprise en ${formatMonthShort(cur.from)}`;
-    return `Depuis ${formatMonthShort(cur.from)} · avant ${fmt(before.amount)}`;
+    if (roundCents(before.amount) === 0) return i - 1 === 0 ? '' : e.resumedIn(formatMonthShort(cur.from));
+    return e.sinceBefore(formatMonthShort(cur.from), fmt(before.amount));
   }
   return '';
 }
 
 export function contributionRuleText(mode: ContributionMode, value?: number): string {
-  if (mode === 'all') return 'tout son salaire';
-  if (mode === 'percent') return `${Math.round(Number(value) || 0)} % du salaire`;
-  return 'montant fixe';
+  const e = pick(E);
+  if (mode === 'all') return e.allTheirPay;
+  if (mode === 'percent') return e.percentOfPay(Math.round(Number(value) || 0));
+  return e.fixedAmount;
 }
 
 /** "tout le salaire" / "1 200 €" / "40 % du salaire" */
 export function contributionStepText(step: ContributionStep, fmt: (n: number) => string): string {
-  if (step.mode === 'all') return 'tout le salaire';
-  if (step.mode === 'percent') return `${Math.round(Number(step.value) || 0)} % du salaire`;
+  if (step.mode === 'all') return pick(E).allThePay;
+  if (step.mode === 'percent') return pick(E).percentOfPay(Math.round(Number(step.value) || 0));
   return fmt(Number(step.value) || 0);
 }
 
@@ -723,8 +831,8 @@ export function contributionHistoryHint(p: Person, ref: YM, fmt: (n: number) => 
   const cur = stepAt(steps, ref)!;
   const i = steps.indexOf(cur);
   const next = steps[i + 1];
-  if (next) return `${contributionStepText(next, fmt)} à partir ${deMonth(formatMonthShort(next.from))}`;
-  if (i > 0) return `Depuis ${formatMonthShort(cur.from)} · avant ${contributionStepText(steps[i - 1], fmt)}`;
+  if (next) return `${contributionStepText(next, fmt)} ${pick(E).from(formatMonthShort(next.from))}`;
+  if (i > 0) return pick(E).sinceBefore(formatMonthShort(cur.from), contributionStepText(steps[i - 1], fmt));
   return '';
 }
 
@@ -890,6 +998,7 @@ export class BudgetEngine {
     const cur = this.month(ym);
     const prev = this.month(addMonths(ym, -1));
     const out: MonthChange[] = [];
+    const e = pick(E);
     const prevCharges = new Map(prev.charges.map((c) => [c.id, c]));
     const curCharges = new Map(cur.charges.map((c) => [c.id, c]));
     const defs = new Map(this.model.charges.map((c) => [c.id, c]));
@@ -897,7 +1006,7 @@ export class BudgetEngine {
     for (const c of cur.charges) {
       const p = prevCharges.get(c.id);
       if (c.skipped) {
-        if (p && !p.skipped) out.push({ kind: 'skip', scope: 'charge', id: c.id, label: c.label, text: 'retirée ce mois-ci', delta: -p.amount, tone: 'good' });
+        if (p && !p.skipped) out.push({ kind: 'skip', scope: 'charge', id: c.id, label: c.label, text: e.removedThisMonth, delta: -p.amount, tone: 'good' });
         continue;
       }
       if (!p || p.skipped) {
@@ -909,7 +1018,7 @@ export class BudgetEngine {
           scope: 'charge',
           id: c.id,
           label: c.label,
-          text: isNew ? (c.frequency === 'once' ? 'dépense ponctuelle' : 'nouvelle charge') : c.frequency === 'yearly' ? 'échéance annuelle' : 'reprend ce mois-ci',
+          text: isNew ? (c.frequency === 'once' ? e.oneOff : e.newBill) : c.frequency === 'yearly' ? e.yearlyDue : e.backThisMonth,
           delta: c.amount,
           tone: 'bad',
         });
@@ -919,7 +1028,7 @@ export class BudgetEngine {
           scope: 'charge',
           id: c.id,
           label: c.label,
-          text: c.adjusted ? 'ajustée ce mois-ci' : c.amount > p.amount ? 'hausse' : 'baisse',
+          text: c.adjusted ? e.adjustedThisMonth : c.amount > p.amount ? e.up : e.down,
           delta: roundCents(c.amount - p.amount),
           tone: c.amount > p.amount ? 'bad' : 'good',
         });
@@ -928,14 +1037,14 @@ export class BudgetEngine {
     for (const p of prev.charges) {
       if (curCharges.has(p.id) || p.skipped) continue;
       const def = defs.get(p.id);
-      let text = 'absente ce mois-ci';
+      let text = e.absentThisMonth;
       if (def) {
         const w = windowOf(def);
         const f = chargeFrequency(def);
-        if (w.end === prev.ym) text = `terminée en ${monthNamesLower()[monthIndex0(prev.ym)]}`;
-        else if (f === 'custom') text = 'en pause ce mois-ci';
-        else if (f === 'once') text = 'ponctuelle, déjà passée';
-        else if (f === 'yearly') text = 'échéance passée';
+        if (w.end === prev.ym) text = e.endedIn(monthNamesLower()[monthIndex0(prev.ym)]);
+        else if (f === 'custom') text = e.pausedThisMonth;
+        else if (f === 'once') text = e.oneOffPast;
+        else if (f === 'yearly') text = e.yearlyPast;
       }
       out.push({ kind: 'end', scope: 'charge', id: p.id, label: p.label, text, delta: -p.amount, tone: 'good' });
     }
@@ -944,11 +1053,11 @@ export class BudgetEngine {
     for (const s of cur.savings) {
       const p = prevSavings.get(s.id);
       if (s.allocation > 0 && (!p || p.allocation === 0)) {
-        out.push({ kind: p ? 'resume' : 'new', scope: 'saving', id: s.id, label: s.label, text: p ? 'épargne reprise' : 'nouvelle épargne', delta: s.allocation, tone: 'neutral' });
+        out.push({ kind: p ? 'resume' : 'new', scope: 'saving', id: s.id, label: s.label, text: p ? e.savingResumed : e.newSaving, delta: s.allocation, tone: 'neutral' });
       } else if (p && p.allocation > 0 && s.allocation === 0) {
-        out.push({ kind: 'pause', scope: 'saving', id: s.id, label: s.label, text: 'rien mis de côté ce mois-ci', delta: -p.allocation, tone: 'neutral' });
+        out.push({ kind: 'pause', scope: 'saving', id: s.id, label: s.label, text: e.nothingSaved, delta: -p.allocation, tone: 'neutral' });
       } else if (p && Math.abs(p.allocation - s.allocation) >= 0.005 && s.allocation > 0) {
-        out.push({ kind: s.allocation > p.allocation ? 'up' : 'down', scope: 'saving', id: s.id, label: s.label, text: 'épargne modifiée', delta: roundCents(s.allocation - p.allocation), tone: 'neutral' });
+        out.push({ kind: s.allocation > p.allocation ? 'up' : 'down', scope: 'saving', id: s.id, label: s.label, text: e.savingChanged, delta: roundCents(s.allocation - p.allocation), tone: 'neutral' });
       }
     }
 
@@ -962,14 +1071,14 @@ export class BudgetEngine {
           scope: 'income',
           id: person.id,
           label: person.name,
-          text: 'contribution',
+          text: e.contribution,
           delta: roundCents(person.contribution - p.contribution),
           tone: person.contribution > p.contribution ? 'good' : 'bad',
         });
       }
     }
     for (const o of cur.oneOffs) {
-      out.push({ kind: 'new', scope: 'income', id: o.id, label: o.label, text: 'revenu ponctuel', delta: o.amount, tone: 'good' });
+      out.push({ kind: 'new', scope: 'income', id: o.id, label: o.label, text: e.oneOffIncome, delta: o.amount, tone: 'good' });
     }
     return out;
   }
