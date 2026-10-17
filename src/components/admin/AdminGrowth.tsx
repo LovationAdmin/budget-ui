@@ -36,12 +36,14 @@ function Funnel({ f }: { f: GrowthData['funnel'] }) {
       {steps.map((s, i) => {
         const prev = i ? steps[i - 1].n : s.n;
         return (
-          <li key={s.label} className="grid grid-cols-[8.5rem_1fr_auto] items-center gap-3 text-sm sm:grid-cols-[10rem_1fr_9rem]">
+          // Phone: label and figures on one line, the bar below at full width, so
+          // every bar has the same track. From sm: label | bar | figures.
+          <li key={s.label} className="grid grid-cols-[1fr_auto] items-baseline gap-x-3 gap-y-1.5 text-sm sm:grid-cols-[10rem_1fr_9rem] sm:items-center">
             <span className="font-medium text-foreground">{s.label}</span>
-            <span className="h-5 rounded-r bg-muted/60" title={`${s.label} : ${s.n}`}>
+            <span className="col-span-2 row-start-2 h-5 rounded-r bg-muted/60 sm:col-span-1 sm:col-start-2 sm:row-start-1" title={`${s.label} : ${s.n}`}>
               <span className="block h-full rounded-r-[4px]" style={{ width: `${Math.max(s.n ? 2 : 0, (s.n / max) * 100)}%`, background: 'var(--series-1)' }} />
             </span>
-            <span className="text-right tabular-nums text-foreground">
+            <span className="text-right tabular-nums text-foreground sm:col-start-3 sm:row-start-1">
               <strong>{s.n}</strong>
               {i > 0 && <span className="ml-1.5 text-xs text-muted-foreground">{pct(s.n, prev)} % de l’étape</span>}
             </span>
