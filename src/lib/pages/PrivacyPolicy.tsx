@@ -14,7 +14,7 @@ const M = defineMessages<{
   title: string; lead: string; prevails?: ReactNode;
   encryptionTitle: string; encryption: ReactNode; accessTitle: string; access: string;
   collectionTitle: string; collection: ReactNode; collected: string[]; noSale: string;
-  hostingTitle: string; hosting: string; deletionTitle: string; deletion: string;
+  hostingTitle: string; hosting: string; deletionTitle: string; deletion: string; unconfirmed: string;
   howTitle: string; how: ReactNode; contactTitle: string; contact: string; email: string;
 }>({
   fr: {
@@ -32,6 +32,7 @@ const M = defineMessages<{
     hosting: 'Vos données sont hébergées sur des serveurs sécurisés en Europe, conformes aux normes RGPD.',
     deletionTitle: 'Suppression du compte et des données',
     deletion: 'Vous gardez le contrôle total de vos informations. Conformément à votre droit à l\'oubli, vous pouvez supprimer votre compte et l\'intégralité de vos données associées à tout moment.',
+    unconfirmed: 'Un compte dont l’adresse e-mail n’a jamais été confirmée est supprimé automatiquement au bout de 30 jours. Un e-mail vous prévient une semaine avant, avec un lien pour le confirmer.',
     howTitle: 'Comment supprimer mes données ?',
     how: <>Rendez-vous sur votre page {profile('Profil')}. Tout en bas, dans la section "Zone de danger", cliquez sur "Supprimer mon compte". Cette action est <strong>immédiate et irréversible</strong> : toutes vos données seront effacées de nos serveurs.</>,
     contactTitle: 'Contact',
@@ -54,6 +55,7 @@ const M = defineMessages<{
     hosting: 'Your data is hosted on secure servers in Europe, in line with the GDPR.',
     deletionTitle: 'Deleting your account and data',
     deletion: 'You stay in full control of your information. In line with your right to erasure, you can delete your account and all the data linked to it at any time.',
+    unconfirmed: 'An account whose email address is never confirmed is deleted automatically after 30 days. An email warns you a week before, with a link to confirm it.',
     howTitle: 'How do I delete my data?',
     how: <>Go to your {profile('Profile')} page. At the very bottom, in the “Danger zone” section, click “Delete my account”. This is <strong>immediate and cannot be undone</strong>: all your data is erased from our servers.</>,
     contactTitle: 'Contact',
@@ -114,6 +116,7 @@ export default function PrivacyPolicy() {
 
           <h3>{t.deletionTitle}</h3>
           <p>{t.deletion}</p>
+          <p>{t.unconfirmed}</p>
 
           <div className="bg-red-50 p-4 rounded-lg border border-red-100 flex gap-3 not-prose my-6">
             <Trash2 className="h-5 w-5 text-red-600 shrink-0 mt-0.5" />
