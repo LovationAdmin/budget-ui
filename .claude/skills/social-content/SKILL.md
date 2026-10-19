@@ -246,19 +246,48 @@ Dans les textes, chaque lien porte ses UTM, avec la source du réseau :
 | Instagram | Accroche sur la première ligne, 500 à 1 000 caractères aérés, puis « 👉 L'article complet : lien en bio ». Pas d'URL (non cliquable). **Exactement 5 hashtags** en fin de texte : c'est le maximum autorisé par Instagram depuis fin 2025 (au-delà, la publication peut être refusée). |
 | X | Un seul post (pas de fil), ≤ 260 caractères lien compris (un lien compte 23). **2 à 3 hashtags**, tant que la limite tient. |
 
-Hashtags : **le maximum de hashtags pertinents** que permet chaque réseau (5 sur
-LinkedIn, Facebook et Instagram ; 2 à 3 sur X), jamais un hashtag hors sujet
-pour faire du nombre. Sans accents ni espaces, en minuscules (#budgetfamilial).
-Un ou deux hashtags larges (#budget, #financespersonnelles ; #famille seulement
-si le sujet est la famille) + des hashtags du sujet de la semaine. Réserve, à compléter selon le sujet :
+Hashtags : ils servent à **faire venir des gens qui ne nous suivent pas**. On
+choisit donc les hashtags **les plus utilisés et les plus suivis au moment de
+la publication** (pas de la rédaction), parmi ceux qui collent au sujet du post.
+Les hashtags « maison » que presque personne ne cherche ni ne suit
+(#budgetfamilial, #resteavivre, #comptecommun, #budgetdecouple, #astucesbudget,
+#gestionbudget…) ne ramènent pas de trafic : au plus un, et seulement si le
+sujet n'a aucun équivalent populaire. Le nombre reste le maximum du réseau
+(5 sur LinkedIn, Facebook et Instagram ; 2 à 3 sur X). En français, sans
+accents ni espaces, en minuscules.
 
-- Budget : #budget #budgetfamilial #budgetperso #gestionbudget #budgetmensuel #gestiondebudget #finances #financespersonnelles #argent
-- Famille et couple : #famille #parents #couple #viedefamille #papa #maman #enfants
-- Solo, coloc et projets : #budgetetudiant #colocation #premierappart #projets #mariage #voyage #travaux #demenagement
-- Économies : #economies #economiser #astucesbudget #pouvoirdachat #consommermieux #antigaspi #bonplan
-- Épargne et objectifs : #epargne #epargner #objectifs #projetdevie
-- Outils : #budgetgratuit #applibudget #simulateur #resteavivre
-- Saisons : #rentree #noel #vacances #blackfriday #impots #taxefonciere
+Recette par post :
+
+1. **2 grands hashtags du sujet**, très utilisés en France : #argent #budget
+   #finance #famille #couple #maman #vacances #voyage #courses #epargne…
+2. **1 hashtag du moment**, tendance ou de saison à la date de publication, et
+   lié au post : #taxefonciere (mi-octobre), #chauffage (novembre), #blackfriday
+   (fin novembre), #noel (décembre), #soldes (janvier), #impots (avril-mai),
+   #rentree (fin août)…
+3. **1 à 2 hashtags de format**, très suivis : #astuces #bonplan #organisation
+   #lesaviezvous #bonasavoir.
+
+Par réseau : Instagram vit de la découverte, prendre les plus utilisés ;
+LinkedIn met en avant les hashtags que les pros suivent (#finance #argent
+#immobilier #parentalite #consommation #droit #pouvoirdachat) ; X suit
+l'actualité (#pouvoirdachat, la tendance du jour si elle colle au post).
+
+Deux limites, qui protègent la portée : **jamais une tendance sans rapport avec
+le post** (#halloween sur un post « compte commun ») : Instagram et X traitent
+ce détournement comme du spam et réduisent la diffusion ; et **pas de hashtag
+politique ou polémique** (#budget2027, #plf, réformes en débat), même quand il
+est en tête des tendances.
+
+Au moment de la routine, vérifier la popularité plutôt que la supposer : nombre
+de publications d'un hashtag dans la recherche Instagram, abonnés d'un hashtag
+sur LinkedIn, onglet Tendances de X, actualité de la semaine (WebSearch) et
+calendrier ci-dessus. Réserve, à compléter selon le sujet et la saison :
+
+- Grands hashtags : #argent #budget #finance #economie #famille #couple #maman #parents #vacances #voyage #mariage
+- Sujets : #courses #batchcooking #antigaspi #epargne #immobilier #energie #chauffage #colocation #vieacouple #viedefamille #etudiant #demenagement #travaux
+- Format : #astuces #bonplan #organisation #lesaviezvous #bonasavoir #conseils
+- LinkedIn : #finance #argent #immobilier #parentalite #consommation #droit #pouvoirdachat #economie
+- Saisons : #rentree #toussaint #chauffage #blackfriday #noel #soldes #impots #taxefonciere #vacances
 
 Le script du kit refuse un post qui dépasse la limite de hashtags de son réseau.
 
