@@ -14,12 +14,14 @@
 // /budget/:id/complete/reality   → RealityTab
 // Legacy URLs: /overview → /month, /calendar → /year.
 //
-// Code splitting: the landing, auth and month screens ship in the main bundle;
-// every other page and tab is loaded on demand (React.lazy). Budget tabs
+// Code splitting: the landing and auth screens ship in the main bundle; every
+// other page and tab is loaded on demand (React.lazy), so the public pages
+// (search traffic) don't download the app. Signed in, the dashboard and the
+// budget screens are fetched right away, in the background. Budget tabs
 // suspend inside the budget layout, so the navbar and tab bar stay put.
 // ============================================================================
 
-import { lazy, Suspense } from 'react';
+import { lazy, Suspense, useEffect } from 'react';
 import { Routes, Route, Navigate, useParams } from 'react-router-dom';
 import { useAuth } from './contexts/AuthContext';
 import { useTutorial } from './contexts/TutorialContext';
@@ -33,13 +35,15 @@ import Login from './lib/pages/Login';
 import Signup from './lib/pages/Signup';
 import LandingPage from './lib/pages/LandingPage';
 
-// ===== Authenticated pages =====
-import Dashboard from './lib/pages/Dashboard';
-
-// ===== Budget layout + month (the default tab) =====
-import BudgetCompleteLayout from './lib/pages/BudgetComplete';
-import MonthTab from './lib/pages/budget-tabs/MonthTab';
 import AdminRoute from './components/AdminRoute';
+
+// ===== The app: loaded on demand, fetched as soon as the user is signed in =====
+const loadDashboard = () => import('./lib/pages/Dashboard');
+const loadBudget = () => import('./lib/pages/BudgetComplete');
+const loadMonthTab = () => import('./lib/pages/budget-tabs/MonthTab');
+const Dashboard = lazy(loadDashboard);
+const BudgetCompleteLayout = lazy(loadBudget);
+const MonthTab = lazy(loadMonthTab);
 
 // ===== Loaded on demand =====
 const ForgotPassword = lazy(() => import('./lib/pages/ForgotPassword'));
@@ -86,6 +90,13 @@ export default function App() {
   const { user } = useAuth();
   // Changing language re-mounts the screen, so labels worked out once (memoized) follow.
   const locale = useScreenLocale();
+
+  // Signed in: the app screens are on their way before they're opened (a
+  // failed download is simply retried when the screen opens).
+  useEffect(() => {
+    if (!user) return;
+    for (const load of [loadDashboard, loadBudget, loadMonthTab]) load().catch(() => undefined);
+  }, [user]);
 
   return (
     <>

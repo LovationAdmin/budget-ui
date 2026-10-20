@@ -4,7 +4,7 @@
 // language and its alternates follow from the canonical path (src/i18n).
 
 import { LOCALES, alternatesOf, hreflangsOf, localeOf, type Locale } from '@/i18n/locales';
-import { DEFAULT_IMAGE, SITE_NAME, absolute } from './site';
+import { DEFAULT_IMAGE, SITE_NAME, absolute } from './identity';
 
 export interface HeadMeta {
   title: string;

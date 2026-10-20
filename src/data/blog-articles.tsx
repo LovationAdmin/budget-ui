@@ -152,9 +152,9 @@ export const blogArticles: BlogArticleContent[] = [
 
   {
     id: '2',
-  title: "Comment Économiser 500€ par An sur vos Abonnements (Énergie, Internet, Assurances)",
+  title: "Économiser 500 € par an sur vos factures et abonnements",
   slug: "economiser-500-euros-abonnements",
-  excerpt: "Énergie, internet et mobile, assurances : les trois postes où un foyer peut le plus souvent économiser. Découvrez comment réduire vos charges fixes sans sacrifier votre confort.",
+  excerpt: "Énergie, internet et mobile, assurances : les trois postes où un foyer économise le plus souvent. Comment réduire vos charges fixes sans perdre en confort.",
   category: "Économies",
   author: "Équipe Budget Famille",
   authorBio: "Experts en gestion budgétaire et développeurs de Budget Famille",
@@ -366,9 +366,9 @@ export const blogArticles: BlogArticleContent[] = [
   },
 
   {id: '3',
-  title: "Budget Couple : 7 Règles d'Or pour Gérer l'Argent à Deux sans Conflits",
+  title: "Budget de couple : 7 règles pour gérer l'argent à deux",
   slug: "budget-couple-regles-gerer-argent",
-  excerpt: "L'argent est un sujet de tension fréquent dans les couples. Découvrez nos 7 règles d'or pour une gestion financière harmonieuse, transparente et équitable à deux.",
+  excerpt: "L'argent est une source fréquente de tensions dans le couple. 7 règles pour gérer vos finances à deux de façon transparente et équitable, sans conflit.",
   category: "Couple",
   author: "Équipe Budget Famille",
   authorBio: "Experts en gestion budgétaire et développeurs de Budget Famille",
@@ -672,9 +672,9 @@ export const blogArticles: BlogArticleContent[] = [
 
   {
     id: '4',
-    title: "Épargne Enfants : Comment Construire un Capital",
+    title: "Épargne enfant : construire un capital",
     slug: "epargne-enfants-construire-capital",
-    excerpt: "Livret A, assurance-vie, PEA... Comparatif complet des solutions d'épargne pour vos enfants.",
+    excerpt: "Livret A, assurance-vie, PEA… Comparatif des solutions d'épargne pour vos enfants, et comment choisir pour leur constituer un capital.",
     category: "Épargne",
     author: "Équipe Budget Famille",
     authorBio: "Experts en gestion budgétaire et développeurs de Budget Famille",
@@ -750,7 +750,7 @@ export const blogArticles: BlogArticleContent[] = [
 
   {
     id: '5',
-    title: "Connexion Bancaire PSD2 : Sécurité & Avantages",
+    title: "Synchronisation bancaire PSD2 : sécurité et avantages",
     slug: "connexion-bancaire-psd2-securite",
     excerpt: "PSD2, Open Banking... Comment fonctionne une connexion bancaire sécurisée, et ce que la synchronisation à venir avec Budget Famille Premium vous apportera.",
     category: "Technologie",
@@ -834,7 +834,7 @@ export const blogArticles: BlogArticleContent[] = [
 
   {
   id: '6',
-  title: "Budget Étudiant 2025 : Le Guide Complet pour Gérer 600€/mois (et Profiter Quand Même)",
+  title: "Budget étudiant : bien vivre avec 600 à 800 € par mois",
   slug: "budget-etudiant-guide-complet-2025",
   excerpt: "APL, job étudiant, courses, sorties... Comment gérer un budget serré sans se priver ? Toutes les astuces concrètes pour finir le mois sans appeler papa-maman.",
   category: "Étudiants",
@@ -1220,9 +1220,9 @@ export const blogArticles: BlogArticleContent[] = [
 
   {
   id: '7',
-  title: "Gérer son Budget Familial au Sénégal : Guide Pratique pour les Familles Dakaroises",
+  title: "Gérer le budget familial au Sénégal (Dakar) : le guide",
   slug: "gerer-budget-familial-senegal-dakar",
-  excerpt: "De la gestion des dépenses en FCFA à l'épargne malgré l'inflation, découvrez comment les familles sénégalaises optimisent leur budget au quotidien avec des solutions adaptées à la réalité locale.",
+  excerpt: "Dépenses en FCFA, épargne malgré l'inflation, tontines : comment les familles sénégalaises tiennent leur budget au quotidien, avec des solutions adaptées.",
   category: "International",
   author: "Équipe Budget Famille",
   authorBio: "Experts en gestion budgétaire et développeurs de Budget Famille",
@@ -1632,9 +1632,9 @@ export const blogArticles: BlogArticleContent[] = [
 },
 {
   id: '8',
-  title: "Budget Familial à Abidjan : Guide Complet pour Gérer 500 000 FCFA en Côte d'Ivoire",
+  title: "Budget familial à Abidjan : combien par mois en FCFA ?",
   slug: "budget-familial-abidjan-cote-ivoire",
-  excerpt: "De Cocody à Yopougon, découvrez comment optimiser votre budget familial en Côte d'Ivoire. Gestion des dépenses en FCFA, tontines, maquis et réalités du coût de la vie abidjanais.",
+  excerpt: "De Cocody à Yopougon : dépenses en FCFA, tontines, maquis et coût de la vie. Comment tenir le budget de votre famille en Côte d'Ivoire.",
   category: "International",
   author: "Équipe Budget Famille",
   authorBio: "Experts en gestion budgétaire et développeurs de Budget Famille",
@@ -2624,9 +2624,9 @@ export const blogArticles: BlogArticleContent[] = [
 ,
   {
     id: '10',
-    title: "Compte Commun en Couple (Marié ou Non) : Pot Commun, Argent de Poche et Charges Perso",
+    title: "Compte commun en couple : combien verser, combien garder",
     slug: "compte-commun-couple-argent-de-poche",
-    excerpt: "Combien verser sur le compte commun, combien garder pour soi, et comment gérer les dépenses personnelles (impôts, envois d'argent) sans tout dévoiler ? La méthode complète, mariés ou non.",
+    excerpt: "Combien verser sur le compte commun, combien garder pour soi, et comment gérer ses dépenses perso (impôts, envois d'argent) sans tout dévoiler ? Mariés ou non.",
     category: "Couple",
     author: "Équipe Budget Famille",
     authorBio: "Experts en gestion budgétaire et développeurs de Budget Famille",
@@ -2753,7 +2753,7 @@ export const blogArticles: BlogArticleContent[] = [
 
   {
     id: '11',
-    title: "Combien Épargner par Mois pour Atteindre un Objectif à une Date Précise ?",
+    title: "Combien épargner par mois pour un objectif à une date ?",
     slug: "combien-epargner-par-mois-objectif-date",
     excerpt: "15 000 € pour juillet 2027 ? Le calcul du montant à mettre de côté chaque mois, comment vérifier qu'il est tenable, et quoi faire s'il ne l'est pas.",
     category: "Épargne",

@@ -46,6 +46,7 @@ Le texte des KPI reste en encre neutre : la couleur sert d'indice (pastille), ja
 
 - **Titres** : Plus Jakarta Sans (`font-display`), extra-gras, `tracking-tight`, `word-spacing: 0.08em`.
 - **Texte** : DM Sans, 400 à 700.
+- **Chargement** : une police variable par famille (`@fontsource-variable`, toutes les graisses dans un fichier), préchargée par chaque page (`scripts/prerender.mjs`) et affichée en `font-display: optional` (`postcss.config.js`). Une police en retard n'est pas substituée en cours de lecture : la page ne bouge pas (CLS).
 - **Montants** : toujours en `tabular-nums`. Les grands montants passent en `font-display text-3xl font-extrabold`.
 - **Hiérarchie** : un seul `h1` par page (le titre de l'onglet) ; le nom du budget dans la navbar est un `<p>`.
 - **Élision** : utiliser `deMonth()` (« d'octobre », « de mars »).

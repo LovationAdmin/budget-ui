@@ -13,11 +13,9 @@ import { BUDGET_503020_PAGE_ZH } from './zh/budget-503020';
 import { RENT_SPLIT_PAGE_ZH } from './zh/rent-split';
 import { WEDDING_PAGE_ZH } from './zh/wedding';
 import { LEFTOVER_INCOME_PAGE_ZH } from './zh/leftover-income';
+import { SITE, SITE_NAME, DEFAULT_IMAGE, absolute, SOCIAL_PROFILES } from './identity';
 
-/** Canonical host: the bare domain redirects here. */
-export const SITE = 'https://www.budgetfamille.com';
-export const SITE_NAME = 'Budget Famille';
-export const DEFAULT_IMAGE = `${SITE}/og-image.png`;
+export { SITE, SITE_NAME, DEFAULT_IMAGE, absolute, SOCIAL_PROFILES, type SocialNetwork } from './identity';
 
 export interface PageSEO {
   path: string;
@@ -43,7 +41,7 @@ export const PAGES: PageSEO[] = [
   {
     path: '/',
     title: 'Application de budget gratuite : famille, couple, perso, projets',
-    description: 'Application de budget gratuite pour la famille, le couple, la coloc ou vous seul : charges, pot commun, épargne et projets datés. Sans connexion bancaire obligatoire.',
+    description: 'Application de budget gratuite pour la famille, le couple, la coloc ou vous seul : charges, pot commun, épargne et projets datés. Sans connexion bancaire.',
     h1: 'L’application de budget gratuite pour la famille, le couple, la coloc et vos projets',
     intro: 'Seul ou à plusieurs, budgétez le mois et planifiez ce qui compte : charges, pot commun, épargne, voyage, mariage, travaux. Sans connexion bancaire obligatoire, sans publicité, en temps réel.',
     links: [CTA, { href: '/tableau-budget-familial-gratuit', label: 'Tableau de budget familial gratuit (Excel et PDF)' }, { href: '/calcul-reste-a-vivre', label: 'Calcul du reste à vivre' }, { href: '/blog/5-etapes-gerer-budget-familial-2025', label: 'Établir un budget familial' }, { href: '/blog/budget-famille-4-personnes-exemple', label: 'Exemple de budget pour une famille de 4' }, { href: '/budget-personnel', label: 'Calculer son budget perso' }, { href: '/budget-colocation', label: 'Budget colocation' }, { href: '/budget-mariage', label: 'Budget mariage' }, { href: '/blog/budget-etudiant-guide-complet-2025', label: 'Budget étudiant' }, { href: '/blog/combien-epargner-par-mois-objectif-date', label: 'Épargner pour un projet à une date' }, { href: '/features', label: 'Toutes les fonctionnalités' }, { href: '/blog', label: 'Conseils budget' }],
@@ -141,7 +139,7 @@ export const PAGES: PageSEO[] = [
   {
     path: '/features',
     title: 'Fonctionnalités : pot commun, projets, Budget IA – Budget Famille',
-    description: 'Vue du mois, pot commun, argent de poche, charges perso privées, projets et épargne datés, plusieurs budgets, Budget IA : tout ce que fait Budget Famille, seul ou à plusieurs.',
+    description: 'Vue du mois, pot commun, argent de poche, charges perso privées, épargne datée, plusieurs budgets, Budget IA : tout ce que fait Budget Famille.',
     h1: 'Les fonctionnalités de Budget Famille',
     intro: 'Tout ce qu’il faut pour budgétiser et planifier, seul ou à plusieurs (couple, famille, coloc) : le mois en un coup d’œil, une répartition juste, des dépenses perso confidentielles et des projets qui avancent.',
     links: [CTA],
@@ -168,7 +166,7 @@ export const PAGES: PageSEO[] = [
   {
     path: '/help',
     title: 'Aide et questions fréquentes – Budget Famille',
-    description: 'Comment créer votre budget, seul ou à plusieurs, inviter des membres, répartir le pot commun, gérer les charges perso, l’épargne et vos projets : toutes les réponses.',
+    description: 'Créer votre budget seul ou à plusieurs, inviter des membres, répartir le pot commun, gérer charges perso, épargne et projets : toutes les réponses.',
     h1: 'Centre d’aide',
     links: [CTA],
     sections: [
@@ -223,7 +221,7 @@ export const PAGES: PageSEO[] = [
   {
     path: '/en/50-30-20-budget-calculator',
     title: '50/30/20 Budget Calculator: Free, No Sign-Up',
-    description: 'Free 50/30/20 budget calculator: enter your take-home pay and essential bills to see your needs, wants and savings split, and how much to save each month. No sign-up.',
+    description: 'Free 50/30/20 budget calculator: enter your take-home pay and essential bills to see your needs, wants and savings split, and what to save. No sign-up.',
     h1: '50/30/20 budget calculator',
     intro: 'Your take-home pay and essential expenses in: the 50/30/20 rule applied to your income, what’s left after your needs and how much to save each month.',
     sections: [
@@ -312,7 +310,7 @@ export const PAGES: PageSEO[] = [
   {
     path: '/en/features',
     title: 'Features: Joint Pot, Goals, AI Budget – Budget Famille',
-    description: 'Monthly view, joint pot, spending money, private personal expenses, savings goals with a date, several budgets, AI budget: everything Budget Famille does, on your own or together.',
+    description: 'Monthly view, joint pot, spending money, private personal expenses, dated savings goals, several budgets, AI budget: everything Budget Famille does.',
     h1: 'Budget Famille features',
     intro: 'Everything you need to budget and plan, on your own or together (couple, family, roommates): the month at a glance, a fair split, private personal expenses and goals that move forward.',
     links: [CTA_EN],
@@ -380,7 +378,7 @@ export const PAGES: PageSEO[] = [
   },
   {
     path: '/en/blog',
-    title: 'Budgeting Tips for Families, Couples and Goals – Budget Famille Blog',
+    title: 'Budgeting Tips for Families and Couples – Budget Famille',
     description: 'Practical guides to manage your budget, on your own or together: family budget, couples and joint accounts, saving for a goal, worked examples.',
     h1: 'Budgeting tips: family, couples, personal and goals',
     priority: 0.7,
@@ -407,17 +405,6 @@ export function pageSEO(pathname: string): PageSEO | undefined {
   return BY_PATH.get(path);
 }
 
-export const absolute = (path: string) => (path.startsWith('http') ? path : `${SITE}${path === '/' ? '/' : path}`);
-
-export type SocialNetwork = 'facebook' | 'instagram' | 'linkedin' | 'x';
-
-/** Official Budget Famille accounts: footer links, Help page and Organization sameAs. */
-export const SOCIAL_PROFILES: ReadonlyArray<{ network: SocialNetwork; label: string; url: string }> = [
-  { network: 'facebook', label: 'Facebook', url: 'https://www.facebook.com/1459022953950331' },
-  { network: 'instagram', label: 'Instagram', url: 'https://www.instagram.com/budgetfamille_lovation/' },
-  { network: 'linkedin', label: 'LinkedIn', url: 'https://www.linkedin.com/in/lovation-corp-238b99442/' },
-  { network: 'x', label: 'X', url: 'https://x.com/LovationLibasse' },
-];
 
 /** Organization + WebSite, published on every page. */
 export const ORGANIZATION_LD = {

@@ -41,8 +41,8 @@ export default {
         },
       },
       fontFamily: {
-        sans: ['DM Sans', 'system-ui', 'sans-serif'],
-        display: ['Plus Jakarta Sans', 'system-ui', 'sans-serif'],
+        sans: ['DM Sans Variable', 'system-ui', 'sans-serif'],
+        display: ['Plus Jakarta Sans Variable', 'system-ui', 'sans-serif'],
       },
       // Default for every colour utility (bg, gradients, ring offset…): surface role.
       colors: {

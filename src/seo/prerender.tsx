@@ -74,59 +74,65 @@ function LanguageLinks({ path }: { path: string }) {
   );
 }
 
+/** What the static page's bar and link list say, in the page's language. */
+function shellOf(path: string): { home: string; label: string; cta: string; links: Array<{ href: string; label: string }> } {
+  const locale = localeOf(path);
+  if (locale === 'zh') {
+    return { home: LOCALES.zh.home, label: '主导航', cta: '免费注册', links: ZH_TOOLS.map((tool) => ({ href: tool.path, label: tool.label })) };
+  }
+  if (locale === 'en') {
+    return {
+      home: LOCALES.en.home,
+      label: 'Main navigation',
+      cta: 'Sign up free',
+      links: [
+        { href: '/en/features', label: 'Features' },
+        { href: '/en/free-budget-template', label: 'Free template' },
+        ...EN_TOOLS.map((tool) => ({ href: tool.path, label: tool.label })),
+        { href: '/en/blog', label: 'Blog' },
+        { href: '/en/help', label: 'Help' },
+      ],
+    };
+  }
+  return {
+    home: '/',
+    label: 'Navigation principale',
+    cta: 'Créer mon budget',
+    links: [
+      { href: '/features', label: 'Fonctionnalités' },
+      { href: '/tableau-budget-familial-gratuit', label: 'Tableau gratuit' },
+      { href: '/calcul-reste-a-vivre', label: 'Reste à vivre' },
+      { href: '/budget-personnel', label: 'Budget perso' },
+      { href: '/budget-colocation', label: 'Colocation' },
+      { href: '/budget-mariage', label: 'Mariage' },
+      { href: '/blog', label: 'Conseils' },
+      { href: '/help', label: 'Aide' },
+    ],
+  };
+}
+
+/**
+ * The page as it reads before the app loads. The bar is one row of fixed
+ * height whatever the screen and the font: on a phone, a wrapping row of
+ * links grew taller when the web fonts arrived and pushed the whole page down
+ * (layout shift). The section links sit under the content instead.
+ */
 function Shell({ path, children }: { path: string; children: React.ReactNode }) {
-  if (localeOf(path) === 'zh') {
-    return (
-      <div className="min-h-screen bg-background">
-        <header className="border-b border-border/60 px-4 py-4">
-          <nav aria-label="主导航" className="mx-auto flex max-w-5xl flex-wrap items-center gap-x-5 gap-y-2 text-sm">
-            <a href={LOCALES.zh.home} className="font-display text-lg font-bold text-foreground">{SITE_NAME}</a>
-            {ZH_TOOLS.map((tool) => <a key={tool.path} href={tool.path} className="text-muted-foreground">{tool.label}</a>)}
-            <a href="/signup" className="font-semibold text-primary">免费注册</a>
-            <LanguageLinks path={path} />
-          </nav>
-        </header>
-        <main className="mx-auto max-w-3xl px-4 py-12">{children}</main>
-      </div>
-    );
-  }
-  if (localeOf(path) === 'en') {
-    return (
-      <div className="min-h-screen bg-background">
-        <header className="border-b border-border/60 px-4 py-4">
-          <nav aria-label="Main navigation" className="mx-auto flex max-w-5xl flex-wrap items-center gap-x-5 gap-y-2 text-sm">
-            <a href={LOCALES.en.home} className="font-display text-lg font-bold text-foreground">{SITE_NAME}</a>
-            <a href="/en/features" className="text-muted-foreground">Features</a>
-            <a href="/en/free-budget-template" className="text-muted-foreground">Free template</a>
-            {EN_TOOLS.map((tool) => <a key={tool.path} href={tool.path} className="text-muted-foreground">{tool.label}</a>)}
-            <a href="/en/blog" className="text-muted-foreground">Blog</a>
-            <a href="/en/help" className="text-muted-foreground">Help</a>
-            <a href="/signup" className="font-semibold text-primary">Create my free budget</a>
-            <LanguageLinks path={path} />
-          </nav>
-        </header>
-        <main className="mx-auto max-w-3xl px-4 py-12">{children}</main>
-      </div>
-    );
-  }
+  const { home, label, cta, links } = shellOf(path);
   return (
     <div className="min-h-screen bg-background">
-      <header className="border-b border-border/60 px-4 py-4">
-        <nav aria-label="Navigation principale" className="mx-auto flex max-w-5xl flex-wrap items-center gap-x-5 gap-y-2 text-sm">
-          <a href="/" className="font-display text-lg font-bold text-foreground">{SITE_NAME}</a>
-          <a href="/features" className="text-muted-foreground">Fonctionnalités</a>
-          <a href="/tableau-budget-familial-gratuit" className="text-muted-foreground">Tableau gratuit</a>
-          <a href="/calcul-reste-a-vivre" className="text-muted-foreground">Reste à vivre</a>
-          <a href="/budget-personnel" className="text-muted-foreground">Budget perso</a>
-          <a href="/budget-colocation" className="text-muted-foreground">Colocation</a>
-          <a href="/budget-mariage" className="text-muted-foreground">Mariage</a>
-          <a href="/blog" className="text-muted-foreground">Conseils</a>
-          <a href="/help" className="text-muted-foreground">Aide</a>
-          <a href="/signup" className="font-semibold text-primary">Créer mon budget gratuit</a>
-          <LanguageLinks path={path} />
-        </nav>
+      <header className="flex h-16 items-center justify-between gap-4 overflow-hidden whitespace-nowrap border-b border-border/60 px-4">
+        <a href={home} className="font-display text-lg font-bold text-foreground">{SITE_NAME}</a>
+        <span className="flex items-center gap-4 text-sm">
+          <span className="hidden sm:contents"><LanguageLinks path={path} /></span>
+          <a href="/signup" className="font-semibold text-primary">{cta}</a>
+        </span>
       </header>
       <main className="mx-auto max-w-3xl px-4 py-12">{children}</main>
+      <nav aria-label={label} className="mx-auto flex max-w-3xl flex-wrap gap-x-5 gap-y-2 border-t border-border/60 px-4 py-6 text-sm">
+        {links.map((link) => <a key={link.href} href={link.href} className="text-muted-foreground">{link.label}</a>)}
+        <LanguageLinks path={path} />
+      </nav>
     </div>
   );
 }

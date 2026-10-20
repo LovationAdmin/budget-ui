@@ -145,9 +145,9 @@ export const blogArticlesEn: BlogArticleContent[] = [
   {
     id: 'en-2',
     translationOf: 'compte-commun-couple-argent-de-poche',
-    title: 'Joint Account as a Couple: How Much Each Pays, and Spending Money',
+    title: 'Couples’ Joint Account: How Much Each Pays In and Keeps',
     slug: 'joint-account-couples-spending-money',
-    excerpt: 'How much to put into the joint account, how much to keep for yourself, and how to handle personal expenses (taxes, money sent to family) without revealing everything.',
+    excerpt: 'How much to put into the joint account, how much to keep, and how to handle personal expenses (taxes, money sent to family) without revealing everything.',
     category: 'Couples',
     ...AUTHOR,
     publishedAt: '2026-10-16',

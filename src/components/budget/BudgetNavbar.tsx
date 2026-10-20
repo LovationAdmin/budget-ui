@@ -1,13 +1,11 @@
 // src/components/budget/BudgetNavbar.tsx
 // ============================================================================
-// 🎯 BudgetNavbar — patch v2: named HelpCenter import
-// ============================================================================
-// Same as the previous version, only line 36 changed:
-//   - import HelpCenter from '@/components/help/HelpCenter';   ❌ default
-//   + import { HelpCenter } from '@/components/help/HelpCenter'; ✅ named
+// 🎯 BudgetNavbar — the app's top bar (account menu, notifications, help).
+// The help center (every help article, in two languages) is downloaded the
+// first time it's opened, never with the page.
 // ============================================================================
 
-import { useState, useCallback, memo, useMemo, type ComponentType } from 'react';
+import { lazy, Suspense, useState, useCallback, memo, useMemo, type ComponentType } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ThemeMenuItems } from '@/components/theme/ThemeMenu';
 import { Bell, Menu, X, HelpCircle, LogIn, UserPlus, User, LogOut, Settings, MoreHorizontal, UserCircle } from 'lucide-react';
@@ -32,7 +30,6 @@ import { useNotifications } from '@/contexts/NotificationContext';
 import { useTutorial } from '@/contexts/TutorialContext';
 import { MemberAvatar } from './MemberAvatar';
 import { BudgetLogo } from './BudgetLogo';
-import { HelpCenter } from '@/components/help/HelpCenter';
 import { LanguageToggle } from '@/components/LanguageToggle';
 import { LOCALES } from '@/i18n/locales';
 import { defineMessages, useLocale, useT } from '@/i18n/runtime';
@@ -131,6 +128,8 @@ interface BudgetNavbarProps {
 
 const MAX_VISIBLE_DESKTOP = 7;
 
+const HelpCenter = lazy(() => import('@/components/help/HelpCenter').then((m) => ({ default: m.HelpCenter })));
+
 export const BudgetNavbar = memo(function BudgetNavbar({
   budgetTitle = 'Budget Famille',
   userName,
@@ -159,11 +158,16 @@ export const BudgetNavbar = memo(function BudgetNavbar({
   /** The bar already links to the help page: no second help button. */
   const helpInBar = items.some((item) => item.id === 'help');
   const [helpOpen, setHelpOpen] = useState(false);
+  // Mounted from its first opening on, so it can animate when it closes.
+  const [helpMounted, setHelpMounted] = useState(false);
   const [internalMenuOpen, setInternalMenuOpen] = useState(false);
   const menuOpen = externalMenuOpen ?? internalMenuOpen;
   const handleMenuToggle = externalOnMenuClick ?? (() => setInternalMenuOpen((v) => !v));
 
-  const handleHelpOpen = () => setHelpOpen(true);
+  const handleHelpOpen = () => {
+    setHelpMounted(true);
+    setHelpOpen(true);
+  };
   const handleHelpClose = () => setHelpOpen(false);
 
   const handleLogout = async () => {
@@ -522,7 +526,11 @@ export const BudgetNavbar = memo(function BudgetNavbar({
         </div>
       )}
 
-      <HelpCenter open={helpOpen} onClose={handleHelpClose} />
+      {helpMounted && (
+        <Suspense fallback={null}>
+          <HelpCenter open={helpOpen} onClose={handleHelpClose} />
+        </Suspense>
+      )}
     </>
   );
 });
