@@ -8,8 +8,12 @@
 // up, pay counted once (src/lib/budget/overview.ts). Read-only: every change
 // is made in the budget itself, one tap away.
 //
-// Which person the member is in each budget: guessed from their name, or
-// asked once, and kept as a private item that other members never see.
+// Which person the member is in each budget: their account's link to that
+// person, kept by the API, one account per person, so no member ever sees the
+// overview of a person who is someone else's. The obvious person (their name,
+// or the only person of a budget they don't share) is linked on first visit;
+// otherwise the page asks once, persons already linked to another account
+// greyed out. A mistaken link can be undone by its member or the budget owner.
 //
 // Offered from two budgets on, or once a budget is shared: alone in a single
 // budget, that budget already is the whole picture (→ dashboard).
@@ -34,15 +38,14 @@ import { addMonths, compareYM, currentYM, formatMonthLong, formatMonthTitle, isY
 import { currencySymbol, money, moneyOut, percent } from '@/lib/budget/format';
 import { PRIVATE_CHARGE_LABEL, privateChargeName, type Person, type PrivateChargeDetails, type YM } from '@/lib/budget/types';
 import {
-  ME_ITEM_ID,
   guessMe,
-  meItemPayload,
+  linkOf,
   myMonth,
   overviewTotals,
   overviewUseful,
-  parseMeItem,
   parsePrivateCharges,
   resolveMe,
+  takenPersons,
   visibleCharge,
   type IncomeMode,
   type MeLink,
@@ -83,7 +86,10 @@ const M = defineMessages({
     you: (name: ReactNode): ReactNode => <>Vous : <strong className="text-foreground">{name}</strong></>,
     change: 'Changer',
     who: (budget: string) => `Qui êtes-vous dans « ${budget} » ?`,
-    whoHelp: 'Votre réponse reste privée : les autres membres ne la voient pas.',
+    whoHelp: 'Une fiche ne se relie qu’à un seul compte. Les membres du budget voient laquelle est la vôtre.',
+    takenBy: (account: string) => (account ? `reliée à ${account}` : 'reliée à un autre compte'),
+    allTaken: 'Toutes les fiches de ce foyer sont déjà reliées à un compte. Si l’une d’elles est la vôtre, le propriétaire du budget peut la délier depuis le Foyer.',
+    taken: 'Cette personne vient d’être reliée au compte d’un autre membre.',
     notMe: 'Je n’y figure pas',
     cancel: 'Annuler',
     notIn: 'Vous ne figurez pas dans ce budget : il n’est pas compté.',
@@ -133,7 +139,10 @@ const M = defineMessages({
     you: (name: ReactNode): ReactNode => <>You: <strong className="text-foreground">{name}</strong></>,
     change: 'Change',
     who: (budget: string) => `Who are you in “${budget}”?`,
-    whoHelp: 'Your answer stays private: other members don’t see it.',
+    whoHelp: 'Each person can be linked to one account only. The budget’s members can see which one is yours.',
+    takenBy: (account: string) => (account ? `linked to ${account}` : 'linked to another account'),
+    allTaken: 'Everyone in this household is already linked to an account. If one of them is you, the budget’s owner can unlink it from the Household tab.',
+    taken: 'This person was just linked to another member’s account.',
     notMe: 'I’m not in it',
     cancel: 'Cancel',
     notIn: 'You’re not in this budget: it isn’t counted.',
@@ -179,13 +188,21 @@ interface LoadedBudget {
   ok: boolean;
   engine?: BudgetEngine;
   people: Person[];
-  /** Choice saved server-side (`undefined`: none). */
-  stored?: MeLink;
-  guess?: string;
+  /** Who the viewer is here (`undefined`: not said yet). */
+  link?: MeLink;
+  /** Persons linked to other members' accounts → account name. */
+  taken: Map<string, string>;
   privateCharges: Record<string, PrivateChargeDetails>;
 }
 
-async function loadBudget(summary: BudgetSummary, tone: string, userName: string | undefined, today: YM): Promise<LoadedBudget> {
+async function loadBudget(
+  summary: BudgetSummary,
+  tone: string,
+  user: { id: string; name?: string } | null,
+  today: YM,
+): Promise<LoadedBudget> {
+  const members = summary.members ?? [];
+  const taken = takenPersons(members, user?.id);
   try {
     const [dataRes, privateRes] = await Promise.all([
       budgetAPI.getData(summary.id),
@@ -194,19 +211,23 @@ async function loadBudget(summary: BudgetSummary, tone: string, userName: string
     const raw: unknown = dataRes.data?.data ?? dataRes.data ?? {};
     // Past months as the budget screens show them (frozen), without saving anything.
     const model = autoCloseMonths(decodeBudget(raw, today), today, new Date().toISOString()).model;
-    const items = privateRes?.data?.items ?? {};
+    let link = resolveMe(linkOf(members, user?.id), model.people);
+    // Not said yet: link the obvious person right away (the API refuses one
+    // that is already someone else's; the page then asks).
+    const guess = link === undefined && user ? guessMe(model.people, user.name, members.length, taken) : undefined;
+    if (guess && user) link = await budgetAPI.setMemberPerson(summary.id, user.id, guess).then(() => guess, () => undefined);
     return {
       summary,
       tone,
       ok: true,
       engine: new BudgetEngine(model, today),
       people: model.people,
-      stored: parseMeItem(items[ME_ITEM_ID]),
-      guess: guessMe(model.people, userName, summary.members?.length ?? 0),
-      privateCharges: parsePrivateCharges(items),
+      link,
+      taken,
+      privateCharges: parsePrivateCharges(privateRes?.data?.items ?? {}),
     };
   } catch {
-    return { summary, tone, ok: false, people: [], privateCharges: {} };
+    return { summary, tone, ok: false, people: [], taken, privateCharges: {} };
   }
 }
 
@@ -236,9 +257,8 @@ export default function Overview() {
   const [list, setList] = useState<BudgetSummary[] | null>(null);
   const [listFailed, setListFailed] = useState(false);
   const [budgets, setBudgets] = useState<LoadedBudget[] | null>(null);
-  /** Choices made on this page (win over the stored one until reload). */
-  const [choices, setChoices] = useState<Record<string, MeLink>>({});
   const [choosing, setChoosing] = useState<string | null>(null);
+  const [saving, setSaving] = useState<string | null>(null);
   const [incomeMode, setIncomeModeState] = useState<IncomeMode>(readIncomeMode);
   const setIncomeMode = (mode: IncomeMode) => {
     setIncomeModeState(mode);
@@ -251,6 +271,7 @@ export default function Overview() {
 
   const userId = user?.id;
   const userName = user?.name;
+  const me = useMemo(() => (userId ? { id: userId, name: userName } : null), [userId, userName]);
   const load = useCallback(async () => {
     setListFailed(false);
     try {
@@ -259,37 +280,37 @@ export default function Overview() {
       if (userId) publishBudgetList(userId, all);
       setList(all);
       if (!overviewUseful(all)) return;
-      setBudgets(await Promise.all(all.map((b, i) => loadBudget(b, BUDGET_TONES[i % BUDGET_TONES.length], userName, today))));
+      setBudgets(await Promise.all(all.map((b, i) => loadBudget(b, BUDGET_TONES[i % BUDGET_TONES.length], me, today))));
     } catch {
       setListFailed(true);
     }
-  }, [userId, userName, today]);
+  }, [userId, me, today]);
 
   useEffect(() => {
     load();
   }, [load]);
 
   const retryOne = async (b: LoadedBudget) => {
-    const fresh = await loadBudget(b.summary, b.tone, userName, today);
+    const fresh = await loadBudget(b.summary, b.tone, me, today);
     setBudgets((prev) => prev?.map((x) => (x.summary.id === b.summary.id ? fresh : x)) ?? prev);
   };
 
-  const meOf = useCallback(
-    (b: LoadedBudget): MeLink | undefined =>
-      b.summary.id in choices ? choices[b.summary.id] : resolveMe(b.stored, b.people, b.guess),
-    [choices],
-  );
-
+  // Shown only once the API has linked the account: never someone else's person.
   const choose = async (b: LoadedBudget, link: MeLink) => {
+    if (!userId) return;
     const id = b.summary.id;
-    const before = choices;
-    setChoices({ ...choices, [id]: link });
-    setChoosing(null);
+    setSaving(id);
     try {
-      await budgetAPI.privateItems.put(id, ME_ITEM_ID, meItemPayload(link));
-    } catch {
-      setChoices(before);
-      toast({ description: t.saveFailed, variant: 'destructive' });
+      await budgetAPI.setMemberPerson(id, userId, link ?? '');
+      setBudgets((prev) => prev?.map((x) => (x.summary.id === id ? { ...x, link } : x)) ?? prev);
+      setChoosing(null);
+    } catch (err: unknown) {
+      const taken = (err as { response?: { status?: number } })?.response?.status === 409;
+      toast({ description: taken ? t.taken : t.saveFailed, variant: 'destructive' });
+      // Someone else has it now: reload to grey it out.
+      if (taken) load();
+    } finally {
+      setSaving(null);
     }
   };
 
@@ -297,11 +318,10 @@ export default function Overview() {
   const rows = useMemo(
     () =>
       (budgets ?? []).map((b) => {
-        const me = meOf(b);
-        const month: MyBudgetMonth | null = b.ok && b.engine && typeof me === 'string' ? myMonth(b.engine, me, ym) : null;
-        return { b, me, month, currency: b.summary.currency || 'EUR' };
+        const month: MyBudgetMonth | null = b.ok && b.engine && typeof b.link === 'string' ? myMonth(b.engine, b.link, ym) : null;
+        return { b, me: b.link, month, currency: b.summary.currency || 'EUR' };
       }),
-    [budgets, meOf, ym],
+    [budgets, ym],
   );
   type Row = (typeof rows)[number];
   const groups = useMemo(() => {
@@ -400,6 +420,7 @@ export default function Overview() {
                     ym={ym}
                     today={today}
                     choosing={choosing === r.b.summary.id}
+                    saving={saving === r.b.summary.id}
                     onChoose={(link) => choose(r.b, link)}
                     onStartChoosing={() => setChoosing(r.b.summary.id)}
                     onCancelChoosing={() => setChoosing(null)}
@@ -561,6 +582,7 @@ function BudgetCard({
   ym,
   today,
   choosing,
+  saving,
   onChoose,
   onStartChoosing,
   onCancelChoosing,
@@ -572,6 +594,7 @@ function BudgetCard({
   ym: YM;
   today: YM;
   choosing: boolean;
+  saving: boolean;
   onChoose: (link: MeLink) => void;
   onStartChoosing: () => void;
   onCancelChoosing: () => void;
@@ -630,35 +653,44 @@ function BudgetCard({
   }
 
   if (choosing || me === undefined) {
+    const allTaken = budget.people.every((p) => budget.taken.has(p.id));
     return (
-      <article className="flex flex-col gap-3 rounded-2xl border-[1.5px] border-primary/40 bg-card p-5 shadow-soft">
+      <article aria-busy={saving} className="flex flex-col gap-3 rounded-2xl border-[1.5px] border-primary/40 bg-card p-5 shadow-soft">
         {header}
-        <fieldset className="flex flex-col gap-2">
+        <fieldset disabled={saving} className="flex flex-col gap-2">
           <legend className="font-semibold">{t.who(summary.name)}</legend>
           <div className="mt-2 flex flex-wrap gap-2">
-            {budget.people.map((p) => (
-              <button
-                key={p.id}
-                type="button"
-                aria-pressed={me === p.id}
-                onClick={() => onChoose(p.id)}
-                className={cn(
-                  'inline-flex min-h-[44px] items-center rounded-full border px-4 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
-                  me === p.id ? 'border-foreground bg-foreground text-background' : 'border-border bg-card hover:bg-muted',
-                )}
-              >
-                {p.name}
-              </button>
-            ))}
+            {budget.people.map((p) => {
+              // Someone else's person: shown, never selectable.
+              const owner = budget.taken.get(p.id);
+              const isTaken = owner !== undefined;
+              return (
+                <button
+                  key={p.id}
+                  type="button"
+                  aria-pressed={me === p.id}
+                  disabled={isTaken}
+                  onClick={() => (me === p.id ? onCancelChoosing() : onChoose(p.id))}
+                  className={cn(
+                    'inline-flex min-h-[44px] items-center gap-1.5 rounded-full border px-4 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed',
+                    me === p.id ? 'border-foreground bg-foreground text-background' : 'border-border bg-card hover:bg-muted',
+                    isTaken && 'border-dashed bg-muted/40 text-muted-foreground hover:bg-muted/40',
+                  )}
+                >
+                  {p.name}
+                  {isTaken && <span className="text-xs font-normal">· {t.takenBy(owner)}</span>}
+                </button>
+              );
+            })}
           </div>
-          <p className="text-xs text-muted-foreground">{t.whoHelp}</p>
+          <p className="text-xs text-muted-foreground">{allTaken ? t.allTaken : t.whoHelp}</p>
         </fieldset>
         <div className="flex flex-wrap gap-2">
-          <Button variant="ghost" className="min-h-[44px]" onClick={() => onChoose(null)}>
+          <Button variant="ghost" className="min-h-[44px]" disabled={saving} onClick={() => (me === null ? onCancelChoosing() : onChoose(null))}>
             {t.notMe}
           </Button>
           {choosing && me !== undefined && (
-            <Button variant="ghost" className="min-h-[44px]" onClick={onCancelChoosing}>
+            <Button variant="ghost" className="min-h-[44px]" disabled={saving} onClick={onCancelChoosing}>
               {t.cancel}
             </Button>
           )}

@@ -11,9 +11,11 @@
 //     (several incomes, one per budget);
 //   - what they put into each pot and their personal charges add up;
 //   - what is left = pay − contributions − personal charges.
-// Which person the member is in each budget is their own choice, kept as a
-// private item (never in the shared data); a guess from their name stands in
-// until they pick.
+// Which person the member is in each budget is a link between their account
+// and that person, kept by the API (`person_id` of the budget's members): a
+// person belongs to ONE account, so nobody sees the overview of a person that
+// is someone else's. The member links themselves (a guess from their name, or
+// one question); only the budget's owner can undo someone else's link.
 // ============================================================================
 
 import type { BudgetEngine, ResolvedPersonalCharge } from './engine';
@@ -38,22 +40,34 @@ export function overviewUseful(budgets: Array<{ members?: unknown[] | null }>): 
 // Who the viewer is in a budget
 // ---------------------------------------------------------------------------
 
-/** Private item holding who the viewer is in a budget. */
-export const ME_ITEM_ID = 'me';
-
 /** A person id, or `null` when the viewer said they are not in that budget. */
 export type MeLink = string | null;
 
-/** The stored choice, `undefined` when there is none (or it is unreadable). */
-export function parseMeItem(payload: unknown): MeLink | undefined {
-  if (!payload || typeof payload !== 'object') return undefined;
-  const p = payload as { personId?: unknown; none?: unknown };
-  if (p.none === true) return null;
-  return typeof p.personId === 'string' && p.personId ? p.personId : undefined;
+/** A budget member as the API lists it, with the person their account is. */
+export interface LinkedMember {
+  user_id?: string;
+  user?: { id?: string; name?: string } | null;
+  /** `null`/absent: not said yet; `''`: not in the household. */
+  person_id?: string | null;
 }
 
-export const meItemPayload = (link: MeLink): { personId: string } | { none: true } =>
-  link === null ? { none: true } : { personId: link };
+const memberUserId = (m: LinkedMember): string | undefined => m.user_id ?? m.user?.id ?? undefined;
+
+/** The viewer's link in a budget, `undefined` when not said yet. */
+export function linkOf(members: LinkedMember[], userId: string | undefined): MeLink | undefined {
+  const m = userId ? members.find((x) => memberUserId(x) === userId) : undefined;
+  if (!m || m.person_id === undefined || m.person_id === null) return undefined;
+  return m.person_id === '' ? null : m.person_id;
+}
+
+/** Persons linked to OTHER members' accounts (person id → account name): never the viewer's. */
+export function takenPersons(members: LinkedMember[], userId: string | undefined): Map<string, string> {
+  const taken = new Map<string, string>();
+  for (const m of members) {
+    if (m.person_id && memberUserId(m) !== userId) taken.set(m.person_id, m.user?.name ?? '');
+  }
+  return taken;
+}
 
 const fold = (s: string): string =>
   s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();
@@ -61,11 +75,12 @@ const fold = (s: string): string =>
 const firstName = (s: string): string => fold(s).split(/[\s._]+/)[0] ?? '';
 
 /**
- * The person the viewer most likely is: the only one whose name (or first
- * name) matches theirs, or the only person of a budget they do not share.
- * `undefined` when it cannot be told: the page asks.
+ * The person the viewer most likely is, among those no one else has: the only
+ * one whose name (or first name) matches theirs, or the only person of a
+ * budget they do not share. `undefined` when it cannot be told: the page asks.
  */
-export function guessMe(people: Person[], userName: string | undefined, memberCount: number): string | undefined {
+export function guessMe(allPeople: Person[], userName: string | undefined, memberCount: number, taken: ReadonlyMap<string, string> = new Map()): string | undefined {
+  const people = allPeople.filter((p) => !taken.has(p.id));
   const full = fold(userName ?? '');
   if (full) {
     const first = firstName(full);
@@ -76,15 +91,14 @@ export function guessMe(people: Person[], userName: string | undefined, memberCo
     if (matches.length === 1) return matches[0].id;
     if (matches.length > 1) return undefined;
   }
-  if (people.length === 1 && memberCount <= 1) return people[0].id;
+  if (allPeople.length === 1 && people.length === 1 && memberCount <= 1) return people[0].id;
   return undefined;
 }
 
-/** The person to use: the stored choice while that person still exists, else the guess. */
-export function resolveMe(stored: MeLink | undefined, people: Person[], guess: string | undefined): MeLink | undefined {
-  if (stored === null) return null;
-  if (stored && people.some((p) => p.id === stored)) return stored;
-  return guess;
+/** The viewer's person: their link while that person still exists in the household. */
+export function resolveMe(link: MeLink | undefined, people: Person[]): MeLink | undefined {
+  if (link === null) return null;
+  return link && people.some((p) => p.id === link) ? link : undefined;
 }
 
 // ---------------------------------------------------------------------------

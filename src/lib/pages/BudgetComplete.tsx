@@ -40,7 +40,7 @@ import { BudgetEngine } from '@/lib/budget/engine';
 import { autoCloseMonths, decodeBudget, encodeBudget } from '@/lib/budget/codec';
 import { currentYM } from '@/lib/budget/months';
 import { currencySymbol as symbolFor, money } from '@/lib/budget/format';
-import { parsePrivateCharges } from '@/lib/budget/overview';
+import { guessMe, linkOf, parsePrivateCharges, resolveMe, takenPersons } from '@/lib/budget/overview';
 
 import { CalendarDays, Receipt, PiggyBank, Users, BarChart3, Sparkles, FlaskConical } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
@@ -485,6 +485,20 @@ export default function BudgetCompleteLayout() {
       console.error('[BudgetComplete] refresh members error', err);
     }
   }, [id]);
+
+  // « Ma vue perso » shows each user the person they are, one account per
+  // person: link the user's obvious person (their name) as soon as they open
+  // the budget, so no one else can take it first. Once per budget and visit.
+  const linkTriedRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!budget || !user?.id || loading || isDemoMode || linkTriedRef.current === budget.id) return;
+    const members = budget.members ?? [];
+    if (resolveMe(linkOf(members, user.id), model.people) !== undefined) return;
+    const guess = guessMe(model.people, user.name, members.length, takenPersons(members, user.id));
+    if (!guess) return;
+    linkTriedRef.current = budget.id;
+    budgetAPI.setMemberPerson(budget.id, user.id, guess).then(refreshMembersOnly, () => undefined);
+  }, [budget, model.people, user, loading, isDemoMode, refreshMembersOnly]);
 
   const handleOpenMapper = useCallback((charge: Charge) => {
     setChargeToMap(charge);

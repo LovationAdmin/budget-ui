@@ -25,6 +25,8 @@ export interface BudgetMember {
     avatar?: string;
   };
   role: 'owner' | 'member';
+  /** The person of the household this account is (« Ma vue perso »): '' = not in it. */
+  person_id?: string | null;
 }
 
 export interface BudgetData {
