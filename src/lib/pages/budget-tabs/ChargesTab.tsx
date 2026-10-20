@@ -197,6 +197,7 @@ export default function ChargesTab() {
   }, [suggestionCharges.length, markSuggestionsRun]);
 
   useHashScroll('suggestions');
+  useHashScroll('perso');
 
   const uncategorized = household.filter((c) => chargeStatus(c, today) !== 'ended' && (!c.category || c.category === 'OTHER'));
   const categorizeAll = async () => {
@@ -371,7 +372,7 @@ export default function ChargesTab() {
       )}
 
       {model.people.length > 0 && (personalGroups.length > 0 || filter === 'active') && (
-        <section aria-labelledby="perso-title" className="flex flex-col gap-2">
+        <section id="perso" aria-labelledby="perso-title" className="flex scroll-mt-24 flex-col gap-2">
           <div className="flex flex-wrap items-end justify-between gap-2 px-1">
             <div>
               <h2 id="perso-title" className="text-xs font-bold uppercase tracking-wider text-muted-foreground">{t.personalTitle}</h2>

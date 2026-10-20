@@ -32,7 +32,7 @@ Le texte des KPI reste en encre neutre : la couleur sert d'indice (pastille), ja
 
 ### Mode sombre
 
-- **Portée** : les écrans connectés (`/dashboard`, `/budget`, `/profile`, `/admin`). Les pages publiques restent claires.
+- **Portée** : les écrans connectés (`/dashboard`, `/overview`, `/budget`, `/profile`, `/admin`). Les pages publiques restent claires.
 - **Choix** : menu du compte › Apparence (Automatique, Clair ou Sombre). Il est stocké dans `localStorage.theme` et appliqué avant le premier rendu par le script d'`index.html`. `theme-color` suit le thème.
 - **Tokens** : bloc `.dark` de `src/index.css`, avec les mêmes teintes que le thème clair (primaire bleue) sur un fond bleu-gris profond.
 - **Classes de palette** (`bg-indigo-50`, `text-gray-600`…) : elles s'adaptent seules, selon leur rôle (`tailwind.palette.ts`).

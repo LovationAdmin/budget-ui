@@ -10,7 +10,7 @@
 import { useState, useCallback, memo, useMemo, type ComponentType } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ThemeMenuItems } from '@/components/theme/ThemeMenu';
-import { Bell, Menu, X, HelpCircle, LogIn, UserPlus, User, LogOut, Settings, MoreHorizontal } from 'lucide-react';
+import { Bell, Menu, X, HelpCircle, LogIn, UserPlus, User, LogOut, Settings, MoreHorizontal, UserCircle } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -36,6 +36,8 @@ import { HelpCenter } from '@/components/help/HelpCenter';
 import { LanguageToggle } from '@/components/LanguageToggle';
 import { LOCALES } from '@/i18n/locales';
 import { defineMessages, useLocale, useT } from '@/i18n/runtime';
+import { useBudgetList } from '@/hooks/useBudgetList';
+import { overviewUseful } from '@/lib/budget/overview';
 
 const M = defineMessages({
   fr: {
@@ -55,6 +57,7 @@ const M = defineMessages({
     user: 'Utilisateur',
     profile: 'Profil',
     myBudgets: 'Mes budgets',
+    overview: 'Ma vue perso',
     tutorial: 'Voir le tutoriel',
     logout: 'Déconnexion',
     login: 'Se connecter',
@@ -77,6 +80,7 @@ const M = defineMessages({
     user: 'User',
     profile: 'Profile',
     myBudgets: 'My budgets',
+    overview: 'My overview',
     tutorial: 'Watch the tutorial',
     logout: 'Sign out',
     login: 'Sign in',
@@ -99,6 +103,7 @@ const M = defineMessages({
     user: '用户',
     profile: '个人资料',
     myBudgets: '我的预算',
+    overview: '我的总览',
     tutorial: '查看教程',
     logout: '退出登录',
     login: '登录',
@@ -146,6 +151,9 @@ export const BudgetNavbar = memo(function BudgetNavbar({
   const { startTutorial } = useTutorial();
 
   const isAuthenticated = !!user;
+  // « Ma vue perso » only when it adds something (several budgets, or a shared one).
+  const myBudgets = useBudgetList(user?.id);
+  const showOverview = !!myBudgets && overviewUseful(myBudgets);
   /** Public pages: many sections plus the sign-in buttons on one bar. */
   const publicBar = !isAuthenticated && items.length >= 5;
   /** The bar already links to the help page: no second help button. */
@@ -396,6 +404,11 @@ export const BudgetNavbar = memo(function BudgetNavbar({
                     <DropdownMenuItem onClick={() => navigate('/dashboard')} className="min-h-[44px]">
                       <Settings className="mr-2 h-4 w-4" /> {t.myBudgets}
                     </DropdownMenuItem>
+                    {showOverview && (
+                      <DropdownMenuItem onClick={() => navigate('/overview')} className="min-h-[44px]">
+                        <UserCircle className="mr-2 h-4 w-4" /> {t.overview}
+                      </DropdownMenuItem>
+                    )}
                     <DropdownMenuSeparator />
                     <ThemeMenuItems />
                     <DropdownMenuSeparator />
@@ -462,6 +475,14 @@ export const BudgetNavbar = memo(function BudgetNavbar({
                 <div className="pt-4 mt-4 border-t space-y-2">
                   {isAuthenticated ? (
                     <>
+                      {showOverview && (
+                        <button
+                          onClick={() => { navigate('/overview'); handleMenuToggle(); }}
+                          className="flex items-center gap-3 p-3 rounded-xl text-left transition-all duration-200 w-full min-h-[48px] hover:bg-accent"
+                        >
+                          <UserCircle className="h-5 w-5" /><span className="font-medium">{t.overview}</span>
+                        </button>
+                      )}
                       <button
                         onClick={() => { navigate('/profile'); handleMenuToggle(); }}
                         className="flex items-center gap-3 p-3 rounded-xl text-left transition-all duration-200 w-full min-h-[48px] hover:bg-accent"

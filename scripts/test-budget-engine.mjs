@@ -12,6 +12,7 @@ const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const dir = mkdtempSync(join(tmpdir(), 'budget-tests-'));
 const SUITES = [
   'src/lib/budget/__tests__/budget.test.ts',
+  'src/lib/budget/__tests__/overview.test.ts',
   'src/lib/tools/__tests__/resteAVivre.test.ts',
   'src/lib/tools/__tests__/colocation.test.ts',
   'src/lib/tools/__tests__/mariage.test.ts',

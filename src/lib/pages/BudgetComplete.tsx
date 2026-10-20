@@ -40,6 +40,7 @@ import { BudgetEngine } from '@/lib/budget/engine';
 import { autoCloseMonths, decodeBudget, encodeBudget } from '@/lib/budget/codec';
 import { currentYM } from '@/lib/budget/months';
 import { currencySymbol as symbolFor, money } from '@/lib/budget/format';
+import { parsePrivateCharges } from '@/lib/budget/overview';
 
 import { CalendarDays, Receipt, PiggyBank, Users, BarChart3, Sparkles, FlaskConical } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
@@ -192,12 +193,7 @@ export default function BudgetCompleteLayout() {
         ]);
         setBudget(budgetRes.data);
         if (privateRes) {
-          const found: Record<string, PrivateChargeDetails> = {};
-          for (const [key, value] of Object.entries(privateRes.data?.items ?? {})) {
-            const v = value as Partial<PrivateChargeDetails> | null;
-            if (key.startsWith('charge:') && v && typeof v.label === 'string') found[key.slice(7)] = v as PrivateChargeDetails;
-          }
-          setPrivateCharges(found);
+          setPrivateCharges(parsePrivateCharges(privateRes.data?.items ?? {}));
           setPrivateLoaded(true);
         }
         const raw: unknown = dataRes.data?.data ?? dataRes.data ?? {};
