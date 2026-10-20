@@ -11,11 +11,9 @@
 //     (several incomes, one per budget);
 //   - what they put into each pot and their personal charges add up;
 //   - what is left = pay − contributions − personal charges.
-// Which person the member is in each budget is a link between their account
-// and that person, kept by the API (`person_id` of the budget's members): a
-// person belongs to ONE account, so nobody sees the overview of a person that
-// is someone else's. The member links themselves (a guess from their name, or
-// one question); only the budget's owner can undo someone else's link.
+// Which person the member is in each budget is never a choice: it is the
+// person who bears their account's name (identify()), so the overview of a
+// person is theirs alone.
 // ============================================================================
 
 import type { BudgetEngine, ResolvedPersonalCharge } from './engine';
@@ -39,66 +37,61 @@ export function overviewUseful(budgets: Array<{ members?: unknown[] | null }>): 
 // ---------------------------------------------------------------------------
 // Who the viewer is in a budget
 // ---------------------------------------------------------------------------
+// Never a choice: the person of the household whose name is the account's
+// name (accents and case aside), so nobody can see the view of a person who is
+// someone else. A name another member's account fits as well (two « Léa ») is
+// no one's until the household tells them apart (« Léa M. », « Léa D. »).
 
-/** A person id, or `null` when the viewer said they are not in that budget. */
-export type MeLink = string | null;
-
-/** A budget member as the API lists it, with the person their account is. */
-export interface LinkedMember {
+/** A budget member as the API lists it. */
+export interface BudgetMemberName {
   user_id?: string;
   user?: { id?: string; name?: string } | null;
-  /** `null`/absent: not said yet; `''`: not in the household. */
-  person_id?: string | null;
 }
 
-const memberUserId = (m: LinkedMember): string | undefined => m.user_id ?? m.user?.id ?? undefined;
-
-/** The viewer's link in a budget, `undefined` when not said yet. */
-export function linkOf(members: LinkedMember[], userId: string | undefined): MeLink | undefined {
-  const m = userId ? members.find((x) => memberUserId(x) === userId) : undefined;
-  if (!m || m.person_id === undefined || m.person_id === null) return undefined;
-  return m.person_id === '' ? null : m.person_id;
-}
-
-/** Persons linked to OTHER members' accounts (person id → account name): never the viewer's. */
-export function takenPersons(members: LinkedMember[], userId: string | undefined): Map<string, string> {
-  const taken = new Map<string, string>();
-  for (const m of members) {
-    if (m.person_id && memberUserId(m) !== userId) taken.set(m.person_id, m.user?.name ?? '');
-  }
-  return taken;
-}
+const memberUserId = (m: BudgetMemberName): string | undefined => m.user_id ?? m.user?.id ?? undefined;
 
 const fold = (s: string): string =>
   s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();
 // « Marie-Anne » is a first name of its own: only spaces, dots and underscores separate.
-const firstName = (s: string): string => fold(s).split(/[\s._]+/)[0] ?? '';
+const words = (s: string): string[] => fold(s).split(/[\s._]+/).filter(Boolean);
 
 /**
- * The person the viewer most likely is, among those no one else has: the only
- * one whose name (or first name) matches theirs, or the only person of a
- * budget they do not share. `undefined` when it cannot be told: the page asks.
+ * How well a person's name fits an account's name: 3 the same full name; 2
+ * the first name and the initial of the last name (« Léa D. » for Léa
+ * Dupont); 1 the first name alone (« Léa »); 0 someone else (« Léa M. »).
  */
-export function guessMe(allPeople: Person[], userName: string | undefined, memberCount: number, taken: ReadonlyMap<string, string> = new Map()): string | undefined {
-  const people = allPeople.filter((p) => !taken.has(p.id));
-  const full = fold(userName ?? '');
-  if (full) {
-    const first = firstName(full);
-    const matches = people.filter((p) => {
-      const name = fold(p.name);
-      return name !== '' && (name === full || firstName(name) === first);
-    });
-    if (matches.length === 1) return matches[0].id;
-    if (matches.length > 1) return undefined;
-  }
-  if (allPeople.length === 1 && people.length === 1 && memberCount <= 1) return people[0].id;
-  return undefined;
+export function nameScore(personName: string, accountName: string): number {
+  const p = words(personName);
+  const a = words(accountName);
+  if (!p.length || !a.length) return 0;
+  if (p.join(' ') === a.join(' ')) return 3;
+  if (p[0] !== a[0]) return 0;
+  if (p.length === 1 || a.length === 1) return 1;
+  return a.slice(1).some((w) => w[0] === p[1][0]) ? 2 : 0;
 }
 
-/** The viewer's person: their link while that person still exists in the household. */
-export function resolveMe(link: MeLink | undefined, people: Person[]): MeLink | undefined {
-  if (link === null) return null;
-  return link && people.some((p) => p.id === link) ? link : undefined;
+export type Identity =
+  | { personId: string }
+  /** `none`: no person has their name; `ambiguous`: several could be them, or someone else fits as well. */
+  | { personId: null; reason: 'none' | 'ambiguous'; names: string[] };
+
+/**
+ * The viewer's person in a budget: the one whose name fits their account's
+ * best, provided no other member's account fits it as well. In a budget they
+ * do not share, a household of one is theirs whatever its name.
+ */
+export function identify(people: Array<Pick<Person, 'id' | 'name'>>, members: BudgetMemberName[], userId: string | undefined, userName: string | undefined): Identity {
+  const name = userName ?? members.find((m) => memberUserId(m) === userId)?.user?.name ?? '';
+  const others = members.filter((m) => memberUserId(m) !== userId).map((m) => m.user?.name ?? '');
+  if (people.length === 1 && others.length === 0) return { personId: people[0].id };
+  const fits = people.map((p) => ({ p, score: nameScore(p.name, name) })).filter((f) => f.score > 0);
+  if (fits.length === 0) return { personId: null, reason: 'none', names: [] };
+  const best = Math.max(...fits.map((f) => f.score));
+  const top = fits.filter((f) => f.score === best).map((f) => f.p);
+  if (top.length > 1 || others.some((n) => nameScore(top[0].name, n) >= best)) {
+    return { personId: null, reason: 'ambiguous', names: top.map((p) => p.name) };
+  }
+  return { personId: top[0].id };
 }
 
 // ---------------------------------------------------------------------------

@@ -5,13 +5,11 @@
 import { BudgetEngine } from '../engine';
 import { autoCloseMonths, decodeBudget } from '../codec';
 import {
-  guessMe,
-  linkOf,
+  identify,
   myMonth,
+  nameScore,
   overviewTotals,
   overviewUseful,
-  resolveMe,
-  takenPersons,
   visibleCharge,
 } from '../overview';
 import { PRIVATE_CHARGE_LABEL, type Person } from '../types';
@@ -54,47 +52,50 @@ test('offered from two budgets, or one shared budget', () => {
   eq(overviewUseful([{ members: [{}] }, { members: [{}] }]), true, 'two budgets');
 });
 
-test('guess: the only matching name, accents and case aside', () => {
-  const people = [person('a', 'Hélène'), person('b', 'Marc')];
-  eq(guessMe(people, 'helene Dupont', 2), 'a', 'first name');
-  eq(guessMe(people, 'Marc', 2), 'b');
-  eq(guessMe([person('a', 'Marie D.'), person('b', 'Paul')], 'marie.dupont', 2), 'a', 'first name of an e-mail-like name');
-  eq(guessMe(people, 'Zoé', 2), undefined, 'no match: ask');
-  eq(guessMe([person('a', 'Marie'), person('b', 'Marie-Anne')], 'Marie', 2), 'a', '« Marie-Anne » is not « Marie »');
-  eq(guessMe([person('a', 'Léa'), person('b', 'Léa B.')], 'Léa', 2), undefined, 'two matches: ask');
+const member = (id: string, name: string) => ({ user_id: id, user: { id, name } });
+
+test('identity: the person who bears the account’s name, never a choice', () => {
+  // Famille Dia: Libasse is Libasse, never Kristell.
+  const people = [person('l', 'Libasse'), person('k', 'Kristell')];
+  const members = [member('u-l', 'Libasse Dia'), member('u-k', 'Kristell Dia')];
+  eq(identify(people, members, 'u-l', 'Libasse Dia'), { personId: 'l' });
+  eq(identify(people, members, 'u-k', 'Kristell Dia'), { personId: 'k' });
+  eq(identify(people, [member('u-l', 'Libasse Dia')], 'u-l', 'Libasse Dia'), { personId: 'l' }, 'Kristell without an account');
+  eq(identify([person('a', 'hélène')], [member('u', 'Hélène Roy'), member('v', 'Marc')], 'u', 'Helene Roy'), { personId: 'a' }, 'accents and case aside');
+  eq(identify([person('a', 'Marie D.'), person('b', 'Paul')], [member('u', 'marie.dupont')], 'u', 'marie.dupont'), { personId: 'a' }, 'e-mail-like account name');
 });
 
-test('guess: the only person of an unshared budget', () => {
-  eq(guessMe([person('a', 'Moi')], 'Sam', 1), 'a');
-  eq(guessMe([person('a', 'Partner')], 'Sam', 2), undefined, 'shared budget: could be the other member');
-  eq(guessMe([], 'Sam', 1), undefined);
+test('identity: nobody by that name → not counted, with the reason', () => {
+  const people = [person('m', 'Maman'), person('p', 'Papa')];
+  eq(identify(people, [member('u', 'Awa'), member('v', 'Fatou')], 'u', 'Awa'), { personId: null, reason: 'none', names: [] });
+  eq(identify([person('m', 'Marie-Anne')], [member('u', 'Marie'), member('v', 'Paul')], 'u', 'Marie'), { personId: null, reason: 'none', names: [] }, '« Marie-Anne » is not « Marie »');
+  eq(identify([person('x', 'Partner')], [member('u', 'Sam'), member('v', 'Alex')], 'u', 'Sam'), { personId: null, reason: 'none', names: [] }, 'one person in a shared budget: not necessarily me');
+  eq(identify([person('x', 'Moi')], [member('u', 'Sam')], 'u', 'Sam'), { personId: 'x' }, 'a household of one in an unshared budget');
+  eq(identify([], [member('u', 'Sam')], 'u', 'Sam'), { personId: null, reason: 'none', names: [] });
 });
 
-test('guess: never a person linked to another member’s account', () => {
-  const people = [person('a', 'Awa'), person('t', 'Tom')];
-  const takenByTom = new Map([['a', 'Tom']]);
-  eq(guessMe(people, 'Awa', 2, takenByTom), undefined, 'the matching name is someone else’s');
-  eq(guessMe([person('a', 'Moi')], 'Sam', 1, new Map([['a', 'Lou']])), undefined, 'only person, but taken');
-  eq(guessMe([person('a', 'Moi'), person('b', 'Ex')], 'Sam', 1, new Map([['b', 'Lou']])), undefined, 'one free person left is no proof');
+test('identity: two people could be me, or someone else fits as well → no one', () => {
+  eq(identify([person('a', 'Léa'), person('b', 'Léa')], [member('u', 'Léa Martin')], 'u', 'Léa Martin'), { personId: null, reason: 'ambiguous', names: ['Léa', 'Léa'] });
+  // Two accounts named Léa, one person « Léa »: it is no one's.
+  eq(identify([person('a', 'Léa'), person('t', 'Tom')], [member('u', 'Léa Martin'), member('v', 'Léa Dupont')], 'u', 'Léa Martin'), { personId: null, reason: 'ambiguous', names: ['Léa'] });
+  // Told apart by the initial of the last name: each one gets theirs.
+  const people = [person('m', 'Léa M.'), person('d', 'Léa D.')];
+  const members = [member('u', 'Léa Martin'), member('v', 'Léa Dupont')];
+  eq(identify(people, members, 'u', 'Léa Martin'), { personId: 'm' });
+  eq(identify(people, members, 'v', 'Léa Dupont'), { personId: 'd' });
+  // The full name beats the first name alone.
+  eq(identify([person('a', 'Léa'), person('b', 'Léa Martin')], [member('u', 'Léa Martin')], 'u', 'Léa Martin'), { personId: 'b' });
 });
 
-test('links: the viewer’s own, the persons other accounts hold', () => {
-  const members = [
-    { user_id: 'u-awa', user: { id: 'u-awa', name: 'Awa' }, person_id: 'a' },
-    { user_id: 'u-tom', user: { id: 'u-tom', name: 'Tom' }, person_id: 't' },
-    { user_id: 'u-lou', user: { id: 'u-lou', name: 'Lou' }, person_id: '' },
-    { user_id: 'u-new', user: { id: 'u-new', name: 'New' }, person_id: null },
-  ];
-  eq(linkOf(members, 'u-awa'), 'a');
-  eq(linkOf(members, 'u-lou'), null, '« not in the household »');
-  eq(linkOf(members, 'u-new'), undefined, 'not said yet');
-  eq(linkOf(members, 'u-stranger'), undefined);
-  eq(linkOf([{ user: { id: 'u-old' } }], 'u-old'), undefined, 'API without links');
-  eq([...takenPersons(members, 'u-awa')], [['t', 'Tom']], 'own and empty links are not « taken »');
-  const people = [person('a', 'A'), person('b', 'B')];
-  eq(resolveMe('b', people), 'b');
-  eq(resolveMe('gone', people), undefined, 'deleted person: ask again');
-  eq(resolveMe(null, people), null);
+test('name fit: full name, first name and initial, first name alone', () => {
+  eq(nameScore('Libasse Dia', 'Libasse Dia'), 3);
+  eq(nameScore('Léa D.', 'Léa Dupont'), 2);
+  eq(nameScore('Léa', 'Léa Dupont'), 1);
+  eq(nameScore('Libasse', 'Libasse'), 3);
+  eq(nameScore('Libasse D.', 'Libasse'), 1, 'no last name on the account');
+  eq(nameScore('Léa M.', 'Léa Dupont'), 0);
+  eq(nameScore('Kristell', 'Libasse Dia'), 0);
+  eq(nameScore('', 'Libasse'), 0);
 });
 
 // Two budgets for Awa: the household (pays 1 800 of 3 000) and a flat-share
