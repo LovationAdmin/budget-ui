@@ -93,7 +93,7 @@ export const PAGES: PageSEO[] = [
     title: 'Budget perso : calculateur gratuit de la règle 50/30/20',
     description: 'Faites votre budget personnel en 2 minutes avec la règle 50/30/20 : besoins, envies, combien épargner par mois. Gratuit, sans inscription.',
     h1: 'Votre budget perso en 2 minutes',
-    intro: 'Votre salaire net et vos dépenses essentielles : voyez la règle 50/30/20 appliquée à vos revenus, ce qui reste après vos besoins et combien épargner chaque mois.',
+    intro: 'Indiquez votre salaire net et vos dépenses essentielles : voyez ce que donne la règle 50/30/20 pour vous, ce qui reste une fois les besoins payés et combien vous pouvez épargner chaque mois. Sans jugement, et le résultat se met à jour pendant la saisie.',
     links: [CTA, { href: '/calcul-reste-a-vivre', label: 'Calcul du reste à vivre' }, { href: '/budget-colocation', label: 'Budget colocation' }, { href: '/blog/budget-etudiant-guide-complet-2025', label: 'Budget étudiant' }, { href: '/blog/combien-epargner-par-mois-objectif-date', label: 'Combien épargner par mois' }],
     sections: [
       { h2: 'Comment faire son budget personnel en 5 étapes', text: 'Revenus nets, charges fixes, dépenses annuelles ÷ 12, dépenses variables, puis épargner d’abord, juste après la paie.' },
@@ -109,7 +109,7 @@ export const PAGES: PageSEO[] = [
     title: 'Budget mariage : calculateur gratuit et épargne par mois',
     description: 'Calculez le budget de votre mariage d’après vos devis : coût par invité, part du traiteur et épargne à prévoir chaque mois. Gratuit, sans inscription.',
     h1: 'Budget mariage : calculez le coût de votre mariage',
-    intro: 'Invités, traiteur, lieu, tenues : additionnez vos devis, voyez le coût par invité et ce qu’il faut mettre de côté chaque mois d’ici le jour J.',
+    intro: 'Invités, traiteur, lieu, tenues : additionnez vos devis, voyez le coût par invité et ce qu’il faut mettre de côté chaque mois d’ici le jour J. Le résultat se met à jour pendant la saisie.',
     links: [CTA, { href: '/blog/combien-epargner-par-mois-objectif-date', label: 'Combien épargner par mois pour un objectif' }, { href: '/budget-personnel', label: 'Budget personnel' }, { href: '/calcul-reste-a-vivre', label: 'Calcul du reste à vivre' }],
     sections: [
       { h2: 'Comment calculer le budget de son mariage ?', text: 'Budget = (traiteur + boissons par invité) × nombre d’invités + postes fixes + imprévus. Il n’existe pas de prix moyen officiel : partez de vos devis.' },
@@ -223,7 +223,7 @@ export const PAGES: PageSEO[] = [
     title: '50/30/20 Budget Calculator: Free, No Sign-Up',
     description: 'Free 50/30/20 budget calculator: enter your take-home pay and essential bills to see your needs, wants and savings split, and what to save. No sign-up.',
     h1: '50/30/20 budget calculator',
-    intro: 'Your take-home pay and essential expenses in: the 50/30/20 rule applied to your income, what’s left after your needs and how much to save each month.',
+    intro: 'Enter your take-home pay and essential expenses: see what the 50/30/20 rule means for you, what’s left once your needs are paid and how much you can save each month. No judgment, and the result updates as you type.',
     sections: [
       { h2: 'How to make a personal budget in 5 steps', text: 'Take-home pay, fixed bills, yearly costs ÷ 12, variable spending, then pay yourself first, right after payday.' },
       { h2: 'The 50/30/20 rule explained', text: '50% for needs, 30% for wants, 20% for savings: a rule popularized by Elizabeth Warren and Amelia Warren Tyagi (All Your Worth, 2005). A benchmark, not an obligation, to adapt to the cost of housing.' },

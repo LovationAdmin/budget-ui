@@ -141,7 +141,10 @@ function StaticPage({ page, extra }: { page: PageSEO; extra?: React.ReactNode })
   return (
     <Shell path={page.path}>
       <h1 className="font-display text-4xl font-bold text-foreground">{page.h1 ?? page.title}</h1>
-      <p className="mt-4 text-lg text-muted-foreground">{page.intro ?? page.description}</p>
+      {/* A size above the app's lead paragraphs (text-lg): when the app takes over, its
+          lead is not a larger element, so the page's main content (LCP) stays this one,
+          painted with the HTML, instead of being counted again when the app has loaded. */}
+      <p className="mt-4 text-xl leading-relaxed text-muted-foreground">{page.intro ?? page.description}</p>
       {page.links && (
         <ul className="mt-6 flex flex-wrap gap-4">
           {page.links.map((l) => (
