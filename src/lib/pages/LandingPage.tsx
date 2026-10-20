@@ -106,9 +106,9 @@ const M = defineMessages({
     allArticles: 'Tous les articles →',
     guide: 'Guide',
     latest: [
-      { title: 'Compte commun en couple : pot commun, argent de poche et charges perso', to: '/blog/compte-commun-couple-argent-de-poche', readTime: '8 min' },
-      { title: 'Combien épargner par mois pour atteindre un objectif à une date ?', to: '/blog/combien-epargner-par-mois-objectif-date', readTime: '6 min' },
-      { title: 'Budget couple : 7 règles d’or pour gérer l’argent à deux', to: '/blog/budget-couple-regles-gerer-argent', readTime: '8 min' },
+      { title: 'Compte commun en couple : combien verser, combien garder', to: '/blog/compte-commun-couple-argent-de-poche', readTime: '8 min' },
+      { title: 'Combien épargner par mois pour un objectif à une date ?', to: '/blog/combien-epargner-par-mois-objectif-date', readTime: '6 min' },
+      { title: 'Budget de couple : 7 règles pour gérer l’argent à deux', to: '/blog/budget-couple-regles-gerer-argent', readTime: '8 min' },
     ],
     finalTitle: 'Votre budget, enfin simple',
     finalText: 'Gratuit, sans carte bancaire. Commencez seul, invitez qui vous voulez ensuite.',
@@ -182,7 +182,7 @@ const M = defineMessages({
     allArticles: 'All articles →',
     guide: 'Guide',
     latest: [
-      { title: 'Joint Account as a Couple: How Much Each Pays, and Spending Money', to: '/en/blog/joint-account-couples-spending-money', readTime: '7 min' },
+      { title: 'Couples’ Joint Account: How Much Each Pays In and Keeps', to: '/en/blog/joint-account-couples-spending-money', readTime: '7 min' },
       { title: 'How Much to Save Each Month to Reach a Goal by a Date', to: '/en/blog/how-much-to-save-each-month-for-a-goal', readTime: '5 min' },
       { title: 'Monthly Budget for a Family of Four: A Worked Example', to: '/en/blog/family-of-four-budget-example', readTime: '8 min' },
     ],

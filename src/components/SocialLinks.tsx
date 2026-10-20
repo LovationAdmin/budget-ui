@@ -2,7 +2,7 @@
 // Links to the official Budget Famille accounts (list in src/seo/site.ts).
 import type { ComponentType } from 'react';
 import { Facebook, Instagram, Linkedin } from 'lucide-react';
-import { SOCIAL_PROFILES, type SocialNetwork } from '@/seo/site';
+import { SOCIAL_PROFILES, type SocialNetwork } from '@/seo/identity';
 import { cn } from '@/lib/utils';
 import { useLocale } from '@/i18n/runtime';
 

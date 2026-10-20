@@ -11,7 +11,7 @@
 // and `changed` lists the URLs to announce (scripts/indexnow.mjs).
 import { build } from 'esbuild';
 import { createHash } from 'node:crypto';
-import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
@@ -58,6 +58,21 @@ function render(template, page) {
   return html;
 }
 
+/**
+ * Preloads the two web fonts (latin, every weight in one variable file) with
+ * the page, so they're there for the first paint: shown with font-display:
+ * optional (postcss.config.js), a late font would otherwise be skipped.
+ */
+function withFontPreloads(html) {
+  const files = readdirSync(join(dist, 'assets'));
+  const links = ['dm-sans-latin-wght-normal', 'plus-jakarta-sans-latin-wght-normal'].map((name) => {
+    const file = files.find((f) => f.startsWith(`${name}-`) && f.endsWith('.woff2'));
+    if (!file) throw new Error(`prerender: font ${name} not found in dist/assets`);
+    return `<link rel="preload" href="/assets/${file}" as="font" type="font/woff2" crossorigin />`;
+  });
+  return setTag(html, /<script type="module"/, `${links.join('\n  ')}\n  <script type="module"`);
+}
+
 /** Content fingerprint: what a crawler reads, not the build's asset hashes (language versions only when there are some, so untranslated pages keep their hash). */
 const contentHash = (page) => createHash('sha256')
   .update(JSON.stringify([page.title, page.description, page.canonical, page.noindex, page.jsonLd, page.body, ...(page.hreflang.length ? [page.hreflang] : [])]))
@@ -96,7 +111,9 @@ try {
     define: { 'process.env.NODE_ENV': '"production"' },
   });
   const { buildPages } = await import(pathToFileURL(outfile).href);
-  const template = readFileSync(join(dist, 'index.html'), 'utf8');
+  const template = withFontPreloads(readFileSync(join(dist, 'index.html'), 'utf8'));
+  // The shell of every other route (the app) preloads them too.
+  writeFileSync(join(dist, 'app.html'), withFontPreloads(readFileSync(join(dist, 'app.html'), 'utf8')));
   const pages = buildPages();
   for (const page of pages) {
     const file = page.path === '/' ? join(dist, 'index.html') : join(dist, page.path.slice(1), 'index.html');

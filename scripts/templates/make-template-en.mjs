@@ -14,6 +14,7 @@ const require = createRequire(import.meta.url);
 const { chromium } = require('playwright');
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
+// Static font files for the PDF (the site itself uses the variable ones).
 const fonts = (pkg) => pathToFileURL(join(root, 'node_modules/@fontsource', pkg, 'files')).href;
 const html = readFileSync(join(root, 'scripts/templates/budget-template-en.html'), 'utf8')
   .replace(/FONTS\/(dm-sans-[^']+)/g, (_, f) => `${fonts('dm-sans')}/${f}`)
