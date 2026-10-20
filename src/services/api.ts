@@ -431,6 +431,11 @@ export const budgetAPI = {
     api.delete(`/budgets/${budgetId}/invitations/${invitationId}`),
   removeMember: (budgetId: string, memberId: string) =>
     api.delete(`/budgets/${budgetId}/members/${memberId}`),
+  // « Who I am in this budget » (Ma vue perso): links a member's account to a
+  // person of the household, one account per person (409 when already taken).
+  // '' = not in the household, null = forget; the owner may only clear others'.
+  setMemberPerson: (budgetId: string, userId: string, personId: string | null) =>
+    api.put(`/budgets/${budgetId}/members/${userId}/person`, { person_id: personId }),
 
   // Categorization (AI)
   categorize: (label: string): Promise<AxiosResponse<CategorizeResponse>> =>

@@ -46,6 +46,12 @@ const M = defineMessages({
     cancelConfirm: (email: ReactNode): ReactNode => <>Cela révoquera le lien envoyé à {email}.</>,
     no: "Non",
     yesCancel: "Oui, annuler",
+    personLinked: (name: string) => `Dans le foyer : ${name}`,
+    notInHousehold: "Ne figure pas dans le foyer",
+    unlink: "Délier",
+    unlinkLabel: (account: string, person: string) => `Délier ${account} de la fiche « ${person} »`,
+    unlinked: (account: string) => `Le compte de ${account} n’est plus relié à une fiche du foyer : la bonne pourra être choisie dans « Ma vue perso ».`,
+    unlinkFailed: "Impossible de délier ce compte.",
   },
   en: {
     removedTitle: "Member removed",
@@ -73,6 +79,12 @@ const M = defineMessages({
     cancelConfirm: (email: ReactNode): ReactNode => <>This will revoke the link sent to {email}.</>,
     no: "No",
     yesCancel: "Yes, cancel",
+    personLinked: (name: string) => `In the household: ${name}`,
+    notInHousehold: "Not in the household",
+    unlink: "Unlink",
+    unlinkLabel: (account: string, person: string) => `Unlink ${account} from “${person}”`,
+    unlinked: (account: string) => `${account}’s account is no longer linked to anyone in the household: the right person can be picked in “My overview”.`,
+    unlinkFailed: "Couldn’t unlink this account.",
   },
 });
 
@@ -85,6 +97,8 @@ interface BudgetMember {
     avatar?: string;
   } | null;
   role: 'owner' | 'member';
+  /** The person of the household this account is (« Ma vue perso »): '' = not in it. */
+  person_id?: string | null;
 }
 
 interface Invitation {
@@ -107,6 +121,8 @@ interface MemberManagementSectionProps {
   onMemberChange: () => void;
   /** Opens the invitation dialog (shown to the budget's owner only). */
   onInvite?: () => void;
+  /** The household, to say which person each account is. */
+  people?: Array<{ id: string; name: string }>;
 }
 
 export default function MemberManagementSection({
@@ -114,6 +130,7 @@ export default function MemberManagementSection({
   currentUserId,
   onMemberChange,
   onInvite,
+  people = [],
 }: MemberManagementSectionProps) {
   const [invitations, setInvitations] = useState<Invitation[]>([]);
   const [loading, setLoading] = useState(false);
@@ -171,6 +188,19 @@ export default function MemberManagementSection({
     }
   };
 
+  // A mistaken (or abusive) link to a person of the household: the owner
+  // frees that person, the member then picks the right one.
+  const handleUnlink = async (member: BudgetMember) => {
+    if (!member.user) return;
+    try {
+      await budgetAPI.setMemberPerson(budget.id, member.user.id, null);
+      onMemberChange();
+      toast({ description: t.unlinked(member.user.name) });
+    } catch {
+      toast({ title: t.error, description: t.unlinkFailed, variant: "destructive" });
+    }
+  };
+
   const handleCancelInvitation = async () => {
     if (!invitationToCancel) return;
     try {
@@ -217,6 +247,8 @@ export default function MemberManagementSection({
           <div className="space-y-2">
             {budget.members.filter(member => member.user).map((member) => {
                 const user = member.user!;
+                const person = member.person_id ? people.find((p) => p.id === member.person_id) : undefined;
+                const canUnlink = budget.is_owner && user.id !== currentUserId && !!member.person_id;
                 return (
                   <div key={member.id} className="flex items-center gap-3 p-3 rounded-xl border border-border/50 bg-card/50 hover:bg-card transition-all">
                     <MemberAvatar name={user.name} image={user.avatar} size="md" />
@@ -226,6 +258,24 @@ export default function MemberManagementSection({
                         {user.name} {user.id === currentUserId && <span className="text-xs text-muted-foreground ml-2">{t.you}</span>}
                       </p>
                       <p className="text-sm text-muted-foreground truncate">{user.email}</p>
+                      {(person || member.person_id === '') && (
+                        <p className="text-xs text-muted-foreground truncate">
+                          {person ? t.personLinked(person.name) : t.notInHousehold}
+                          {canUnlink && person && (
+                            <>
+                              {' · '}
+                              <button
+                                type="button"
+                                onClick={() => handleUnlink(member)}
+                                aria-label={t.unlinkLabel(user.name, person.name)}
+                                className="inline-flex min-h-[32px] items-center rounded font-semibold text-primary underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                              >
+                                {t.unlink}
+                              </button>
+                            </>
+                          )}
+                        </p>
+                      )}
                     </div>
                     
                     {/* ✅ MODIFICATION : Badge "Membre" seulement pour les non-propriétaires */}

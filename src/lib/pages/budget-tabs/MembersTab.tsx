@@ -720,7 +720,7 @@ export default function MembersTab() {
 
       {budget && user && (
         <section aria-label={t.access} className="flex flex-col gap-3">
-          <MemberManagementSection budget={budget} currentUserId={user.id} onMemberChange={refreshMembersOnly} onInvite={handleShowInviteModal} />
+          <MemberManagementSection budget={budget} currentUserId={user.id} onMemberChange={refreshMembersOnly} onInvite={handleShowInviteModal} people={model.people} />
         </section>
       )}
     </div>

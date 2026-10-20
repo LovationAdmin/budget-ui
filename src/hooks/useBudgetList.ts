@@ -18,7 +18,8 @@ export interface BudgetSummary {
   is_owner: boolean;
   location?: string;
   currency?: string;
-  members: Array<{ user_id?: string; user: { id?: string; name: string; avatar?: string } | null }>;
+  /** `person_id`: the person of the household the account is (src/lib/budget/overview.ts). */
+  members: Array<{ user_id?: string; user: { id?: string; name: string; avatar?: string } | null; person_id?: string | null }>;
 }
 
 let state: { userId: string; list: BudgetSummary[] } | null = null;

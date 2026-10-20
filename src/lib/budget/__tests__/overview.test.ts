@@ -6,12 +6,12 @@ import { BudgetEngine } from '../engine';
 import { autoCloseMonths, decodeBudget } from '../codec';
 import {
   guessMe,
-  meItemPayload,
+  linkOf,
   myMonth,
   overviewTotals,
   overviewUseful,
-  parseMeItem,
   resolveMe,
+  takenPersons,
   visibleCharge,
 } from '../overview';
 import { PRIVATE_CHARGE_LABEL, type Person } from '../types';
@@ -70,16 +70,31 @@ test('guess: the only person of an unshared budget', () => {
   eq(guessMe([], 'Sam', 1), undefined);
 });
 
-test('stored choice: kept while the person exists, « not in it » kept', () => {
+test('guess: never a person linked to another member’s account', () => {
+  const people = [person('a', 'Awa'), person('t', 'Tom')];
+  const takenByTom = new Map([['a', 'Tom']]);
+  eq(guessMe(people, 'Awa', 2, takenByTom), undefined, 'the matching name is someone else’s');
+  eq(guessMe([person('a', 'Moi')], 'Sam', 1, new Map([['a', 'Lou']])), undefined, 'only person, but taken');
+  eq(guessMe([person('a', 'Moi'), person('b', 'Ex')], 'Sam', 1, new Map([['b', 'Lou']])), undefined, 'one free person left is no proof');
+});
+
+test('links: the viewer’s own, the persons other accounts hold', () => {
+  const members = [
+    { user_id: 'u-awa', user: { id: 'u-awa', name: 'Awa' }, person_id: 'a' },
+    { user_id: 'u-tom', user: { id: 'u-tom', name: 'Tom' }, person_id: 't' },
+    { user_id: 'u-lou', user: { id: 'u-lou', name: 'Lou' }, person_id: '' },
+    { user_id: 'u-new', user: { id: 'u-new', name: 'New' }, person_id: null },
+  ];
+  eq(linkOf(members, 'u-awa'), 'a');
+  eq(linkOf(members, 'u-lou'), null, '« not in the household »');
+  eq(linkOf(members, 'u-new'), undefined, 'not said yet');
+  eq(linkOf(members, 'u-stranger'), undefined);
+  eq(linkOf([{ user: { id: 'u-old' } }], 'u-old'), undefined, 'API without links');
+  eq([...takenPersons(members, 'u-awa')], [['t', 'Tom']], 'own and empty links are not « taken »');
   const people = [person('a', 'A'), person('b', 'B')];
-  eq(resolveMe('b', people, 'a'), 'b');
-  eq(resolveMe('gone', people, 'a'), 'a', 'deleted person: back to the guess');
-  eq(resolveMe(null, people, 'a'), null);
-  eq(resolveMe(undefined, people, undefined), undefined);
-  eq(parseMeItem(meItemPayload('b')), 'b');
-  eq(parseMeItem(meItemPayload(null)), null);
-  eq(parseMeItem({ personId: '' }), undefined);
-  eq(parseMeItem('b'), undefined);
+  eq(resolveMe('b', people), 'b');
+  eq(resolveMe('gone', people), undefined, 'deleted person: ask again');
+  eq(resolveMe(null, people), null);
 });
 
 // Two budgets for Awa: the household (pays 1 800 of 3 000) and a flat-share
