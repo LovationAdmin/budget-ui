@@ -8,12 +8,10 @@
 // up, pay counted once (src/lib/budget/overview.ts). Read-only: every change
 // is made in the budget itself, one tap away.
 //
-// Which person the member is in each budget: their account's link to that
-// person, kept by the API, one account per person, so no member ever sees the
-// overview of a person who is someone else's. The obvious person (their name,
-// or the only person of a budget they don't share) is linked on first visit;
-// otherwise the page asks once, persons already linked to another account
-// greyed out. A mistaken link can be undone by its member or the budget owner.
+// Which person the member is in each budget is never asked nor chosen: it is
+// the person who bears their account's name (identify()), so a person's
+// overview is theirs alone. A budget where no one (or more than one) fits is
+// not counted, and the card says how to fix the household's names.
 //
 // Offered from two budgets on, or once a budget is shared: alone in a single
 // budget, that budget already is the whole picture (→ dashboard).
@@ -26,7 +24,6 @@ import Navbar from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { budgetAPI } from '@/services/api';
 import { publishBudgetList, type BudgetSummary } from '@/hooks/useBudgetList';
@@ -34,21 +31,18 @@ import { CategoryIcon, Pill, Segmented } from '@/components/budget/shared/primit
 import { cn } from '@/lib/utils';
 import { BudgetEngine } from '@/lib/budget/engine';
 import { autoCloseMonths, decodeBudget } from '@/lib/budget/codec';
-import { addMonths, compareYM, currentYM, formatMonthLong, formatMonthTitle, isYM, monthNameLower } from '@/lib/budget/months';
+import { addMonths, compareYM, currentYM, formatMonthLong, formatMonthTitle, isYM, joinFr, monthNameLower } from '@/lib/budget/months';
 import { currencySymbol, money, moneyOut, percent } from '@/lib/budget/format';
 import { PRIVATE_CHARGE_LABEL, privateChargeName, type Person, type PrivateChargeDetails, type YM } from '@/lib/budget/types';
 import {
-  guessMe,
-  linkOf,
+  identify,
   myMonth,
   overviewTotals,
   overviewUseful,
   parsePrivateCharges,
-  resolveMe,
-  takenPersons,
   visibleCharge,
   type IncomeMode,
-  type MeLink,
+  type Identity,
   type MyBudgetMonth,
 } from '@/lib/budget/overview';
 import { defineMessages, useT } from '@/i18n/runtime';
@@ -79,20 +73,16 @@ const M = defineMessages({
     differ: (list: string) => `Votre revenu n’est pas le même selon le budget (${list}). Comment le compter ?`,
     incomeModes: { highest: 'Un seul revenu (le plus élevé)', sum: 'Plusieurs revenus (les additionner)' } as Record<IncomeMode, string>,
     incomeModeLabel: 'Façon de compter votre revenu',
-    notCounted: (n: number) => (n > 1 ? `${n} budgets ne sont pas encore comptés : dites-nous qui vous êtes dans chacun, ci-dessous.` : 'Un budget n’est pas encore compté : dites-nous qui vous y êtes, ci-dessous.'),
+    notCounted: (n: number) => (n > 1 ? `${n} budgets ne sont pas comptés : on ne vous y trouve pas (voir ci-dessous).` : 'Un budget n’est pas compté : on ne vous y trouve pas (voir ci-dessous).'),
     nothingThisMonth: (month: string) => `Vous ne faites partie d’aucun foyer en ${month}.`,
     // Budget cards
     byBudget: 'Par budget',
     you: (name: ReactNode): ReactNode => <>Vous : <strong className="text-foreground">{name}</strong></>,
-    change: 'Changer',
-    who: (budget: string) => `Qui êtes-vous dans « ${budget} » ?`,
-    whoHelp: 'Une fiche ne se relie qu’à un seul compte. Les membres du budget voient laquelle est la vôtre.',
-    takenBy: (account: string) => (account ? `reliée à ${account}` : 'reliée à un autre compte'),
-    allTaken: 'Toutes les fiches de ce foyer sont déjà reliées à un compte. Si l’une d’elles est la vôtre, le propriétaire du budget peut la délier depuis le Foyer.',
-    taken: 'Cette personne vient d’être reliée au compte d’un autre membre.',
-    notMe: 'Je n’y figure pas',
-    cancel: 'Annuler',
-    notIn: 'Vous ne figurez pas dans ce budget : il n’est pas compté.',
+    notFound: (first: string) => `Personne dans ce foyer ne porte votre prénom (${first}) : ce budget n’est pas compté. Si vous en faites partie, donnez votre prénom à votre fiche dans le Foyer.`,
+    ambiguous: (names: string[]) =>
+      names.length > 1
+        ? `Plusieurs personnes de ce foyer portent votre prénom (${joinFr(names)}) : ce budget n’est pas compté. Distinguez-les dans le Foyer, par exemple avec l’initiale du nom (« Léa M. »).`
+        : `« ${names[0]} » correspond aussi au compte d’un autre membre : ce budget n’est pas compté. Distinguez-les dans le Foyer, par exemple avec l’initiale du nom (« Léa M. »).`,
     noPeople: 'Ce budget n’a encore personne dans son foyer.',
     absent: (month: string) => `Vous ne faites pas partie de ce foyer en ${month}.`,
     declaredPay: 'Revenu',
@@ -104,7 +94,6 @@ const M = defineMessages({
     seeMonth: 'Voir le mois',
     household: 'Foyer',
     loadFailed: (budget: string) => `Impossible de charger « ${budget} ».`,
-    saveFailed: 'Votre choix n’a pas pu être enregistré. Réessayez.',
     // Personal charges
     personalTitle: 'Vos charges perso',
     personalIntro: 'Ce que vous payez seul, sur votre argent de poche.',
@@ -133,19 +122,15 @@ const M = defineMessages({
     differ: (list: string) => `Your income isn’t the same in every budget (${list}). How should it be counted?`,
     incomeModes: { highest: 'One income (the highest)', sum: 'Several incomes (add them up)' } as Record<IncomeMode, string>,
     incomeModeLabel: 'How to count your income',
-    notCounted: (n: number) => (n > 1 ? `${n} budgets aren’t counted yet: tell us who you are in each one, below.` : 'One budget isn’t counted yet: tell us who you are in it, below.'),
+    notCounted: (n: number) => (n > 1 ? `${n} budgets aren’t counted: you’re not found in them (see below).` : 'One budget isn’t counted: you’re not found in it (see below).'),
     nothingThisMonth: (month: string) => `You’re not part of any household in ${month}.`,
     byBudget: 'By budget',
     you: (name: ReactNode): ReactNode => <>You: <strong className="text-foreground">{name}</strong></>,
-    change: 'Change',
-    who: (budget: string) => `Who are you in “${budget}”?`,
-    whoHelp: 'Each person can be linked to one account only. The budget’s members can see which one is yours.',
-    takenBy: (account: string) => (account ? `linked to ${account}` : 'linked to another account'),
-    allTaken: 'Everyone in this household is already linked to an account. If one of them is you, the budget’s owner can unlink it from the Household tab.',
-    taken: 'This person was just linked to another member’s account.',
-    notMe: 'I’m not in it',
-    cancel: 'Cancel',
-    notIn: 'You’re not in this budget: it isn’t counted.',
+    notFound: (first: string) => `No one in this household has your first name (${first}), so this budget isn’t counted. If you’re part of it, give your first name to your entry in the Household tab.`,
+    ambiguous: (names: string[]) =>
+      names.length > 1
+        ? `Several people in this household have your first name (${joinFr(names)}), so this budget isn’t counted. Tell them apart in the Household tab, e.g. with a last-name initial (“Lea M.”).`
+        : `“${names[0]}” also matches another member’s account, so this budget isn’t counted. Tell them apart in the Household tab, e.g. with a last-name initial (“Lea M.”).`,
     noPeople: 'This budget has nobody in its household yet.',
     absent: (month: string) => `You’re not part of this household in ${month}.`,
     declaredPay: 'Income',
@@ -157,7 +142,6 @@ const M = defineMessages({
     seeMonth: 'See the month',
     household: 'Household',
     loadFailed: (budget: string) => `Couldn’t load “${budget}”.`,
-    saveFailed: 'Your choice couldn’t be saved. Please try again.',
     personalTitle: 'Your personal expenses',
     personalIntro: 'What you pay on your own, out of your spending money.',
     personalEmpty: (month: string) => `No personal expenses in ${month}. Taxes, a personal loan, money sent to family… add them in a budget’s Bills tab.`,
@@ -188,10 +172,8 @@ interface LoadedBudget {
   ok: boolean;
   engine?: BudgetEngine;
   people: Person[];
-  /** Who the viewer is here (`undefined`: not said yet). */
-  link?: MeLink;
-  /** Persons linked to other members' accounts → account name. */
-  taken: Map<string, string>;
+  /** Who the viewer is here, from their account's name. */
+  identity?: Identity;
   privateCharges: Record<string, PrivateChargeDetails>;
 }
 
@@ -201,8 +183,6 @@ async function loadBudget(
   user: { id: string; name?: string } | null,
   today: YM,
 ): Promise<LoadedBudget> {
-  const members = summary.members ?? [];
-  const taken = takenPersons(members, user?.id);
   try {
     const [dataRes, privateRes] = await Promise.all([
       budgetAPI.getData(summary.id),
@@ -211,23 +191,17 @@ async function loadBudget(
     const raw: unknown = dataRes.data?.data ?? dataRes.data ?? {};
     // Past months as the budget screens show them (frozen), without saving anything.
     const model = autoCloseMonths(decodeBudget(raw, today), today, new Date().toISOString()).model;
-    let link = resolveMe(linkOf(members, user?.id), model.people);
-    // Not said yet: link the obvious person right away (the API refuses one
-    // that is already someone else's; the page then asks).
-    const guess = link === undefined && user ? guessMe(model.people, user.name, members.length, taken) : undefined;
-    if (guess && user) link = await budgetAPI.setMemberPerson(summary.id, user.id, guess).then(() => guess, () => undefined);
     return {
       summary,
       tone,
       ok: true,
       engine: new BudgetEngine(model, today),
       people: model.people,
-      link,
-      taken,
+      identity: identify(model.people, summary.members ?? [], user?.id, user?.name),
       privateCharges: parsePrivateCharges(privateRes?.data?.items ?? {}),
     };
   } catch {
-    return { summary, tone, ok: false, people: [], taken, privateCharges: {} };
+    return { summary, tone, ok: false, people: [], privateCharges: {} };
   }
 }
 
@@ -238,7 +212,6 @@ async function loadBudget(
 export default function Overview() {
   const t = useT(M);
   const { user } = useAuth();
-  const { toast } = useToast();
   const [today] = useState<YM>(() => currentYM());
   const [params, setParams] = useSearchParams();
   const requested = params.get('m');
@@ -257,8 +230,6 @@ export default function Overview() {
   const [list, setList] = useState<BudgetSummary[] | null>(null);
   const [listFailed, setListFailed] = useState(false);
   const [budgets, setBudgets] = useState<LoadedBudget[] | null>(null);
-  const [choosing, setChoosing] = useState<string | null>(null);
-  const [saving, setSaving] = useState<string | null>(null);
   const [incomeMode, setIncomeModeState] = useState<IncomeMode>(readIncomeMode);
   const setIncomeMode = (mode: IncomeMode) => {
     setIncomeModeState(mode);
@@ -295,31 +266,13 @@ export default function Overview() {
     setBudgets((prev) => prev?.map((x) => (x.summary.id === b.summary.id ? fresh : x)) ?? prev);
   };
 
-  // Shown only once the API has linked the account: never someone else's person.
-  const choose = async (b: LoadedBudget, link: MeLink) => {
-    if (!userId) return;
-    const id = b.summary.id;
-    setSaving(id);
-    try {
-      await budgetAPI.setMemberPerson(id, userId, link ?? '');
-      setBudgets((prev) => prev?.map((x) => (x.summary.id === id ? { ...x, link } : x)) ?? prev);
-      setChoosing(null);
-    } catch (err: unknown) {
-      const taken = (err as { response?: { status?: number } })?.response?.status === 409;
-      toast({ description: taken ? t.taken : t.saveFailed, variant: 'destructive' });
-      // Someone else has it now: reload to grey it out.
-      if (taken) load();
-    } finally {
-      setSaving(null);
-    }
-  };
-
   // ---- The month, budget by budget, then per currency ----
   const rows = useMemo(
     () =>
       (budgets ?? []).map((b) => {
-        const month: MyBudgetMonth | null = b.ok && b.engine && typeof b.link === 'string' ? myMonth(b.engine, b.link, ym) : null;
-        return { b, me: b.link, month, currency: b.summary.currency || 'EUR' };
+        const me = b.identity?.personId ?? null;
+        const month: MyBudgetMonth | null = b.ok && b.engine && me ? myMonth(b.engine, me, ym) : null;
+        return { b, me, month, currency: b.summary.currency || 'EUR' };
       }),
     [budgets, ym],
   );
@@ -333,13 +286,13 @@ export default function Overview() {
     return Array.from(byCurrency, ([currency, items]) => ({ currency, items, totals: overviewTotals(items.map((r) => r.month!), incomeMode) }));
   }, [rows, incomeMode]);
 
-  const uncounted = rows.filter((r) => r.b.ok && r.me === undefined && r.b.people.length > 0).length;
+  const uncounted = rows.filter((r) => r.b.ok && r.b.people.length > 0 && !r.me).length;
   const loaded = rows.filter((r) => r.b.engine);
   const viewState: ViewState =
     loaded.length > 0 && loaded.every((r) => r.b.engine!.isClosed(ym)) ? 'closed' : compareYM(ym, today) > 0 ? 'forecast' : 'current';
 
-  // Cards: what needs an answer first, then the counted budgets, then the others.
-  const order = (r: Row) => (!r.b.ok ? 1 : r.me === undefined && r.b.people.length > 0 ? 0 : r.me === null || r.b.people.length === 0 ? 3 : 2);
+  // Cards: the counted budgets first, then those that failed to load, then those you're not found in.
+  const order = (r: Row) => (r.me ? 0 : !r.b.ok ? 1 : 2);
   const cards = rows.slice().sort((a, b) => order(a) - order(b));
 
   const personalRows = rows.flatMap((r) =>
@@ -415,15 +368,10 @@ export default function Overview() {
                   <BudgetCard
                     key={r.b.summary.id}
                     budget={r.b}
-                    me={r.me}
                     month={r.month}
                     ym={ym}
                     today={today}
-                    choosing={choosing === r.b.summary.id}
-                    saving={saving === r.b.summary.id}
-                    onChoose={(link) => choose(r.b, link)}
-                    onStartChoosing={() => setChoosing(r.b.summary.id)}
-                    onCancelChoosing={() => setChoosing(null)}
+                    firstName={(userName ?? '').trim().split(/\s+/)[0] ?? ''}
                     onRetry={() => retryOne(r.b)}
                   />
                 ))}
@@ -577,27 +525,18 @@ function SummaryCard({
 
 function BudgetCard({
   budget,
-  me,
   month,
   ym,
   today,
-  choosing,
-  saving,
-  onChoose,
-  onStartChoosing,
-  onCancelChoosing,
+  firstName,
   onRetry,
 }: {
   budget: LoadedBudget;
-  me: MeLink | undefined;
   month: MyBudgetMonth | null;
   ym: YM;
   today: YM;
-  choosing: boolean;
-  saving: boolean;
-  onChoose: (link: MeLink) => void;
-  onStartChoosing: () => void;
-  onCancelChoosing: () => void;
+  /** The viewer's first name, to explain why they are not found. */
+  firstName: string;
   onRetry: () => void;
 }) {
   const t = useT(M);
@@ -606,7 +545,8 @@ function BudgetCard({
   const fmt = (n: number) => money(n, symbol);
   const base = `/budget/${summary.id}/complete`;
   const monthLink = ym === today ? `${base}/month` : `${base}/month?m=${ym}`;
-  const meName = typeof me === 'string' ? budget.people.find((p) => p.id === me)?.name : undefined;
+  const identity = budget.identity;
+  const meName = identity?.personId ? budget.people.find((p) => p.id === identity.personId)?.name : undefined;
   const state: ViewState | null = month ? (month.closed ? 'closed' : compareYM(ym, today) > 0 ? 'forecast' : 'current') : null;
 
   const header = (
@@ -614,15 +554,7 @@ function BudgetCard({
       <span aria-hidden="true" className={cn('mt-1.5 h-3 w-3 shrink-0 rounded-sm', tone)} />
       <div className="min-w-0 flex-1">
         <h3 className="truncate font-display text-lg font-extrabold">{summary.name}</h3>
-        {meName && !choosing && (
-          <p className="text-sm text-muted-foreground">
-            {t.you(meName)}
-            {' · '}
-            <button type="button" onClick={onStartChoosing} className="inline-flex min-h-[32px] items-center font-semibold text-primary underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded">
-              {t.change}
-            </button>
-          </p>
-        )}
+        {meName && <p className="text-sm text-muted-foreground">{t.you(meName)}</p>}
       </div>
       {state && <Pill tone={state === 'closed' ? 'grey' : state === 'current' ? 'green' : 'blue'}>{t.viewState[state]}</Pill>}
     </div>
@@ -652,63 +584,16 @@ function BudgetCard({
     );
   }
 
-  if (choosing || me === undefined) {
-    const allTaken = budget.people.every((p) => budget.taken.has(p.id));
+  if (!identity || identity.personId === null) {
     return (
-      <article aria-busy={saving} className="flex flex-col gap-3 rounded-2xl border-[1.5px] border-primary/40 bg-card p-5 shadow-soft">
-        {header}
-        <fieldset disabled={saving} className="flex flex-col gap-2">
-          <legend className="font-semibold">{t.who(summary.name)}</legend>
-          <div className="mt-2 flex flex-wrap gap-2">
-            {budget.people.map((p) => {
-              // Someone else's person: shown, never selectable.
-              const owner = budget.taken.get(p.id);
-              const isTaken = owner !== undefined;
-              return (
-                <button
-                  key={p.id}
-                  type="button"
-                  aria-pressed={me === p.id}
-                  disabled={isTaken}
-                  onClick={() => (me === p.id ? onCancelChoosing() : onChoose(p.id))}
-                  className={cn(
-                    'inline-flex min-h-[44px] items-center gap-1.5 rounded-full border px-4 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed',
-                    me === p.id ? 'border-foreground bg-foreground text-background' : 'border-border bg-card hover:bg-muted',
-                    isTaken && 'border-dashed bg-muted/40 text-muted-foreground hover:bg-muted/40',
-                  )}
-                >
-                  {p.name}
-                  {isTaken && <span className="text-xs font-normal">· {t.takenBy(owner)}</span>}
-                </button>
-              );
-            })}
-          </div>
-          <p className="text-xs text-muted-foreground">{allTaken ? t.allTaken : t.whoHelp}</p>
-        </fieldset>
-        <div className="flex flex-wrap gap-2">
-          <Button variant="ghost" className="min-h-[44px]" disabled={saving} onClick={() => (me === null ? onCancelChoosing() : onChoose(null))}>
-            {t.notMe}
-          </Button>
-          {choosing && me !== undefined && (
-            <Button variant="ghost" className="min-h-[44px]" disabled={saving} onClick={onCancelChoosing}>
-              {t.cancel}
-            </Button>
-          )}
-        </div>
-      </article>
-    );
-  }
-
-  if (me === null) {
-    return (
-      <article className="flex flex-col gap-2 rounded-2xl border border-dashed border-border bg-muted/20 p-5">
+      <article className="flex flex-col gap-3 rounded-2xl border border-dashed border-border bg-muted/20 p-5">
         {header}
         <p className="text-sm text-muted-foreground">
-          {t.notIn}{' '}
-          <button type="button" onClick={onStartChoosing} className="inline-flex min-h-[32px] items-center font-semibold text-primary underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded">
-            {t.change}
-          </button>
+          {identity?.reason === 'ambiguous' ? t.ambiguous(identity.names) : t.notFound(firstName)}
         </p>
+        <Button asChild variant="outline" className="min-h-[44px] self-start">
+          <Link to={`${base}/members`}><Users className="h-4 w-4" /> {t.household}</Link>
+        </Button>
       </article>
     );
   }
