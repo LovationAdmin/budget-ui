@@ -3,8 +3,8 @@
 
 import { EmptyState } from '@/components/budget/EmptyState';
 import { useState, useEffect, useCallback, memo } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
-import { PiggyBank, Plus, ArrowRight, Trash2, MapPin, DollarSign, Pencil, Sparkles, Check } from "lucide-react";
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { PiggyBank, Plus, ArrowRight, Trash2, MapPin, DollarSign, Pencil, Sparkles, Check, UserCircle } from "lucide-react";
 import { budgetAPI } from '../../services/api';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
@@ -41,6 +41,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { intlLocale } from '@/lib/budget/format';
+import { overviewUseful } from '@/lib/budget/overview';
+import { publishBudgetList } from '@/hooks/useBudgetList';
 import { defineMessages, useT } from '@/i18n/runtime';
 
 interface Budget {
@@ -124,6 +126,8 @@ const M = defineMessages({
     deleteTitle: 'Supprimer ce budget ?',
     deleteText: (name = '') => `Cette action est irréversible. Toutes les données du budget "${name}" seront définitivement supprimées.`,
     deleting: 'Suppression...',
+    overviewTitle: 'Ma vue perso',
+    overviewText: 'Votre revenu, vos versements et votre argent de poche, tous budgets confondus.',
   },
   en: {
     countries: {
@@ -171,6 +175,8 @@ const M = defineMessages({
     deleteTitle: 'Delete this budget?',
     deleteText: (name = '') => `This can’t be undone. All the data in the budget “${name}” will be permanently deleted.`,
     deleting: 'Deleting...',
+    overviewTitle: 'My overview',
+    overviewText: 'Your income, what you pay in and your spending money, across all your budgets.',
   },
 });
 
@@ -342,13 +348,16 @@ export default function Dashboard() {
   const loadBudgets = useCallback(async () => {
     try {
       const response = await budgetAPI.list();
-      setBudgets(Array.isArray(response.data) ? response.data : []);
+      const list = Array.isArray(response.data) ? response.data : [];
+      setBudgets(list);
+      // The menus offer « Ma vue perso » from this list (no second request).
+      if (user?.id) publishBudgetList(user.id, list);
     } catch (error) {
       console.error('Error loading budgets:', error);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [user?.id]);
 
   useEffect(() => { loadBudgets(); }, [loadBudgets]);
 
@@ -508,6 +517,23 @@ export default function Dashboard() {
             </Button>
           </div>
         </div>
+
+        {/* « Ma vue perso »: only useful with several budgets, or a shared one */}
+        {!loading && overviewUseful(budgets) && (
+          <Link
+            to="/overview"
+            className="mb-6 flex items-center gap-4 rounded-2xl border border-border bg-card p-4 sm:p-5 shadow-card transition-shadow hover:shadow-elevated focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          >
+            <span aria-hidden="true" className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+              <UserCircle className="h-5 w-5" />
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block font-display text-base font-semibold text-foreground">{t.overviewTitle}</span>
+              <span className="block text-sm text-muted-foreground">{t.overviewText}</span>
+            </span>
+            <ArrowRight aria-hidden="true" className="h-5 w-5 shrink-0 text-muted-foreground" />
+          </Link>
+        )}
 
         {/* Budget List */}
         {loading ? (

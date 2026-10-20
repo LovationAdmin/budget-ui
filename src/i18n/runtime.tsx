@@ -21,7 +21,7 @@ import { setUiLocale, uiLocale } from './preference';
 export { defineMessages, pick, screenLocale, wordsIn, type Messages } from './current';
 
 /** Screens whose language follows the visitor's preference rather than their URL. */
-const PREFERENCE_PATHS = /^\/(login|signup|forgot-password|reset-password|verify-email|404|dashboard|profile)\/?$|^\/(budget|invitation|beta2|admin)(\/|$)/;
+const PREFERENCE_PATHS = /^\/(login|signup|forgot-password|reset-password|verify-email|404|dashboard|overview|profile)\/?$|^\/(budget|invitation|beta2|admin)(\/|$)/;
 
 export const followsPreference = (pathname: string) => PREFERENCE_PATHS.test(pathname);
 

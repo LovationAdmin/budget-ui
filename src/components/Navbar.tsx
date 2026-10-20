@@ -60,7 +60,8 @@ const ROUTE_MAP: Record<string, string> = {
 function sectionOf(path: string, signedIn: boolean): string | undefined {
   const fr = alternatesOf(path)?.fr ?? path;
   if (fr === '/') return signedIn ? 'dashboard' : 'home';
-  if (fr === '/dashboard' || fr.startsWith('/budget/')) return 'dashboard';
+  // « Ma vue perso » (/overview) is a view of the user's budgets.
+  if (fr === '/dashboard' || fr === '/overview' || fr.startsWith('/budget/')) return 'dashboard';
   if (fr === '/smart-tools' || fr === '/outils-ia') return 'smart-tools';
   if (fr === '/blog' || fr.startsWith('/blog/') || fr.startsWith('/en/blog')) return 'blog';
   const section = Object.entries(ROUTE_MAP).find(([, route]) => route === fr)?.[0];

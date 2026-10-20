@@ -69,6 +69,7 @@ const RentSplitCalculatorZh = lazy(() => import('./lib/pages/zh/RentSplitCalcula
 const WeddingBudgetCalculatorZh = lazy(() => import('./lib/pages/zh/WeddingBudgetCalculator'));
 const LeftoverIncomeCalculatorZh = lazy(() => import('./lib/pages/zh/LeftoverIncomeCalculator'));
 const Profile = lazy(() => import('./lib/pages/Profile'));
+const Overview = lazy(() => import('./lib/pages/Overview'));
 const AcceptInvitation = lazy(() => import('./lib/pages/AcceptInvitation'));
 const EnableBankingCallbackPage = lazy(() => import('./lib/pages/EnableBankingCallbackPage'));
 const NotFound = lazy(() => import('./lib/pages/NotFound'));
@@ -159,6 +160,15 @@ export default function App() {
             element={
               <PrivateRoute>
                 <Profile />
+              </PrivateRoute>
+            }
+          />
+          {/* « Ma vue perso »: the user's own money across all their budgets (?m=YYYY-MM) */}
+          <Route
+            path="/overview"
+            element={
+              <PrivateRoute>
+                <Overview />
               </PrivateRoute>
             }
           />

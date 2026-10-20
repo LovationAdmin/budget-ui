@@ -27,6 +27,7 @@ Allow: /en/
 Disallow: /dashboard
 Disallow: /budget/
 Disallow: /profile
+Disallow: /overview
 Disallow: /verify-email
 Disallow: /reset-password
 Disallow: /invitation/
@@ -52,6 +53,7 @@ Allow: /
 Disallow: /dashboard
 Disallow: /budget/
 Disallow: /profile
+Disallow: /overview
 Disallow: /api/
 
 # Bingbot
@@ -60,6 +62,7 @@ Allow: /
 Disallow: /dashboard
 Disallow: /budget/
 Disallow: /profile
+Disallow: /overview
 Disallow: /api/
 
 # Sitemap
