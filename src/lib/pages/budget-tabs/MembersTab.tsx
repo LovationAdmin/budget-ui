@@ -29,7 +29,7 @@ import {
   type SplitMethod,
 } from '@/lib/budget/engine';
 import { applyContributionRules, type ContributionRule } from '@/lib/budget/mutations';
-import { addMonths, compareYM, formatMonthLong, formatMonthShort, formatMonthTitle, joinFr, maxYM, deMonth, monthNameLower } from '@/lib/budget/months';
+import { addMonths, compareYM, formatMonthLong, formatMonthShort, formatMonthTitle, joinFr, maxYM, deMonth, monthIndex0, monthNameLower, monthNamesShort } from '@/lib/budget/months';
 import { moneySigned, percent, roundCents } from '@/lib/budget/format';
 import { ChipToggle, Pill, Segmented } from '@/components/budget/shared/primitives';
 import { MonthPicker } from '@/components/budget/shared/MonthPicker';
@@ -86,6 +86,7 @@ const M = defineMessages({
     covered: (pct: string) => `Les entrées couvrent ${pct} des besoins du mois (charges + épargne).`,
     notCovered: (pct: string, missing: string) => `Les entrées couvrent ${pct} des besoins : il manque ${missing}.`,
     frozen: ' Mois clôturé : montants figés.',
+    vsMonth: (delta: string, month: string) => `${delta} vs ${month}`,
     // Split assistant
     prorataExplain: (parts: string[]) => parts.join(', ') + ' : chacun verse cette part du besoin.',
     earns: (name: string, pct: string) => `${name} gagne ${pct} des revenus du foyer`,
@@ -188,6 +189,7 @@ const M = defineMessages({
     covered: (pct: string) => `Income covers ${pct} of the month’s needs (bills + savings).`,
     notCovered: (pct: string, missing: string) => `Income covers ${pct} of the needs: ${missing} short.`,
     frozen: ' Closed month: amounts frozen.',
+    vsMonth: (delta: string, month: string) => `${delta} vs ${month}`,
     // Split assistant
     prorataExplain: (parts: string[]) => parts.join(', ') + ': everyone pays in that share of the need.',
     earns: (name: string, pct: string) => `${name} earns ${pct} of the household’s income`,
@@ -350,13 +352,22 @@ function MemberCard({ person, index, refYm }: { person: Person; index: number; r
 
 /** The household pot for one month: what comes in vs what the month needs. */
 function PotPanel({ ym }: { ym: YM }) {
-  const { engine, fmt, budgetId } = useBudget();
+  const { engine, fmt, budgetId, currencySymbol } = useBudget();
   const words = useT(M);
   const m = engine.month(ym);
   const t = m.totals;
   const need = roundCents(t.charges + t.savings);
   const coverage = need > 0 ? (t.entrees / need) * 100 : 100;
   const scale = Math.max(t.entrees, need, 1);
+  // What moved since the month before, so a change simulated on a coming
+  // month shows up here (nothing to compare with before the budget starts).
+  const prevYm = addMonths(ym, -1);
+  const prev = engine.month(prevYm).totals;
+  const comparable = prev.entrees !== 0 || prev.charges !== 0 || prev.savings !== 0;
+  const vsPrev = (now: number, before: number) => {
+    const d = roundCents(now - before);
+    return comparable && d !== 0 ? words.vsMonth(moneySigned(d, currencySymbol), monthNamesShort()[monthIndex0(prevYm)]) : '';
+  };
   return (
     <section aria-labelledby="pot-title" className="flex flex-col gap-4 rounded-2xl border border-border/70 bg-card p-5 shadow-soft">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
@@ -367,10 +378,10 @@ function PotPanel({ ym }: { ym: YM }) {
       </div>
       <dl className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         {[
-          { label: words.income, value: t.entrees, dot: 'bg-emerald-500', hint: t.oneOff ? words.oneOffIncluded(fmt(t.oneOff)) : words.contributions(m.people.length) },
-          { label: words.charges, value: t.charges, dot: 'bg-orange-500', hint: words.chargeCount(m.charges.filter((c) => c.amount !== 0).length) },
-          { label: words.savings, value: t.savings, dot: 'bg-indigo-500', hint: words.setAside },
-          { label: t.reste >= 0 ? words.leftInPot : words.shortfall, value: t.reste, dot: t.reste >= 0 ? 'bg-emerald-300' : 'bg-red-500', hint: t.reste >= 0 ? words.toGeneral : words.fromGeneral, short: t.reste < 0 },
+          { label: words.income, value: t.entrees, dot: 'bg-emerald-500', hint: t.oneOff ? words.oneOffIncluded(fmt(t.oneOff)) : words.contributions(m.people.length), delta: vsPrev(t.entrees, prev.entrees) },
+          { label: words.charges, value: t.charges, dot: 'bg-orange-500', hint: words.chargeCount(m.charges.filter((c) => c.amount !== 0).length), delta: vsPrev(t.charges, prev.charges) },
+          { label: words.savings, value: t.savings, dot: 'bg-indigo-500', hint: words.setAside, delta: vsPrev(t.savings, prev.savings) },
+          { label: t.reste >= 0 ? words.leftInPot : words.shortfall, value: t.reste, dot: t.reste >= 0 ? 'bg-emerald-300' : 'bg-red-500', hint: t.reste >= 0 ? words.toGeneral : words.fromGeneral, short: t.reste < 0, delta: vsPrev(t.reste, prev.reste) },
         ].map((k) => (
           <div key={k.label} className="flex flex-col gap-0.5">
             <dt className="flex items-center gap-1.5 text-xs font-bold text-muted-foreground">
@@ -378,6 +389,7 @@ function PotPanel({ ym }: { ym: YM }) {
             </dt>
             <dd className={cn('font-display text-xl font-extrabold tabular-nums', k.short && 'text-red-700')}>{fmt(Math.abs(k.value))}</dd>
             <dd className="text-xs text-muted-foreground">{k.hint}</dd>
+            {k.delta && <dd className="text-xs font-semibold tabular-nums text-foreground/80">{k.delta}</dd>}
           </div>
         ))}
       </dl>
