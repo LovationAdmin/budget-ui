@@ -13,6 +13,9 @@ import { AppThemeProvider } from './components/theme/AppThemeProvider';
 import { registerSW } from 'virtual:pwa-register';
 
 import App from './App';
+import { ErrorFallback } from './components/ErrorFallback';
+import { SentryErrorBoundary } from './lib/sentry';
+import { isReloadingForNewVersion, reloadOnStaleVersion } from './lib/staleVersion';
 import { AuthProvider } from './contexts/AuthContext';
 import { NotificationProvider } from './contexts/NotificationContext';
 import { TutorialProvider } from './contexts/TutorialContext';
@@ -47,11 +50,21 @@ const updateSW = registerSW({
   },
 });
 
+// A screen of the previous version that no longer exists after a deploy:
+// reload once to get the new version instead of a blank page.
+reloadOnStaleVersion();
+
 // ============================================================================
 // Mount
 // ============================================================================
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
+    <SentryErrorBoundary
+      fallback={({ error }) =>
+        // Reloading for a new version: the page is about to go, show nothing.
+        isReloadingForNewVersion() ? <></> : <ErrorFallback error={error} resetError={() => window.location.reload()} />
+      }
+    >
     <BrowserRouter>
       <LocaleProvider>
       <AppThemeProvider>
@@ -65,5 +78,6 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
       </AppThemeProvider>
       </LocaleProvider>
     </BrowserRouter>
+    </SentryErrorBoundary>
   </React.StrictMode>
 );
