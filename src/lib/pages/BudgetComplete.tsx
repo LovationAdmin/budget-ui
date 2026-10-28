@@ -48,6 +48,9 @@ import { DEMO_TRANSACTIONS, DEMO_BANK_BALANCE, DEMO_MODE_LIMITS } from '@/consta
 import { useAdvisorJob } from '@/lib/ai/advisorJob';
 import { defineMessages, useT } from '@/i18n/runtime';
 
+/** Waits before retrying a save that got no answer from the server. */
+const SAVE_RETRY_DELAYS_MS = [2000, 5000, 15000];
+
 // ============================================================================
 // NAVIGATION
 // ============================================================================
@@ -229,19 +232,37 @@ export default function BudgetCompleteLayout() {
   // ============================================================================
   const isDemoRef = useRef(false);
   isDemoRef.current = isDemoMode;
+  // A save that got no answer (phone waking up, switching networks) is
+  // retried on its own, and again as soon as the connection or the page comes
+  // back; the error only shows once the retries are spent.
+  const retryRef = useRef<{ attempt: number; failed: boolean; timer?: ReturnType<typeof setTimeout> }>({ attempt: 0, failed: false });
+  const saveNowRef = useRef<() => Promise<void>>();
 
   const performSave = useCallback(async () => {
     if (!id || !loadedRef.current) return;
     if (isDemoRef.current) return;
+    clearTimeout(retryRef.current.timer);
     saveStateMachine.markSaving();
     try {
       const data = encodeBudget(modelRef.current, today, new Date().toISOString());
       await budgetAPI.updateData(id, { data } as never);
       dirtyRef.current = false;
+      retryRef.current = { attempt: 0, failed: false };
       saveStateMachine.markSaved();
     } catch (err: unknown) {
-      const message = (err as { response?: { data?: { error?: string } } })?.response?.data?.error || t.saveFailed;
-      saveStateMachine.markError(message);
+      const response = (err as { response?: { data?: { error?: string } } })?.response;
+      const delay = SAVE_RETRY_DELAYS_MS[retryRef.current.attempt];
+      retryRef.current.failed = true;
+      if (!response && delay !== undefined) {
+        retryRef.current.attempt += 1;
+        saveStateMachine.markPending();
+        retryRef.current.timer = setTimeout(() => saveNowRef.current?.().catch(() => undefined), delay);
+      } else {
+        retryRef.current.attempt = 0;
+        saveStateMachine.markError(response?.data?.error || t.saveFailed);
+      }
+      // Still unsaved: keeps the "leave the page?" warning on.
+      throw err;
     }
   }, [id, today, saveStateMachine, t]);
 
@@ -250,6 +271,21 @@ export default function BudgetCompleteLayout() {
     delay: 1500,
     enabled: !loading && !isDemoMode,
   });
+  saveNowRef.current = saveNow;
+
+  useEffect(() => {
+    const resume = () => {
+      if (document.visibilityState !== 'visible' || !retryRef.current.failed) return;
+      saveNowRef.current?.().catch(() => undefined);
+    };
+    window.addEventListener('online', resume);
+    document.addEventListener('visibilitychange', resume);
+    return () => {
+      window.removeEventListener('online', resume);
+      document.removeEventListener('visibilitychange', resume);
+      clearTimeout(retryRef.current.timer);
+    };
+  }, []);
 
   const scheduleSave = useCallback(
     (immediate?: boolean) => {

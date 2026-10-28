@@ -2,7 +2,7 @@
 // ============================================================================
 // ERROR FALLBACK
 // ============================================================================
-// UI affichée quand React crash et que le SentryErrorBoundary catche.
+// UI affichée quand React crash et que le SentryErrorBoundary (main.tsx) catche.
 // Doit être minimaliste : pas de dépendance qui pourrait elle-même crasher
 // (donc pas de hooks complexes, pas de contexte, pas d'API).
 // ============================================================================
@@ -13,17 +13,17 @@ import { LOCALES } from '@/i18n/locales';
 const M = defineMessages({
   fr: {
     title: 'Oups, une erreur est survenue',
-    text: "L'application a rencontré un problème inattendu. Nous avons été notifiés et travaillons à le résoudre.",
+    text: "L'application a rencontré un problème inattendu. Rechargez la page pour reprendre où vous en étiez.",
     details: 'Détails techniques (dev only)',
-    retry: 'Réessayer',
+    retry: 'Recharger la page',
     home: "Retour à l'accueil",
     ref: 'Réf:',
   },
   en: {
     title: 'Oops, something went wrong',
-    text: 'The app ran into an unexpected problem. We’ve been notified and are working on a fix.',
+    text: 'The app ran into an unexpected problem. Reload the page to pick up where you left off.',
     details: 'Technical details (dev only)',
-    retry: 'Try again',
+    retry: 'Reload the page',
     home: 'Back to home',
     ref: 'Ref:',
   },
