@@ -69,7 +69,8 @@ export function useAutoSave({
 
     timeoutRef.current = setTimeout(() => {
       console.log(`⏰ [AutoSave] Déclenchement auto-save après ${delay} ms`);
-      performSave();
+      // Failures are shown (and retried) by the caller's onSave.
+      performSave().catch(() => undefined);
     }, delay);
   }, [enabled, delay, performSave]);
 
