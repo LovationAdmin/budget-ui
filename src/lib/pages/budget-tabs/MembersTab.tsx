@@ -28,7 +28,7 @@ import {
   windowOf,
   type SplitMethod,
 } from '@/lib/budget/engine';
-import { applyContributionRules, type ContributionRule } from '@/lib/budget/mutations';
+import { applySplitMethod, readSplitSettings, sameSettings, SPLIT_KEY, splitNeed, splitRuleAt, splitRuleText, type SplitBasis, type SplitSettings } from '@/lib/budget/split';
 import { addMonths, formatMonthLong, formatMonthShort, formatMonthTitle, joinFr, maxYM, deMonth, monthIndex0, monthNameLower, monthNamesShort } from '@/lib/budget/months';
 import { moneySigned, percent, roundCents } from '@/lib/budget/format';
 import { ChipToggle, Pill, Segmented } from '@/components/budget/shared/primitives';
@@ -92,8 +92,7 @@ const M = defineMessages({
     equalExplain: (n: number) => `Le besoin est coupé en ${n} parts égales.`,
     resteExplain: (amount: string) => `Une fois les charges et l’épargne payées, chacun garde environ ${amount} d’argent de poche.`,
     allExplain: 'Chacun verse tout son salaire.',
-    settingSaved: 'Réglage de répartition enregistré pour le foyer.',
-    applied: (month: string) => `Nouvelles contributions appliquées à partir ${deMonth(month)}. Les mois précédents ne changent pas.`,
+    applied: (month: string) => `Méthode appliquée à partir ${deMonth(month)} : les contributions se recalculent chaque mois. Les mois précédents ne changent pas.`,
     splitTitle: 'Répartir le pot commun',
     splitIntro: 'Calcule une contribution juste pour chacun. Rien ne change tant que vous n’appliquez pas.',
     needMember: 'Ajoutez au moins un membre du foyer pour utiliser l’assistant.',
@@ -104,29 +103,29 @@ const M = defineMessages({
     step2: '2. Besoin à couvrir chaque mois',
     needBreakdown: (charges: string, savings: string, margin: number) => `charges ${charges} + épargne ${savings}${margin ? ` + marge ${margin} %` : ''}`,
     basisLabel: 'Base de calcul du besoin',
-    basisMonth: (month: string, amount: string) => `Mois ${deMonth(month)} · ${amount}`,
+    basisMonth: (amount: string) => `Mois par mois · ${amount}`,
     basisAverage: (amount: string) => `Lissé sur 12 mois · ${amount}`,
     basisPeak: (amount: string) => `Le plus chargé · ${amount}`,
     evenNote: (month: string) => `Le même besoin chaque mois sur les 12 mois à partir ${deMonth(month)}.`,
-    monthNote: (month: string) => `Les charges et l’épargne prévues en ${month}, le mois où la répartition commence. À revoir quand elles changent.`,
-    averageNote: (month: string) => `Moyenne des 12 mois à partir ${deMonth(month)} : les mois plus chargés puisent dans l’épargne générale.`,
-    peakNote: (month: string) => `${month} est le mois le plus chargé : chaque mois est couvert, le surplus des autres va à l’épargne générale.`,
+    monthNote: (month: string) => `Chaque mois couvre ses propres charges et son épargne (ici, celles ${deMonth(month)}) : les contributions suivent leurs changements.`,
+    averageNote: (month: string) => `Chaque mois, la moyenne des 12 mois qui suivent (ici, à partir ${deMonth(month)}) : des contributions stables, les mois plus chargés puisent dans l’épargne générale.`,
+    peakNote: (month: string) => `Chaque mois, le plus chargé des 12 mois qui suivent (ici, ${month}) : chaque mois est couvert, le surplus des autres va à l’épargne générale.`,
     endingNote: (labels: string[], lasts: string[]) =>
       ` ${joinFr(labels.map((l) => `« ${l} »`))} ${labels.length > 1 ? 's’arrêtent' : 's’arrête'} en cours de route (${joinFr(lasts.map((m) => `fin ${m}`))}) : ${labels.length > 1 ? 'elles ne pèsent' : 'elle ne pèse'} que sur les premiers mois.`,
     marginLabel: 'Marge de sécurité',
     noMargin: 'Sans marge',
     marginChip: (v: number) => `+${v} %`,
-    step3: '3. Résultat',
+    step3: (month: string) => `3. Résultat en ${month}`,
     wouldPay: 'verserait',
     resultLine: (salary: string, keep: string, personal?: string, share?: string) =>
       `Salaire ${salary} · argent de poche ${keep}${personal ? ` (dont ${personal} de charges perso)` : ''} · ${share ? `${share} du salaire` : '—'}`,
     sameAsToday: 'comme aujourd’hui',
     vsToday: (delta: string) => `${delta} vs aujourd’hui`,
     surplus: (amount: string) => `Excédent de ${amount} par mois → épargne générale.`,
+    livingNote: (month: string) => `Une fois appliquée, la méthode recalcule les contributions chaque mois à partir ${deMonth(month)}, en suivant les charges, l’épargne et les salaires, jusqu’à ce que vous en changiez.`,
     applyFrom: 'Appliquer à partir de',
-    currentSetting: (method: string, margin: number) => `Réglage en place : ${method}${margin ? ` · marge ${margin} %` : ' · sans marge'}.`,
+    currentSetting: (method: string, margin: number, since?: string) => `${since ? `En place depuis ${since}` : 'Réglage en place'} : ${method}${margin ? ` · marge ${margin} %` : ' · sans marge'}.`,
     backToSetting: 'Revenir à ce réglage',
-    saveSetting: 'Enregistrer ce réglage',
     alreadyInPlace: 'Déjà en place',
     applyFromMonth: (month: string) => `Appliquer à partir ${deMonth(month)}`,
     // Tab
@@ -191,8 +190,7 @@ const M = defineMessages({
     equalExplain: (n: number) => (n === 1 ? 'With a single member, they cover the whole need.' : `The need is split into ${n} equal shares.`),
     resteExplain: (amount: string) => `Once the bills and savings are paid, everyone keeps about ${amount} of spending money.`,
     allExplain: 'Everyone pays in all their pay.',
-    settingSaved: 'Split setting saved for the household.',
-    applied: (month: string) => `New contributions applied from ${month}. Earlier months don’t change.`,
+    applied: (month: string) => `Method applied from ${month}: contributions are worked out again every month. Earlier months don’t change.`,
     splitTitle: 'Split the joint pot',
     splitIntro: 'Works out a fair contribution for everyone. Nothing changes until you apply it.',
     needMember: 'Add at least one household member to use the assistant.',
@@ -203,29 +201,29 @@ const M = defineMessages({
     step2: '2. Need to cover each month',
     needBreakdown: (charges: string, savings: string, margin: number) => `bills ${charges} + savings ${savings}${margin ? ` + ${margin}% margin` : ''}`,
     basisLabel: 'What the need is based on',
-    basisMonth: (month: string, amount: string) => `${month} · ${amount}`,
+    basisMonth: (amount: string) => `Month by month · ${amount}`,
     basisAverage: (amount: string) => `Spread over 12 months · ${amount}`,
     basisPeak: (amount: string) => `Busiest month · ${amount}`,
     evenNote: (month: string) => `The same need every month over the 12 months from ${month}.`,
-    monthNote: (month: string) => `The bills and savings planned for ${month}, the month the split starts. Worth revisiting when they change.`,
-    averageNote: (month: string) => `Average of the 12 months from ${month}: busier months draw on general savings.`,
-    peakNote: (month: string) => `${month} is the busiest month: every month is covered, and the other months’ surplus goes to general savings.`,
+    monthNote: (month: string) => `Each month covers its own bills and savings (here, ${month}’s): contributions follow their changes.`,
+    averageNote: (month: string) => `Each month, the average of the 12 months that follow (here, from ${month}): steady contributions, busier months draw on general savings.`,
+    peakNote: (month: string) => `Each month, the busiest of the 12 months that follow (here, ${month}): every month is covered, the other months’ surplus goes to general savings.`,
     endingNote: (labels: string[], lasts: string[]) =>
       ` ${joinFr(labels.map((l) => `“${l}”`))} ${labels.length > 1 ? 'stop' : 'stops'} along the way (${joinFr(lasts.map((m) => `end of ${m}`))}): ${labels.length > 1 ? 'they only weigh' : 'it only weighs'} on the first months.`,
     marginLabel: 'Safety margin',
     noMargin: 'No margin',
     marginChip: (v: number) => `+${v}%`,
-    step3: '3. Result',
+    step3: (month: string) => `3. Result in ${month}`,
     wouldPay: 'would pay in',
     resultLine: (salary: string, keep: string, personal?: string, share?: string) =>
       `Pay ${salary} · spending money ${keep}${personal ? ` (including ${personal} of personal expenses)` : ''} · ${share ? `${share} of pay` : '—'}`,
     sameAsToday: 'same as today',
     vsToday: (delta: string) => `${delta} vs today`,
     surplus: (amount: string) => `Surplus of ${amount} a month → general savings.`,
+    livingNote: (month: string) => `Once applied, the method works contributions out again every month from ${month}, following bills, savings and pay, until you change it.`,
     applyFrom: 'Apply from',
-    currentSetting: (method: string, margin: number) => `Current setting: ${method}${margin ? ` · ${margin}% margin` : ' · no margin'}.`,
+    currentSetting: (method: string, margin: number, since?: string) => `${since ? `In place since ${since}` : 'Current setting'}: ${method}${margin ? ` · ${margin}% margin` : ' · no margin'}.`,
     backToSetting: 'Go back to this setting',
-    saveSetting: 'Save this setting',
     alreadyInPlace: 'Already in place',
     applyFromMonth: (month: string) => `Apply from ${month}`,
     // Tab
@@ -243,7 +241,7 @@ const M = defineMessages({
 });
 
 function MemberCard({ person, index, refYm }: { person: Person; index: number; refYm: YM }) {
-  const { fmt, openSheet, today, engine } = useBudget();
+  const { fmt, openSheet, today, engine, model } = useBudget();
   const t = useT(M);
   const firstOpen = useFirstOpenMonth();
   const status = personStatus(person, today);
@@ -251,6 +249,7 @@ function MemberCard({ person, index, refYm }: { person: Person; index: number; r
   const ref = status === 'upcoming' ? w.start ?? refYm : status === 'ended' ? w.end ?? refYm : refYm;
   // The viewed month as the month screen shows it: frozen values for a closed month.
   const r = engine.month(ref).people.find((p) => p.id === person.id) ?? resolvePerson(person, ref);
+  const method = engine.isClosed(ref) ? undefined : splitRuleAt(model, ref)?.settings?.method;
   if (!r) {
     return (
       <article className="flex items-center gap-3 rounded-2xl border border-dashed border-border bg-muted/20 p-5">
@@ -311,7 +310,7 @@ function MemberCard({ person, index, refYm }: { person: Person; index: number; r
           <span className="block h-full rounded-full bg-emerald-500" style={{ width: `${Math.min(100, share)}%` }} />
         </span>
         <span className="text-xs text-muted-foreground">
-          {t.share(percent(share), r.contributionAdjusted ? t.adjustedThisMonth : contributionRuleText(r.mode, r.value))}
+          {t.share(percent(share), r.contributionAdjusted ? t.adjustedThisMonth : method ? splitRuleText(method) : contributionRuleText(r.mode, r.value))}
         </span>
       </div>
       <div className="flex flex-col gap-2 border-t border-border/60 pt-3 sm:flex-row sm:items-end sm:justify-between">
@@ -405,33 +404,13 @@ function PotPanel({ ym }: { ym: YM }) {
   );
 }
 
-type SplitBasis = 'month' | 'average' | 'peak';
-interface SplitSettings {
-  method: SplitMethod;
-  margin: number;
-  basis: SplitBasis;
-}
-
 const SPLIT_DEFAULTS: SplitSettings = { method: 'prorata', margin: 5, basis: 'month' };
-/** Top-level key of the shared budget data holding the settings last applied. */
-const SPLIT_KEY = 'splitSettings';
 const draftKey = (budgetId: string) => `split-draft:${budgetId}`;
-
-/** Keeps only valid settings from stored, untrusted data. */
-function readSplit(raw: unknown): Partial<SplitSettings> {
-  if (!raw || typeof raw !== 'object') return {};
-  const v = raw as Record<string, unknown>;
-  const out: Partial<SplitSettings> = {};
-  if (METHODS.includes(v.method as SplitMethod)) out.method = v.method as SplitMethod;
-  if (v.margin === 0 || v.margin === 5 || v.margin === 10) out.margin = v.margin;
-  if (v.basis === 'month' || v.basis === 'average' || v.basis === 'peak') out.basis = v.basis;
-  return out;
-}
 
 function readDraft(budgetId: string | undefined): Partial<SplitSettings> {
   if (!budgetId) return {};
   try {
-    return readSplit(JSON.parse(localStorage.getItem(draftKey(budgetId)) ?? 'null'));
+    return readSplitSettings(JSON.parse(localStorage.getItem(draftKey(budgetId)) ?? 'null'));
   } catch {
     return {};
   }
@@ -443,7 +422,7 @@ function SplitAssistant() {
   const firstOpen = useFirstOpenMonth();
   // The household's applied settings are shared in the budget data; choices not
   // applied yet are kept on this device so leaving the tab does not lose them.
-  const applied: SplitSettings = { ...SPLIT_DEFAULTS, ...readSplit(model.extras[SPLIT_KEY]) };
+  const applied: SplitSettings = { ...SPLIT_DEFAULTS, ...readSplitSettings(model.extras[SPLIT_KEY]) };
   const [initial] = useState<SplitSettings>(() => ({ ...applied, ...readDraft(budget?.id) }));
   const [method, setMethod] = useState<SplitMethod>(initial.method);
   const [margin, setMargin] = useState(initial.margin);
@@ -484,11 +463,12 @@ function SplitAssistant() {
   const peakTotal = Math.round(peakMonth.totals.charges + peakMonth.totals.savings);
   const uneven = peakTotal > avgC + avgS || monthTotal !== avgC + avgS;
   const effBasis = uneven ? basis : 'average';
-  const basisMonth = effBasis === 'peak' ? peakMonth : effBasis === 'month' ? fromMonth : null;
-  const needC = basisMonth ? Math.round(basisMonth.totals.charges) : avgC;
-  const needS = basisMonth ? Math.round(basisMonth.totals.savings) : avgS;
+  // Same need as the months the method will fill (see split.ts), here for `from`.
+  const { charges: needC, savings: needS, need } = splitNeed(engine, from, { basis: effBasis, margin });
   const withMargin = (v: number) => Math.round(v * (1 + margin / 100));
-  const need = withMargin(needC + needS);
+  // The method in place in `from`, if any: applying the same one again changes nothing.
+  const living = splitRuleAt(model, from);
+  const inPlace = sameSettings(living?.settings ?? null, { method, margin, basis });
   const ending = chargesEndingBetween(model, from, addMonths(from, 11));
   // Personal charges are not rebalanced: they are only shown inside each pocket money.
   const personalAt = (personId: string) => engine.month(from).people.find((p) => p.id === personId)?.personalCharges ?? 0;
@@ -497,7 +477,6 @@ function SplitAssistant() {
   const totalSalaries = salaries.reduce((a, b) => a + b, 0);
   const totalProposal = proposal.reduce((a, b) => a + b, 0);
   const surplus = roundCents(totalProposal - need);
-  const unchanged = members.every((m, i) => roundCents(m.r.contribution) === roundCents(proposal[i]));
 
   let explain = '';
   if (method === 'prorata') {
@@ -507,16 +486,7 @@ function SplitAssistant() {
   else explain = t.allExplain;
 
   const apply = () => {
-    const rules: Record<string, ContributionRule> = {};
-    members.forEach((m, i) => {
-      rules[m.person.id] = method === 'all' ? { mode: 'all' } : { mode: 'fixed', value: proposal[i] };
-    });
-    const settings: SplitSettings = { method, margin, basis };
-    commit((m) => ({ ...applyContributionRules(m, from, rules, today), extras: { ...m.extras, [SPLIT_KEY]: settings } }), {
-      message: unchanged
-        ? t.settingSaved
-        : t.applied(formatMonthLong(from)),
-    });
+    commit((m) => applySplitMethod(m, from, { method, margin, basis }, today), { message: t.applied(formatMonthLong(from)) });
   };
 
   return (
@@ -560,7 +530,7 @@ function SplitAssistant() {
                 value={basis}
                 onChange={setBasis}
                 options={[
-                  { value: 'month', label: t.basisMonth(monthNameLower(from), fmt(withMargin(monthTotal))) },
+                  { value: 'month', label: t.basisMonth(fmt(withMargin(monthTotal))) },
                   { value: 'average', label: t.basisAverage(fmt(withMargin(avgC + avgS))) },
                   { value: 'peak', label: t.basisPeak(fmt(withMargin(peakTotal))) },
                 ]}
@@ -570,7 +540,7 @@ function SplitAssistant() {
                 {!uneven
                   ? t.evenNote(formatMonthShort(from))
                   : effBasis === 'month'
-                  ? t.monthNote(formatMonthLong(from))
+                  ? t.monthNote(monthNameLower(from))
                   : effBasis === 'average'
                   ? t.averageNote(formatMonthShort(from))
                   : t.peakNote(formatMonthTitle(peakMonth.ym))}
@@ -591,7 +561,7 @@ function SplitAssistant() {
           </div>
 
           <div className="flex flex-col gap-3">
-            <span className="text-sm font-semibold">{t.step3}</span>
+            <span className="text-sm font-semibold">{t.step3(formatMonthLong(from))}</span>
             {members.map((m, i) => {
               const delta = roundCents(proposal[i] - m.r.contribution);
               return (
@@ -616,13 +586,14 @@ function SplitAssistant() {
             })}
             <p className="text-sm">{explain}</p>
             {surplus > 0 && <p className="text-xs text-muted-foreground">{t.surplus(fmt(surplus))}</p>}
+            <p className="rounded-xl bg-sky-50 px-3.5 py-2.5 text-sm text-sky-950">{t.livingNote(formatMonthLong(from))}</p>
             <div className="flex flex-col gap-2">
               <span className="text-sm font-semibold">{t.applyFrom}</span>
               <MonthPicker value={from} onChange={setFrom} min={firstOpen} ariaLabel={t.applyFrom} />
             </div>
             {isDraft && model.extras[SPLIT_KEY] !== undefined && (
               <p className="text-xs text-muted-foreground">
-                {t.currentSetting(t.methods[applied.method].label, applied.margin)}{' '}
+                {t.currentSetting(t.methods[applied.method].label, applied.margin, living ? formatMonthLong(living.from) : undefined)}{' '}
                 <button
                   type="button"
                   className="font-semibold text-primary underline-offset-2 hover:underline"
@@ -632,8 +603,8 @@ function SplitAssistant() {
                 </button>
               </p>
             )}
-            <Button className="min-h-[48px]" onClick={apply} disabled={unchanged && !isDraft}>
-              {unchanged ? (isDraft ? t.saveSetting : t.alreadyInPlace) : t.applyFromMonth(formatMonthLong(from))}
+            <Button className="min-h-[48px]" onClick={apply} disabled={inPlace}>
+              {inPlace ? t.alreadyInPlace : t.applyFromMonth(formatMonthLong(from))}
             </Button>
           </div>
         </div>

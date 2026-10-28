@@ -38,6 +38,7 @@ import type { BudgetModel, Charge, PrivateChargeDetails, YM } from '@/lib/budget
 import { GENERAL_SAVINGS_ID, PRIVATE_CHARGE_LABEL } from '@/lib/budget/types';
 import { BudgetEngine } from '@/lib/budget/engine';
 import { autoCloseMonths, decodeBudget, encodeBudget } from '@/lib/budget/codec';
+import { deriveSplit } from '@/lib/budget/split';
 import { currentYM } from '@/lib/budget/months';
 import { currencySymbol as symbolFor, money } from '@/lib/budget/format';
 import { parsePrivateCharges } from '@/lib/budget/overview';
@@ -202,7 +203,10 @@ export default function BudgetCompleteLayout() {
         const raw: unknown = dataRes.data?.data ?? dataRes.data ?? {};
         const decoded = decodeBudget(raw, today);
         if (!decoded.budgetTitle) decoded.budgetTitle = budgetRes.data?.name || '';
-        const { model: closed, changed } = autoCloseMonths(decoded, today, new Date().toISOString());
+        const { model: closedModel, changed: closedChanged } = autoCloseMonths(decoded, today, new Date().toISOString());
+        // The household's split method fills the months that opened since.
+        const closed = deriveSplit(closedModel, today);
+        const changed = closedChanged || closed !== closedModel;
         modelRef.current = closed;
         setModel(closed);
         dirtyRef.current = false;
@@ -307,7 +311,8 @@ export default function BudgetCompleteLayout() {
   const commit = useCallback(
     (updater: (m: BudgetModel) => BudgetModel, options: CommitOptions = {}) => {
       const prev = modelRef.current;
-      const next = updater(prev);
+      // Every change re-runs the household's split method on the months it governs.
+      const next = deriveSplit(updater(prev), today);
       if (next === prev) return;
       modelRef.current = next;
       setModel(next);
@@ -335,7 +340,7 @@ export default function BudgetCompleteLayout() {
         });
       }
     },
-    [scheduleSave, toast, t],
+    [scheduleSave, toast, t, today],
   );
 
   // ============================================================================

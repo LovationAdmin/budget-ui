@@ -21,6 +21,7 @@ import {
   windowOf,
 } from '@/lib/budget/engine';
 import { clearPersonMonthException, newId, removePerson, setPersonMoney, updatePerson, upsertPerson } from '@/lib/budget/mutations';
+import { splitRuleAt, splitRuleText } from '@/lib/budget/split';
 import {
   addMonths,
   compareYM,
@@ -62,6 +63,10 @@ const M = defineMessages({
     nameRequired: 'Indiquez un prénom.',
     joined: (name: string, amount: string, from?: string) =>
       `${name} fait partie du foyer${from ? ` à partir ${deMonth(from)}` : ''} : ${amount} par mois au pot commun.`,
+    joinedMethod: (name: string, from?: string) =>
+      `${name} fait partie du foyer${from ? ` à partir ${deMonth(from)}` : ''} : sa contribution suit la méthode du foyer.`,
+    methodNote: (rule: string) => `Calculée chaque mois par la méthode du foyer : ${rule}. La changer « à partir de » ce mois arrête la méthode pour tout le foyer.`,
+    newMethodNote: (rule: string) => `Sa contribution suivra la méthode du foyer (${rule}) : elle est calculée chaque mois.`,
     newTitle: 'Nouveau membre du foyer',
     newDescription: 'Son salaire et ce qu’il/elle met dans le pot commun.',
     namePlaceholder: 'Ex. : Camille',
@@ -145,6 +150,10 @@ const M = defineMessages({
     nameRequired: 'Enter a first name.',
     joined: (name: string, amount: string, from?: string) =>
       `${name} is part of the household${from ? ` from ${from}` : ''}: ${amount} a month into the joint pot.`,
+    joinedMethod: (name: string, from?: string) =>
+      `${name} is part of the household${from ? ` from ${from}` : ''}: their contribution follows the household’s method.`,
+    methodNote: (rule: string) => `Worked out every month by the household’s method: ${rule}. Changing it “from” this month stops the method for the whole household.`,
+    newMethodNote: (rule: string) => `Their contribution will follow the household’s method (${rule}): it is worked out every month.`,
     newTitle: 'New household member',
     newDescription: 'Their take-home pay and what they put into the joint pot.',
     namePlaceholder: 'E.g. Alex',
@@ -233,6 +242,8 @@ function MoneyFields({
   onEdit,
   salaryHint,
   contributionHint,
+  methodNote,
+  followsMethod,
 }: {
   idPrefix: string;
   salary: string;
@@ -244,6 +255,10 @@ function MoneyFields({
   onEdit: () => void;
   salaryHint?: string;
   contributionHint?: string;
+  /** The contribution is worked out by the household's method (shown under it). */
+  methodNote?: string;
+  /** A new member joins the household's method: no contribution to choose. */
+  followsMethod?: string;
 }) {
   const { fmt, currencySymbol } = useBudget();
   const t = useT(M);
@@ -269,6 +284,10 @@ function MoneyFields({
         <MoneyInput id={`${idPrefix}-salary`} value={salary} onChange={(e) => { setSalary(e.target.value); onEdit(); }} placeholder="0" suffix={currencySymbol} />
         {salaryHint && <p className="mt-1.5 text-xs text-muted-foreground">{salaryHint}</p>}
       </div>
+      {followsMethod ? (
+        <p className="rounded-xl bg-sky-50 px-4 py-3 text-sm text-sky-950">{followsMethod}</p>
+      ) : (
+      <>
       <div>
         <span className="mb-2 block text-sm font-semibold">{t.paysIn}</span>
         <Segmented label={t.contributionLabel} value={mode} options={MODES.map((value) => ({ value, label: t.modes[value] }))} onChange={pickMode} />
@@ -279,6 +298,7 @@ function MoneyFields({
           </div>
         )}
         {contributionHint && <p className="mt-1.5 text-xs text-muted-foreground">{contributionHint}</p>}
+        {methodNote && <p className="mt-2 rounded-lg bg-sky-50 px-3 py-2 text-xs text-sky-950">{methodNote}</p>}
       </div>
       <div className="rounded-xl border border-teal-100 bg-teal-50 px-4 py-3">
         <p className="text-[15px] font-semibold text-teal-950">
@@ -286,6 +306,8 @@ function MoneyFields({
         </p>
         {sOk && contribution > s && <p className="mt-1 text-sm text-orange-900">{t.overPay}</p>}
       </div>
+      </>
+      )}
     </>
   );
 }
@@ -311,7 +333,7 @@ export function MemberSheet({ sheet, onClose }: SheetProps<'member'>) {
 }
 
 function NewMember({ ym, onClose }: { ym: YM; onClose: () => void }) {
-  const { commit, today, fmt } = useBudget();
+  const { commit, today, fmt, model } = useBudget();
   const t = useT(M);
   const [name, setName] = useState('');
   const [salary, setSalary] = useState('');
@@ -320,18 +342,21 @@ function NewMember({ ym, onClose }: { ym: YM; onClose: () => void }) {
   const [arrives, setArrives] = useState(false);
   const [start, setStart] = useState<YM>(compareYM(ym, today) < 0 ? today : ym);
   const [error, setError] = useState('');
+  // Under the household's split method, the newcomer's contribution is worked out by it.
+  const method = splitRuleAt(model, arrives ? start : today)?.settings?.method;
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim()) return failOn('nm-name', setError, t.nameRequired);
-    const check = validate(salary, mode, value);
+    const check = validate(salary, method ? 'all' : mode, value);
     if (check.error) return setError(check.error);
     const person: Person = { id: newId('m'), name: name.trim(), salary: roundCents(check.s) };
     if (arrives) person.startDate = startDateOf(start);
-    if (mode !== 'all') person.contributions = [{ from: arrives ? start : today, mode, value: roundCents(check.v) }];
+    if (!method && mode !== 'all') person.contributions = [{ from: arrives ? start : today, mode, value: roundCents(check.v) }];
     const contribution = contributionOf(mode, check.s, check.v);
+    const from = arrives ? formatMonthLong(start) : undefined;
     commit((m) => upsertPerson(m, person), {
-      message: t.joined(person.name, fmt(contribution), arrives ? formatMonthLong(start) : undefined),
+      message: method ? t.joinedMethod(person.name, from) : t.joined(person.name, fmt(contribution), from),
     });
     onClose();
   };
@@ -343,7 +368,17 @@ function NewMember({ ym, onClose }: { ym: YM; onClose: () => void }) {
           <FieldLabel htmlFor="nm-name">{t.firstName}</FieldLabel>
           <Input id="nm-name" value={name} onChange={(e) => { setName(e.target.value); setError(''); }} placeholder={t.namePlaceholder} className="h-12 rounded-xl text-base" autoComplete="off" />
         </div>
-        <MoneyFields idPrefix="nm" salary={salary} setSalary={setSalary} mode={mode} setMode={setMode} value={value} setValue={setValue} onEdit={() => setError('')} />
+        <MoneyFields
+          idPrefix="nm"
+          salary={salary}
+          setSalary={setSalary}
+          mode={mode}
+          setMode={setMode}
+          value={value}
+          setValue={setValue}
+          onEdit={() => setError('')}
+          followsMethod={method ? t.newMethodNote(splitRuleText(method)) : undefined}
+        />
         <div>
           <span className="mb-2 block text-sm font-semibold">{t.inHousehold}</span>
           <div role="group" aria-label={t.joiningAria} className="flex flex-wrap gap-2">
@@ -364,7 +399,7 @@ function NewMember({ ym, onClose }: { ym: YM; onClose: () => void }) {
 }
 
 function EditMember({ person, ym, onClose }: { person: Person; ym: YM; onClose: () => void }) {
-  const { commit, today, fmt, engine, openSheet } = useBudget();
+  const { commit, today, fmt, engine, openSheet, model } = useBudget();
   const t = useT(M);
   const resolved = resolvePerson(person, ym);
   const rule = stepAt(person.contributions, ym);
@@ -384,6 +419,7 @@ function EditMember({ person, ym, onClose }: { person: Person; ym: YM; onClose: 
 
   const closed = engine.isClosed(ym);
   const monthLabel = formatMonthLong(ym);
+  const method = closed ? undefined : splitRuleAt(model, ym)?.settings?.method;
   const check = validate(salary, mode, value);
   const changed = useMemo(() => {
     if (check.error) return true;
@@ -427,6 +463,7 @@ function EditMember({ person, ym, onClose }: { person: Person; ym: YM; onClose: 
           onEdit={() => setError('')}
           salaryHint={amountHistoryHint(person.salaryHistory, ym, fmt)}
           contributionHint={contributionHistoryHint(person, ym, fmt)}
+          methodNote={method ? t.methodNote(splitRuleText(method)) : undefined}
         />
         <ErrorText>{error}</ErrorText>
         {changed ? (

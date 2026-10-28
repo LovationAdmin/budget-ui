@@ -10,6 +10,7 @@ import { cn } from '@/lib/utils';
 import { useBudget } from '@/contexts/BudgetContext';
 import type { ResolvedCharge, ResolvedMonth } from '@/lib/budget/engine';
 import { contributionRuleText, customMonthsText, windowOf } from '@/lib/budget/engine';
+import { splitRuleAt, splitRuleText } from '@/lib/budget/split';
 import { removeOneOff, setChargeMonthAmount } from '@/lib/budget/mutations';
 import { formatMonthLong, monthNameLower, monthNamesShort, monthIndex0, deMonth } from '@/lib/budget/months';
 import type { YM } from '@/lib/budget/types';
@@ -137,9 +138,11 @@ function useClosedGuard(ym: YM, closed: boolean) {
 // ---------------------------------------------------------------------------
 export function IncomeCard({ month }: { month: ResolvedMonth }) {
   const t = useT(M);
-  const { fmt, openSheet, commit } = useBudget();
+  const { fmt, openSheet, commit, model } = useBudget();
   const guard = useClosedGuard(month.ym, month.closed);
   const totals = month.totals;
+  // Open months under the household's split method say so instead of "montant fixe".
+  const method = month.closed ? undefined : splitRuleAt(model, month.ym)?.settings?.method;
   return (
     <SectionCard
       id="entrees"
@@ -171,7 +174,7 @@ export function IncomeCard({ month }: { month: ResolvedMonth }) {
               </span>
               <span className="text-xs text-muted-foreground">
                 {t.pay(fmt(p.salary), fmt(p.keep), p.personalCharges > 0 ? fmt(p.personalCharges) : null)}{' '}
-                {p.contributionAdjusted || p.salaryAdjusted ? t.adjusted : contributionRuleText(p.mode, p.value)}
+                {p.contributionAdjusted || p.salaryAdjusted ? t.adjusted : method ? splitRuleText(method) : contributionRuleText(p.mode, p.value)}
                 {p.deleted ? t.leftHousehold : ''}
               </span>
             </span>

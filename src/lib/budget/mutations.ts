@@ -38,6 +38,7 @@ import {
   isRecurringProject,
 } from './engine';
 import { roundCents } from './format';
+import { stopSplitMethod } from './split';
 
 export type Scope = 'month' | 'forward' | 'all';
 
@@ -257,7 +258,8 @@ export interface ContributionRule {
 
 /**
  * Salary and contribution of a member, either for one month (exception) or
- * from `ym` onward (new rule, earlier months untouched).
+ * from `ym` onward (new rule, earlier months untouched). A contribution set by
+ * hand from `ym` on stops the household's split method there.
  */
 export function setPersonMoney(
   model: BudgetModel,
@@ -268,6 +270,12 @@ export function setPersonMoney(
   scope: 'month' | 'forward',
   today: YM,
 ): BudgetModel {
+  if (scope === 'forward') {
+    const person = model.people.find((p) => p.id === id);
+    const current = person && (stepAt(person.contributions, ym) ?? { from: ym, mode: 'all' as const });
+    const wanted: ContributionStep = rule.mode === 'all' ? { from: ym, mode: 'all' } : { from: ym, mode: rule.mode, value: roundCents(Number(rule.value) || 0) };
+    if (current && !sameRule(current, wanted)) model = stopSplitMethod(model, ym);
+  }
   return {
     ...model,
     people: mapById(model.people, id, (p) => {
@@ -329,7 +337,7 @@ export function clearPersonMonthException(model: BudgetModel, id: string, ym: YM
 
 /** Applies the same kind of rule to several members from `ym` onward. */
 export function applyContributionRules(model: BudgetModel, ym: YM, rules: Record<string, ContributionRule>, today: YM): BudgetModel {
-  let next = model;
+  let next = stopSplitMethod(model, ym);
   for (const person of model.people) {
     const rule = rules[person.id];
     if (!rule) continue;
