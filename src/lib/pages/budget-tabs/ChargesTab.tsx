@@ -3,7 +3,9 @@
 // « Charges » — the catalog of rules. Each month fills itself from these rules;
 // month-only exceptions are made from the month itself. Charges are sorted by
 // status (en cours / à venir / terminées) so a charge that ended in March no
-// longer clutters the list in August, while staying in the history.
+// longer clutters the list in August, while staying in the history. Statuses,
+// amounts and totals are those of the month shown, which lives in the URL
+// (?m=YYYY-MM) like on the month screen.
 // ============================================================================
 
 import { useEffect, useMemo, useState } from 'react';
@@ -29,9 +31,10 @@ import {
   type ItemStatus,
 } from '@/lib/budget/engine';
 import { updateCharge } from '@/lib/budget/mutations';
-import { addMonths, deMonth, joinFr, monthNameLower } from '@/lib/budget/months';
+import { addMonths, deMonth, isYM, joinFr, maxYM, monthNameLower } from '@/lib/budget/months';
 import { roundCents } from '@/lib/budget/format';
 import { CategoryIcon, ChipToggle } from '@/components/budget/shared/primitives';
+import { MonthStepper } from '@/components/budget/shared/MonthStepper';
 import { useChargePrivacy, useFirstOpenMonth, useHashScroll } from '@/components/budget/shared/hooks';
 import { defineMessages, useT } from '@/i18n/runtime';
 
@@ -50,12 +53,12 @@ const M = defineMessages({
     filterAria: 'Filtrer les charges',
     endedInfo: 'Une charge terminée n’apparaît plus dans les mois suivants. Les mois clôturés gardent leur photo : vous pouvez la supprimer sans perdre l’historique.',
     monthCharges: (month: string) => `Charges ${deMonth(month)}`,
-    thisMonthCount: (n: number) => `${n} charges ce mois-ci`,
+    monthCount: (n: number, current: boolean) => `${n} charge${n > 1 ? 's' : ''} ${current ? 'ce mois-ci' : 'ce mois-là'}`,
     sameAmount: 'Le même montant chaque mois sur les 12 prochains mois.',
     average: 'Moyenne sur 12 mois',
     endingSoon: (items: Array<{ label: string; month: string }>) =>
       `Plus basse car ${joinFr(items.map(({ label, month }) => `« ${label} » (jusqu’en ${month})`))} ${items.length > 1 ? 's’arrêtent' : 's’arrête'} bientôt.`,
-    lower: 'Plus basse : ce mois-ci compte des charges qui ne reviennent pas tous les mois.',
+    lower: (current: boolean) => `Plus basse : ${current ? 'ce mois-ci' : 'ce mois-là'} compte des charges qui ne reviennent pas tous les mois.`,
     higher: 'Plus haute : des charges annuelles ou ponctuelles arrivent dans les prochains mois.',
     uncategorized: (n: number) => `${n} charge${n > 1 ? 's' : ''} sans catégorie : les suggestions d’économies ne peuvent pas les comparer.`,
     detect: 'Détecter les catégories',
@@ -90,12 +93,12 @@ const M = defineMessages({
     filterAria: 'Filter bills',
     endedInfo: 'An ended bill no longer shows up in the following months. Closed months keep their snapshot: you can delete it without losing the history.',
     monthCharges: (month: string) => `${month} bills`,
-    thisMonthCount: (n: number) => (n === 1 ? '1 bill this month' : `${n} bills this month`),
+    monthCount: (n: number, current: boolean) => `${n === 1 ? '1 bill' : `${n} bills`} ${current ? 'this month' : 'that month'}`,
     sameAmount: 'The same amount every month for the next 12 months.',
     average: '12-month average',
     endingSoon: (items: Array<{ label: string; month: string }>) =>
       `Lower because ${joinFr(items.map(({ label, month }) => `“${label}” (until ${month})`))} ${items.length > 1 ? 'end' : 'ends'} soon.`,
-    lower: 'Lower: this month has bills that don’t come back every month.',
+    lower: (current: boolean) => `Lower: ${current ? 'this month' : 'that month'} has bills that don’t come back every month.`,
     higher: 'Higher: yearly or one-off bills are coming up in the next few months.',
     uncategorized: (n: number) => `${n === 1 ? '1 bill' : `${n} bills`} without a category: money-saving suggestions can’t compare them.`,
     detect: 'Detect categories',
@@ -134,7 +137,12 @@ export default function ChargesTab() {
   const privacy = useChargePrivacy();
   const [params, setParams] = useSearchParams();
   const filter: ItemStatus = isFilter(params.get('filtre')) ? (params.get('filtre') as ItemStatus) : 'active';
+  const requested = params.get('m');
+  // The month the catalog is read at: statuses, amounts and totals.
+  const ym: YM = isYM(requested) ? requested : today;
   const firstOpen = useFirstOpenMonth();
+  // A charge added while looking at a later month starts that month.
+  const newYm = maxYM(firstOpen, ym);
   const [categorizing, setCategorizing] = useState(false);
 
   const setFilter = (f: ItemStatus) =>
@@ -145,7 +153,15 @@ export default function ChargesTab() {
       return copy;
     });
 
-  const statuses = useMemo(() => new Map(model.charges.map((c) => [c.id, chargeStatus(c, today)])), [model.charges, today]);
+  const setYm = (next: YM) =>
+    setParams((p) => {
+      const copy = new URLSearchParams(p);
+      if (next === today) copy.delete('m');
+      else copy.set('m', next);
+      return copy;
+    });
+
+  const statuses = useMemo(() => new Map(model.charges.map((c) => [c.id, chargeStatus(c, ym)])), [model.charges, ym]);
   const counts = { active: 0, upcoming: 0, ended: 0 } as Record<ItemStatus, number>;
   statuses.forEach((s) => (counts[s] += 1));
 
@@ -158,9 +174,9 @@ export default function ChargesTab() {
     .filter((g) => g.items.length > 0);
   const refMonth = (c: Charge): YM => {
     const w = windowOf(c);
-    if (filter === 'ended') return w.end ?? w.start ?? today;
-    if (filter === 'upcoming') return w.start ?? today;
-    return today;
+    if (filter === 'ended') return w.end ?? w.start ?? ym;
+    if (filter === 'upcoming') return w.start ?? ym;
+    return ym;
   };
   const groups = GROUPS.map((g) => ({
     id: g,
@@ -171,13 +187,14 @@ export default function ChargesTab() {
       .sort((a, b) => b.amount - a.amount || a.c.label.localeCompare(b.c.label, 'fr')),
   })).filter((g) => g.items.length > 0);
 
-  // This month's total (what the month screen shows) and the 12-month average,
-  // with the charges that end soon and pull the average down.
-  const thisMonth = engine.month(today);
+  // The month's total (what the month screen shows) and the average of the 12
+  // months from it, with the charges that end soon and pull the average down.
+  const isCurrent = ym === today;
+  const thisMonth = engine.month(ym);
   let avg = 0;
-  for (let i = 0; i < 12; i++) avg += engine.month(addMonths(today, i)).totals.charges;
+  for (let i = 0; i < 12; i++) avg += engine.month(addMonths(ym, i)).totals.charges;
   avg = roundCents(avg / 12);
-  const ending = chargesEndingBetween(model, today, addMonths(today, 11));
+  const ending = chargesEndingBetween(model, ym, addMonths(ym, 11));
 
   // Charges the savings analysis looks at: running ones, at their monthly cost.
   const suggestionCharges = useMemo(
@@ -243,11 +260,13 @@ export default function ChargesTab() {
         </div>
         {/* Empty page: the empty state below carries the only add button. */}
         {household.length > 0 && (
-          <Button className="min-h-[44px] self-start sm:self-auto" onClick={() => openSheet({ kind: 'chargeEditor', ym: firstOpen })}>
+          <Button className="min-h-[44px] self-start sm:self-auto" onClick={() => openSheet({ kind: 'chargeEditor', ym: newYm })}>
             <Plus className="h-4 w-4" /> {t.newCharge}
           </Button>
         )}
       </div>
+
+      {model.charges.length > 0 && <MonthStepper ym={ym} onChange={setYm} home={today} />}
 
       <div role="group" aria-label={t.filterAria} className="flex flex-wrap gap-2">
         {FILTERS.map((f) => (
@@ -269,13 +288,13 @@ export default function ChargesTab() {
       {filter === 'active' && counts.active > 0 && (
         <div className="grid gap-3 sm:grid-cols-2">
           <Link
-            to={`/budget/${id}/complete/month?m=${today}`}
+            to={`/budget/${id}/complete/month?m=${ym}`}
             className="group flex flex-col gap-1 rounded-2xl border border-border/70 bg-card p-4 shadow-soft transition-colors hover:border-primary/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
-            <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">{t.monthCharges(monthNameLower(today))}</span>
+            <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">{t.monthCharges(monthNameLower(ym))}</span>
             <span className="font-display text-3xl font-extrabold tracking-tight tabular-nums">{fmt(thisMonth.totals.charges)}</span>
             <span className="flex items-center gap-1 text-sm text-muted-foreground">
-              {t.thisMonthCount(thisMonth.charges.filter((c) => c.amount !== 0).length)}
+              {t.monthCount(thisMonth.charges.filter((c) => c.amount !== 0).length, isCurrent)}
               <ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
             </span>
           </Link>
@@ -289,7 +308,7 @@ export default function ChargesTab() {
               {ending.length > 0
                 ? t.endingSoon(ending.map(({ charge, last }) => ({ label: charge.label, month: monthNameLower(last) })))
                 : avg < thisMonth.totals.charges
-                  ? t.lower
+                  ? t.lower(isCurrent)
                   : t.higher}
             </span>
           </div>
@@ -330,7 +349,7 @@ export default function ChargesTab() {
                   <CategoryIcon category={c.category} tone={filter === 'ended' ? 'muted' : 'charge'} />
                   <span className="flex min-w-0 flex-1 flex-col gap-0.5">
                     <span className="truncate text-[15px] font-semibold">{c.label}</span>
-                    <span className="text-[13px] text-muted-foreground">{describeChargeSchedule(c, today)}</span>
+                    <span className="text-[13px] text-muted-foreground">{describeChargeSchedule(c, ym)}</span>
                     {hint && <span className="text-xs text-sky-800">{hint}</span>}
                   </span>
                   <span className="flex flex-col items-end">
@@ -358,7 +377,7 @@ export default function ChargesTab() {
           </p>
           {household.length === 0 && (
             <div className="flex flex-wrap justify-center gap-2">
-              <Button className="min-h-[44px]" onClick={() => openSheet({ kind: 'chargeEditor', ym: firstOpen })}>
+              <Button className="min-h-[44px]" onClick={() => openSheet({ kind: 'chargeEditor', ym: newYm })}>
                 <Plus className="h-4 w-4" /> {t.addCharge}
               </Button>
               <Button asChild variant="outline" className="min-h-[44px]">
@@ -378,7 +397,7 @@ export default function ChargesTab() {
               <h2 id="perso-title" className="text-xs font-bold uppercase tracking-wider text-muted-foreground">{t.personalTitle}</h2>
               <p className="text-xs text-muted-foreground">{t.personalIntro}</p>
             </div>
-            <Button variant="ghost" className="min-h-[40px] text-primary" onClick={() => openSheet({ kind: 'chargeEditor', ym: firstOpen, ownerId: model.people[0]?.id })}>
+            <Button variant="ghost" className="min-h-[40px] text-primary" onClick={() => openSheet({ kind: 'chargeEditor', ym: newYm, ownerId: model.people[0]?.id })}>
               <Plus className="h-4 w-4" /> {t.personalCharge}
             </Button>
           </div>
@@ -387,7 +406,7 @@ export default function ChargesTab() {
               <p className="px-2.5 pb-1 pt-1.5 text-sm font-semibold">
                 {person.name}{' '}
                 <span className="font-normal text-muted-foreground">
-                  {t.personTotal(fmt(thisMonth.people.find((p) => p.id === person.id)?.personalCharges ?? 0), monthNameLower(today))}
+                  {t.personTotal(fmt(thisMonth.people.find((p) => p.id === person.id)?.personalCharges ?? 0), monthNameLower(ym))}
                 </span>
               </p>
               {items.map((c) => {
@@ -400,7 +419,7 @@ export default function ChargesTab() {
                       </span>
                       <span className="flex min-w-0 flex-1 flex-col">
                         <span className="text-[15px] font-semibold text-muted-foreground">{privateChargeName()}</span>
-                        <span className="text-[13px] text-muted-foreground">{describeChargeSchedule(c, today)}</span>
+                        <span className="text-[13px] text-muted-foreground">{describeChargeSchedule(c, ym)}</span>
                       </span>
                       <span className="whitespace-nowrap text-[15px] font-bold tabular-nums">{fmt(amount)}</span>
                     </div>
@@ -419,7 +438,7 @@ export default function ChargesTab() {
                         {privacy.label(c)}
                         {c.private && <Lock className="h-3.5 w-3.5 shrink-0 text-muted-foreground" aria-label={t.privateAria} />}
                       </span>
-                      <span className="text-[13px] text-muted-foreground">{describeChargeSchedule(c, today)}</span>
+                      <span className="text-[13px] text-muted-foreground">{describeChargeSchedule(c, ym)}</span>
                     </span>
                     <span className="flex flex-col items-end">
                       <span className="whitespace-nowrap text-[15px] font-bold tabular-nums">{fmt(amount)}</span>
