@@ -45,7 +45,7 @@ import {
   startDateOf,
   deMonth,
 } from '@/lib/budget/months';
-import { parseAmount, roundCents } from '@/lib/budget/format';
+import { moneySigned, parseAmount, roundCents } from '@/lib/budget/format';
 import { ResponsiveSheet } from '../shared/ResponsiveSheet';
 import { MonthPicker } from '../shared/MonthPicker';
 import { ChoiceCard, ErrorText, failOn, FieldLabel, MoneyInput, Segmented } from '../shared/primitives';
@@ -112,6 +112,8 @@ const M = defineMessages({
       fromOn: (month: string) => `À partir ${deMonth(month)}`,
       earlierKeep: (amount: string) => `Les mois d’avant gardent ${amount}.`,
       fromFirst: 'S’applique dès le premier mois.',
+      effect: (month: string, amount: string, delta: string) => `À partir ${deMonth(month)} : ${amount} par mois (${delta})`,
+      applyFrom: (month: string) => `Appliquer à partir ${deMonth(month)}`,
       fixAll: 'Corriger une erreur de saisie sur tous les mois ouverts',
     },
     spend: {
@@ -255,6 +257,8 @@ const M = defineMessages({
       fromOn: (month: string) => `From ${month} on`,
       earlierKeep: (amount: string) => `Earlier months keep ${amount}.`,
       fromFirst: 'Applies from the first month.',
+      effect: (month: string, amount: string, delta: string) => `From ${month} on: ${amount} a month (${delta})`,
+      applyFrom: (month: string) => `Apply from ${month}`,
       fixAll: 'Fix a typing mistake in every open month',
     },
     spend: {
@@ -471,8 +475,12 @@ export function SavingAmountSheet({ sheet, onClose }: SheetProps<'savingAmount'>
   const resolved = p ? resolveSaving(p, fromYm, model.months[fromYm]) : null;
   const initial = !p ? 0 : recurring ? (sheet.fromCatalog || !resolved ? projectPlanned(p, fromYm) : resolved.allocation) : resolved?.allocation ?? 0;
   const [value, setValue] = useState(String(initial || ''));
+  // A typed amount survives a change of month: only an untouched field follows it.
+  const [typed, setTyped] = useState(false);
   const [error, setError] = useState('');
-  useEffect(() => setValue(String(initial || '')), [fromYm]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    if (!typed) setValue(String(initial || ''));
+  }, [fromYm]); // eslint-disable-line react-hooks/exhaustive-deps
   if (!p) return null;
 
   const monthLabel = formatMonthLong(fromYm);
@@ -508,7 +516,7 @@ export function SavingAmountSheet({ sheet, onClose }: SheetProps<'savingAmount'>
           )}
           <div>
             <FieldLabel htmlFor="sa-amount">{t.setAsideIn(monthLabel)}</FieldLabel>
-            <MoneyInput id="sa-amount" big value={value} onChange={(e) => { setValue(e.target.value); setError(''); }} placeholder="0" suffix={currencySymbol} />
+            <MoneyInput id="sa-amount" big value={value} onChange={(e) => { setValue(e.target.value); setTyped(true); setError(''); }} placeholder="0" suffix={currencySymbol} />
           </div>
           <ErrorText>{error}</ErrorText>
           <Button type="submit" className="min-h-[48px]">{a.saveFor(monthLabel)}</Button>
@@ -526,6 +534,8 @@ export function SavingAmountSheet({ sheet, onClose }: SheetProps<'savingAmount'>
   const r = resolveSaving(p, fromYm, model.months[fromYm]);
   const canMonthOnly = !sheet.fromCatalog && !!r && r.active && !closed;
   const prevAmount = start && compareYM(start, fromYm) >= 0 ? null : projectPlanned(p, addMonths(fromYm, -1));
+  // Nothing to save when the plan already gives this amount from that month.
+  const unchanged = valid && p.overrides?.[fromYm] === undefined && roundCents(v) === roundCents(projectPlanned(p, fromYm));
   const apply = (scope: 'month' | 'forward' | 'all') => {
     if (!valid) return failOn('sa-amount', setError, t.validAmount);
     if (scope === 'month') {
@@ -550,25 +560,45 @@ export function SavingAmountSheet({ sheet, onClose }: SheetProps<'savingAmount'>
       )}
       <div>
         <FieldLabel htmlFor="sa-amount">{t.amountPerMonth}</FieldLabel>
-        <MoneyInput id="sa-amount" big value={value} onChange={(e) => { setValue(e.target.value); setError(''); }} placeholder="0" suffix={currencySymbol} />
+        <MoneyInput id="sa-amount" big value={value} onChange={(e) => { setValue(e.target.value); setTyped(true); setError(''); }} placeholder="0" suffix={currencySymbol} />
         <p className="mt-1.5 text-sm text-muted-foreground">{a.currently(fmt(initial))}</p>
         <div className="mt-2"><ErrorText>{error}</ErrorText></div>
       </div>
-      <div className="flex flex-col gap-2">
-        {!sheet.fromCatalog && <span className="text-sm font-semibold">{a.applyTo}</span>}
-        {canMonthOnly && (
-          <ChoiceCard title={a.only(monthNames()[monthIndex0(fromYm)])} help={a.onlyHelp(fmt(r!.planned))} onClick={() => apply('month')} />
-        )}
-        <ChoiceCard
-          title={a.fromOn(formatMonthShort(fromYm))}
-          help={prevAmount !== null ? a.earlierKeep(fmt(prevAmount)) : a.fromFirst}
-          onClick={() => apply('forward')}
-          selected={sheet.fromCatalog}
-        />
-        <button type="button" onClick={() => apply('all')} className="self-start py-2 text-sm font-semibold text-primary underline underline-offset-4 hover:text-primary/80">
-          {a.fixAll}
-        </button>
-      </div>
+      {sheet.fromCatalog ? (
+        // From the catalog the month is a field: the effect is spelled out and
+        // nothing is saved until the button naming that month is pressed.
+        <div className="flex flex-col gap-2">
+          <div aria-live="polite" className="rounded-xl bg-muted/60 px-4 py-3 text-sm">
+            {valid && !unchanged ? (
+              <p className="font-semibold tabular-nums">{a.effect(formatMonthShort(fromYm), fmt(v), moneySigned(v - initial, currencySymbol))}</p>
+            ) : (
+              <p className="font-semibold">{a.fromOn(formatMonthShort(fromYm))}</p>
+            )}
+            <p className="text-muted-foreground">{prevAmount !== null ? a.earlierKeep(fmt(prevAmount)) : a.fromFirst}</p>
+          </div>
+          <Button className="min-h-[48px]" onClick={() => apply('forward')} disabled={unchanged}>
+            {a.applyFrom(monthLabel)}
+          </Button>
+          <button type="button" onClick={() => apply('all')} className="self-start py-2 text-sm font-semibold text-primary underline underline-offset-4 hover:text-primary/80">
+            {a.fixAll}
+          </button>
+        </div>
+      ) : (
+        <div className="flex flex-col gap-2">
+          <span className="text-sm font-semibold">{a.applyTo}</span>
+          {canMonthOnly && (
+            <ChoiceCard title={a.only(monthNames()[monthIndex0(fromYm)])} help={a.onlyHelp(fmt(r!.planned))} onClick={() => apply('month')} />
+          )}
+          <ChoiceCard
+            title={a.fromOn(formatMonthShort(fromYm))}
+            help={prevAmount !== null ? a.earlierKeep(fmt(prevAmount)) : a.fromFirst}
+            onClick={() => apply('forward')}
+          />
+          <button type="button" onClick={() => apply('all')} className="self-start py-2 text-sm font-semibold text-primary underline underline-offset-4 hover:text-primary/80">
+            {a.fixAll}
+          </button>
+        </div>
+      )}
     </ResponsiveSheet>
   );
 }
