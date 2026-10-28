@@ -37,6 +37,7 @@ import {
   restartProject,
   clearPersonMonthException,
 } from '../mutations';
+import { applySplitMethod, deriveSplit, splitRuleAt } from '../split';
 import { makeYM, MONTH_NAMES, addMonths } from '../months';
 import type { Charge } from '../types';
 
@@ -411,6 +412,88 @@ test('assistant: split methods and apply', () => {
   near(e.month('2026-09').totals.contributions, 6300, 'before');
   near(e.month('2026-10').totals.contributions, 2800, 'after');
   near(e.month('2026-11').totals.contributions, 2800, 'later exception cleared');
+});
+
+test('living split: the method applied keeps applying to every later month', () => {
+  const today = '2026-10';
+  let model = decodeBudget(
+    {
+      people: [
+        { id: 'l', name: 'L', salary: 3200, startDate: '2026-08-01' },
+        { id: 'k', name: 'K', salary: 2200, startDate: '2026-08-01' },
+      ],
+      charges: [
+        { id: 'rent', label: 'Loyer', amount: 1160, startDate: '2026-08-01' },
+        { id: 'food', label: 'Courses', amount: 400, startDate: '2026-08-01' },
+        { id: 'massage', label: 'Massage', amount: 240, startDate: '2026-09-01', endDate: '2026-11-30', amountHistory: [{ from: '2026-09', amount: 480 }, { from: '2026-11', amount: 240 }] },
+      ],
+    },
+    today,
+  );
+  const pay = (m: typeof model, ym: string) => {
+    const e = new BudgetEngine(m, today);
+    return e.month(ym).people.map((p) => p.contribution);
+  };
+  model = applySplitMethod(model, '2026-11', { method: 'reste', margin: 0, basis: 'month' }, today);
+  eq(pay(model, '2026-10'), [3200, 2200], 'months before are untouched');
+  eq(pay(model, '2026-11'), [1400, 400], 'November covers its 1800 of charges');
+  eq(pay(model, '2026-12'), [1280, 280], 'December follows the massage ending');
+  eq(pay(model, '2028-06'), [1280, 280], 'and keeps going, years later');
+  eq(splitRuleAt(model, '2027-04')?.settings?.method, 'reste');
+  ok(deriveSplit(model, today) === model, 'derivation is stable');
+
+  // A charge added later: its months adjust on their own.
+  model = deriveSplit(upsertCharge(model, { id: 'gym', label: 'Sport', amount: 300, startDate: '2027-03-01' } as Charge), today);
+  eq(pay(model, '2027-02'), [1280, 280]);
+  eq(pay(model, '2027-03'), [1430, 430], 'same pocket money with the new charge');
+
+  // A raise is not a contribution set by hand: the method rebalances.
+  model = deriveSplit(setPersonMoney(model, 'k', '2027-01', 2600, { mode: 'fixed', value: 280 }, 'forward', today), today);
+  eq(pay(model, '2027-01'), [1080, 480], 'the raise is shared');
+  eq(splitRuleAt(model, '2027-01')?.from, '2026-11', 'the method is still in place');
+
+  // A contribution set by hand from May stops the method: amounts stay put.
+  model = deriveSplit(setPersonMoney(model, 'l', '2027-05', 3200, { mode: 'fixed', value: 1500 }, 'forward', today), today);
+  ok(splitRuleAt(model, '2027-05') === null, 'no method from May');
+  model = deriveSplit(upsertCharge(model, { id: 'car', label: 'Auto', amount: 200, startDate: '2027-07-01' } as Charge), today);
+  eq(pay(model, '2027-04'), [1230, 630], 'April still follows the method');
+  eq(pay(model, '2027-07'), [1500, 630], 'July keeps the May amounts');
+
+  // Closed months keep what they were.
+  const later = autoCloseMonths(model, '2026-12', 'now').model;
+  const changed = deriveSplit(upsertCharge(later, { id: 'x', label: 'X', amount: 100, startDate: '2026-08-01' } as Charge), '2026-12');
+  eq(new BudgetEngine(changed, '2026-12').month('2026-11').people.map((p) => p.contribution), [1400, 400], 'November is closed');
+  eq(new BudgetEngine(changed, '2026-12').month('2026-12').people.map((p) => p.contribution), [1330, 330], 'December re-balanced with the new charge');
+});
+
+test('living split: bases, all the pay, and hand-set rules', () => {
+  const today = '2026-10';
+  const base = decodeBudget(
+    {
+      people: [{ id: 'a', name: 'A', salary: 3000 }, { id: 'b', name: 'B', salary: 2000 }],
+      charges: [
+        { id: 'rent', label: 'Loyer', amount: 1200, startDate: '2026-01-01' },
+        { id: 'ins', label: 'Assurance', amount: 1200, frequency: 'yearly', startDate: '2027-01-01' },
+      ],
+    },
+    today,
+  );
+  const pay = (m: typeof base, ym: string) => new BudgetEngine(m, today).month(ym).people.map((p) => p.contribution);
+  // Average of the 12 months from each month: (11 × 1200 + 2400) / 12 = 1300.
+  const avg = applySplitMethod(base, '2026-11', { method: 'prorata', margin: 0, basis: 'average' }, today);
+  eq(pay(avg, '2026-11'), [780, 520]);
+  eq(pay(avg, '2027-01'), [780, 520], 'the yearly charge is spread');
+  // Heaviest of the 12 months, plus 10 %.
+  const peak = applySplitMethod(base, '2026-11', { method: 'equal', margin: 10, basis: 'peak' }, today);
+  eq(pay(peak, '2026-11'), [1320, 1320]);
+  // Everyone pays all their pay.
+  const all = applySplitMethod(base, '2026-11', { method: 'all', margin: 0, basis: 'month' }, today);
+  eq(pay(all, '2027-05'), [3000, 2000]);
+  // The AI budget's amounts are set by hand: no method from then on.
+  const ai = applyContributionRules(avg, '2027-02', { a: { mode: 'fixed', value: 900 }, b: { mode: 'fixed', value: 400 } }, today);
+  ok(splitRuleAt(ai, '2027-02') === null);
+  eq(pay(deriveSplit(ai, today), '2027-06'), [900, 400]);
+  eq(pay(deriveSplit(ai, today), '2027-01'), [780, 520], 'January still follows the method');
 });
 
 test('savings: recurring amount from a month, exceptions, manual pots', () => {
