@@ -8,7 +8,7 @@
 // ============================================================================
 
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
-import { ChevronLeft, ChevronRight, History, Pencil, Plus, Sparkles, UserPlus } from 'lucide-react';
+import { ChevronRight, History, Pencil, Plus, Sparkles, UserPlus } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -29,18 +29,17 @@ import {
   type SplitMethod,
 } from '@/lib/budget/engine';
 import { applyContributionRules, type ContributionRule } from '@/lib/budget/mutations';
-import { addMonths, compareYM, formatMonthLong, formatMonthShort, formatMonthTitle, joinFr, maxYM, deMonth, monthIndex0, monthNameLower, monthNamesShort } from '@/lib/budget/months';
+import { addMonths, formatMonthLong, formatMonthShort, formatMonthTitle, joinFr, maxYM, deMonth, monthIndex0, monthNameLower, monthNamesShort } from '@/lib/budget/months';
 import { moneySigned, percent, roundCents } from '@/lib/budget/format';
 import { ChipToggle, Pill, Segmented } from '@/components/budget/shared/primitives';
 import { MonthPicker } from '@/components/budget/shared/MonthPicker';
+import { MonthStepper } from '@/components/budget/shared/MonthStepper';
 import { useFirstOpenMonth, useHashScroll } from '@/components/budget/shared/hooks';
 import { defineMessages, useT } from '@/i18n/runtime';
 
 const AVATAR_TONES = ['bg-teal-50 text-teal-800', 'bg-violet-50 text-violet-800', 'bg-amber-50 text-amber-800', 'bg-sky-50 text-sky-800', 'bg-rose-50 text-rose-800'];
 
 const METHODS: SplitMethod[] = ['prorata', 'equal', 'reste', 'all'];
-
-type ViewState = 'closed' | 'forecast' | 'current';
 
 const M = defineMessages({
   fr: {
@@ -131,7 +130,6 @@ const M = defineMessages({
     alreadyInPlace: 'Déjà en place',
     applyFromMonth: (month: string) => `Appliquer à partir ${deMonth(month)}`,
     // Tab
-    viewState: { closed: 'Clôturé', forecast: 'Prévisionnel', current: 'En cours' } as Record<ViewState, string>,
     title: 'Foyer',
     intro: (month: string, contributions: ReactNode, salaries: string): ReactNode => (
       <>
@@ -139,9 +137,6 @@ const M = defineMessages({
       </>
     ),
     addMember: 'Ajouter un membre',
-    previousMonth: 'Mois précédent',
-    nextMonth: 'Mois suivant',
-    backToCurrent: 'Revenir au mois en cours',
     empty: 'Ajoutez les membres du foyer : leur salaire, et ce que chacun verse au pot commun.',
     former: 'Ne font plus partie du foyer',
     access: 'Accès au budget',
@@ -234,7 +229,6 @@ const M = defineMessages({
     alreadyInPlace: 'Already in place',
     applyFromMonth: (month: string) => `Apply from ${month}`,
     // Tab
-    viewState: { closed: 'Closed', forecast: 'Forecast', current: 'Current' },
     title: 'Household',
     intro: (month: string, contributions: ReactNode, salaries: string): ReactNode => (
       <>
@@ -242,9 +236,6 @@ const M = defineMessages({
       </>
     ),
     addMember: 'Add a member',
-    previousMonth: 'Previous month',
-    nextMonth: 'Next month',
-    backToCurrent: 'Back to the current month',
     empty: 'Add the household members: their take-home pay, and what each one pays into the joint pot.',
     former: 'No longer in the household',
     access: 'Budget access',
@@ -660,7 +651,6 @@ export default function MembersTab() {
   // The month shown by the cards and the pot panel (browse past months to see history).
   const [viewYm, setViewYm] = useState<YM>(firstOpen);
   const month = engine.month(viewYm);
-  const viewStatus: ViewState = month.closed ? 'closed' : compareYM(viewYm, today) > 0 ? 'forecast' : 'current';
   const indexed = model.people.map((p, i) => ({ p, i }));
   const current = indexed.filter(({ p }) => personStatus(p, today) !== 'ended');
   const former = indexed.filter(({ p }) => personStatus(p, today) === 'ended');
@@ -682,23 +672,7 @@ export default function MembersTab() {
         )}
       </div>
 
-      {model.people.length > 0 && (
-        <div className="flex flex-wrap items-center gap-2">
-          <Button variant="outline" size="icon" className="h-11 w-11 shrink-0" aria-label={t.previousMonth} onClick={() => setViewYm(addMonths(viewYm, -1))}>
-            <ChevronLeft className="h-5 w-5" />
-          </Button>
-          <span className="min-w-[150px] text-center font-display text-lg font-extrabold tabular-nums" aria-live="polite">{formatMonthTitle(viewYm)}</span>
-          <Button variant="outline" size="icon" className="h-11 w-11 shrink-0" aria-label={t.nextMonth} onClick={() => setViewYm(addMonths(viewYm, 1))}>
-            <ChevronRight className="h-5 w-5" />
-          </Button>
-          <Pill tone={month.closed ? 'grey' : viewStatus === 'current' ? 'green' : 'blue'}>{t.viewState[viewStatus]}</Pill>
-          {viewYm !== firstOpen && (
-            <Button variant="ghost" className="min-h-[44px]" onClick={() => setViewYm(firstOpen)}>
-              {t.backToCurrent}
-            </Button>
-          )}
-        </div>
-      )}
+      {model.people.length > 0 && <MonthStepper ym={viewYm} onChange={setViewYm} home={firstOpen} />}
 
       {current.length > 0 ? (
         <div className="grid gap-4 md:grid-cols-2">
