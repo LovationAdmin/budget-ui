@@ -38,7 +38,7 @@ import {
   clearPersonMonthException,
 } from '../mutations';
 import { applySplitMethod, deriveSplit, splitRuleAt } from '../split';
-import { makeYM, MONTH_NAMES, addMonths } from '../months';
+import { makeYM, MONTH_NAMES, addMonths, homeYM } from '../months';
 import type { Charge } from '../types';
 
 // ---------------------------------------------------------------------------
@@ -595,6 +595,14 @@ test('changes: new, resume, end and increases', () => {
 test('months helpers', () => {
   eq(addMonths('2026-12', 1), '2027-01');
   eq(addMonths('2026-01', -1), '2025-12');
+});
+
+test('months: the screens open on the next month from the 23rd', () => {
+  eq(homeYM(new Date(2026, 9, 1)), '2026-10');
+  eq(homeYM(new Date(2026, 9, 22, 23, 59)), '2026-10');
+  eq(homeYM(new Date(2026, 9, 23)), '2026-11');
+  eq(homeYM(new Date(2026, 1, 28)), '2026-03');
+  eq(homeYM(new Date(2026, 11, 24)), '2027-01');
 });
 
 test('charges: this month vs 12-month average with charges ending soon', () => {

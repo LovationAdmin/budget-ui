@@ -12,6 +12,8 @@ import {
   compareYM,
   formatMonthTitle,
   makeYM,
+  monthIndex0,
+  monthNameLower,
   monthNames,
   monthLetters,
   monthNamesShort,
@@ -30,6 +32,8 @@ const M = defineMessages({
     prev: 'Mois précédent',
     next: 'Mois suivant',
     backToToday: 'Revenir à aujourd’hui',
+    backTo: (month: string) => `Revenir à ${month}`,
+    seeMonth: (month: string) => `Voir ${month}`,
     add: 'Ajouter',
     yearMonths: (year: number) => `Mois de ${year}`,
     cell: (name: string, year: number, status: string, reste: string) => `${name} ${year}, ${status}, reste ${reste}`,
@@ -38,6 +42,8 @@ const M = defineMessages({
     readOnly: 'Il est en lecture seule.',
     reopen: 'Rouvrir',
     forecastBanner: 'Mois prévisionnel, rempli automatiquement à partir de vos règles. Tout reste modifiable.',
+    preparingBanner: (ending: string, next: string) =>
+      `${ending} se termine : on vous montre déjà ${next} pour le préparer. Il est rempli automatiquement à partir de vos règles, tout reste modifiable.`,
   },
   en: {
     closed: 'Closed',
@@ -47,6 +53,8 @@ const M = defineMessages({
     prev: 'Previous month',
     next: 'Next month',
     backToToday: 'Back to today',
+    backTo: (month: string) => `Back to ${month}`,
+    seeMonth: (month: string) => `See ${month}`,
     add: 'Add',
     yearMonths: (year: number) => `Months of ${year}`,
     cell: (name: string, year: number, status: string, reste: string) => `${name} ${year}, ${status}, ${reste} left`,
@@ -55,6 +63,8 @@ const M = defineMessages({
     readOnly: 'It’s read-only.',
     reopen: 'Reopen',
     forecastBanner: 'Forecast month, filled in automatically from your rules. You can still change anything.',
+    preparingBanner: (ending: string, next: string) =>
+      `${ending} is nearly over, so you’re already seeing ${next} to get it ready. It’s filled in automatically from your rules; you can still change anything.`,
   },
 });
 
@@ -81,8 +91,12 @@ interface MonthHeaderProps {
 
 export function MonthHeader({ ym, onChange }: MonthHeaderProps) {
   const t = useT(M);
-  const { engine, today, openSheet, fmt } = useBudget();
+  const { engine, today, home, openSheet, fmt } = useBudget();
   const month = engine.month(ym);
+  // From the 23rd the screen opens on the next month (see homeYM): say why,
+  // and keep the current month one tap away.
+  const preparing = ym === home && home !== today;
+  const shortcut = ym !== home ? home : preparing ? today : undefined;
   const status = monthStatus(month.closed, ym, today);
   const year = yearOf(ym);
   const restes = monthNames().map((_, i) => engine.month(makeYM(year, i)).totals.reste);
@@ -106,9 +120,9 @@ export function MonthHeader({ ym, onChange }: MonthHeaderProps) {
         </div>
         <div className="flex items-center justify-center gap-2 sm:justify-end">
           <Pill tone={status.tone} className="sm:hidden">{status.label}</Pill>
-          {ym !== today && (
-            <Button variant="outline" className="min-h-[44px]" onClick={() => onChange(today)}>
-              {t.backToToday}
+          {shortcut && (
+            <Button variant="outline" className="min-h-[44px]" onClick={() => onChange(shortcut)}>
+              {preparing ? t.seeMonth(monthNameLower(today)) : home === today ? t.backToToday : t.backTo(monthNameLower(home))}
             </Button>
           )}
           <Button
@@ -181,7 +195,9 @@ export function MonthHeader({ ym, onChange }: MonthHeaderProps) {
       {!month.closed && compareYM(ym, today) > 0 && (
         <div className="flex items-start gap-3 rounded-2xl border border-sky-100 bg-sky-50 p-3 sm:px-4">
           <Info className="mt-0.5 h-5 w-5 shrink-0 text-sky-700" aria-hidden="true" />
-          <p className="text-sm text-sky-950">{t.forecastBanner}</p>
+          <p className="text-sm text-sky-950">
+            {preparing ? t.preparingBanner(monthNames()[monthIndex0(today)], monthNameLower(ym)) : t.forecastBanner}
+          </p>
         </div>
       )}
     </div>

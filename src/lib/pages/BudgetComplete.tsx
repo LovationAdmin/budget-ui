@@ -39,7 +39,7 @@ import { GENERAL_SAVINGS_ID, PRIVATE_CHARGE_LABEL } from '@/lib/budget/types';
 import { BudgetEngine } from '@/lib/budget/engine';
 import { autoCloseMonths, decodeBudget, encodeBudget } from '@/lib/budget/codec';
 import { deriveSplit } from '@/lib/budget/split';
-import { currentYM } from '@/lib/budget/months';
+import { currentYM, homeYM } from '@/lib/budget/months';
 import { currencySymbol as symbolFor, money } from '@/lib/budget/format';
 import { parsePrivateCharges } from '@/lib/budget/overview';
 
@@ -148,6 +148,7 @@ export default function BudgetCompleteLayout() {
   const mainTabs = useMemo(() => navItems.slice(0, 5), [navItems]);
 
   const [today] = useState<YM>(() => currentYM());
+  const [home] = useState<YM>(() => homeYM());
   const [budget, setBudget] = useState<BudgetData | null>(null);
   // The current user's private charge details, kept server-side only.
   const [privateCharges, setPrivateCharges] = useState<Record<string, PrivateChargeDetails>>({});
@@ -625,6 +626,7 @@ export default function BudgetCompleteLayout() {
       model,
       engine,
       today,
+      home,
       budgetLocation,
       budgetCurrency,
       currencySymbol: symbol,
@@ -658,7 +660,7 @@ export default function BudgetCompleteLayout() {
       markSuggestionsRun,
     }),
     [
-      id, budget, model, engine, today, budgetLocation, budgetCurrency, symbol, fmt, commit, closeSheet, goToMonth,
+      id, budget, model, engine, today, home, budgetLocation, budgetCurrency, symbol, fmt, commit, closeSheet, goToMonth,
       privateCharges, savePrivateCharge, deletePrivateCharge,
       saveStateMachine.status, saveStateMachine.errorMessage, saveStateMachine.lastSavedAt, performSave,
       totalGlobalRealized, realBankBalance, demoBankBalance, hasActiveConnection, isDemoMode,

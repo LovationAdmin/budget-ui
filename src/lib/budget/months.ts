@@ -70,6 +70,19 @@ export function currentYM(now: Date = new Date()): YM {
   return makeYM(now.getFullYear(), now.getMonth());
 }
 
+/** Day of the month from which households are already preparing the next one. */
+export const PREPARE_NEXT_MONTH_DAY = 23;
+
+/**
+ * The month the screens open on: the current one, then the next one from the
+ * 23rd, when households start preparing it. `today` (statuses, closing) stays
+ * the calendar month.
+ */
+export function homeYM(now: Date = new Date()): YM {
+  const ym = currentYM(now);
+  return now.getDate() >= PREPARE_NEXT_MONTH_DAY ? addMonths(ym, 1) : ym;
+}
+
 /**
  * Month of a stored date. Date-only strings (`YYYY-MM-DD`) are calendar dates
  * and map directly; full ISO timestamps are read in local time, the way the

@@ -31,7 +31,7 @@ import { CategoryIcon, Pill, Segmented } from '@/components/budget/shared/primit
 import { cn } from '@/lib/utils';
 import { BudgetEngine } from '@/lib/budget/engine';
 import { autoCloseMonths, decodeBudget } from '@/lib/budget/codec';
-import { addMonths, compareYM, currentYM, formatMonthLong, formatMonthTitle, isYM, joinFr, monthNameLower } from '@/lib/budget/months';
+import { addMonths, compareYM, currentYM, formatMonthLong, formatMonthTitle, homeYM, isYM, joinFr, monthNameLower } from '@/lib/budget/months';
 import { currencySymbol, money, moneyOut, percent } from '@/lib/budget/format';
 import { PRIVATE_CHARGE_LABEL, privateChargeName, type Person, type PrivateChargeDetails, type YM } from '@/lib/budget/types';
 import {
@@ -56,6 +56,8 @@ const M = defineMessages({
     previousMonth: 'Mois précédent',
     nextMonth: 'Mois suivant',
     backToCurrent: 'Revenir au mois en cours',
+    backTo: (month: string) => `Revenir à ${month}`,
+    seeCurrent: (month: string) => `Voir ${month}`,
     viewState: { closed: 'Clôturé', forecast: 'Prévisionnel', current: 'En cours' } as Record<ViewState, string>,
     loading: 'Chargement de vos budgets',
     listFailed: 'Impossible de charger vos budgets.',
@@ -106,6 +108,8 @@ const M = defineMessages({
     previousMonth: 'Previous month',
     nextMonth: 'Next month',
     backToCurrent: 'Back to the current month',
+    backTo: (month: string) => `Back to ${month}`,
+    seeCurrent: (month: string) => `See ${month}`,
     viewState: { closed: 'Closed', forecast: 'Forecast', current: 'Current' } as Record<ViewState, string>,
     loading: 'Loading your budgets',
     listFailed: 'Couldn’t load your budgets.',
@@ -213,18 +217,20 @@ export default function Overview() {
   const t = useT(M);
   const { user } = useAuth();
   const [today] = useState<YM>(() => currentYM());
+  // The month the page opens on: the next one from the 23rd (see homeYM).
+  const [home] = useState<YM>(() => homeYM());
   const [params, setParams] = useSearchParams();
   const requested = params.get('m');
-  const ym: YM = isYM(requested) ? requested : today;
+  const ym: YM = isYM(requested) ? requested : home;
   const setYm = useCallback(
     (next: YM) =>
       setParams((p) => {
         const copy = new URLSearchParams(p);
-        if (next === today) copy.delete('m');
+        if (next === home) copy.delete('m');
         else copy.set('m', next);
         return copy;
       }),
-    [setParams, today],
+    [setParams, home],
   );
 
   const [list, setList] = useState<BudgetSummary[] | null>(null);
@@ -288,6 +294,9 @@ export default function Overview() {
 
   const uncounted = rows.filter((r) => r.b.ok && r.b.people.length > 0 && !r.me).length;
   const loaded = rows.filter((r) => r.b.engine);
+  // Off the month the page opens on: back to it; on it, from the 23rd: to the current month.
+  const preparing = ym === home && home !== today;
+  const shortcut = ym !== home ? home : preparing ? today : undefined;
   const viewState: ViewState =
     loaded.length > 0 && loaded.every((r) => r.b.engine!.isClosed(ym)) ? 'closed' : compareYM(ym, today) > 0 ? 'forecast' : 'current';
 
@@ -321,9 +330,9 @@ export default function Overview() {
             <ChevronRight className="h-5 w-5" />
           </Button>
           <Pill tone={viewState === 'closed' ? 'grey' : viewState === 'current' ? 'green' : 'blue'}>{t.viewState[viewState]}</Pill>
-          {ym !== today && (
-            <Button variant="ghost" className="min-h-[44px]" onClick={() => setYm(today)}>
-              {t.backToCurrent}
+          {shortcut && (
+            <Button variant="ghost" className="min-h-[44px]" onClick={() => setYm(shortcut)}>
+              {preparing ? t.seeCurrent(monthNameLower(today)) : home === today ? t.backToCurrent : t.backTo(monthNameLower(home))}
             </Button>
           )}
         </div>
@@ -371,6 +380,7 @@ export default function Overview() {
                     month={r.month}
                     ym={ym}
                     today={today}
+                    home={home}
                     firstName={(userName ?? '').trim().split(/\s+/)[0] ?? ''}
                     onRetry={() => retryOne(r.b)}
                   />
@@ -528,6 +538,7 @@ function BudgetCard({
   month,
   ym,
   today,
+  home,
   firstName,
   onRetry,
 }: {
@@ -535,6 +546,8 @@ function BudgetCard({
   month: MyBudgetMonth | null;
   ym: YM;
   today: YM;
+  /** The month the budget screens open on (no ?m= needed for it). */
+  home: YM;
   /** The viewer's first name, to explain why they are not found. */
   firstName: string;
   onRetry: () => void;
@@ -544,7 +557,7 @@ function BudgetCard({
   const symbol = currencySymbol(summary.currency || 'EUR');
   const fmt = (n: number) => money(n, symbol);
   const base = `/budget/${summary.id}/complete`;
-  const monthLink = ym === today ? `${base}/month` : `${base}/month?m=${ym}`;
+  const monthLink = ym === home ? `${base}/month` : `${base}/month?m=${ym}`;
   const identity = budget.identity;
   const meName = identity?.personId ? budget.people.find((p) => p.id === identity.personId)?.name : undefined;
   const state: ViewState | null = month ? (month.closed ? 'closed' : compareYM(ym, today) > 0 ? 'forecast' : 'current') : null;

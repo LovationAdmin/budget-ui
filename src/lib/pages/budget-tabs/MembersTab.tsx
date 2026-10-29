@@ -417,9 +417,10 @@ function readDraft(budgetId: string | undefined): Partial<SplitSettings> {
 }
 
 function SplitAssistant() {
-  const { model, engine, today, fmt, commit, currencySymbol, budget } = useBudget();
+  const { model, engine, today, home, fmt, commit, currencySymbol, budget } = useBudget();
   const t = useT(M);
   const firstOpen = useFirstOpenMonth();
+  const homeOpen = useFirstOpenMonth(home);
   // The household's applied settings are shared in the budget data; choices not
   // applied yet are kept on this device so leaving the tab does not lose them.
   const applied: SplitSettings = { ...SPLIT_DEFAULTS, ...readSplitSettings(model.extras[SPLIT_KEY]) };
@@ -437,8 +438,9 @@ function SplitAssistant() {
       // Storage unavailable (private mode): the choice simply is not remembered.
     }
   }, [budget?.id, method, margin, basis, isDraft]);
-  // Starts with the current (first open) month: what the household needs now.
-  const [from, setFrom] = useState<YM>(firstOpen);
+  // Starts with the month the screens open on (the next one from the 23rd):
+  // what the household is preparing.
+  const [from, setFrom] = useState<YM>(homeOpen);
 
   const members = useMemo(
     () =>
@@ -615,12 +617,13 @@ function SplitAssistant() {
 
 export default function MembersTab() {
   const { user } = useAuth();
-  const { model, engine, fmt, openSheet, budget, refreshMembersOnly, handleShowInviteModal, today } = useBudget();
+  const { model, engine, fmt, openSheet, budget, refreshMembersOnly, handleShowInviteModal, today, home } = useBudget();
   const t = useT(M);
   const firstOpen = useFirstOpenMonth();
+  const homeOpen = useFirstOpenMonth(home);
   useHashScroll('repartition');
   // The month shown by the cards and the pot panel (browse past months to see history).
-  const [viewYm, setViewYm] = useState<YM>(firstOpen);
+  const [viewYm, setViewYm] = useState<YM>(homeOpen);
   const month = engine.month(viewYm);
   const indexed = model.people.map((p, i) => ({ p, i }));
   const current = indexed.filter(({ p }) => personStatus(p, today) !== 'ended');
@@ -643,7 +646,7 @@ export default function MembersTab() {
         )}
       </div>
 
-      {model.people.length > 0 && <MonthStepper ym={viewYm} onChange={setViewYm} home={firstOpen} />}
+      {model.people.length > 0 && <MonthStepper ym={viewYm} onChange={setViewYm} home={homeOpen} />}
 
       {current.length > 0 ? (
         <div className="grid gap-4 md:grid-cols-2">

@@ -132,14 +132,14 @@ function isFilter(v: string | null): v is ItemStatus {
 export default function ChargesTab() {
   const t = useT(M);
   const { id } = useParams<{ id: string }>();
-  const { model, engine, today, fmt, openSheet, commit, mappedTotalsByChargeId, householdSize, budgetLocation, budgetCurrency, markSuggestionsRun } = useBudget();
+  const { model, engine, today, home, fmt, openSheet, commit, mappedTotalsByChargeId, householdSize, budgetLocation, budgetCurrency, markSuggestionsRun } = useBudget();
   const { toast } = useToast();
   const privacy = useChargePrivacy();
   const [params, setParams] = useSearchParams();
   const filter: ItemStatus = isFilter(params.get('filtre')) ? (params.get('filtre') as ItemStatus) : 'active';
   const requested = params.get('m');
   // The month the catalog is read at: statuses, amounts and totals.
-  const ym: YM = isYM(requested) ? requested : today;
+  const ym: YM = isYM(requested) ? requested : home;
   const firstOpen = useFirstOpenMonth();
   // A charge added while looking at a later month starts that month.
   const newYm = maxYM(firstOpen, ym);
@@ -156,7 +156,7 @@ export default function ChargesTab() {
   const setYm = (next: YM) =>
     setParams((p) => {
       const copy = new URLSearchParams(p);
-      if (next === today) copy.delete('m');
+      if (next === home) copy.delete('m');
       else copy.set('m', next);
       return copy;
     });
@@ -266,7 +266,7 @@ export default function ChargesTab() {
         )}
       </div>
 
-      {model.charges.length > 0 && <MonthStepper ym={ym} onChange={setYm} home={today} />}
+      {model.charges.length > 0 && <MonthStepper ym={ym} onChange={setYm} home={home} />}
 
       <div role="group" aria-label={t.filterAria} className="flex flex-wrap gap-2">
         {FILTERS.map((f) => (

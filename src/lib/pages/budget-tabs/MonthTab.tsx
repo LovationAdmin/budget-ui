@@ -24,21 +24,21 @@ const M = defineMessages({
 
 export default function MonthTab() {
   const t = useT(M);
-  const { engine, today, openSheet } = useBudget();
+  const { engine, home, openSheet } = useBudget();
   const [params, setParams] = useSearchParams();
   const requested = params.get('m');
-  const ym: YM = isYM(requested) ? requested : today;
+  const ym: YM = isYM(requested) ? requested : home;
 
   const setYm = useCallback(
     (next: YM) => {
       setParams((p) => {
         const copy = new URLSearchParams(p);
-        if (next === today) copy.delete('m');
+        if (next === home) copy.delete('m');
         else copy.set('m', next);
         return copy;
       });
     },
-    [setParams, today],
+    [setParams, home],
   );
 
   const month = engine.month(ym);

@@ -51,6 +51,8 @@ export interface BudgetContextValue {
   model: BudgetModel;
   engine: BudgetEngine;
   today: YM;
+  /** The month the screens open on: `today`, or the next month from the 23rd (see homeYM). */
+  home: YM;
 
   budgetLocation: string;
   budgetCurrency: string;
