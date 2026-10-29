@@ -390,11 +390,34 @@ export const userAPI = {
   getLocation: (): Promise<AxiosResponse<UserLocation>> =>
     api.get('/user/location'),
 
+  /** The emails the account receives: the monthly recap, the product news. */
+  updateEmailPreferences: (data: { monthly_recap?: boolean; news?: boolean }): Promise<AxiosResponse<{ email_monthly_recap: boolean; email_news: boolean }>> =>
+    api.put('/user/email-preferences', data),
+
   // 2FA
   setupTOTP: () => api.post('/user/2fa/setup'),
   verifyTOTP: (code: string) => api.post('/user/2fa/verify', { code }),
   disableTOTP: (password: string, code: string) =>
     api.post('/user/2fa/disable', { password, code }),
+};
+
+// ============================================================================
+// EMAILS — leave or come back to a list from an email's signed link
+// ============================================================================
+
+export type EmailList = 'monthly_recap' | 'news';
+
+export interface EmailListState {
+  list: EmailList;
+  subscribed: boolean;
+  /** Masked address the link belongs to (al**@gmail.com). */
+  email: string;
+}
+
+export const emailAPI = {
+  preferences: (token: string): Promise<AxiosResponse<EmailListState>> => api.get('/email/preferences', { params: { token } }),
+  unsubscribe: (token: string): Promise<AxiosResponse<EmailListState>> => api.post('/email/unsubscribe', null, { params: { token } }),
+  resubscribe: (token: string): Promise<AxiosResponse<EmailListState>> => api.post('/email/resubscribe', null, { params: { token } }),
 };
 
 // ============================================================================

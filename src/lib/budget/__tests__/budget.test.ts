@@ -37,7 +37,7 @@ import {
   restartProject,
   clearPersonMonthException,
 } from '../mutations';
-import { applySplitMethod, deriveSplit, splitRuleAt } from '../split';
+import { applySplitMethod, deriveSplit, splitRuleAt, splitShift } from '../split';
 import { makeYM, MONTH_NAMES, addMonths } from '../months';
 import type { Charge } from '../types';
 
@@ -464,6 +464,45 @@ test('living split: the method applied keeps applying to every later month', () 
   const changed = deriveSplit(upsertCharge(later, { id: 'x', label: 'X', amount: 100, startDate: '2026-08-01' } as Charge), '2026-12');
   eq(new BudgetEngine(changed, '2026-12').month('2026-11').people.map((p) => p.contribution), [1400, 400], 'November is closed');
   eq(new BudgetEngine(changed, '2026-12').month('2026-12').people.map((p) => p.contribution), [1330, 330], 'December re-balanced with the new charge');
+});
+
+test('living split: a method applied before rules existed keeps applying', () => {
+  const today = '2026-10';
+  // What the previous version left: the settings and the amounts of that day.
+  const legacy = {
+    people: [
+      { id: 'a', name: 'A', salary: 3000, contributions: [{ from: '2026-01', mode: 'all' }, { from: '2026-09', mode: 'fixed', value: 840 }] },
+      { id: 'b', name: 'B', salary: 2000, contributions: [{ from: '2026-01', mode: 'all' }, { from: '2026-09', mode: 'fixed', value: 560 }] },
+    ],
+    charges: [{ id: 'rent', label: 'Loyer', amount: 1400, startDate: '2026-01-01' }],
+    splitSettings: { method: 'prorata', margin: 0, basis: 'month' },
+  };
+  const pay = (m: ReturnType<typeof decodeBudget>, ym: string) => new BudgetEngine(m, today).month(ym).people.map((p) => p.contribution);
+  let model = deriveSplit(decodeBudget(legacy, today), today);
+  eq(splitRuleAt(model, '2026-10')?.from, '2026-09', 'the method is in place from the month it was applied');
+  eq(pay(model, '2026-10'), [840, 560]);
+  // A charge goes up: the contributions follow, no need to apply the method again.
+  model = deriveSplit(upsertCharge(model, { id: 'rent', label: 'Loyer', amount: 1600, startDate: '2026-01-01' } as Charge), today);
+  eq(pay(model, '2026-10'), [960, 640], 'October rebalanced');
+  eq(pay(model, '2027-08'), [960, 640], 'and every later month');
+  ok(deriveSplit(model, today) === model, 'derivation is stable');
+  // What the change toast tells: the first month moved, and each one's new amount.
+  const prev = model;
+  const raised = deriveSplit(upsertCharge(prev, { id: 'gym', label: 'Sport', amount: 100, startDate: '2027-02-01' } as Charge), today);
+  const shift = splitShift(prev, raised, today);
+  eq(shift?.ym, '2027-02');
+  eq(shift?.members.map((m) => [m.contribution, m.delta]), [[1020, 60], [680, 40]]);
+  ok(splitShift(prev, applySplitMethod(prev, '2026-11', { method: 'equal', margin: 0, basis: 'month' }, today), today) === null, 'a new method says so itself');
+
+  // A contribution set by hand since: the amounts stay as they are.
+  const byHand = decodeBudget(
+    { ...legacy, people: [legacy.people[0], { ...legacy.people[1], contributions: [...legacy.people[1].contributions, { from: '2026-10', mode: 'fixed', value: 700 }] }] },
+    today,
+  );
+  ok(deriveSplit(byHand, today) === byHand, 'nothing adopted');
+  // A method stopped by hand with this version is never brought back.
+  const stopped = decodeBudget({ ...legacy, splitRules: [{ from: '2026-09', method: null }] }, today);
+  ok(splitRuleAt(deriveSplit(stopped, today), '2026-10') === null);
 });
 
 test('living split: bases, all the pay, and hand-set rules', () => {

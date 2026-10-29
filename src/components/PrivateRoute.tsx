@@ -1,7 +1,7 @@
 // src/components/PrivateRoute.tsx
 
 import { ReactNode } from 'react';
-import { Navigate } from 'react-router-dom';
+import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 
 interface PrivateRouteProps {
@@ -10,6 +10,7 @@ interface PrivateRouteProps {
 
 export default function PrivateRoute({ children }: PrivateRouteProps) {
   const { user, loading } = useAuth();
+  const location = useLocation();
 
   if (loading) {
     return (
@@ -19,5 +20,6 @@ export default function PrivateRoute({ children }: PrivateRouteProps) {
     );
   }
 
-  return user ? children : <Navigate to="/login" />;
+  // Signing in brings back where the link pointed (e.g. /profile#emails from an email).
+  return user ? children : <Navigate to="/login" state={{ from: location }} />;
 }

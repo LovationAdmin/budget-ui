@@ -8,7 +8,8 @@
 // The amounts are written as plain per-member contribution steps, so the
 // other readers of the data (monthly recap e-mails, older app versions) read
 // the same amounts without knowing about the rule. `deriveSplit` rewrites
-// them after every change; closed months are never touched.
+// them after every change; closed months are never touched. A method applied
+// before rules existed becomes one on its own (`adoptLegacySplit`).
 // ============================================================================
 
 import type { BudgetModel, ContributionStep, Person, YM } from './types';
@@ -192,17 +193,52 @@ export function stopSplitMethod(model: BudgetModel, from: YM): BudgetModel {
   return setRuleFrom({ ...model, people }, from, null);
 }
 
+function firstOpenMonth(engine: BudgetEngine, today: YM): YM {
+  let firstOpen = today;
+  for (let i = 0; i < 36 && engine.isClosed(firstOpen); i++) firstOpen = addMonths(firstOpen, 1);
+  return firstOpen;
+}
+
+/**
+ * A method applied before methods were living only left `splitSettings` and
+ * the amounts of that day: every member's contribution from the same month.
+ * Those amounts become the living rule from that month on. When the members'
+ * contributions no longer start together, one was set by hand since: nothing
+ * is adopted, the amounts stay as they are.
+ */
+export function adoptLegacySplit(model: BudgetModel, today: YM): BudgetModel {
+  if (model.extras[SPLIT_RULES_KEY] !== undefined) return model;
+  const s = readSplitSettings(model.extras[SPLIT_KEY]);
+  if (!s.method) return model;
+  const settings: SplitSettings = { method: s.method, margin: s.margin ?? 0, basis: s.basis ?? 'month' };
+  const firstOpen = firstOpenMonth(new BudgetEngine(model, today), today);
+  // The members still there, each with the last contribution they were given.
+  const last = model.people
+    .filter((p) => {
+      const end = windowOf(p).end;
+      return !end || compareYM(end, firstOpen) >= 0;
+    })
+    .map((p) => sortSteps(p.contributions ?? []).pop());
+  if (!last.length) return model;
+  const wantedMode = settings.method === 'all' ? 'all' : 'fixed';
+  if (last.some((st) => (st?.mode ?? 'all') !== wantedMode)) return model;
+  const froms = new Set(last.map((st) => st?.from));
+  if (froms.size !== 1) return model;
+  const from = last[0]?.from;
+  return withRules(model, [{ from: from && isYM(from) ? from : firstOpen, settings }]);
+}
+
 /**
  * Writes the contributions of every month a method governs, from the first
  * open month on, up to the next rule or HORIZON_MONTHS ahead for the last one.
  * Returns `model` itself when nothing changes.
  */
-export function deriveSplit(model: BudgetModel, today: YM): BudgetModel {
+export function deriveSplit(input: BudgetModel, today: YM): BudgetModel {
+  const model = adoptLegacySplit(input, today);
   const rules = splitRules(model);
-  if (!rules.some((r) => r.settings)) return model;
+  if (!rules.some((r) => r.settings)) return input;
   const engine = new BudgetEngine(model, today);
-  let firstOpen = today;
-  for (let i = 0; i < 36 && engine.isClosed(firstOpen); i++) firstOpen = addMonths(firstOpen, 1);
+  const firstOpen = firstOpenMonth(engine, today);
 
   const steps = new Map(model.people.map((p) => [p.id, sortSteps(p.contributions ?? [])]));
   rules.forEach((rule, i) => {
@@ -244,4 +280,29 @@ export function deriveSplit(model: BudgetModel, today: YM): BudgetModel {
     return { ...p, contributions: nextSteps };
   });
   return changed ? { ...model, people } : model;
+}
+
+export interface SplitShift {
+  ym: YM;
+  members: Array<{ id: string; name: string; contribution: number; delta: number }>;
+}
+
+/**
+ * The first month whose contributions the method moved between `prev` and
+ * `next` (a charge, a saving or a pay that changed), to tell the household.
+ * Null when the rules themselves changed (a method applied or stopped).
+ */
+export function splitShift(prev: BudgetModel, next: BudgetModel, today: YM): SplitShift | null {
+  if (prev === next || !splitRules(next).some((r) => r.settings)) return null;
+  if (JSON.stringify(splitRules(adoptLegacySplit(prev, today))) !== JSON.stringify(splitRules(next))) return null;
+  const before = new BudgetEngine(prev, today);
+  const after = new BudgetEngine(next, today);
+  let ym = firstOpenMonth(after, today);
+  for (let i = 0; i < HORIZON_MONTHS; i++, ym = addMonths(ym, 1)) {
+    if (!splitRuleAt(next, ym)) continue;
+    const was = new Map(before.month(ym).people.map((p) => [p.id, p.contribution]));
+    const members = after.month(ym).people.map((p) => ({ id: p.id, name: p.name, contribution: p.contribution, delta: roundCents(p.contribution - (was.get(p.id) ?? 0)) }));
+    if (members.some((m) => m.delta !== 0)) return { ym, members };
+  }
+  return null;
 }

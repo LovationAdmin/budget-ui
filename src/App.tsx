@@ -49,6 +49,7 @@ const MonthTab = lazy(loadMonthTab);
 const ForgotPassword = lazy(() => import('./lib/pages/ForgotPassword'));
 const ResetPassword = lazy(() => import('./lib/pages/ResetPassword'));
 const VerifyEmail = lazy(() => import('./lib/pages/VerifyEmail'));
+const EmailUnsubscribe = lazy(() => import('./lib/pages/EmailUnsubscribe'));
 const PrivacyPolicy = lazy(() => import('./lib/pages/PrivacyPolicy'));
 const Terms = lazy(() => import('./lib/pages/Terms'));
 const About = lazy(() => import('./lib/pages/About'));
@@ -123,6 +124,7 @@ export default function App() {
           <Route path="/invitation/accept" element={<AcceptInvitation />} />
           <Route path="/privacy" element={<PrivacyPolicy />} />
           <Route path="/verify-email" element={<VerifyEmail />} />
+          <Route path="/emails/desabonnement" element={<EmailUnsubscribe />} />
           <Route path="/terms" element={<Terms />} />
           <Route path="/features" element={<Features />} />
           <Route path="/tableau-budget-familial-gratuit" element={<BudgetTemplate />} />
