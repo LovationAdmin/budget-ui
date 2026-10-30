@@ -21,6 +21,9 @@ import { BUDGET_PERSO_EN, EXAMPLE_EN, EXAMPLE_EN_HIGH_RENT } from '@/i18n/en/bud
 import { FULL_SAVINGS_MAX_NEEDS_SHARE, NEED_FIELDS, computeBudgetPerso } from '@/lib/tools/budgetPerso';
 import { BUDGET_503020_FAQ_EN } from '@/seo/faq-503020-en';
 
+// Take-home pay levels of the « by take-home pay » table (US-dollar scale,
+// converted like the example for rupees, naira…).
+const TAKE_HOME_LEVELS = [2000, 3000, 4000, 5000, 6000, 8000];
 
 export default function BudgetCalculatorEn() {
   const { code, setCode, format } = useCurrency();
@@ -126,6 +129,42 @@ export default function BudgetCalculatorEn() {
               <li><strong>Needs above {pct(FULL_SAVINGS_MAX_NEEDS_SHARE)}</strong>: what’s left is split into two equal halves, one for wants, the other for the savings you can manage. Keeping 20% would otherwise squeeze wants, and a budget that’s too tight rarely lasts.</li>
               <li><strong>Needs above your income</strong>: no split, but ways to rebalance.</li>
             </ul>
+          </section>
+
+          <section>
+            <h2>50/30/20 budget by take-home pay</h2>
+            <p className="mt-4">
+              What the rule gives at a glance, per month. Find the line closest to your take-home pay, then enter your real
+              amounts in the calculator above: your needs decide what’s actually left.
+            </p>
+            <div className="mt-4 overflow-x-auto">
+              <table className="w-full min-w-[320px] text-left text-sm">
+                <thead>
+                  <tr className="border-b border-border text-foreground">
+                    <th className="py-2 font-semibold">Take-home pay</th>
+                    <th className="py-2 text-right font-semibold">Needs (50%)</th>
+                    <th className="py-2 text-right font-semibold">Wants (30%)</th>
+                    <th className="py-2 text-right font-semibold">Savings (20%)</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border/60 tabular-nums">
+                  {TAKE_HOME_LEVELS.map((level) => {
+                    const pay = format.example(level);
+                    return (
+                      <tr key={level}>
+                        <td className="py-2 font-semibold text-foreground">{money(pay)}</td>
+                        <td className="py-2 text-right">{money(pay * 0.5)}</td>
+                        <td className="py-2 text-right">{money(pay * 0.3)}</td>
+                        <td className="py-2 text-right">{money(pay * 0.2)}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+            <p className="mt-4">
+              Paid yearly? Use your yearly take-home pay ÷ 12, not your gross salary: the rule applies after tax.
+            </p>
           </section>
 
           <section>

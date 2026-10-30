@@ -20,6 +20,14 @@ export const BUDGET_503020_FAQ_EN: FaqItem[] = [
     a: 'On after-tax income, not your gross salary. The simplest is to use your take-home pay: what actually lands in your account each month, after tax and other deductions, plus any regular benefits or other income.',
   },
   {
+    q: 'What counts as a need and what counts as a want?',
+    a: 'A need is what you would still have to pay if you cut back to the minimum: rent or mortgage, utilities, groceries, transportation to work, insurance, minimum loan payments. A want is what you could pause: eating out, takeout, streaming, hobbies, travel, new clothes beyond the basics. The same line can be split: basic groceries are a need, premium brands and snacks are wants; a basic phone plan is a need, the latest phone is a want.',
+  },
+  {
+    q: 'Does the 50/30/20 rule work for a couple or a family?',
+    a: 'Yes: add up the household’s take-home pay and the shared needs (housing, bills, groceries, childcare), and the rule applies to the total. With children, needs often go above 50%: the calculator then adapts how what’s left is split. Couples usually also agree on how much each one pays into the joint pot and how much spending money each keeps.',
+  },
+  {
     q: 'What if my needs are more than 50% of my income?',
     a: 'That is not a failure: with high rent, it happens quickly. The calculator first trims wants and keeps 20% for savings as long as your needs stay at or below 60% of your income; above that, it splits what is left into two equal halves for wants and savings. To loosen your budget, compare your bills, check the benefits you may be entitled to and, if needed, talk to a free, non-profit money adviser.',
   },

@@ -227,6 +227,7 @@ export const PAGES: PageSEO[] = [
     sections: [
       { h2: 'How to make a personal budget in 5 steps', text: 'Take-home pay, fixed bills, yearly costs ÷ 12, variable spending, then pay yourself first, right after payday.' },
       { h2: 'The 50/30/20 rule explained', text: '50% for needs, 30% for wants, 20% for savings: a rule popularized by Elizabeth Warren and Amelia Warren Tyagi (All Your Worth, 2005). A benchmark, not an obligation, to adapt to the cost of housing.' },
+      { h2: '50/30/20 budget by take-home pay', text: 'Per month: on 2,000, 1,000 for needs, 600 for wants, 400 for savings; on 3,000: 1,500, 900 and 600; on 4,000: 2,000, 1,200 and 800; on 5,000: 2,500, 1,500 and 1,000; on 6,000: 3,000, 1,800 and 1,200; on 8,000: 4,000, 2,400 and 1,600. Paid yearly? Use your yearly take-home pay ÷ 12.' },
       { h2: 'A 50/30/20 budget example', text: 'In our example, 4,000 take-home pay and 2,200 of needs (55%): 1,000 for wants and 800 of savings a month.' },
       { h2: 'How much should you save each month?', text: '20% of take-home pay as a benchmark; start small, build an emergency fund of a few months of expenses first, then your goals.' },
     ],

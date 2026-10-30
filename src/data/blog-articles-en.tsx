@@ -136,7 +136,7 @@ export const blogArticlesEn: BlogArticleContent[] = [
         <h3>How do I make a simple family budget?</h3>
         <p>List your take-home income, then fixed bills and day-to-day spending from your bank statements, set aside 1/12 of your yearly costs each month, schedule your savings, and check what’s left.</p>
         <h3>What percentage of income should a family save?</h3>
-        <p>The 50/30/20 rule suggests 20%. What matters most is to start, even at 5 or 10%, and to raise it month after month.</p>
+        <p>The <a href="/en/50-30-20-budget-calculator">50/30/20 rule</a> suggests 20%. What matters most is to start, even at 5 or 10%, and to raise it month after month.</p>
         <h3>Is there a free app to manage a family budget?</h3>
         <p>Yes: Budget Famille is free for budgets, members, savings and sharing, with no bank connection. Coming soon with Budget Famille Premium: your accounts synced automatically to compare the plan with what you actually spent.</p>
       </div>
@@ -328,7 +328,7 @@ export const blogArticlesEn: BlogArticleContent[] = [
 
         <h2>❓ Frequently asked questions</h2>
         <h3>How much should I save each month based on my pay?</h3>
-        <p>The 50/30/20 rule suggests 20% of take-home pay, but it works better to start from your goals and their dates, then check that the total stays realistic.</p>
+        <p>The 50/30/20 rule suggests 20% of take-home pay (our <a href="/en/50-30-20-budget-calculator">50/30/20 budget calculator</a> shows the split for your pay), but it works better to start from your goals and their dates, then check that the total stays realistic.</p>
         <h3>Is one savings account better than several pots?</h3>
         <p>Several pots, one per goal: you see each one’s progress and you avoid dipping into the down payment for the vacation.</p>
       </div>
@@ -437,6 +437,7 @@ export const blogArticlesEn: BlogArticleContent[] = [
           To go faster: our <a href="/en/free-budget-template">free family budget template</a> (Excel with formulas, or a printable PDF), or the Budget
           Famille app, which fills in every month from your rules and works out everyone’s share of the joint pot. To see in one minute what your
           household keeps after fixed bills, per person and per day: the <a href="/en/leftover-income-calculator">leftover income calculator</a>.
+          To compare your split with the 50/30/20 rule: the <a href="/en/50-30-20-budget-calculator">50/30/20 budget calculator</a>.
         </p>
 
         <Cta title="Your family budget, worked out every month" text="Free, no bank connection required, shared in real time." label="Create our family budget →" />
