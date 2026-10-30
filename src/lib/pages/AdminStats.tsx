@@ -15,18 +15,13 @@ import { useNavigate } from 'react-router-dom';
 import {
   ShieldCheck,
   ShieldAlert,
-  Users,
-  Wallet,
   KeyRound,
-  Database,
   RefreshCw,
   LogOut,
   AlertCircle,
   ArrowLeft,
   Pause,
   Play,
-  TrendingUp,
-  CheckCircle2,
   Lock,
 } from 'lucide-react';
 import Navbar from '@/components/Navbar';
@@ -44,7 +39,7 @@ import { AdminCampaignSender } from '@/components/admin/AdminCampaignSender';
 import { AdminMonthlyRecapSender } from '@/components/admin/AdminMonthlyRecapSender';
 import { AdminUnverifiedReminderSender } from '@/components/admin/AdminUnverifiedReminderSender';
 import { AdminLocksBackfill } from '@/components/admin/AdminLocksBackfill';
-import { AdminGrowth } from '@/components/admin/AdminGrowth';
+import { AdminGrowth, Tile, plural } from '@/components/admin/AdminGrowth';
 
 // ============================================================================
 // HELPERS
@@ -54,10 +49,10 @@ function formatRelativeTime(date: Date | null): string {
   if (!date) return '—';
   const seconds = Math.floor((Date.now() - date.getTime()) / 1000);
   if (seconds < 5) return 'à l’instant';
-  if (seconds < 60) return `il y a ${seconds}s`;
+  if (seconds < 60) return `il y a ${seconds} s`;
   const minutes = Math.floor(seconds / 60);
-  if (minutes < 60) return `il y a ${minutes}min`;
-  return `il y a ${Math.floor(minutes / 60)}h`;
+  if (minutes < 60) return `il y a ${minutes} min`;
+  return `il y a ${Math.floor(minutes / 60)} h`;
 }
 
 function formatDateTime(iso: string): string {
@@ -132,7 +127,7 @@ export default function AdminStats() {
                   className="border-destructive/40 bg-destructive/5 text-destructive font-mono text-[10px] uppercase tracking-wider"
                 >
                   <Lock className="h-2.5 w-2.5 mr-1" />
-                  Restricted
+                  Accès restreint
                 </Badge>
               </div>
               <p className="text-sm text-muted-foreground">
@@ -141,8 +136,9 @@ export default function AdminStats() {
               </p>
             </div>
 
+            {/* items-start: on a phone the badge keeps its own width */}
             {hasSecret && data && (
-              <div className="flex flex-col sm:items-end gap-1">
+              <div className="flex flex-col items-start sm:items-end gap-1">
                 <Badge
                   variant="outline"
                   className={cn(
@@ -152,10 +148,14 @@ export default function AdminStats() {
                       : 'border-warning/40 bg-warning/5 text-warning'
                   )}
                 >
-                  ENV: {data.environment}
+                  {data.environment}
                 </Badge>
-                <span className="text-xs text-muted-foreground">
+                <span
+                  className="text-xs text-muted-foreground"
+                  title={`Données du ${formatDateTime(data.generated_at)}`}
+                >
                   Mis à jour {formatRelativeTime(lastFetchedAt)}
+                  {autoRefreshEnabled ? ' · auto toutes les 30 s' : ' · auto en pause'}
                 </span>
               </div>
             )}
@@ -182,7 +182,7 @@ export default function AdminStats() {
                 className="gap-2"
               >
                 <RefreshCw className={cn('h-3.5 w-3.5', loading && 'animate-spin')} />
-                Rafraîchir
+                Actualiser
               </Button>
 
               <Button
@@ -190,21 +190,21 @@ export default function AdminStats() {
                 size="sm"
                 onClick={toggleAutoRefresh}
                 className="gap-2"
-                title={
+                aria-label={
                   autoRefreshEnabled
-                    ? 'Auto-refresh actif (30s)'
-                    : 'Auto-refresh en pause'
+                    ? 'Mettre en pause l’actualisation automatique'
+                    : 'Reprendre l’actualisation automatique'
                 }
               >
                 {autoRefreshEnabled ? (
                   <>
                     <Pause className="h-3.5 w-3.5" />
-                    Pause auto-refresh
+                    Pause
                   </>
                 ) : (
                   <>
                     <Play className="h-3.5 w-3.5" />
-                    Reprendre auto-refresh
+                    Reprendre
                   </>
                 )}
               </Button>
@@ -232,16 +232,16 @@ export default function AdminStats() {
 
             {/* INITIAL LOADING */}
             {loading && !data && (
-              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
                 {[1, 2, 3, 4].map((i) => (
-                  <Card key={i} className="h-40 animate-pulse bg-muted/50" />
+                  <div key={i} className="h-28 animate-pulse rounded-2xl bg-muted/50" />
                 ))}
               </div>
             )}
 
             {/* DATA */}
-            {data?.growth && <AdminGrowth growth={data.growth} />}
-            {data && <StatsGrid data={data} />}
+            {data?.growth && <AdminGrowth growth={data.growth} newLast24h={data.users.new_last_24h} />}
+            {data && <UsageTiles data={data} />}
 
             {/* CAMPAIGNS — only render once stats are loaded so the layout is stable */}
             {data && (
@@ -351,236 +351,39 @@ function SecretPrompt({
 }
 
 // ============================================================================
-// KPI GRID
+// USAGE & TECHNIQUE — what « Croissance » doesn't already say
 // ============================================================================
 
-function StatsGrid({ data }: { data: AdminStatsData }) {
+function UsageTiles({ data }: { data: AdminStatsData }) {
+  const { budgets, sessions, users, suggestions_cache: cache } = data;
+  const expired = cache.total - cache.not_expired;
   return (
-    <div className="space-y-6">
-      {/* USERS */}
-      <SectionCard
-        title="Utilisateurs"
-        icon={Users}
-        accent="primary"
-        primary={{
-          label: 'Total inscrits',
-          value: data.users.total,
-        }}
-        metrics={[
-          {
-            label: 'Email vérifié',
-            value: data.users.verified,
-            of: data.users.total,
-            tone: 'success',
-          },
-          {
-            label: '2FA activé',
-            value: data.users.with_totp,
-            of: data.users.total,
-            tone: 'neutral',
-          },
-          {
-            label: 'Nouveaux 24h',
-            value: data.users.new_last_24h,
-            tone: 'neutral',
-            badge: data.users.new_last_24h > 0 ? 'live' : undefined,
-          },
-          {
-            label: 'Actifs 7 jours',
-            value: data.users.active_last_7_days,
-            of: data.users.total,
-            tone: 'success',
-          },
-        ]}
-      />
-
-      {/* BUDGETS */}
-      <SectionCard
-        title="Budgets"
-        icon={Wallet}
-        accent="secondary"
-        primary={{
-          label: 'Total créés',
-          value: data.budgets.total,
-        }}
-        metrics={[
-          {
-            label: 'Modifiés 24h',
-            value: data.budgets.updated_last_24h,
-            tone: 'success',
-            badge: data.budgets.updated_last_24h > 0 ? 'live' : undefined,
-          },
-          {
-            label: 'Modifiés 7 jours',
-            value: data.budgets.updated_last_7_days,
-            of: data.budgets.total,
-            tone: 'neutral',
-          },
-        ]}
-      />
-
-      {/* SESSIONS */}
-      <SectionCard
-        title="Sessions actives"
-        icon={ShieldCheck}
-        accent="success"
-        primary={{
-          label: 'Refresh tokens valides',
-          value: data.sessions.active_refresh_tokens,
-        }}
-        metrics={[
-          {
-            label: 'Utilisateurs uniques',
-            value: data.sessions.unique_users_with_session,
-            tone: 'neutral',
-          },
-          {
-            label: 'Émis dans les 24h',
-            value: data.sessions.issued_last_24h,
-            tone: 'neutral',
-          },
-        ]}
-      />
-
-      {/* SUGGESTIONS CACHE */}
-      <SectionCard
-        title="Cache IA"
-        icon={Database}
-        accent="warning"
-        primary={{
-          label: 'Entrées totales',
-          value: data.suggestions_cache.total,
-        }}
-        metrics={[
-          {
-            label: 'Encore valides',
-            value: data.suggestions_cache.not_expired,
-            of: data.suggestions_cache.total,
-            tone: 'success',
-          },
-          {
-            label: 'Expirées',
-            value:
-              data.suggestions_cache.total - data.suggestions_cache.not_expired,
-            of: data.suggestions_cache.total,
-            tone: 'neutral',
-          },
-        ]}
-      />
-
-      {/* FOOTER META */}
-      <div className="text-xs text-muted-foreground text-center pt-2 font-mono">
-        Snapshot généré le {formatDateTime(data.generated_at)}
+    <section aria-labelledby="usage-title" className="space-y-4">
+      <h2 id="usage-title" className="text-lg font-display font-bold text-foreground sm:text-xl">
+        Usage et technique
+      </h2>
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        <Tile
+          label="Budgets créés"
+          value={budgets.total.toLocaleString('fr-FR')}
+          hint={`${budgets.updated_last_7_days} modifiés en 7 j, ${budgets.updated_last_24h} en 24 h`}
+        />
+        <Tile
+          label="Sessions ouvertes"
+          value={sessions.active_refresh_tokens.toLocaleString('fr-FR')}
+          hint={`${plural(sessions.unique_users_with_session, 'personne')}, ${sessions.issued_last_24h} émises en 24 h`}
+        />
+        <Tile
+          label="2FA activée"
+          value={`${users.total ? Math.round((users.with_totp / users.total) * 100) : 0} %`}
+          hint={`${plural(users.with_totp, 'compte')} sur ${users.total}`}
+        />
+        <Tile
+          label="Cache IA"
+          value={cache.total.toLocaleString('fr-FR')}
+          hint={expired > 0 ? `${cache.not_expired} valides, ${expired} expirées` : 'toutes valides'}
+        />
       </div>
-    </div>
-  );
-}
-
-// ============================================================================
-// SECTION CARD
-// ============================================================================
-
-interface Metric {
-  label: string;
-  value: number;
-  of?: number;
-  tone?: 'success' | 'neutral' | 'warning';
-  badge?: 'live';
-}
-
-interface SectionCardProps {
-  title: string;
-  icon: React.ComponentType<{ className?: string }>;
-  accent: 'primary' | 'secondary' | 'success' | 'warning';
-  primary: { label: string; value: number };
-  metrics: Metric[];
-}
-
-const ACCENT_CLASSES: Record<SectionCardProps['accent'], string> = {
-  primary: 'bg-primary/10 text-primary',
-  secondary: 'bg-secondary/10 text-secondary',
-  success: 'bg-success/10 text-success',
-  warning: 'bg-warning/10 text-warning',
-};
-
-function SectionCard({
-  title,
-  icon: Icon,
-  accent,
-  primary,
-  metrics,
-}: SectionCardProps) {
-  return (
-    <Card className="overflow-hidden">
-      <CardHeader className="pb-3">
-        <div className="flex items-center gap-3">
-          <div
-            className={cn(
-              'flex h-10 w-10 items-center justify-center rounded-xl',
-              ACCENT_CLASSES[accent]
-            )}
-          >
-            <Icon className="h-5 w-5" />
-          </div>
-          <CardTitle className="font-display text-lg">{title}</CardTitle>
-        </div>
-      </CardHeader>
-
-      <CardContent className="space-y-4">
-        {/* Primary headline metric */}
-        <div className="flex items-baseline gap-3 pb-3 border-b border-border/50">
-          <span className="text-4xl sm:text-5xl font-display font-bold tabular-nums">
-            {primary.value.toLocaleString('fr-FR')}
-          </span>
-          <span className="text-sm text-muted-foreground uppercase tracking-wide">
-            {primary.label}
-          </span>
-        </div>
-
-        {/* Sub metrics */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          {metrics.map((m) => (
-            <SubMetric key={m.label} metric={m} />
-          ))}
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
-
-function SubMetric({ metric }: { metric: Metric }) {
-  const percentage =
-    metric.of && metric.of > 0
-      ? Math.round((metric.value / metric.of) * 100)
-      : null;
-
-  return (
-    <div className="rounded-xl bg-muted/40 p-3">
-      <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-wide text-muted-foreground font-medium">
-        {metric.label}
-        {metric.badge === 'live' && (
-          <span className="flex items-center gap-1 text-success">
-            <span className="h-1.5 w-1.5 rounded-full bg-success animate-pulse" />
-            <span>live</span>
-          </span>
-        )}
-      </div>
-      <div className="flex items-baseline gap-1.5 mt-1">
-        <span
-          className={cn(
-            'text-xl font-display font-bold tabular-nums',
-            metric.tone === 'success' && metric.value > 0 && 'text-success',
-            metric.tone === 'warning' && 'text-warning'
-          )}
-        >
-          {metric.value.toLocaleString('fr-FR')}
-        </span>
-        {percentage !== null && (
-          <span className="text-xs text-muted-foreground tabular-nums">
-            ({percentage}%)
-          </span>
-        )}
-      </div>
-    </div>
+    </section>
   );
 }

@@ -10,9 +10,36 @@ import type { GrowthData } from '@/hooks/useAdminStats';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 const pct = (n: number, d: number) => (d > 0 ? Math.round((n / d) * 100) : 0);
-const COUNTRY: Record<string, string> = { FR: 'France', BE: 'Belgique', CH: 'Suisse', CA: 'Canada', SN: 'Sénégal', CI: 'Côte d’Ivoire', MA: 'Maroc', LU: 'Luxembourg', '?': 'Non renseigné' };
+export const plural = (n: number, word: string) => `${n} ${word}${n > 1 ? 's' : ''}`;
 
-function Tile({ label, value, hint }: { label: string; value: string; hint: string }) {
+// Any ISO code → its French name (GB → Royaume-Uni); unknown codes as is.
+const regionNames = (() => {
+  try { return new Intl.DisplayNames(['fr'], { type: 'region' }); } catch { return null; }
+})();
+function countryName(code: string): string {
+  if (code === '?') return 'Non renseigné';
+  try { return regionNames?.of(code === 'UK' ? 'GB' : code) ?? code; } catch { return code; }
+}
+
+// Campaign ids are snake_case, often with a month: "monthly_recap_2026_09"
+// reads "Récap mensuel · sept. 2026". The raw id stays in the tooltip.
+const CAMPAIGN: Record<string, string> = {
+  unverified_deletion_warning: 'Avertissement avant suppression',
+  unverified_reminder: 'Rappel de vérification',
+  reengagement: 'Relance',
+  monthly_recap: 'Récap mensuel',
+  whatsnew: 'Nouveautés',
+};
+function campaignName(id: string): string {
+  const m = /^(.+?)_(\d{4})_(\d{2})$/.exec(id);
+  const base = m ? m[1] : id;
+  const raw = base.replace(/_/g, ' ');
+  const name = CAMPAIGN[base] ?? raw.charAt(0).toUpperCase() + raw.slice(1);
+  if (!m) return name;
+  return `${name} · ${new Date(+m[2], +m[3] - 1).toLocaleDateString('fr-FR', { month: 'short', year: 'numeric' })}`;
+}
+
+export function Tile({ label, value, hint }: { label: string; value: string; hint: string }) {
   return (
     <div className="rounded-2xl border border-border/70 bg-card p-4">
       <p className="text-xs font-semibold text-muted-foreground">{label}</p>
@@ -86,7 +113,8 @@ function WeeklySignups({ weeks }: { weeks: GrowthData['weekly'] }) {
         })}
       </div>
       <div className="mt-1 grid grid-cols-12 gap-1 text-center text-[10px] text-muted-foreground" aria-hidden="true">
-        {weeks.map((w, i) => <span key={w.week}>{i % 2 === 0 ? label(w.week) : ''}</span>)}
+        {/* Every other week, counted back from the current one so it is labelled. */}
+        {weeks.map((w, i) => <span key={w.week}>{(weeks.length - 1 - i) % 2 === 0 ? label(w.week) : ''}</span>)}
       </div>
       <table className="sr-only">
         <caption>Inscriptions par semaine</caption>
@@ -98,17 +126,18 @@ function WeeklySignups({ weeks }: { weeks: GrowthData['weekly'] }) {
   );
 }
 
-export function AdminGrowth({ growth }: { growth: GrowthData }) {
+export function AdminGrowth({ growth, newLast24h = 0 }: { growth: GrowthData; newLast24h?: number }) {
   const f = growth.funnel;
   const weekTotal = growth.weekly.reduce((a, w) => a + w.signups, 0);
   return (
     <section aria-labelledby="growth-title" className="viz-root mb-6 space-y-4 sm:mb-8">
       <h2 id="growth-title" className="text-lg font-display font-bold text-foreground sm:text-xl">Croissance</h2>
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <Tile label="Inscriptions (12 sem.)" value={String(weekTotal)} hint={`${f.signed_up} comptes au total`} />
+        <Tile label="Inscriptions (12 sem.)" value={String(weekTotal)} hint={`${f.signed_up} comptes au total${newLast24h > 0 ? `, dont ${newLast24h} en 24 h` : ''}`} />
         <Tile label="Vérifient leur e-mail" value={`${pct(f.verified, f.signed_up)} %`} hint={`${growth.unverified_over_7_days} bloqués depuis plus de 7 jours`} />
-        <Tile label="Actifs sur 7 jours" value={String(growth.active_users_7_days)} hint="ont ouvert ou modifié un budget" />
-        <Tile label="Actifs sur 30 jours" value={String(growth.active_users_30_days)} hint={`${pct(growth.active_users_30_days, f.verified)} % des comptes vérifiés`} />
+        {/* Same definition as the funnel: has a budget and opened the app. */}
+        <Tile label="Actifs sur 7 jours" value={String(growth.active_users_7_days)} hint="ont un budget et ont ouvert l’app" />
+        <Tile label="Actifs sur 30 jours" value={String(growth.active_users_30_days)} hint={`${pct(growth.active_users_30_days, f.with_budget)} % de ceux qui ont un budget`} />
       </div>
       <div className="grid gap-4 lg:grid-cols-2">
         <Card>
@@ -124,34 +153,47 @@ export function AdminGrowth({ growth }: { growth: GrowthData }) {
         <Card>
           <CardHeader className="pb-2"><CardTitle className="text-base">Budgets par pays</CardTitle></CardHeader>
           <CardContent>
-            <table className="w-full text-sm tabular-nums">
-              <tbody>
-                {growth.locations.map((l) => (
-                  <tr key={l.code} className="border-t border-border/60 first:border-0">
-                    <td className="py-1.5 text-foreground">{COUNTRY[l.code] ?? l.code}</td>
-                    <td className="py-1.5 text-right font-semibold text-foreground">{l.count}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+            {growth.locations.length === 0 ? (
+              <p className="text-sm text-muted-foreground">Aucun budget pour l’instant.</p>
+            ) : (
+              <table className="w-full text-sm tabular-nums">
+                <tbody>
+                  {growth.locations.map((l) => (
+                    <tr key={l.code} className="border-t border-border/60 first:border-0">
+                      <td className="py-1.5 text-foreground">{countryName(l.code)}</td>
+                      <td className="py-1.5 text-right font-semibold text-foreground">{l.count}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="pb-2"><CardTitle className="text-base">Campagnes e-mail</CardTitle></CardHeader>
           <CardContent>
-            <table className="w-full text-sm tabular-nums">
-              <thead><tr className="text-left text-xs text-muted-foreground"><th className="pb-1 font-medium">Campagne</th><th className="pb-1 text-right font-medium">Envoyés</th><th className="pb-1 text-right font-medium">Échecs</th><th className="pb-1 text-right font-medium">Date</th></tr></thead>
-              <tbody>
+            {/* A list, not a 4-column table: on a phone the name gets the full
+                width and the figures sit under it, nothing breaks mid-word. */}
+            {growth.campaigns.length === 0 ? (
+              <p className="text-sm text-muted-foreground">Aucune campagne envoyée.</p>
+            ) : (
+              <ul className="text-sm">
                 {growth.campaigns.map((c) => (
-                  <tr key={c.id} className="border-t border-border/60">
-                    <td className="py-1.5 pr-2 text-foreground [overflow-wrap:anywhere]">{c.id}</td>
-                    <td className="py-1.5 text-right font-semibold text-foreground">{c.sent}</td>
-                    <td className={c.failed ? 'py-1.5 text-right font-semibold text-destructive' : 'py-1.5 text-right text-muted-foreground'}>{c.failed}</td>
-                    <td className="py-1.5 pl-2 text-right text-muted-foreground">{c.last_at.slice(5).split('-').reverse().join('/')}</td>
-                  </tr>
+                  <li key={c.id} className="flex items-baseline justify-between gap-3 border-t border-border/60 py-2 first:border-0 first:pt-0">
+                    <div className="min-w-0">
+                      <p className="font-medium text-foreground" title={c.id}>{campaignName(c.id)}</p>
+                      <p className="mt-0.5 text-xs tabular-nums text-muted-foreground">
+                        {plural(c.sent, 'envoyé')}
+                        {c.failed > 0 && <span className="font-semibold text-destructive"> · {plural(c.failed, 'échec')}</span>}
+                      </p>
+                    </div>
+                    <time dateTime={c.last_at} className="shrink-0 text-xs tabular-nums text-muted-foreground">
+                      {c.last_at.slice(5).split('-').reverse().join('/')}
+                    </time>
+                  </li>
                 ))}
-              </tbody>
-            </table>
+              </ul>
+            )}
           </CardContent>
         </Card>
       </div>
