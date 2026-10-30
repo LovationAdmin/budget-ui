@@ -226,12 +226,18 @@ export default function AdminStats() {
             {error && (
               <Alert variant="destructive" className="mb-4">
                 <AlertCircle className="h-4 w-4" />
-                <AlertDescription>{error}</AlertDescription>
+                <AlertDescription className="flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <span>{error}</span>
+                  <Button variant="outline" size="sm" onClick={refresh} disabled={loading} className="shrink-0 gap-2">
+                    <RefreshCw className={cn('h-3.5 w-3.5', loading && 'animate-spin')} />
+                    {loading ? 'Nouvel essai…' : 'Réessayer'}
+                  </Button>
+                </AlertDescription>
               </Alert>
             )}
 
-            {/* INITIAL LOADING */}
-            {loading && !data && (
+            {/* INITIAL LOADING (an error already says what is going on) */}
+            {loading && !data && !error && (
               <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
                 {[1, 2, 3, 4].map((i) => (
                   <div key={i} className="h-28 animate-pulse rounded-2xl bg-muted/50" />
