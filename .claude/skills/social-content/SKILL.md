@@ -10,7 +10,9 @@ depuis les comptes LinkedIn, Instagram, Facebook et X de lovation.pro, avec un
 article utile (qui reste sur le blog et travaille aussi le référencement) et des
 posts adaptés à chaque réseau.
 
-Une semaine type = **1 article + 2 posts par réseau** :
+Une semaine type = **1 article + 2 posts par réseau**. Une semaine sur deux,
+l'article vise un pays francophone hors de France, et chaque sujet universel
+part aussi en anglais (voir « Marchés ») :
 
 - **Post A « article »** (mardi) : fait découvrir l'article de la semaine.
 - **Post B « astuce »** (jeudi) : un conseil chiffré concret qui renvoie vers un
@@ -53,6 +55,56 @@ Tout le travail de la semaine passe par **une pull request** sur
 session la fusionne elle-même (mode `autonome`). Rien n'est publié sur un réseau
 avant que l'article et les visuels soient en ligne.
 
+## Marchés : la France, et une semaine sur deux ailleurs
+
+La France reste le premier marché. Mais une semaine sur deux, l'article vise un
+pays francophone hors de France, et chaque sujet universel part aussi en
+anglais. Pourquoi (Search Console, 90 jours au 27/10/2026) : l'article
+`budget-familial-maroc-casablanca-rabat` sort en 6e-7e position au Maroc sur des
+requêtes génériques (« budget familial », « budget famille 4 personnes ») et a
+fait du Maroc le 2e pays en clics ; au Canada et en Belgique, les mêmes
+requêtes en français restent entre la 13e et la 35e position, faute d'article
+local ; les États-Unis (2e pays en impressions) et le Royaume-Uni (4e) arrivent
+déjà sur les pages anglaises.
+
+- **Alternance** : colonne « Marché » de `docs/social/log.md`. Dernière ligne
+  « France » → semaine internationale ; sinon → France. Un sujet de saison
+  français qui ne peut pas attendre (Black Friday, Noël) décale l'alternance
+  d'une semaine : le dire dans la PR.
+- **Ordre des marchés** (le premier pays sans article) : Québec (Canada) ·
+  Belgique · Suisse romande · Cameroun · Tunisie · Algérie. Ensuite, un nouvel
+  angle dans un pays déjà traité (Maroc, Sénégal, Côte d'Ivoire compris), choisi
+  sur son calendrier et ses requêtes Search Console.
+- **Premier article d'un pays** : sur le modèle de l'article Maroc, celui qui
+  marche. « Budget familial au <pays> : … », budget mensuel type d'une famille
+  de 4 en monnaie locale (par ville), organismes et postes locaux, aides,
+  dépenses de saison du pays, FAQ. Catégorie `International`, tags pays et villes.
+- **Écrire pour ce pays** : la monnaie locale et ses usages (Québec
+  « 1 200 $ », Suisse « 1 200 CHF », Maroc « 1 200 DH », Afrique de l'Ouest et
+  centrale « 120 000 FCFA ») ; le vocabulaire local (Québec : épicerie, garderie,
+  Hydro-Québec ; Belgique : allocations familiales, pécule de vacances ; Suisse :
+  primes LAMal, caisse maladie) ; les sources officielles du pays (voir
+  garde-fous). Le vouvoiement reste.
+- **Un article sur un pays reste en français** ; la version anglaise ne concerne
+  que les sujets universels (étape 3).
+
+Calendriers hors de France (pics de recherche ; publier ~3 semaines avant ;
+vérifier chaque date et montant de l'année auprès de la source officielle) :
+
+- Québec : janvier-février budget d'après les Fêtes · mars-avril déclaration de
+  revenus (date limite : 30 avril) · juin déménagement du 1er juillet · août
+  rentrée scolaire · novembre Vendredi fou · décembre budget des Fêtes.
+- Belgique : mai-juin pécule de vacances · mai-juillet déclaration d'impôts
+  (Tax-on-web) · août rentrée scolaire et supplément annuel des allocations
+  familiales · décembre fêtes de fin d'année.
+- Suisse romande : fin septembre nouvelles primes LAMal · octobre-novembre
+  changer de caisse maladie (résiliation reçue avant le 30 novembre) ·
+  février-mars déclaration d'impôts (date selon le canton) · décembre 13e
+  salaire et fêtes.
+- Afrique de l'Ouest et centrale, Maghreb : Ramadan et Aïd el-Fitr, Tabaski /
+  Aïd el-Kebir (dates mobiles) · rentrée scolaire (septembre-octobre) · fêtes de
+  fin d'année.
+
 ## Fichiers
 
 | Fichier | Rôle |
@@ -63,6 +115,8 @@ avant que l'article et les visuels soient en ligne.
 | `public/social/<slug>/article.png`, `astuce.png` | Visuels 1080×1350, servis par le site (Metricool exige une URL publique). |
 | `public/social/<slug>/kit.html` | Le kit à copier de la semaine (noindex), généré depuis le fichier de posts. |
 | `src/data/blog-articles.tsx` | Les articles du blog (le sitemap, le prérendu et IndexNow suivent automatiquement). |
+| `src/data/blog-articles-en.tsx`, `src/data/blog-pairs.ts` | Les versions anglaises (`/en/blog/…`) et la paire slug français → slug anglais qui relie les deux. |
+| `scripts/gsc-queries.mjs` | Recherches Google qui affichent déjà le site dans un pays (Search Console, gratuit). |
 | `assets/card.html`, `scripts/render-card.mjs` | Gabarit et rendu des visuels. |
 | `scripts/render-kit.mjs` | Génère le kit à partir du fichier de posts et de la config. |
 | `scripts/wait-live.mjs` | Attend que l'article et les visuels soient en ligne après la fusion. |
@@ -71,8 +125,11 @@ avant que l'article et les visuels soient en ligne.
 
 - **Aucun chiffre inventé.** Chaque montant, pourcentage ou statistique d'un post
   ou d'un visuel figure dans l'article, et dans l'article il est soit sourcé
-  (INSEE, Banque de France, service-public.fr, caf.fr, ADEME… avec le nom de la
-  source dans le texte), soit présenté explicitement comme un exemple
+  (INSEE, Banque de France, service-public.fr, caf.fr, ADEME… ; hors de France,
+  la statistique et l'administration du pays : Statistique Canada, ISQ, Revenu
+  Québec ; Statbel, SPF Finances ; OFS, priminfo.admin.ch ; HCP au Maroc, ANSD
+  au Sénégal… avec le nom de la source dans le texte), soit présenté
+  explicitement comme un exemple
   (« dans notre exemple », « par exemple »). Pas de « 87 % des familles… » sans source.
 - **Pas de conseil financier personnalisé ni de promesse de gain** (« vous allez
   économiser 1 000 € »). Formuler en possibilités : « jusqu'à », « dans l'exemple ».
@@ -132,28 +189,39 @@ dans Metricool ») sur des créneaux libres de la semaine en cours. Un contenu
 saisonnier dont la saison est passée (Noël après le 25 décembre…) est abandonné :
 le dire dans un commentaire de la PR, avec le marqueur.
 
-### 2. Choisir le sujet
+### 2. Choisir le marché, puis le sujet
 
+0. Marché de la semaine : France ou pays suivant, d'après la section « Marchés »
+   (alternance du log, ordre des pays).
 1. Sujets déjà traités : les slugs de `src/data/blog-articles.tsx` et le log. Ne
    jamais refaire un sujet ; un angle nouveau sur un thème proche est possible s'il
    vise une autre recherche.
-2. Partir de la saison (voir le calendrier) et des piliers :
+2. Partir de la saison (calendrier du marché) et des piliers :
    méthodes de budget · budget perso et étudiant · couple · famille et enfants ·
    colocation · projets (voyage, mariage, travaux, voiture, déménagement) · baisser ses charges
    (énergie, assurances, box, mobile → simulateur `/outils-ia`) · épargne et
-   objectifs · dépenses de saison · budget en Afrique francophone et au Maghreb
-   (Sénégal, Côte d'Ivoire, Maroc déjà traités : élargir, ex. Cameroun, Tunisie, Belgique, Suisse).
-3. Valider la demande avec OpenRush : `research_keywords` avec
-   `location: "France"`, `language: "French"`, `mode: "suggestions"` (le mode
+   objectifs · dépenses de saison · budget dans un pays francophone hors de
+   France (semaines internationales).
+3. Valider la demande avec OpenRush : `research_keywords` avec la `location` du
+   marché (`"France"`, `"Canada"`, `"Belgium"`, `"Switzerland"`, `"Morocco"`,
+   `"Cameroon"`…), `language: "French"`, `mode: "suggestions"` (le mode
    `ideas` dérive vite hors sujet), une graine par appel (« budget … »,
    « combien … par mois », « comment économiser … »). Viser une requête
    informationnelle de 100 à 5 000 recherches/mois, en hausse ou de saison
    (`trend_12m`). Regarder la page de résultats avec `inspect_serp` (mêmes
    `location`/`language`) pour viser un angle que les premiers résultats couvrent mal.
-4. Si OpenRush est indisponible, choisir sur le calendrier et le dire dans la PR.
+4. Sans OpenRush (connecteur absent ou sans crédits) :
+   `node .claude/skills/social-content/scripts/gsc-queries.mjs <pays>` (codes à
+   3 lettres : `fra`, `can`, `bel`, `che`, `mar`… ; sans argument, la liste des
+   pays) donne les recherches qui affichent déjà le site dans ce pays. Viser
+   celles en position 8 à 40 : une demande réelle qu'un article mieux ciblé peut
+   faire passer en première page. Si la variable `GSC_SERVICE_ACCOUNT_JSON`
+   manque aussi, choisir sur le calendrier. Dans tous les cas, dire dans la PR
+   d'où vient la requête visée.
 
-Calendrier (France) : janvier bilan + soldes + résolutions · février vacances
-d'hiver · mars-avril déclaration de revenus · mai ponts et fête des mères · juin
+Calendrier (France ; les autres marchés sont dans « Marchés ») : janvier bilan
++ soldes + résolutions · février vacances d'hiver · mars-avril déclaration de
+revenus · mai ponts et fête des mères · juin
 vacances d'été · juillet-août budget vacances, fournitures · septembre rentrée et
 allocation de rentrée scolaire · octobre taxe foncière, chauffage, vacances de la
 Toussaint · novembre Black Friday, préparer Noël · décembre budget de Noël,
@@ -181,6 +249,16 @@ développeurs de Budget Famille"`, `publishedAt` = date du jour, `featured: true
   qui reprennent les questions réellement recherchées (OpenRush, « autres questions »).
 - Échapper les apostrophes dans le JSX comme les articles existants (texte entre
   balises, chaînes entre guillemets doubles).
+
+**Version anglaise**, dans la même PR, quand le sujet n'est pas propre à un pays
+(méthode, couple, épargne, projets, colocation…) : l'adapter à la fin de
+`blogArticlesEn` (`src/data/blog-articles-en.tsx`) en suivant les règles en tête
+du fichier (montants sans devise, aucune aide ni règle d'un pays présentée
+comme la règle, `translationOf` = slug français), avec un titre et un slug qui
+visent la requête anglaise (« how much… », « … calculator », « … example »),
+puis ajouter la paire à `src/data/blog-pairs.ts`. Les deux versions se lient
+alors d'elles-mêmes (hreflang, sitemap, choix de la langue) ; `npm test` vérifie
+la paire. Les posts restent en français.
 
 ### 4. Créer les visuels
 
@@ -288,6 +366,7 @@ calendrier ci-dessus. Réserve, à compléter selon le sujet et la saison :
 - Format : #astuces #bonplan #organisation #lesaviezvous #bonasavoir #conseils
 - LinkedIn : #finance #argent #immobilier #parentalite #consommation #droit #pouvoirdachat #economie
 - Saisons : #rentree #toussaint #chauffage #blackfriday #noel #soldes #impots #taxefonciere #vacances
+- Pays (semaine internationale : 1 hashtag du pays à la place d'un grand hashtag) : #quebec #montreal #belgique #bruxelles #suisse #geneve #lausanne #maroc #casablanca #senegal #dakar #abidjan #cameroun #tunisie
 
 Le script du kit refuse un post qui dépasse la limite de hashtags de son réseau.
 
@@ -305,14 +384,16 @@ raccourcir alors le texte ou retirer le hashtag le moins pertinent.
 
 ### 6. Vérifier, puis ouvrir la PR
 
-1. `npm run build` doit passer (TypeScript, Vite, prérendu, sitemap).
+1. `npm run build` doit passer (TypeScript, Vite, prérendu, sitemap), et
+   `npm test` s'il y a une version anglaise.
 2. Relire l'article et les posts contre les garde-fous ; vérifier les longueurs.
    Ouvrir le kit (Playwright, viewport 390×844) et en faire une capture : textes
    complets, visuels affichés, rien ne déborde.
-3. Ajouter une ligne en haut du tableau de `docs/social/log.md`.
+3. Ajouter une ligne en haut du tableau de `docs/social/log.md`, avec le marché
+   (« France », « Québec »…) et, s'il y a lieu, le slug anglais.
 4. Commit, push, PR vers `main` intitulée
    `Social : <titre de l'article> (semaine du <JJ/MM>)`. Corps de la PR, en français :
-   le sujet et pourquoi (requête visée, volume, saison) ; les deux visuels affichés
+   le marché, le sujet et pourquoi (requête visée et sa source, volume, saison) ; les deux visuels affichés
    (`![article](https://github.com/LovationAdmin/budget-ui/blob/<sha>/public/social/<slug>/article.png?raw=true)`) ;
    les textes des posts ; le calendrier prévu (ce qui part dans Metricool, ce qui
    est à publier depuis le kit) ; la prévisualisation Vercel de l'article et du
@@ -358,7 +439,10 @@ Quand la PR est fusionnée (événement GitHub, ou rattrapage de l'étape 1) :
   le même visuel) sur ce réseau n'est pas reprogrammé.
 - Horaires : `getBestTimeToPostByNetwork` sur le jour prévu (mardi pour A, jeudi
   pour B) ; s'il ne renvoie rien d'exploitable, prendre les horaires de
-  `docs/social/config.md`. Jamais deux posts le même jour sur le même réseau.
+  `docs/social/config.md`. Semaine Québec : entre 19:00 et 21:00 heure de
+  Paris (13 h-15 h à Montréal), pour toucher les deux côtés de l'Atlantique ;
+  idem pour les heures conseillées du kit. Jamais deux posts le même jour sur
+  le même réseau.
   Si le jour prévu est passé, décaler au prochain jour ouvré libre (en gardant
   A avant B).
 - `info` (chaîne JSON) — exemple LinkedIn :
@@ -396,7 +480,7 @@ Quand la PR est fusionnée (événement GitHub, ou rattrapage de l'étape 1) :
 ## Compte rendu de fin de session
 
 Court, en français (il sert de notification sur le téléphone de l'équipe) :
-sujet et requête visée, lien de la PR, ce qui est programmé (ou en attente de
+marché, sujet et requête visée, lien de la PR, ce qui est programmé (ou en attente de
 validation / de connexion Metricool, avec le lien de connexion), puis, dès que
 la PR est fusionnée, une ligne « À publier : <lien du kit> » avec les réseaux
 manuels et leurs jours et heures conseillés ; et tout blocage. Ne jamais dire
