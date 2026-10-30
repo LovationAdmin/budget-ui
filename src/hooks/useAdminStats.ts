@@ -104,52 +104,74 @@ export function useAdminStats(): UseAdminStatsReturn {
   // Avoid stale closure inside the interval callback
   const secretRef = useRef(secret);
   secretRef.current = secret;
+  // Read by the retry triggers (online, tab visible) without re-subscribing
+  const hasDataRef = useRef(false);
+  const errorRef = useRef<string | null>(null);
+  errorRef.current = error;
+  const autoRefreshRef = useRef(autoRefreshEnabled);
+  autoRefreshRef.current = autoRefreshEnabled;
+  // One request at a time: « online » and « visible » often fire together
+  const inFlightRef = useRef(false);
 
   // ============================================================================
   // CORE FETCH
   // ============================================================================
+  // silentOnError only hides the error while the last stats are still on
+  // screen (« Mis à jour il y a … » shows their age). With nothing to show,
+  // the error stays visible until a request succeeds: a failed background
+  // retry must not leave a blank page.
   const fetchStats = useCallback(async (silentOnError = false) => {
     const currentSecret = secretRef.current;
-    if (!currentSecret) return;
+    if (!currentSecret || inFlightRef.current) return;
+    inFlightRef.current = true;
+    const silent = silentOnError && hasDataRef.current;
 
     setLoading(true);
-    setError(null);
 
     try {
       const response = await axios.get<AdminStatsData>(
         `${API_BASE_URL}/admin/stats`,
         {
           headers: { 'X-Admin-Secret': currentSecret },
-          timeout: 8000,
+          // The API answers in milliseconds; the margin is for weak mobile networks
+          timeout: 15000,
         }
       );
+      hasDataRef.current = true;
       setData(response.data);
       setLastFetchedAt(new Date());
+      setError(null);
     } catch (err: any) {
-      if (axios.isAxiosError(err)) {
+      if (axios.isAxiosError(err) && !err.response) {
+        // No answer at all (offline, timeout, request blocked)
+        if (!silent) {
+          setError('Le serveur ne répond pas. Vérifiez votre connexion : la page réessaie toute seule.');
+        }
+      } else if (axios.isAxiosError(err)) {
         const status = err.response?.status;
         if (status === 401) {
           // Wrong secret — clear it so the prompt re-appears
           sessionStorage.removeItem(ADMIN_SECRET_STORAGE_KEY);
           setSecretState(null);
-          if (!silentOnError) setError('Secret administrateur invalide.');
+          if (!silent) setError('Secret administrateur invalide.');
         } else if (status === 503) {
-          if (!silentOnError) {
+          if (!silent) {
             setError(
               "L'endpoint admin est désactivé sur le serveur (ADMIN_SECRET non configuré)."
             );
           }
         } else {
-          if (!silentOnError) {
+          if (!silent) {
             setError(
               err.response?.data?.error ?? `Erreur ${status ?? 'réseau'}`
             );
           }
         }
       } else {
-        if (!silentOnError) setError('Erreur inattendue.');
+        if (!silent) setError('Erreur inattendue.');
       }
     } finally {
+      inFlightRef.current = false;
       setLoading(false);
     }
   }, []);
@@ -170,6 +192,7 @@ export function useAdminStats(): UseAdminStatsReturn {
   const clearSecret = useCallback(() => {
     sessionStorage.removeItem(ADMIN_SECRET_STORAGE_KEY);
     setSecretState(null);
+    hasDataRef.current = false;
     setData(null);
     setError(null);
     setLastFetchedAt(null);
@@ -208,6 +231,26 @@ export function useAdminStats(): UseAdminStatsReturn {
       }
     };
   }, [secret, autoRefreshEnabled, fetchStats]);
+
+  // ============================================================================
+  // RETRY AS SOON AS IT CAN WORK
+  // ============================================================================
+  // Back online, or back to the tab (a phone suspends background tabs): fetch
+  // now rather than at the next 30 s tick, if auto-refresh is on or the last
+  // attempt failed.
+  useEffect(() => {
+    if (!secret) return;
+    const retry = () => {
+      if (document.visibilityState !== 'visible') return;
+      if (autoRefreshRef.current || errorRef.current || !hasDataRef.current) fetchStats(true);
+    };
+    window.addEventListener('online', retry);
+    document.addEventListener('visibilitychange', retry);
+    return () => {
+      window.removeEventListener('online', retry);
+      document.removeEventListener('visibilitychange', retry);
+    };
+  }, [secret, fetchStats]);
 
   // ============================================================================
   // PUBLIC API
