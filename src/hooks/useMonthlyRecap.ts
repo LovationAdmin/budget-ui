@@ -34,11 +34,11 @@ export interface MonthlyRecapResponse {
 }
 
 export interface SendMonthlyRecapParams {
-  campaignId?: string; // optional — backend auto-generates monthly_recap_YYYY_MM
+  campaignId?: string; // optional — backend auto-generates monthly_recap_YYYY_MM (month prepared)
   dryRun?: boolean;
   skipSent?: boolean;
   limit?: number;
-  anchor?: string; // YYYY-MM-DD — overrides the reference "today"
+  month?: string; // YYYY-MM — the month the recap prepares (default: next month)
 }
 
 interface UseMonthlyRecapReturn {
@@ -87,7 +87,7 @@ export function useMonthlyRecap(): UseMonthlyRecapReturn {
             dry_run: params.dryRun ?? false,
             skip_sent: params.skipSent ?? true,
             limit: params.limit,
-            anchor: params.anchor,
+            month: params.month,
           },
           {
             headers: { 'X-Admin-Secret': secret },

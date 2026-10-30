@@ -38,9 +38,9 @@ import type { BudgetModel, Charge, PrivateChargeDetails, YM } from '@/lib/budget
 import { GENERAL_SAVINGS_ID, PRIVATE_CHARGE_LABEL } from '@/lib/budget/types';
 import { BudgetEngine } from '@/lib/budget/engine';
 import { autoCloseMonths, decodeBudget, encodeBudget } from '@/lib/budget/codec';
-import { deriveSplit } from '@/lib/budget/split';
-import { currentYM } from '@/lib/budget/months';
-import { currencySymbol as symbolFor, money } from '@/lib/budget/format';
+import { deriveSplit, splitShift } from '@/lib/budget/split';
+import { currentYM, formatMonthLong } from '@/lib/budget/months';
+import { currencySymbol as symbolFor, money, moneySigned } from '@/lib/budget/format';
 import { parsePrivateCharges } from '@/lib/budget/overview';
 
 import { CalendarDays, Receipt, PiggyBank, Users, BarChart3, Sparkles, FlaskConical } from 'lucide-react';
@@ -64,6 +64,7 @@ const M = defineMessages({
     undoChange: 'Annuler cette modification',
     cannotUndo: 'Impossible d’annuler : le budget a changé depuis.',
     undo: 'Annuler',
+    rebalanced: (month: string) => `Contributions recalculées pour ${month} :`,
     updatedBy: (who: string) => `Budget mis à jour par ${who}.`,
     aiReady: 'Votre budget IA est prêt',
     aiFailed: 'Budget IA : la génération a échoué',
@@ -89,6 +90,7 @@ const M = defineMessages({
     undoChange: 'Undo this change',
     cannotUndo: 'Can’t undo: the budget has changed since.',
     undo: 'Undo',
+    rebalanced: (month: string) => `Contributions rebalanced for ${month}:`,
     updatedBy: (who: string) => `${who} updated the budget.`,
     aiReady: 'Your AI budget is ready',
     aiFailed: 'AI budget: generation failed',
@@ -319,8 +321,22 @@ export default function BudgetCompleteLayout() {
       scheduleSave(options.saveNow);
       if (options.message) {
         const undoable = options.undoable !== false;
+        // The household's method followed the change: say what each one now pays.
+        const shift = splitShift(prev, next, today);
         toast({
-          description: options.message,
+          description: shift ? (
+            <>
+              <span className="block">{options.message}</span>
+              <span className="mt-1.5 block text-xs font-semibold">
+                {t.rebalanced(formatMonthLong(shift.ym))}{' '}
+                {shift.members
+                  .map((m) => `${m.name} ${fmt(m.contribution)}${m.delta ? ` (${moneySigned(m.delta, symbol)})` : ''}`)
+                  .join(' · ')}
+              </span>
+            </>
+          ) : (
+            options.message
+          ),
           action: undoable ? (
             <ToastAction
               altText={t.undoChange}
@@ -340,7 +356,7 @@ export default function BudgetCompleteLayout() {
         });
       }
     },
-    [scheduleSave, toast, t, today],
+    [scheduleSave, toast, t, today, fmt, symbol],
   );
 
   // ============================================================================

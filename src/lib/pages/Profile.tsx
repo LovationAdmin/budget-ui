@@ -22,6 +22,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { EmailPreferences } from '@/components/EmailPreferences';
 import { defineMessages, useLocale, usePreference, useT, wordsIn } from '@/i18n/runtime';
 import type { Locale } from '@/i18n/locales';
 
@@ -411,6 +412,8 @@ export default function Profile() {
             ))}
           </div>
         </div>
+
+        <EmailPreferences />
 
         {/* ============================================================================ */}
         {/* SECTION 2: CHANGE PASSWORD */}

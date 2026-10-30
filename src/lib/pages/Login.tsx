@@ -78,7 +78,8 @@ export default function Login() {
   const { toast } = useToast();
   const t = useT(M);
 
-  const from = (location.state as any)?.from?.pathname || '/dashboard';
+  const fromLoc = (location.state as { from?: { pathname?: string; search?: string; hash?: string } } | null)?.from;
+  const from = fromLoc?.pathname ? `${fromLoc.pathname}${fromLoc.search ?? ''}${fromLoc.hash ?? ''}` : '/dashboard';
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();

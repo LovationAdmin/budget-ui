@@ -3,12 +3,12 @@
 // 🎯 AdminMonthlyRecapSender — UI for POST /admin/campaigns/monthly-recap
 // ============================================================================
 // Same defensive 3-step UX as AdminCampaignSender: dry-run → confirm → send.
-// One verified user gets one recap email per call; the backend picks each
-// user's most-recently updated budget and aggregates previous / current /
-// next month + project evolution.
+// One verified user (who did not opt out) gets one recap email per call; the
+// backend picks each user's most-consulted budget and prepares the month
+// ahead: transfers, changes, bills, savings.
 //
-// Anchor is optional — defaults to "today" on the server. Useful to backfill
-// or test a specific reporting month without waiting for the cron on the 1st.
+// The server sends it on its own on the 27th, as pay lands; this screen picks
+// the month to prepare (next month by default) to test or catch up.
 // ============================================================================
 
 import { useMemo, useState } from 'react';
@@ -40,12 +40,16 @@ import { cn } from '@/lib/utils';
 // HELPERS
 // ============================================================================
 
-function defaultCampaignId(): string {
-  // The backend defaults to "monthly_recap_<previous-month>"; we mirror that
-  // here so the field shows the same identifier the server would generate.
+/** Next month as YYYY-MM: the month the recap prepares by default. */
+function nextMonth(): string {
   const now = new Date();
-  const prev = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-  return `monthly_recap_${prev.getFullYear()}_${String(prev.getMonth() + 1).padStart(2, '0')}`;
+  const next = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+  return `${next.getFullYear()}-${String(next.getMonth() + 1).padStart(2, '0')}`;
+}
+
+/** The identifier the server generates for a month: monthly_recap_YYYY_MM. */
+function campaignIdFor(month: string): string {
+  return `monthly_recap_${month.replace('-', '_')}`;
 }
 
 // ============================================================================
@@ -57,9 +61,9 @@ export function AdminMonthlyRecapSender() {
   const { loading, error, send, reset } = useMonthlyRecap();
 
   // ── Form ──────────────────────────────────────────────────────────────
-  const [campaignId, setCampaignId] = useState(defaultCampaignId());
+  const [month, setMonth] = useState(nextMonth());
+  const [campaignId, setCampaignId] = useState(campaignIdFor(nextMonth()));
   const [skipSent, setSkipSent] = useState(true);
-  const [anchor, setAnchor] = useState('');
   const [limitInput, setLimitInput] = useState('');
 
   // ── Workflow ─────────────────────────────────────────────────────────
@@ -79,7 +83,7 @@ export function AdminMonthlyRecapSender() {
     campaignId: campaignId.trim() || undefined,
     dryRun,
     skipSent,
-    anchor: anchor.trim() || undefined,
+    month: month || undefined,
     limit,
   });
 
@@ -124,8 +128,8 @@ export function AdminMonthlyRecapSender() {
     setPreviewResult(null);
     setSendResult(null);
     setConfirmingReal(false);
-    setCampaignId(defaultCampaignId());
-    setAnchor('');
+    setMonth(nextMonth());
+    setCampaignId(campaignIdFor(nextMonth()));
     setLimitInput('');
     reset();
   };
@@ -152,7 +156,7 @@ export function AdminMonthlyRecapSender() {
               Récap mensuel
             </CardTitle>
             <p className="text-xs text-muted-foreground mt-0.5">
-              Envoi du résumé budgétaire à tous les utilisateurs vérifiés (auto le 1er de chaque mois, 09:00 Paris)
+              Le récap du mois à venir pour tous les utilisateurs vérifiés et abonnés (auto le 27 à 9 h, Paris, quand les salaires tombent)
             </p>
           </div>
         </div>
@@ -174,24 +178,25 @@ export function AdminMonthlyRecapSender() {
               />
               <p className="text-xs text-muted-foreground">
                 Si vide, le serveur génère <code className="font-mono text-[11px]">monthly_recap_YYYY_MM</code>{' '}
-                à partir du mois précédent.
+                d’après le mois préparé.
               </p>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="space-y-2">
-                <Label htmlFor="recap-anchor">
-                  Date d'ancrage <span className="text-muted-foreground font-normal">(optionnel)</span>
-                </Label>
+                <Label htmlFor="recap-month">Mois préparé</Label>
                 <Input
-                  id="recap-anchor"
-                  type="date"
-                  value={anchor}
-                  onChange={(e) => setAnchor(e.target.value)}
+                  id="recap-month"
+                  type="month"
+                  value={month}
+                  onChange={(e) => {
+                    setMonth(e.target.value);
+                    if (e.target.value) setCampaignId(campaignIdFor(e.target.value));
+                  }}
                   disabled={formDisabled}
                 />
                 <p className="text-xs text-muted-foreground">
-                  Décale le "aujourd'hui" — utile pour rejouer un mois passé.
+                  Le mois que le récap présente. Envoi automatique le 27 du mois d’avant, quand les salaires tombent.
                 </p>
               </div>
 
@@ -220,7 +225,7 @@ export function AdminMonthlyRecapSender() {
                   Skip les déjà envoyés
                 </Label>
                 <p className="text-xs text-muted-foreground mt-0.5">
-                  Recommandé. Évite les doublons si le cron du 1er du mois a déjà tourné.
+                  Recommandé. Évite les doublons si l’envoi automatique du 27 a déjà tourné.
                 </p>
               </div>
               <Switch
@@ -262,7 +267,7 @@ export function AdminMonthlyRecapSender() {
                 <span className="font-bold tabular-nums">{totalToSend - (previewResult?.skipped ?? 0)} récap{(totalToSend - (previewResult?.skipped ?? 0)) > 1 ? 's' : ''} réel{(totalToSend - (previewResult?.skipped ?? 0)) > 1 ? 's' : ''}</span>.
               </p>
               <p className="text-sm opacity-90">
-                Chaque destinataire reçoit le résumé budgétaire de son budget le plus récent (mois précédent / en cours / suivant + évolution des projets).
+                Chaque destinataire reçoit le mois préparé de son budget le plus consulté : virements de chacun, ce qui change, charges, épargne. Ceux qui se sont désabonnés sont ignorés.
               </p>
               <div className="flex flex-wrap gap-2 pt-1">
                 <Button
