@@ -2983,5 +2983,168 @@ export const blogArticles: BlogArticleContent[] = [
         <p>Le bon repère n'est pas le salaire mais le reste après charges fixes et provisions : s'il couvre les courses, les enfants et un peu d'épargne, le budget tient.</p>
       </div>
     )
+  },
+  {
+    id: '13',
+    title: "Budget familial au Québec : combien pour une famille de 4 ?",
+    slug: "budget-familial-quebec-montreal",
+    excerpt: "Le budget d'une famille de 4 à Montréal, en dollars : loyer, épicerie, CPE à 9,65 $, Hydro-Québec, allocations 2026 et 1er juillet, avec un exemple chiffré.",
+    category: "International",
+    author: "Équipe Budget Famille",
+    authorBio: "Experts en gestion budgétaire et développeurs de Budget Famille",
+    publishedAt: "2026-10-30",
+    readTime: "6 min",
+    tags: ["Québec", "Montréal", "Canada", "Budget", "Famille", "Exemple"],
+    featured: true,
+    related: ["budget-famille-4-personnes-exemple", "budget-familial-maroc-casablanca-rabat", "compte-commun-couple-argent-de-poche"],
+    content: (
+      <div className="prose prose-lg max-w-none">
+        <p className="lead">
+          Au Québec, trois postes font presque tout le budget d'une famille : le <strong>loyer</strong>, l'<strong>épicerie</strong> et
+          la <strong>garde des enfants</strong>. Dans notre exemple montréalais, une famille de 4 dépense environ 5 300 $ par mois,
+          épargne non comprise. Voici le détail poste par poste, les montants officiels de 2026 et la méthode pour adapter le vôtre.
+        </p>
+
+        <h2>📋 Exemple de budget mensuel d'une famille de 4 à Montréal</h2>
+        <p>
+          <strong>Le foyer de l'exemple</strong> : un couple locataire d'un 5 ½ à Montréal, avec deux enfants de 3 ans (en CPE)
+          et de 8 ans, une voiture et une passe d'autobus et de métro. Revenus nets : 3 800 $ et 3 000 $ par mois. Les allocations
+          familiales ne sont pas comptées, car leur montant dépend de vos revenus (voir plus bas) : elles s'ajoutent à la marge.
+          Ces chiffres sont une illustration, pas une moyenne québécoise.
+        </p>
+        <div className="overflow-x-auto">
+          <table>
+            <thead>
+              <tr><th>Poste</th><th>Par mois</th><th>Part des revenus</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><strong>Revenus nets du foyer (hors allocations)</strong></td><td><strong>6 800 $</strong></td><td>100 %</td></tr>
+              <tr><td>Loyer d'un 5 ½ (3 chambres)</td><td>1 650 $</td><td>24 %</td></tr>
+              <tr><td>Électricité (Hydro-Québec)</td><td>150 $</td><td>2 %</td></tr>
+              <tr><td>Épicerie (alimentation, hygiène, entretien)</td><td>1 400 $</td><td>21 %</td></tr>
+              <tr><td>Transport (une voiture, une passe STM à 110 $)</td><td>600 $</td><td>9 %</td></tr>
+              <tr><td>Assurances (habitation, auto)</td><td>180 $</td><td>3 %</td></tr>
+              <tr><td>Santé (dentiste, lunettes, médicaments)</td><td>100 $</td><td>1 %</td></tr>
+              <tr><td>Cellulaires et internet</td><td>160 $</td><td>2 %</td></tr>
+              <tr><td>Garderie en CPE (9,65 $ par jour)</td><td>210 $</td><td>3 %</td></tr>
+              <tr><td>Enfant d'âge scolaire (service de garde, activités)</td><td>200 $</td><td>3 %</td></tr>
+              <tr><td>Vêtements</td><td>150 $</td><td>2 %</td></tr>
+              <tr><td>Loisirs et sorties</td><td>230 $</td><td>3 %</td></tr>
+              <tr><td>Provision dépenses annuelles</td><td>300 $</td><td>4 %</td></tr>
+              <tr><td>Épargne</td><td>600 $</td><td>9 %</td></tr>
+              <tr><td><strong>Reste (marge pour les imprévus)</strong></td><td><strong>870 $</strong></td><td>13 %</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>
+          Total des dépenses : 5 330 $, épargne : 600 $. La <strong>marge de 870 $</strong> absorbe une réparation, une facture
+          d'électricité d'hiver plus lourde ou une sortie imprévue sans toucher à l'épargne.
+        </p>
+
+        <h2>🏠 Le loyer : celui que vous payez n'est pas celui qui est affiché</h2>
+        <p>
+          Selon la SCHL, le loyer moyen payé dans la région de Montréal était en octobre 2025 de <strong>1 346 $ pour un 2 chambres</strong> (4 ½)
+          et de <strong>1 625 $ pour 3 chambres et plus</strong> (5 ½ et plus), dans les immeubles locatifs. Mais un logement qui se libère
+          est affiché bien plus cher : Statistique Canada relevait un loyer demandé moyen d'environ 1 930 $ pour un 2 chambres
+          à Montréal au premier trimestre 2025.
+        </p>
+        <p>Ce que cela change pour votre budget :</p>
+        <ul>
+          <li><strong>Déménager coûte cher deux fois</strong> : le camion et les boîtes le 1er juillet, puis un loyer souvent plus élevé que l'ancien. Avant de signer, refaites votre budget avec le nouveau loyer.</li>
+          <li><strong>Une hausse de loyer se discute</strong> : vous avez un mois après l'avis pour la refuser ; c'est alors au propriétaire de s'adresser au Tribunal administratif du logement.</li>
+          <li><strong>Vérifiez ce que le loyer comprend</strong> : chauffé ou non, électroménagers, stationnement. Un logement non chauffé ajoute une facture d'Hydro-Québec qui grimpe en hiver.</li>
+        </ul>
+
+        <h2>🛒 L'épicerie, premier poste variable</h2>
+        <p>
+          Le Rapport sur les prix alimentaires au Canada 2026 (Université Dalhousie et partenaires) estime l'épicerie annuelle de sa famille
+          de référence de quatre personnes à <strong>17 571,79 $</strong>, soit environ 1 464 $ par mois, pour deux adultes et deux enfants
+          plus âgés que dans notre exemple. Pour garder ce poste sous contrôle :
+        </p>
+        <ul>
+          <li>planifiez les repas de la semaine à partir des <strong>circulaires</strong>, puis faites une liste ;</li>
+          <li>comparez le <strong>prix unitaire</strong> (au kilo, au litre) affiché sur les tablettes, pas le prix du paquet ;</li>
+          <li>achetez les produits de base en grand format quand ils sont en spécial, et congelez ;</li>
+          <li>comptez le mois réel : <em>montant par semaine × 52 ÷ 12</em>. 325 $ par semaine font environ 1 400 $ par mois, et non 1 300 $.</li>
+        </ul>
+
+        <h2>👶 La garde des enfants : le grand avantage québécois</h2>
+        <p>
+          En service de garde subventionné (CPE, garderie subventionnée ou milieu familial reconnu), la contribution est de
+          <strong> 9,65 $ par jour en 2026</strong> (Gouvernement du Québec), soit environ 210 $ par mois à temps plein
+          (9,65 $ × 261 jours ÷ 12). Sans place subventionnée, les frais d'une garderie privée sont bien plus élevés, mais le
+          <strong> crédit d'impôt pour frais de garde d'enfants</strong> en rembourse une partie, et peut être versé par anticipation
+          chaque mois plutôt qu'une fois par an.
+        </p>
+        <p>
+          Pour l'enfant d'âge scolaire, prévoyez le service de garde de l'école, les activités et, en août, les fournitures et le matériel :
+          c'est un poste de la provision annuelle.
+        </p>
+
+        <h2>💵 Les allocations familiales en 2026</h2>
+        <p>Deux allocations s'additionnent, et leur montant baisse quand le revenu familial augmente :</p>
+        <ul>
+          <li>
+            <strong>L'Allocation canadienne pour enfants</strong> (fédérale) : jusqu'à <strong>8 157 $ par an</strong> par enfant de moins de 6 ans
+            et <strong>6 883 $</strong> par enfant de 6 à 17 ans, de juillet 2026 à juin 2027 (Gouvernement du Canada).
+          </li>
+          <li>
+            <strong>L'Allocation famille</strong> (Retraite Québec) : entre <strong>1 221 $ et 3 068 $ par an</strong> par enfant en 2026,
+            plus un supplément de 127 $ par enfant pour les fournitures scolaires.
+          </li>
+        </ul>
+        <p>
+          Les deux sont recalculées chaque juillet à partir de votre déclaration de revenus : produisez-la à temps (le 30 avril
+          pour la plupart des gens), même sans revenu, sinon les versements s'arrêtent. Pour connaître votre montant, utilisez les
+          simulateurs de l'Agence du revenu du Canada et de Retraite Québec, puis ajoutez-le à la ligne des revenus.
+        </p>
+
+        <h2>⚡ Hydro-Québec et assurances : lisser les factures</h2>
+        <ul>
+          <li><strong>Électricité</strong> : dans un logement chauffé à l'électricité, la facture d'hiver peut valoir plusieurs fois celle de l'été. Le mode de versements égaux d'Hydro-Québec répartit le coût estimé de l'année en montants identiques : votre budget reste le même tous les mois.</li>
+          <li><strong>Assurance médicaments</strong> : au Québec, elle est obligatoire. C'est le régime collectif de votre employeur s'il y en a un, sinon le régime public de la RAMQ, dont la prime se paie avec la déclaration de revenus : si c'est votre cas, ajoutez-la à la provision.</li>
+          <li><strong>Auto</strong> : les pneus d'hiver sont obligatoires du 1er décembre au 15 mars. Leur achat, la pose et l'entreposage reviennent chaque année.</li>
+        </ul>
+
+        <h2>📅 Les dépenses qui ne tombent pas tous les mois</h2>
+        <p>
+          Dans l'exemple, 300 $ par mois sont mis de côté pour : les <strong>Fêtes</strong> (800 $), la <strong>rentrée</strong> de fin août (400 $),
+          les <strong>vacances</strong>, souvent pendant les vacances de la construction (1 800 $), les <strong>anniversaires</strong> (300 $)
+          et les <strong>pneus d'hiver et l'entretien de l'auto</strong> (300 $), soit 3 600 $ par an ÷ 12.
+          Vous déménagez le 1er juillet ? Ajoutez le déménagement et le premier mois de loyer.
+        </p>
+
+        <h2>✏️ Faire le vôtre en 15 minutes</h2>
+        <ol>
+          <li>Recopiez le tableau avec <strong>vos</strong> montants, à partir de vos trois derniers relevés.</li>
+          <li>Ajoutez vos <strong>allocations</strong> aux revenus, et la <strong>provision</strong> pour vos dépenses annuelles.</li>
+          <li>Fixez l'<strong>épargne</strong>, puis regardez le reste. La méthode pas à pas est dans <a href="/blog/5-etapes-gerer-budget-familial-2025">établir un budget familial en 5 étapes</a>, et le partage entre conjoints dans <a href="/blog/compte-commun-couple-argent-de-poche">notre guide du compte commun</a>.</li>
+        </ol>
+        <p>
+          Pour voir en une minute ce qu'il reste à votre foyer après les charges fixes, notre <a href="/calcul-reste-a-vivre">calculateur de reste à vivre</a>
+          fonctionne en dollars canadiens, comme l'application Budget Famille : elle remplit chaque mois à partir de vos règles, se partage
+          entre conjoints en temps réel, et permet d'ouvrir un budget à part pour un projet (déménagement, vacances, naissance).
+        </p>
+
+        <div className="bg-gradient-to-r from-primary to-purple-600 text-white rounded-xl p-8 text-center my-8">
+          <h3 className="text-2xl font-bold mb-4">Le budget de votre famille, en dollars, chaque mois</h3>
+          <p className="text-lg mb-6 opacity-90">Gratuit, sans connexion bancaire obligatoire, partagé en temps réel.</p>
+          <a
+            href="/signup"
+            className="inline-block bg-white text-primary font-semibold px-8 py-3 rounded-lg hover:bg-gray-100 transition-colors"
+          >
+            Créer notre budget familial →
+          </a>
+        </div>
+
+        <h2>❓ Questions fréquentes</h2>
+        <h3>Quel budget pour une famille de 4 au Québec ?</h3>
+        <p>Il dépend surtout du loyer et de la garde des enfants. Dans notre exemple à Montréal, les dépenses atteignent 5 330 $ par mois, plus 600 $ d'épargne, pour 6 800 $ de revenus nets, allocations non comprises.</p>
+        <h3>Combien coûte l'épicerie pour 4 personnes au Québec ?</h3>
+        <p>Le Rapport sur les prix alimentaires au Canada 2026 l'estime à 17 571,79 $ par an pour sa famille de référence, soit environ 1 464 $ par mois. Partez plutôt de vos propres factures sur 4 semaines.</p>
+        <h3>Comment faire un budget familial efficace ?</h3>
+        <p>Notez vos revenus, allocations comprises, puis vos dépenses fixes, une provision pour les dépenses annuelles et l'épargne. Ce qui reste est votre marge : si elle couvre les imprévus, le budget tient.</p>
+      </div>
+    )
   }
 ];
