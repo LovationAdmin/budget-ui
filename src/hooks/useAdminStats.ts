@@ -57,6 +57,12 @@ export interface GrowthData {
   unverified_over_7_days: number;
   locations: Array<{ code: string; count: number }>;
   campaigns: Array<{ id: string; sent: number; failed: number; last_at: string }>;
+  /** Last 90 days, anonymous (src/lib/acquisition.ts). Absent on older API versions. */
+  acquisition?: {
+    since: string;
+    sources: Array<{ source: string; downloads: number; downloads_pdf: number; downloads_excel: number; signups: number }>;
+    landings: Array<{ page: string; signups: number }>;
+  };
 }
 
 interface UseAdminStatsReturn {

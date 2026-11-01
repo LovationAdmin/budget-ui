@@ -19,6 +19,7 @@ import { createContext, useContext, useState, useEffect, ReactNode } from 'react
 import api, { authAPI, userAPI, User as APIUser } from '../services/api';
 import { extractRateLimitError } from '@/lib/rateLimitError';
 import { setSentryUser } from '@/lib/sentry';
+import { firstTouch } from '@/lib/acquisition';
 import { clearAllAdvisorJobs } from '@/lib/ai/advisorJob';
 import { pick, defineMessages, usePreference } from '@/i18n/runtime';
 import { LOCALES, type Locale } from '@/i18n/locales';
@@ -189,6 +190,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         password,
         country,
         postal_code,
+        acquisition: firstTouch(),
       });
 
       // Le signup actuel demande une vérification d'email avant login,

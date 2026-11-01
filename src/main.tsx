@@ -16,6 +16,7 @@ import App from './App';
 import { ErrorFallback } from './components/ErrorFallback';
 import { SentryErrorBoundary } from './lib/sentry';
 import { isReloadingForNewVersion, reloadOnStaleVersion } from './lib/staleVersion';
+import { listenForDownloads, rememberFirstTouch } from './lib/acquisition';
 import { AuthProvider } from './contexts/AuthContext';
 import { NotificationProvider } from './contexts/NotificationContext';
 import { TutorialProvider } from './contexts/TutorialContext';
@@ -53,6 +54,11 @@ const updateSW = registerSW({
 // A screen of the previous version that no longer exists after a deploy:
 // reload once to get the new version instead of a blank page.
 reloadOnStaleVersion();
+
+// Where the visitor came from (before the router changes the URL), and the
+// free-template downloads, counted anonymously (src/lib/acquisition.ts).
+rememberFirstTouch();
+listenForDownloads();
 
 // ============================================================================
 // Mount
