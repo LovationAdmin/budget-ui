@@ -22,7 +22,7 @@
 // ============================================================================
 
 import { lazy, Suspense, useEffect } from 'react';
-import { Routes, Route, Navigate, useParams } from 'react-router-dom';
+import { Routes, Route, Navigate, useLocation, useParams } from 'react-router-dom';
 import { useAuth } from './contexts/AuthContext';
 import { useTutorial } from './contexts/TutorialContext';
 import PrivateRoute from './components/PrivateRoute';
@@ -155,6 +155,8 @@ export default function App() {
           <Route path="/smart-tools" element={<SmartTools />} />
           <Route path="/outils-ia" element={<SmartTools />} />
           <Route path="/blog" element={<Blog />} />
+          {/* Old address, also 301 on the server (vercel.json): the service worker answers navigations itself. */}
+          <Route path="/blog/5-etapes-gerer-budget-familial-2025" element={<RedirectKeepingQuery to="/blog/etablir-budget-familial-5-etapes" />} />
           <Route path="/blog/:slug" element={<BlogArticle />} />
           <Route path="/en/blog" element={<Blog />} />
           <Route path="/en/blog/:slug" element={<BlogArticle />} />
@@ -262,6 +264,12 @@ function TutorialHost() {
 function RedirectToBudgetComplete() {
   const { id } = useParams();
   return <Navigate to={`/budget/${id}/complete/month`} replace />;
+}
+
+// Moved page: keeps ?utm_… and #anchor so campaign links are still counted.
+function RedirectKeepingQuery({ to }: { to: string }) {
+  const { search, hash } = useLocation();
+  return <Navigate to={{ pathname: to, search, hash }} replace />;
 }
 
 // Shown while a lazily-loaded page downloads (usually a few hundred ms).

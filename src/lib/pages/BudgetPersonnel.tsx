@@ -84,7 +84,7 @@ export default function BudgetPersonnel() {
                 <strong>Divisez les dépenses annuelles par 12.</strong> Taxe foncière, assurance payée en une fois, abonnement à l’année,
                 cadeaux de fin d’année : comptez-en un douzième chaque mois, sinon elles reviennent comme des « mauvaises surprises ».
                 Notre guide pour{' '}
-                <Link to="/blog/5-etapes-gerer-budget-familial-2025" className="font-medium text-primary hover:underline">établir son budget en 5 étapes</Link>{' '}
+                <Link to="/blog/etablir-budget-familial-5-etapes" className="font-medium text-primary hover:underline">établir son budget en 5 étapes</Link>{' '}
                 détaille la méthode.
               </li>
               <li>

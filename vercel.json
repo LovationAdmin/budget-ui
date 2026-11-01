@@ -2,6 +2,13 @@
   "framework": "vite",
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
+  "redirects": [
+    {
+      "source": "/blog/5-etapes-gerer-budget-familial-2025",
+      "destination": "/blog/etablir-budget-familial-5-etapes",
+      "statusCode": 301
+    }
+  ],
   "rewrites": [
     {
       "source": "/(.*)",

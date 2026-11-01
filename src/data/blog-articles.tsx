@@ -27,15 +27,15 @@ export interface BlogArticleContent {
 export const blogArticles: BlogArticleContent[] = [
   {
     id: '1',
-    title: "Établir un budget familial en 5 étapes (méthode 2026)",
-    slug: "5-etapes-gerer-budget-familial-2025",
-    excerpt: "Revenus, charges fixes, dépenses annuelles, épargne, bilan du mois : la méthode simple pour établir le budget de votre famille, avec un tableau gratuit.",
+    title: "Établir un budget familial en 5 étapes (méthode simple)",
+    slug: "etablir-budget-familial-5-etapes",
+    excerpt: "Revenus, charges, dépenses annuelles, épargne, bilan du mois : les 5 étapes pour établir le budget de votre famille, la méthode à choisir et un tableau gratuit.",
     category: "Méthodes",
     author: "Équipe Budget Famille",
     authorBio: "Experts en gestion budgétaire et développeurs de Budget Famille",
     publishedAt: "2025-01-02",
-    updatedAt: "2026-10-03",
-    readTime: "8 min",
+    updatedAt: "2026-11-01",
+    readTime: "10 min",
     tags: ["Budget", "Famille", "Méthode", "Débutant"],
     featured: true,
     related: ["budget-famille-4-personnes-exemple", "compte-commun-couple-argent-de-poche", "combien-epargner-par-mois-objectif-date"],
@@ -114,6 +114,38 @@ export const blogArticles: BlogArticleContent[] = [
           pour avoir un budget qui tient.
         </p>
 
+        <h2>Quelle méthode de budget choisir ?</h2>
+        <p>
+          Les cinq étapes valent pour toutes les méthodes : elles ne diffèrent que par la façon de répartir
+          ce qui reste une fois les charges fixes payées.
+        </p>
+        <div className="overflow-x-auto">
+          <table>
+            <thead>
+              <tr><th>Méthode</th><th>Le principe</th><th>Pour qui</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><strong>50/30/20</strong></td><td>50 % pour les besoins, 30 % pour les envies, 20 % pour l'épargne</td><td>Pour démarrer, avec des revenus réguliers</td></tr>
+              <tr><td><strong>Se payer d'abord</strong></td><td>L'épargne part par virement automatique le jour de la paie ; le reste se dépense librement</td><td>Ceux qui ne veulent pas suivre chaque dépense</td></tr>
+              <tr><td><strong>Enveloppes</strong></td><td>Un montant fixe par poste variable (courses, essence, loisirs) ; une enveloppe vide attend le mois suivant</td><td>Quand les dépenses courantes débordent</td></tr>
+              <tr><td><strong>Budget base zéro</strong></td><td>Chaque euro reçoit une affectation, jusqu'à ce que revenus − affectations = 0</td><td>Les budgets serrés, où chaque euro compte</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>
+          Vous pouvez les combiner : se payer d'abord pour l'épargne, des enveloppes pour les courses et les loisirs.
+          Pour tester la règle 50/30/20 sur vos chiffres, utilisez le <a href="/budget-personnel">calculateur de budget perso</a>.
+        </p>
+
+        <h2>Les erreurs qui font dérailler un budget familial</h2>
+        <ul>
+          <li><strong>Budgéter sur un revenu moyen</strong> quand il varie : le mois creux finit toujours par arriver. Partez du mois le plus bas.</li>
+          <li><strong>Oublier les dépenses annuelles</strong> : taxe foncière, assurance auto, rentrée. Sans provision, elles tombent toutes sur le même mois.</li>
+          <li><strong>Estimer les courses de mémoire</strong> : on les sous-estime presque toujours. Les relevés des trois derniers mois disent la vérité.</li>
+          <li><strong>Un budget sans marge</strong> : sans ligne « imprévus » ni un peu d'argent libre pour chaque adulte, on abandonne au bout de deux mois.</li>
+          <li><strong>Le faire seul pour deux</strong> : en couple, un budget que l'autre n'a pas validé ne tient pas. Fixez les règles ensemble, puis chacun voit les mêmes chiffres.</li>
+        </ul>
+
         <h2>En couple : qui paie quoi ?</h2>
         <p>
           Le plus simple est un <strong>pot commun</strong> (compte joint) pour les charges du foyer, alimenté par chacun selon une règle
@@ -142,6 +174,10 @@ export const blogArticles: BlogArticleContent[] = [
         <h2>❓ Questions fréquentes</h2>
         <h3>Comment établir un budget familial simplement ?</h3>
         <p>Listez les revenus nets, puis les charges fixes et les dépenses courantes à partir de vos relevés, mettez de côté chaque mois 1/12 des dépenses annuelles, programmez l'épargne, et vérifiez le reste.</p>
+        <h3>Combien de temps faut-il pour établir un budget familial ?</h3>
+        <p>Comptez une heure la première fois, avec vos trois derniers relevés bancaires. Ensuite, 15 minutes en fin de mois suffisent pour comparer le prévu et le réel.</p>
+        <h3>Quelle est la meilleure méthode de budget familial ?</h3>
+        <p>Celle que vous tiendrez. La règle 50/30/20 est la plus simple pour démarrer ; les enveloppes conviennent quand les courses et les loisirs débordent ; le budget base zéro, quand chaque euro compte.</p>
         <h3>Quel pourcentage des revenus épargner ?</h3>
         <p>La règle 50/30/20 propose 20 %. L'essentiel est de commencer, même à 5 ou 10 %, puis d'augmenter au fil des mois.</p>
         <h3>Existe-t-il une application gratuite pour gérer le budget familial ?</h3>
@@ -1634,7 +1670,7 @@ export const blogArticles: BlogArticleContent[] = [
   id: '8',
   title: "Budget familial à Abidjan : combien par mois en FCFA ?",
   slug: "budget-familial-abidjan-cote-ivoire",
-  excerpt: "De Cocody à Yopougon : dépenses en FCFA, tontines, maquis et coût de la vie. Comment tenir le budget de votre famille en Côte d'Ivoire.",
+  excerpt: "Combien faut-il par mois à Abidjan ? Pour une famille de 4, de 450 000 à 820 000 FCFA : loyer par commune, nourriture, CIE, transport, école et tontines.",
   category: "International",
   author: "Équipe Budget Famille",
   authorBio: "Experts en gestion budgétaire et développeurs de Budget Famille",
@@ -2862,7 +2898,7 @@ export const blogArticles: BlogArticleContent[] = [
     readTime: "9 min",
     tags: ["Budget", "Famille", "Enfants", "Courses", "Exemple"],
     featured: true,
-    related: ["5-etapes-gerer-budget-familial-2025", "compte-commun-couple-argent-de-poche", "economiser-500-euros-abonnements"],
+    related: ["etablir-budget-familial-5-etapes", "compte-commun-couple-argent-de-poche", "economiser-500-euros-abonnements"],
     content: (
       <div className="prose prose-lg max-w-none">
         <p className="lead">
@@ -2953,7 +2989,7 @@ export const blogArticles: BlogArticleContent[] = [
         <ol>
           <li>Recopiez ce tableau avec <strong>vos</strong> montants, à partir de vos trois derniers relevés.</li>
           <li>Ajoutez la <strong>provision</strong> pour vos dépenses annuelles.</li>
-          <li>Fixez l'<strong>épargne</strong>, puis regardez le reste : la méthode pas à pas est dans <a href="/blog/5-etapes-gerer-budget-familial-2025">établir un budget familial en 5 étapes</a>.</li>
+          <li>Fixez l'<strong>épargne</strong>, puis regardez le reste : la méthode pas à pas est dans <a href="/blog/etablir-budget-familial-5-etapes">établir un budget familial en 5 étapes</a>.</li>
         </ol>
         <p>
           Pour aller vite : notre <a href="/tableau-budget-familial-gratuit">tableau de budget familial gratuit</a> (Excel avec calculs, ou PDF à imprimer),
@@ -3118,7 +3154,7 @@ export const blogArticles: BlogArticleContent[] = [
         <ol>
           <li>Recopiez le tableau avec <strong>vos</strong> montants, à partir de vos trois derniers relevés.</li>
           <li>Ajoutez vos <strong>allocations</strong> aux revenus, et la <strong>provision</strong> pour vos dépenses annuelles.</li>
-          <li>Fixez l'<strong>épargne</strong>, puis regardez le reste. La méthode pas à pas est dans <a href="/blog/5-etapes-gerer-budget-familial-2025">établir un budget familial en 5 étapes</a>, et le partage entre conjoints dans <a href="/blog/compte-commun-couple-argent-de-poche">notre guide du compte commun</a>.</li>
+          <li>Fixez l'<strong>épargne</strong>, puis regardez le reste. La méthode pas à pas est dans <a href="/blog/etablir-budget-familial-5-etapes">établir un budget familial en 5 étapes</a>, et le partage entre conjoints dans <a href="/blog/compte-commun-couple-argent-de-poche">notre guide du compte commun</a>.</li>
         </ol>
         <p>
           Pour voir en une minute ce qu'il reste à votre foyer après les charges fixes, notre <a href="/calcul-reste-a-vivre">calculateur de reste à vivre</a>

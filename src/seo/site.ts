@@ -44,7 +44,7 @@ export const PAGES: PageSEO[] = [
     description: 'Application de budget gratuite pour la famille, le couple, la coloc ou vous seul : charges, pot commun, épargne et projets datés. Sans connexion bancaire.',
     h1: 'L’application de budget gratuite pour la famille, le couple, la coloc et vos projets',
     intro: 'Seul ou à plusieurs, budgétez le mois et planifiez ce qui compte : charges, pot commun, épargne, voyage, mariage, travaux. Sans connexion bancaire obligatoire, sans publicité, en temps réel.',
-    links: [CTA, { href: '/tableau-budget-familial-gratuit', label: 'Tableau de budget familial gratuit (Excel et PDF)' }, { href: '/calcul-reste-a-vivre', label: 'Calcul du reste à vivre' }, { href: '/blog/5-etapes-gerer-budget-familial-2025', label: 'Établir un budget familial' }, { href: '/blog/budget-famille-4-personnes-exemple', label: 'Exemple de budget pour une famille de 4' }, { href: '/budget-personnel', label: 'Calculer son budget perso' }, { href: '/budget-colocation', label: 'Budget colocation' }, { href: '/budget-mariage', label: 'Budget mariage' }, { href: '/blog/budget-etudiant-guide-complet-2025', label: 'Budget étudiant' }, { href: '/blog/combien-epargner-par-mois-objectif-date', label: 'Épargner pour un projet à une date' }, { href: '/features', label: 'Toutes les fonctionnalités' }, { href: '/blog', label: 'Conseils budget' }],
+    links: [CTA, { href: '/tableau-budget-familial-gratuit', label: 'Tableau de budget familial gratuit (Excel et PDF)' }, { href: '/calcul-reste-a-vivre', label: 'Calcul du reste à vivre' }, { href: '/blog/etablir-budget-familial-5-etapes', label: 'Établir un budget familial' }, { href: '/blog/budget-famille-4-personnes-exemple', label: 'Exemple de budget pour une famille de 4' }, { href: '/budget-personnel', label: 'Calculer son budget perso' }, { href: '/budget-colocation', label: 'Budget colocation' }, { href: '/budget-mariage', label: 'Budget mariage' }, { href: '/blog/budget-etudiant-guide-complet-2025', label: 'Budget étudiant' }, { href: '/blog/combien-epargner-par-mois-objectif-date', label: 'Épargner pour un projet à une date' }, { href: '/features', label: 'Toutes les fonctionnalités' }, { href: '/blog', label: 'Conseils budget' }],
     sections: [
       { h2: 'Pas seulement pour les familles', text: '« Famille » au sens large : seul pour votre budget perso, en couple avec un pot commun, en famille, en colocation ou entre amis, et pour un projet (voyage, mariage, travaux, voiture, apport) avec un objectif et une date. Créez autant de budgets que nécessaire, chacun avec ses membres et sa devise.' },
     ],
@@ -60,7 +60,7 @@ export const PAGES: PageSEO[] = [
     links: [
       { href: '/telechargements/tableau-budget-familial-budgetfamille.xlsx', label: 'Tableau Excel (.xlsx)' },
       { href: '/telechargements/tableau-budget-familial-a-imprimer.pdf', label: 'PDF à imprimer (A4, 3 pages)' },
-      { href: '/blog/5-etapes-gerer-budget-familial-2025', label: 'Établir un budget familial en 5 étapes' },
+      { href: '/blog/etablir-budget-familial-5-etapes', label: 'Établir un budget familial en 5 étapes' },
       { href: '/blog/budget-famille-4-personnes-exemple', label: 'Exemple de budget pour une famille de 4' },
       CTA,
     ],
@@ -90,8 +90,8 @@ export const PAGES: PageSEO[] = [
   },
   {
     path: '/budget-personnel',
-    title: 'Budget perso : calculateur gratuit de la règle 50/30/20',
-    description: 'Faites votre budget personnel en 2 minutes avec la règle 50/30/20 : besoins, envies, combien épargner par mois. Gratuit, sans inscription.',
+    title: 'Budget personnel mensuel : calculateur 50/30/20 gratuit',
+    description: 'Faites votre budget mensuel en 2 minutes : salaire net, besoins, envies et épargne selon la règle 50/30/20, et ce qui reste à dépenser. Gratuit, sans inscription.',
     h1: 'Votre budget perso en 2 minutes',
     intro: 'Indiquez votre salaire net et vos dépenses essentielles : voyez ce que donne la règle 50/30/20 pour vous, ce qui reste une fois les besoins payés et combien vous pouvez épargner chaque mois. Sans jugement, et le résultat se met à jour pendant la saisie.',
     links: [CTA, { href: '/calcul-reste-a-vivre', label: 'Calcul du reste à vivre' }, { href: '/budget-colocation', label: 'Budget colocation' }, { href: '/blog/budget-etudiant-guide-complet-2025', label: 'Budget étudiant' }, { href: '/blog/combien-epargner-par-mois-objectif-date', label: 'Combien épargner par mois' }],
@@ -236,8 +236,8 @@ export const PAGES: PageSEO[] = [
   },
   {
     path: '/en/rent-split-calculator',
-    title: 'Rent Split Calculator: Share Rent and Bills with Roommates',
-    description: 'Free rent split calculator for roommates: split the rent equally, by bedroom size or by income, plus shared bills, and see each person’s monthly share. No sign-up.',
+    title: 'Rent Split Calculator: Fair Split by Room Size or Income',
+    description: 'Split rent fairly with roommates: equally, by bedroom size or by income, plus shared bills. See what each person pays each month. Free, no sign-up.',
     h1: 'Rent split calculator: who pays what?',
     intro: 'Rent, bills, shared groceries: work out each roommate’s share, equally, by bedroom size or by income. Free, no sign-up, nothing is sent.',
     sections: [
@@ -295,8 +295,8 @@ export const PAGES: PageSEO[] = [
   },
   {
     path: '/en/leftover-income-calculator',
-    title: 'Leftover Income Calculator: What’s Left After Bills',
-    description: 'Free leftover income calculator: your take-home income minus fixed bills, per person, per day and per adult equivalent. In your currency, no sign-up.',
+    title: 'How Much Is Left After Bills? Leftover Income Calculator',
+    description: 'See how much money you have left after bills: take-home pay minus fixed bills, per month, per person and per day. Free, in your currency, no sign-up.',
     h1: 'Leftover income calculator',
     intro: 'Your income minus your fixed bills: see what your household has left each month, per person and per day. Free, no sign-up, nothing is sent.',
     sections: [
@@ -392,7 +392,9 @@ export const PAGES: PageSEO[] = [
   RENT_SPLIT_PAGE_ZH,
   WEDDING_PAGE_ZH,
   LEFTOVER_INCOME_PAGE_ZH,
-  { path: '/signup', title: 'Créer un compte gratuit – Budget Famille', description: 'Créez votre budget gratuit en 1 minute, seul ou à plusieurs : sans carte bancaire, sans connexion à votre banque.', priority: 0.7, changefreq: 'yearly', h1: 'Créez votre budget gratuit' },
+  // A form, like /login: kept out of the index and the sitemap so that Google
+  // spends its visits on the pages that answer searches.
+  { path: '/signup', title: 'Créer un compte gratuit – Budget Famille', description: 'Créez votre budget gratuit en 1 minute, seul ou à plusieurs : sans carte bancaire, sans connexion à votre banque.', noindex: true, h1: 'Créez votre budget gratuit' },
   { path: '/privacy', title: 'Politique de confidentialité – Budget Famille', description: 'Comment Budget Famille protège vos données : hébergement en Europe, chiffrement, aucune revente.', priority: 0.3, changefreq: 'yearly' },
   { path: '/terms', title: 'Conditions d’utilisation – Budget Famille', description: 'Les conditions générales d’utilisation de Budget Famille.', priority: 0.2, changefreq: 'yearly' },
   { path: '/login', title: 'Connexion – Budget Famille', description: 'Connectez-vous à vos budgets.', noindex: true },

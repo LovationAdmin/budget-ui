@@ -33,7 +33,7 @@ const AUTHOR = { author: 'Budget Famille team', authorBio: 'Budgeting experts an
 export const blogArticlesEn: BlogArticleContent[] = [
   {
     id: 'en-1',
-    translationOf: '5-etapes-gerer-budget-familial-2025',
+    translationOf: 'etablir-budget-familial-5-etapes',
     title: 'How to Make a Family Budget in 5 Steps',
     slug: 'how-to-make-a-family-budget',
     excerpt: 'Income, fixed bills, yearly costs, savings, then what’s left: the simple method to set up your family budget, with a free template.',
