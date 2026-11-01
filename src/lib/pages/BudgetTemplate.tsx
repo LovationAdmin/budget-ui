@@ -59,7 +59,7 @@ const M = defineMessages<{
     ],
     further: (
       <>
-        Pour aller plus loin : {link('/blog/5-etapes-gerer-budget-familial-2025', 'établir un budget familial en 5 étapes')},{' '}
+        Pour aller plus loin : {link('/blog/etablir-budget-familial-5-etapes', 'établir un budget familial en 5 étapes')},{' '}
         {link('/blog/budget-famille-4-personnes-exemple', 'un exemple de budget pour une famille de 4')},{' '}
         {link('/blog/combien-epargner-par-mois-objectif-date', 'combien épargner par mois pour un objectif')},{' '}
         {link('/calcul-reste-a-vivre', 'calculer son reste à vivre')} et{' '}
