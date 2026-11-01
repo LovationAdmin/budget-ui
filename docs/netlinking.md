@@ -34,12 +34,12 @@ Contacts et constats vérifiés le 1er novembre 2026.
 
 | Prio. | Site | Pourquoi eux | Contact | Modèle | Statut |
 |---|---|---|---|---|---|
-| 1 | Médiathèque Françoise Sagan (Paris 10e), atelier « Double clic : gérer le budget familial grâce à un tableur », **samedi 7 novembre 2026** | L'atelier n'a pas de modèle attitré ; paris.fr est un domaine très fort | mediatheque.francoise-sagan@paris.fr · 01 53 24 69 70 · [page de l'atelier](https://www.paris.fr/evenements/double-clic-gerer-le-budget-familial-grace-a-un-tableur-90291) | C | À envoyer **lundi** |
+| 1 | Médiathèque Françoise Sagan (Paris 10e), atelier « Double clic : gérer le budget familial grâce à un tableur », **samedi 7 novembre 2026** | L'atelier n'a pas de modèle attitré ; paris.fr est un domaine très fort | mediatheque.francoise-sagan@paris.fr · 01 53 24 69 70 · [page de l'atelier](https://www.paris.fr/evenements/double-clic-gerer-le-budget-familial-grace-a-un-tableur-90291) | C | Brouillon Gmail prêt, à envoyer **lundi** |
 | 1 | Copeps.fr, « Gérer vos finances personnelles avec un tableau Excel » | Promet des modèles Excel, LibreOffice, Google Sheets et PDF, mais **tous ses boutons de téléchargement pointent vers « # »** | https://copeps.fr/contact/ | B | |
 | 1 | Moneyvox, « Gestion de budget » (Sarah Bouget) | Comparatif Bankin', Linxo, Finary, Finzee : aucune appli de budget à deux | lien « Contact » en pied de page de https://www.moneyvox.fr | A | |
 | 1 | Finactuel, « Meilleures applications pour gérer son budget et son épargne en 2026 » | Bankin', Linxo, Pilote Budget, Finary, YNAB : aucune appli de budget à deux | formulaire https://finactuel.fr/contact/ | A | |
 | 1 | Empruntis, « Applications de suivi de budget » (Christophe Piroux, février 2023) | Article ancien, rangé sous le reste à vivre : notre calculateur et l'appli y ont leur place | https://www.empruntis.com/contact.php · presse : https://www.empruntis.com/espace-presse/ | A | |
-| 2 | Points conseil budget (Udaf) | Reçoivent des familles chaque jour ; une grille papier à leur remettre est utile | pcb@udaf95.fr (Val-d'Oise), pcb@udaf73.fr (Savoie) ; les autres Udaf départementales publient le leur | D | |
+| 2 | Points conseil budget (Udaf) | Reçoivent des familles chaque jour ; une grille papier à leur remettre est utile | pcb@udaf95.fr (Val-d'Oise), pcb@udaf73.fr (Savoie) ; les autres Udaf départementales publient le leur | D | Brouillons Gmail prêts (95, 73) |
 | 2 | INC (inc-conso.fr), « Organiser son budget » | Recommande déjà une brochure de Finances & Pédagogie : domaine public, très fort | https://www.inc-conso.fr/content/contact | D | |
 | 2 | MeilleureSCPI, « Tableau de budget familial : modèles à télécharger » (Jonathan Dhiver) | Propose ses propres modèles ; il manque une option « à deux, sans recopier chaque mois » | https://www.meilleurescpi.com/contact/ · 01 84 25 52 15 | E | |
 | 2 | Espace-famille.net, « Tableau Excel gratuit : gérer votre budget familial » | Blog familial, son propre modèle ; article invité sur le budget du couple | https://www.espace-famille.net/contact/ | E | |
@@ -55,19 +55,24 @@ Ordre conseillé : la médiathèque lundi (l'atelier est samedi), puis Copeps
 Remplacer les crochets. Un e-mail par site, jamais en copie groupée. Une
 seule relance, 7 à 10 jours après, en deux lignes.
 
+Chaque e-mail commence par se présenter en une phrase : le destinataire ne
+connaît pas Budget Famille, il doit savoir qui écrit avant de lire pourquoi.
+
 ### A. Comparatif d'applis sans budget à deux
 
 > **Objet :** Une appli de budget à deux pour votre comparatif ?
 >
 > Bonjour [Prénom de l'auteur],
 >
+> Je m'appelle [Prénom Nom] et je développe Budget Famille, une application
+> française et gratuite pour gérer le budget du foyer (budgetfamille.com).
+>
 > J'ai lu votre article « [titre de l'article] ». Il compare clairement les
 > applis qui suivent les comptes d'une personne ; il manque pourtant un cas
 > que beaucoup de vos lecteurs vivent : le budget à plusieurs. Aucune des
 > applis citées ne répartit les charges d'un couple ou d'une famille.
 >
-> C'est ce que fait Budget Famille, une application française gratuite, sans
-> connexion bancaire obligatoire :
+> C'est ce que fait Budget Famille, sans connexion bancaire obligatoire :
 > - un pot commun et la part de chacun (50/50, au prorata des salaires ou
 >   même argent de poche) ;
 > - l'argent de poche de chacun, et des charges perso qui restent privées ;
@@ -87,9 +92,12 @@ seule relance, 7 à 10 jours après, en deux lignes.
 >
 > Bonjour,
 >
-> Votre article « Gérer vos finances personnelles avec un tableau Excel »
-> propose des modèles en Excel, LibreOffice, Google Sheets et PDF, mais les
-> boutons de téléchargement ne mènent nulle part (ils pointent vers « # »).
+> Je m'appelle [Prénom Nom] et je développe Budget Famille, une application
+> française et gratuite pour gérer le budget du foyer (budgetfamille.com).
+> Je vous écris au sujet de votre article « Gérer vos finances personnelles
+> avec un tableau Excel » : il propose des modèles en Excel, LibreOffice,
+> Google Sheets et PDF, mais les boutons de téléchargement ne mènent nulle
+> part (ils pointent vers « # »).
 >
 > Si vous cherchez un modèle à mettre à la place, le nôtre est gratuit, sans
 > inscription ni adresse e-mail à donner :
@@ -108,6 +116,9 @@ seule relance, 7 à 10 jours après, en deux lignes.
 > **Objet :** Un modèle de budget gratuit pour votre atelier du 7 novembre
 >
 > Bonjour,
+>
+> Je m'appelle [Prénom Nom] et je développe Budget Famille, une application
+> française et gratuite pour gérer le budget du foyer (budgetfamille.com).
 >
 > J'ai vu que la médiathèque organise samedi 7 novembre l'atelier « Double
 > clic : gérer le budget familial grâce à un tableur ». Si cela peut servir
@@ -134,11 +145,16 @@ seule relance, 7 à 10 jours après, en deux lignes.
 >
 > Bonjour,
 >
-> Si cela peut vous être utile dans vos rendez-vous, nous proposons
-> gratuitement une grille de budget familial à imprimer : PDF A4 de 3 pages
+> Je m'appelle [Prénom Nom] et je développe Budget Famille, une application
+> française et gratuite pour gérer le budget du foyer (budgetfamille.com).
+> Je vous écris car [la raison, par exemple : votre Point conseil budget
+> reçoit des familles au quotidien, et nous avons un outil qui peut vous
+> servir dans vos rendez-vous].
+>
+> Il s'agit d'une grille de budget familial à imprimer : PDF A4 de 3 pages
 > (budget du mois prévu et réel, dépenses annuelles et répartition dans le
 > couple, suivi de l'année), et sa version Excel qui calcule toute seule.
-> Sans inscription, à imprimer et distribuer librement :
+> Gratuite, sans inscription, à imprimer et distribuer librement :
 > https://www.budgetfamille.com/tableau-budget-familial-gratuit
 >
 > Pour les personnes à l'aise avec un téléphone, notre calculateur de reste
@@ -157,6 +173,9 @@ seule relance, 7 à 10 jours après, en deux lignes.
 > **Objet :** Une idée d'article pour vos lecteurs : le budget du couple
 >
 > Bonjour,
+>
+> Je m'appelle [Prénom Nom] et je développe Budget Famille, une application
+> française et gratuite pour gérer le budget du foyer (budgetfamille.com).
 >
 > Votre article « [titre] » aide beaucoup de familles à démarrer. Une
 > question revient souvent ensuite : comment répartir les charges quand les
