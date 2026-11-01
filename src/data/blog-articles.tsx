@@ -156,7 +156,7 @@ export const blogArticles: BlogArticleContent[] = [
 
         <h2>Quel outil choisir ?</h2>
         <ul>
-          <li><strong>Un tableau</strong> : notre <a href="/tableau-budget-familial-gratuit">tableau de budget familial gratuit</a> existe en Excel (calculs automatiques) et en PDF à imprimer.</li>
+          <li><strong>Un tableau</strong> : notre <a href="/tableau-budget-familial-gratuit">modèle de budget familial Excel</a>, gratuit, fait les calculs tout seul ; il existe aussi en grille PDF à imprimer.</li>
           <li><strong>Une application</strong> : Budget Famille reprend ces cinq étapes, remplit chaque mois à partir de vos règles (loyer mensuel, taxe annuelle, cantine certains mois) et se partage en temps réel, à deux ou à plusieurs. Malgré son nom, elle convient aussi à un budget solo, à une coloc ou à un projet (mariage, travaux, voyage) dans un budget à part. Gratuit, sans connexion bancaire obligatoire.</li>
         </ul>
 
@@ -2719,6 +2719,10 @@ export const blogArticles: BlogArticleContent[] = [
         <p>
           Aucune n'est « la bonne » : le 50/50 convient aux revenus proches, le prorata est le plus courant quand les écarts sont importants,
           et le « même argent de poche » privilégie l'égalité de niveau de vie.
+        </p>
+        <p>
+          Pour comparer les trois sur vos propres salaires, l'onglet « Pot commun » de notre{' '}
+          <a href="/tableau-budget-familial-gratuit">tableau Excel de budget de couple</a>, gratuit, fait le calcul tout seul.
         </p>
 
         <h3>Calculez sur le mois réel, pas sur une moyenne</h3>

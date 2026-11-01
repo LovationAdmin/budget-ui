@@ -27,6 +27,8 @@ const M = defineMessages<{
   xlsx: string; pdf: string; xlsxEvent: string; badge: string; h1: string; lead: string; leadFile: string;
   xlsxLabel: string; pdfLabel: string; sizes: string; orApp: string; insideTitle: string;
   tab: (title: string) => string; tabs: Array<{ title: string; text: string }>;
+  previewTitle: string; previewImage: string; previewAlt: string; previewCaption: string;
+  previewPages: Array<[string, string]>; previewCta: string;
   stepsTitle: string; steps: Array<[string, string]>; further: ReactNode;
   appTitle: string; appPoints: string[]; appCta: string; appImageAlt: string; appImage: string; faqTitle: string;
   faq: Array<{ q: string; a: string }>;
@@ -50,6 +52,16 @@ const M = defineMessages<{
       { title: 'Pot commun', text: 'Pour les couples : ce que chacun verse selon la méthode 50/50, au prorata des salaires ou même argent de poche.' },
       { title: 'Année', text: 'Les 12 mois côte à côte, avec les dépenses qui ne tombent qu’une fois (taxe foncière, prime…) et le reste cumulé.' },
     ],
+    previewTitle: 'La grille de budget à imprimer',
+    previewImage: '/images/modele/grille-budget-familial-a-imprimer.webp',
+    previewAlt: 'Page 1 de la grille de budget familial à imprimer : revenus nets, charges fixes, épargne et dépenses courantes, avec les colonnes prévu, réel et écart',
+    previewCaption: 'Page 1 du PDF, à remplir au stylo.',
+    previewPages: [
+      ['Page 1 · Budget du mois', ' : revenus, charges fixes, épargne et dépenses courantes, avec le prévu, le réel et l’écart.'],
+      ['Page 2 · Dépenses annuelles et pot commun', ' : ce qui ne tombe pas tous les mois, ramené au mois, et ce que chacun verse au compte commun.'],
+      ['Page 3 · Suivi de l’année', ' : les totaux de chaque mois, pour voir la tendance d’un coup d’œil.'],
+    ],
+    previewCta: 'Télécharger la grille (PDF)',
     stepsTitle: 'Comment faire son budget familial en 4 étapes',
     steps: [
       ['1. Notez vos revenus nets', ' : salaires, allocations, primes. Pour un couple, un salaire par ligne.'],
@@ -98,6 +110,16 @@ const M = defineMessages<{
       { title: 'Joint pot', text: 'For couples: what each person pays in with a 50/50 split, in proportion to pay, or the same spending money for both.' },
       { title: 'Year', text: 'The 12 months side by side, with the costs that come once a year (property tax, a bonus…) and the running total.' },
     ],
+    previewTitle: 'The printable budget sheet',
+    previewImage: '/images/modele/printable-budget-template.webp',
+    previewAlt: 'Page 1 of the printable family budget template: take-home income, fixed bills, savings and day-to-day spending, with plan, actual and gap columns',
+    previewCaption: 'Page 1 of the PDF, to fill in with a pen.',
+    previewPages: [
+      ['Page 1 · Monthly budget', ': income, fixed bills, savings and day-to-day spending, with the plan, the actual and the gap.'],
+      ['Page 2 · Yearly expenses and joint pot', ': what doesn’t come every month, brought back to a month, and what each person pays into the joint account.'],
+      ['Page 3 · Year tracker', ': each month’s totals, to see the trend at a glance.'],
+    ],
+    previewCta: 'Download the sheet (PDF)',
     stepsTitle: 'How to make a family budget in 4 steps',
     steps: [
       ['1. Write down your take-home pay', ': salaries, benefits, bonuses. For a couple, one pay per line.'],
@@ -181,6 +203,31 @@ export default function BudgetTemplate() {
                   </article>
                 );
               })}
+            </div>
+          </div>
+        </section>
+
+        {/* What the printable sheet looks like, before downloading it. */}
+        <section className="px-4 pt-16 sm:px-6 lg:px-8" aria-labelledby="preview-title">
+          <div className="mx-auto grid max-w-5xl items-center gap-10 md:grid-cols-[minmax(0,20rem)_1fr]">
+            <figure className="mx-auto w-full max-w-[20rem]">
+              <a href={t.pdf} download onClick={() => trackDownload(file(t.pdf))} className="block rounded-xl border border-border bg-white shadow-elevated transition-transform hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+                <img src={t.previewImage} alt={t.previewAlt} width={720} height={1018} loading="lazy" decoding="async" className="h-auto w-full rounded-xl" />
+              </a>
+              <figcaption className="mt-2 text-center text-sm text-muted-foreground">{t.previewCaption}</figcaption>
+            </figure>
+            <div>
+              <h2 id="preview-title" className="font-display text-3xl font-bold text-foreground">{t.previewTitle}</h2>
+              <ul className="mt-6 space-y-3 text-lg text-muted-foreground">
+                {t.previewPages.map(([title, text]) => (
+                  <li key={title}><strong className="text-foreground">{title}</strong>{text}</li>
+                ))}
+              </ul>
+              <Button asChild size="lg" variant="outline" className="mt-8 h-12 border-2 px-6">
+                <a href={t.pdf} download onClick={() => trackDownload(file(t.pdf))}>
+                  <Printer className="mr-2 h-5 w-5" aria-hidden="true" /> {t.previewCta}
+                </a>
+              </Button>
             </div>
           </div>
         </section>

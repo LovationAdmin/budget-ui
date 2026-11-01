@@ -100,7 +100,7 @@ export default function BudgetPersonnel() {
               Pour suivre ce budget chaque mois sans tout recopier, vous pouvez{' '}
               <Link to="/signup" className="font-medium text-primary hover:underline">créer votre budget gratuit</Link> sur Budget Famille ou
               partir de notre{' '}
-              <Link to="/tableau-budget-familial-gratuit" className="font-medium text-primary hover:underline">tableau de budget gratuit (Excel et PDF)</Link>.
+              <Link to="/tableau-budget-familial-gratuit" className="font-medium text-primary hover:underline">tableau de budget mensuel gratuit (Excel et PDF)</Link>.
             </p>
           </section>
 
