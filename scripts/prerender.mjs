@@ -21,6 +21,12 @@ const dist = join(root, 'dist');
 const SITE = 'https://www.budgetfamille.com';
 const tmp = mkdtempSync(join(tmpdir(), 'prerender-'));
 
+/** Files of public/ listed in the sitemap next to the pages (see below). */
+const DOWNLOADS_IN_SITEMAP = [
+  { path: '/telechargements/tableau-budget-familial-a-imprimer.pdf', priority: 0.6 },
+  { path: '/telechargements/budget-template-printable.pdf', priority: 0.5 },
+];
+
 const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 const abs = (p) => (p === '/' ? `${SITE}/` : `${SITE}${p}`);
 
@@ -133,11 +139,23 @@ try {
     manifest[p.path] = { hash, lastmod: same ? before.lastmod : (before ? today : (p.sitemap.lastmod ?? today)) };
     if (!same) changed.push(abs(p.path));
   }
+  // The printable templates are documents of their own: Bing and Google show
+  // them in results (« tableau budget familial pdf »), so they are listed too,
+  // dated by their content. The Excel files stay out: a result that downloads
+  // straight away is a worse landing than the page that presents them.
+  for (const file of DOWNLOADS_IN_SITEMAP) {
+    const hash = createHash('sha256').update(readFileSync(join(dist, file.path.slice(1)))).digest('hex').slice(0, 16);
+    const before = previous?.pages[file.path];
+    const same = before?.hash === hash;
+    manifest[file.path] = { hash, lastmod: same ? before.lastmod : today };
+    if (!same) changed.push(abs(file.path));
+  }
   // Pages gone from the sitemap are announced too (search engines then see the 404).
   for (const path of Object.keys(previous?.pages ?? {})) if (!manifest[path]) changed.push(abs(path));
   const urls = pages
     .filter((p) => p.sitemap)
-    .map((p) => `  <url>\n    <loc>${abs(p.path)}</loc>\n${p.hreflang.map((h) => `    <xhtml:link rel="alternate" hreflang="${h.hreflang}" href="${h.href}" />\n`).join('')}    <lastmod>${manifest[p.path].lastmod}</lastmod>\n    <changefreq>${p.sitemap.changefreq}</changefreq>\n    <priority>${p.sitemap.priority}</priority>\n  </url>`);
+    .map((p) => `  <url>\n    <loc>${abs(p.path)}</loc>\n${p.hreflang.map((h) => `    <xhtml:link rel="alternate" hreflang="${h.hreflang}" href="${h.href}" />\n`).join('')}    <lastmod>${manifest[p.path].lastmod}</lastmod>\n    <changefreq>${p.sitemap.changefreq}</changefreq>\n    <priority>${p.sitemap.priority}</priority>\n  </url>`)
+    .concat(DOWNLOADS_IN_SITEMAP.map((f) => `  <url>\n    <loc>${abs(f.path)}</loc>\n    <lastmod>${manifest[f.path].lastmod}</lastmod>\n    <changefreq>yearly</changefreq>\n    <priority>${f.priority}</priority>\n  </url>`));
   writeFileSync(join(dist, 'sitemap.xml'), `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">\n${urls.join('\n')}\n</urlset>\n`);
   writeFileSync(join(dist, 'seo-manifest.json'), `${JSON.stringify({
     generatedAt: new Date().toISOString(),
