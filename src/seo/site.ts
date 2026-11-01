@@ -40,8 +40,10 @@ const CTA_EN = { href: '/signup', label: 'Create my free budget' };
 export const PAGES: PageSEO[] = [
   {
     path: '/',
-    title: 'Application de budget gratuite : famille, couple, perso, projets',
-    description: 'Application de budget gratuite pour la famille, le couple, la coloc ou vous seul : charges, pot commun, épargne et projets datés. Sans connexion bancaire.',
+    // « budget familial » is the home's first search (Bing 4th, Google 24th):
+    // the title now says it first.
+    title: 'Budget familial : application gratuite pour famille et couple',
+    description: 'Gérez le budget familial gratuitement, seul ou à plusieurs : charges, pot commun, épargne et projets datés. Famille, couple, coloc, sans connexion bancaire.',
     h1: 'L’application de budget gratuite pour la famille, le couple, la coloc et vos projets',
     intro: 'Seul ou à plusieurs, budgétez le mois et planifiez ce qui compte : charges, pot commun, épargne, voyage, mariage, travaux. Sans connexion bancaire obligatoire, sans publicité, en temps réel.',
     links: [CTA, { href: '/tableau-budget-familial-gratuit', label: 'Tableau de budget familial gratuit (Excel et PDF)' }, { href: '/calcul-reste-a-vivre', label: 'Calcul du reste à vivre' }, { href: '/blog/etablir-budget-familial-5-etapes', label: 'Établir un budget familial' }, { href: '/blog/budget-famille-4-personnes-exemple', label: 'Exemple de budget pour une famille de 4' }, { href: '/budget-personnel', label: 'Calculer son budget perso' }, { href: '/budget-colocation', label: 'Budget colocation' }, { href: '/budget-mariage', label: 'Budget mariage' }, { href: '/blog/budget-etudiant-guide-complet-2025', label: 'Budget étudiant' }, { href: '/blog/combien-epargner-par-mois-objectif-date', label: 'Épargner pour un projet à une date' }, { href: '/features', label: 'Toutes les fonctionnalités' }, { href: '/blog', label: 'Conseils budget' }],
@@ -54,7 +56,7 @@ export const PAGES: PageSEO[] = [
   {
     path: '/tableau-budget-familial-gratuit',
     title: 'Tableau budget familial gratuit : Excel et PDF à imprimer',
-    description: 'Tableau de budget familial gratuit : Excel avec calculs automatiques (compatible Google Sheets) ou PDF à imprimer. Budget du mois, épargne, compte commun.',
+    description: 'Tableau de budget familial gratuit : Excel qui calcule tout seul (Google Sheets) ou grille PDF à imprimer. Budget mensuel, dépenses prévues et réelles, épargne.',
     h1: 'Tableau de budget familial gratuit',
     intro: 'Un modèle simple pour suivre le budget mensuel du foyer : revenus, dépenses, épargne, et la répartition du compte commun dans un couple. En Excel, les calculs sont déjà faits ; en PDF, il s’imprime et se remplit au stylo.',
     links: [
@@ -63,6 +65,12 @@ export const PAGES: PageSEO[] = [
       { href: '/blog/etablir-budget-familial-5-etapes', label: 'Établir un budget familial en 5 étapes' },
       { href: '/blog/budget-famille-4-personnes-exemple', label: 'Exemple de budget pour une famille de 4' },
       CTA,
+    ],
+    // The page's own content, also in the prerendered HTML that crawlers read
+    // first (Bing ranks it on « tableau budget mensuel », « grille à imprimer »).
+    sections: [
+      { h2: 'Ce que contient le tableau', text: 'Onglet « Budget du mois » : un budget mensuel complet, avec les revenus, 13 postes de charges (logement, énergie, courses, enfants…), l’épargne, et le reste du mois calculé tout seul. Onglet « Pot commun » : pour les couples, ce que chacun verse selon la méthode 50/50, au prorata des salaires ou même argent de poche. Onglet « Année » : les 12 mois côte à côte, avec les dépenses qui ne tombent qu’une fois (taxe foncière, prime…) et le reste cumulé.' },
+      { h2: 'La grille à imprimer', text: 'Le PDF A4 de 3 pages est une feuille de budget à remplir au stylo : pour chaque poste, le prévu en début de mois, le réel à la fin et l’écart, qui montre ce qui a dérapé. Puis les dépenses annuelles ramenées au mois, le pot commun du couple et le suivi de l’année.' },
     ],
     priority: 0.9,
     changefreq: 'monthly',

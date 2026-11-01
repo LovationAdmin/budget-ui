@@ -16,6 +16,7 @@
 import axios, { AxiosError, InternalAxiosRequestConfig, AxiosResponse } from 'axios';
 import type { HouseholdInput, BudgetProposal, AdvisorProgress, AdvisorErrorCode } from '@/types/aiBudget';
 import { defineMessages, pick, screenLocale } from '@/i18n/current';
+import type { FirstTouch } from '@/lib/acquisition';
 
 const M = defineMessages({
   fr: {
@@ -307,6 +308,8 @@ interface AuthData {
   password: string;
   country?: string;
   postal_code?: string;
+  /** Where the visitor first came from: counted anonymously, never kept with the account. */
+  acquisition?: FirstTouch;
 }
 
 interface ProfileUpdateData {

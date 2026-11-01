@@ -1,8 +1,8 @@
 // src/components/admin/AdminGrowth.tsx
 // ============================================================================
 // « Croissance » — where people come from and where they drop off: KPI tiles,
-// the signup funnel, 12 weeks of signups (verified / not yet), budgets per
-// country and email campaign results. Plain HTML marks, theme-aware colors
+// the signup funnel, 12 weeks of signups (verified / not yet), downloads and
+// signups by source, budgets per country and email campaign results. Plain HTML marks, theme-aware colors
 // (.viz-root variables), a table behind every chart for screen readers.
 // ============================================================================
 
@@ -37,6 +37,68 @@ function campaignName(id: string): string {
   const name = CAMPAIGN[base] ?? raw.charAt(0).toUpperCase() + raw.slice(1);
   if (!m) return name;
   return `${name} · ${new Date(+m[2], +m[3] - 1).toLocaleDateString('fr-FR', { month: 'short', year: 'numeric' })}`;
+}
+
+const SOURCE: Record<string, string> = {
+  google: 'Google', bing: 'Bing', chatgpt: 'ChatGPT', copilot: 'Copilot', perplexity: 'Perplexity',
+  duckduckgo: 'DuckDuckGo', ecosia: 'Ecosia', qwant: 'Qwant', yahoo: 'Yahoo', other_search: 'Autres moteurs',
+  social: 'Réseaux sociaux', email: 'E-mails', referral: 'Autres sites', direct: 'Accès direct', other: 'Autre',
+};
+const frDate = (iso: string) => iso.split('-').reverse().join('/');
+
+// What each source (search engine, AI assistant, social network…) brings:
+// free-template downloads and signups, anonymous, the last 90 days.
+function Acquisition({ a }: { a: NonNullable<GrowthData['acquisition']> }) {
+  const total = a.sources.reduce((s, r) => ({ d: s.d + r.downloads, i: s.i + r.signups }), { d: 0, i: 0 });
+  if (a.sources.length === 0) {
+    return <p className="text-sm text-muted-foreground">Rien pour l’instant : les téléchargements du modèle gratuit et les inscriptions s’afficheront ici, par source, dès les premières visites.</p>;
+  }
+  return (
+    <div className="grid gap-6 lg:grid-cols-[3fr_2fr]">
+      <table className="w-full text-sm tabular-nums">
+        <caption className="sr-only">Téléchargements et inscriptions par source</caption>
+        <thead>
+          <tr className="text-left text-xs text-muted-foreground">
+            <th scope="col" className="pb-2 font-semibold">Source</th>
+            <th scope="col" className="pb-2 text-right font-semibold">Modèles téléchargés</th>
+            <th scope="col" className="pb-2 text-right font-semibold">Inscriptions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {a.sources.map((r) => (
+            <tr key={r.source} className="border-t border-border/60 align-top">
+              <th scope="row" className="py-2 pr-2 text-left font-medium text-foreground">{SOURCE[r.source] ?? r.source}</th>
+              <td className="py-2 text-right">
+                <strong className="text-foreground">{r.downloads}</strong>
+                {r.downloads > 0 && <span className="block text-xs text-muted-foreground">PDF {r.downloads_pdf} · Excel {r.downloads_excel}</span>}
+              </td>
+              <td className="py-2 text-right"><strong className="text-foreground">{r.signups}</strong></td>
+            </tr>
+          ))}
+          <tr className="border-t-2 border-border text-muted-foreground">
+            <th scope="row" className="pt-2 text-left font-semibold">Total</th>
+            <td className="pt-2 text-right font-semibold">{total.d}</td>
+            <td className="pt-2 text-right font-semibold">{total.i}</td>
+          </tr>
+        </tbody>
+      </table>
+      <div>
+        <h3 className="text-xs font-semibold text-muted-foreground">Première page vue par les inscrits</h3>
+        {a.landings.length === 0 ? (
+          <p className="mt-2 text-sm text-muted-foreground">Aucune inscription suivie pour l’instant.</p>
+        ) : (
+          <ul className="mt-2 text-sm">
+            {a.landings.map((l) => (
+              <li key={l.page} className="flex items-baseline justify-between gap-3 border-t border-border/60 py-2 first:border-0 first:pt-0">
+                <span className="min-w-0 break-words text-foreground">{l.page}</span>
+                <strong className="shrink-0 tabular-nums text-foreground">{l.signups}</strong>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+    </div>
+  );
 }
 
 export function Tile({ label, value, hint }: { label: string; value: string; hint: string }) {
@@ -149,6 +211,17 @@ export function AdminGrowth({ growth, newLast24h = 0 }: { growth: GrowthData; ne
           <CardContent><WeeklySignups weeks={growth.weekly} /></CardContent>
         </Card>
       </div>
+      {growth.acquisition && (
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base">D’où viennent les visiteurs</CardTitle>
+            <p className="text-xs text-muted-foreground">
+              90 derniers jours{growth.acquisition.since ? `, suivi depuis le ${frDate(growth.acquisition.since)}` : ''}. Source de la première visite, comptée sans compte ni identifiant.
+            </p>
+          </CardHeader>
+          <CardContent><Acquisition a={growth.acquisition} /></CardContent>
+        </Card>
+      )}
       <div className="grid gap-4 lg:grid-cols-2">
         <Card>
           <CardHeader className="pb-2"><CardTitle className="text-base">Budgets par pays</CardTitle></CardHeader>
