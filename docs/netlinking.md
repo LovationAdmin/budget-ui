@@ -125,7 +125,30 @@ pour l'éducation financière ne publie pas ses coordonnées en ligne).
 | 2 | Canada | Prosper Canada | « Learning Hub » pour les intervenants en autonomie financière | info@prospercanada.org | F | Envoyé le 2 novembre ; relance vers le 10 |
 | 3 | États-Unis, Royaume-Uni | Jump$tart Clearinghouse (base de ressources gratuites), Citizens Advice, Good Things Foundation | Procédures et contacts pas encore vérifiés | — | F | |
 
-Le 2 novembre, tout ce qui avait une adresse e-mail est parti (12 e-mails).
+### Associations étudiantes (modèle G)
+
+Les étudiants comptent chaque euro et vivent souvent en colocation : on leur
+propose d'abord les calculateurs (budget 50/30/20, colocation), qui comptent
+en euros, francs suisses, dollars canadiens, francs CFA, dirhams… et en
+anglais en livres, dollars, etc. Puis le modèle Excel et l'application pour
+la colocation.
+
+| Pays | Association | Contact | Langue | Statut |
+|---|---|---|---|---|
+| France | FAGE, fédération des associations étudiantes | contact@fage.org | FR | Envoyé le 2 novembre ; relance vers le 10 |
+| France | Animafac, réseau d'associations étudiantes | hello@animafac.net | FR | Envoyé le 2 novembre ; relance vers le 10 |
+| France | UNEF | formulaire https://unef.fr/nous-contacter/ | FR | À envoyer |
+| Belgique | FEF, Fédération des étudiants francophones | contact@fef.be | FR | Envoyé le 2 novembre ; relance vers le 10 |
+| Luxembourg | ACEL, cercles d'étudiants luxembourgeois | contact@acel.lu | FR | Envoyé le 2 novembre ; relance vers le 10 |
+| Suisse | UNES (VSS), Union des étudiant·e·s de Suisse | info@vss-unes.ch | FR | Envoyé le 2 novembre ; relance vers le 10 |
+| Québec | UEQ, Union étudiante du Québec | info@unionetudiante.ca | FR | Envoyé le 2 novembre ; relance vers le 10 |
+| Canada | CFS-FCÉÉ, Canadian Federation of Students | info@cfs-fcee.ca | EN | Envoyé le 2 novembre ; relance vers le 10 |
+| Europe | ESU, European Students' Union | secretariat@esu-online.org | EN | Envoyé le 2 novembre ; relance vers le 10 |
+| Europe | ESN, Erasmus Student Network | esn.org bloque la lecture automatique : contact à relever à la main | EN | |
+| Royaume-Uni, Irlande | NUS UK, AMLÉ (ex-USI) | sites sans adresse lisible (NUS bloque, AMLÉ n'a qu'un formulaire) | EN | |
+| Nouvelle-Zélande, Australie | NZUSA, NUS Australia | students.org.nz et nus.org.au hors du réseau autorisé de la session cloud | EN | |
+
+Le 2 novembre, tout ce qui avait une adresse e-mail est parti (12 e-mails aux organismes, 8 aux associations étudiantes).
 Reste : les formulaires de l'UNAF et de Finances & Pédagogie, Crésus (site
 indisponible), puis les PCB, par 10 à 20, en ajustant le modèle D avec les
 premiers retours.
@@ -137,7 +160,7 @@ seule relance, 7 à 10 jours après, en deux lignes.
 
 Chaque e-mail commence par se présenter en une phrase : le destinataire ne
 connaît pas Budget Famille, il doit savoir qui écrit avant de lire pourquoi.
-Aux organismes (modèles C, D et F), dire aussi ce que deviennent les données
+Aux organismes (modèles C, D, F et G), dire aussi ce que deviennent les données
 des familles, avec les seuls mots de « Sécurité et confidentialité ».
 
 Envoyer depuis **libasse@budgetfamille.com** (Resend, réponses vers
@@ -318,6 +341,50 @@ grille A4 s'imprime bien sur du papier Letter.
 >
 > Best regards,
 > [First Last], Budget Famille
+
+### G. Associations étudiantes
+
+> **Objet :** Des outils de budget gratuits pour les étudiants
+>
+> Bonjour,
+>
+> Je m'appelle [Prénom Nom] et je développe Budget Famille, une application
+> française et gratuite pour gérer son budget, seul ou à plusieurs
+> (budgetfamille.com). Je vous écris car [la raison, par exemple : la FEF
+> représente les étudiants francophones de Belgique, pour qui le budget est
+> souvent serré], et nous avons des outils gratuits qui peuvent leur servir au
+> quotidien :
+> - un calculateur de budget mensuel (règle 50/30/20) : ce qui reste une fois
+>   le loyer et l'essentiel payés, et ce qu'on peut mettre de côté :
+>   https://www.budgetfamille.com/budget-personnel
+> - un calculateur de colocation, pour partager le loyer et les factures à
+>   parts égales, selon la chambre ou selon les revenus :
+>   https://www.budgetfamille.com/budget-colocation
+> - un tableau de budget Excel à télécharger, qui calcule tout seul :
+>   https://www.budgetfamille.com/tableau-budget-familial-gratuit
+>
+> [Hors zone euro : « Les calculateurs comptent aussi en francs suisses (et
+> existent en anglais). »]
+>
+> Côté confidentialité : tout est gratuit et sans inscription, et dans les
+> calculateurs rien n'est envoyé, les chiffres restent dans le navigateur.
+> Pour gérer une colocation à plusieurs, l'application chiffre les données de
+> budget avant de les enregistrer, les héberge en Europe, ne les vend jamais,
+> sans publicité ni connexion bancaire obligatoire, et chacun peut tout
+> supprimer à tout moment : https://www.budgetfamille.com/privacy
+>
+> Si vous avez une page de ressources (vie étudiante, logement, aides) ou une
+> lettre d'information, un lien nous aiderait beaucoup à faire connaître ces
+> outils.
+>
+> Bonne journée,
+> [Prénom Nom], Budget Famille
+
+En anglais (« Free budgeting tools for students »), le même texte avec
+https://www.budgetfamille.com/en/50-30-20-budget-calculator,
+https://www.budgetfamille.com/en/rent-split-calculator,
+https://www.budgetfamille.com/en/free-budget-template et
+https://www.budgetfamille.com/en/privacy.
 
 ## Les règles
 
