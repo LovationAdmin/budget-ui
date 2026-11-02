@@ -29,6 +29,31 @@ Contacts et constats vérifiés le 1er novembre 2026.
   c'est l'angle.
 - **Des articles par pays** (Dakar, Abidjan, Maroc, Québec), avec des budgets
   chiffrés : de quoi intéresser des médias locaux.
+- **En anglais**, le même modèle, sans devise (montants sans symbole) :
+  https://www.budgetfamille.com/en/free-budget-template. Le modèle français,
+  lui, affiche des **€**.
+
+## Sécurité et confidentialité : ce qu'on peut écrire
+
+C'est la première question d'un organisme qui reçoit des familles en
+difficulté. Vérifié dans le code le 2 novembre 2026 :
+
+- **Le modèle et la grille** se téléchargent sans compte ni adresse e-mail :
+  aucune donnée n'est demandée, le fichier reste chez la personne. Le site
+  compte les téléchargements, sans identifiant.
+- **Les calculateurs** fonctionnent sans compte : le calcul se fait dans le
+  navigateur.
+- **L'application** : données de budget chiffrées (AES-256-GCM) avant d'être
+  enregistrées (`budget-api/utils/crypto.go`), base hébergée en Europe, à
+  Francfort (`budget-api/render.yaml`), jamais vendues, sans publicité,
+  connexion bancaire facultative, compte et données supprimables à tout
+  moment depuis le profil.
+- **Page à citer** : https://www.budgetfamille.com/privacy (en anglais :
+  https://www.budgetfamille.com/en/privacy).
+- **Ne pas écrire** « jamais partagées » (la connexion bancaire facultative
+  passe par Enable Banking, les outils IA par un fournisseur d'IA), « standard
+  militaire », ni « accès journalisé et notifié » : la politique de
+  confidentialité l'affirme, mais rien dans `budget-api` ne le fait encore.
 
 ## Les cibles
 
@@ -50,6 +75,61 @@ Contacts et constats vérifiés le 1er novembre 2026.
 Ordre conseillé : la médiathèque lundi (l'atelier est samedi), puis Copeps
 (le plus facile : on répare leur page), puis les comparatifs.
 
+## Élargir : les réseaux, en France et à l'étranger
+
+Les médiathèques et les Points conseil budget sont les meilleures cibles :
+ils remettent des outils à des familles tous les jours, et leurs sites
+(paris.fr, sites publics, associations reconnues) pèsent lourd. On vise
+d'abord les **têtes de réseau**, qui relaient à des dizaines de services.
+Contacts vérifiés le 2 novembre 2026 sur le site de chaque organisme, sauf
+mention contraire.
+
+### France
+
+| Prio. | Organisme | Pourquoi eux | Contact | Modèle | Statut |
+|---|---|---|---|---|---|
+| 1 | Les 500 Points conseil budget | Les Udaf 95 et 73, en grand. Liste officielle (PDF, mai 2024) sur [solidarites.gouv.fr](https://solidarites.gouv.fr/point-conseil-budget-pcb) ; l'adresse de chaque PCB est sur le site de sa structure | 10 à 20 par semaine, un e-mail chacun | D | |
+| 1 | UNAF, tête de réseau des Udaf | Peut relayer auprès de toutes les Udaf, qui portent une bonne partie des PCB | formulaire https://www.unaf.fr/contact-unaf/ (sujet « Accompagnement budgétaire ») | D | |
+| 1 | Les Bons Clics (WeTechCare) | La plateforme des aidants numériques ; publie déjà « Gérer son budget au quotidien, et si le numérique nous aidait ? » | formulaire https://www.lesbonsclics.fr/fr/nous-contacter | C | |
+| 2 | Finances & Pédagogie | Ateliers budget dans toute la France, page « Ressources pédagogiques » ; l'INC cite déjà leur brochure | formulaire https://www.finances-pedagogie.fr/contact/ | D | |
+| 2 | Crésus | Réseau d'associations d'accompagnement budgétaire | https://www.cresus.org (site indisponible le 2 novembre : contact à relever) | D | |
+| 2 | Médiathèques, espaces numériques | Comme Françoise Sagan : chercher « atelier budget » ou « tableur budget » dans les agendas des villes | au cas par cas | C | |
+
+### Francophonie
+
+Belgique et Luxembourg comptent en euros : prêts. La Suisse et le Québec ne
+comptent pas en euros : leur proposer le modèle français tel quel (en €)
+serait maladroit, prévoir d'abord un modèle français sans devise, comme
+l'anglais.
+
+| Prio. | Pays | Organisme | Pourquoi eux | Contact | Modèle | Statut |
+|---|---|---|---|---|---|---|
+| 1 | Belgique | Observatoire du Crédit et de l'Endettement (Wallonie) | Prévention du surendettement, formations et publications pour les travailleurs sociaux | info@observatoire-credit.be | D | |
+| 1 | Belgique | Centre d'Appui aux Services de Médiation de Dettes (Bruxelles) | Appui aux professionnels, « outils de prévention », boîte à outils du médiateur | info@mediationdedettes.be | D | |
+| 1 | Luxembourg | Ligue médico-sociale, service d'information et de conseil en surendettement | Service conventionné par l'État | endettement@ligue.lu (dépliant 2025 du ministère de la Famille) | D | |
+| 1 | Luxembourg | Inter-Actions (Esch-sur-Alzette) | Même mission, dans le sud du pays | endettement@inter-actions.lu (même dépliant) | D | |
+| 2 | Suisse | FRC Vaud, conseil en budget | Entretiens budget gratuits ; a son propre modèle PDF : proposer l'Excel qui calcule et la répartition du couple | budget.vaud@frc.ch (relevé sur vaudfamille.ch) | D | Attendre le modèle sans devise |
+| 2 | Suisse | Dettes Conseils Suisse | Faîtière des services de désendettement | administration@schulden.ch | D | Attendre le modèle sans devise |
+| 2 | Québec | Union des consommateurs (réseau d'ACEF) | Complète la ligne Québec ci-dessus | formulaire https://uniondesconsommateurs.ca/contact/ | D | Attendre le modèle sans devise |
+
+Afrique francophone : pas encore de contact vérifié (la Fondation marocaine
+pour l'éducation financière ne publie pas ses coordonnées en ligne).
+
+### Pays anglophones (modèle F)
+
+| Prio. | Pays | Organisme | Pourquoi eux | Contact | Modèle | Statut |
+|---|---|---|---|---|---|---|
+| 1 | Irlande | MABS (Money Advice and Budgeting Service) | Service public de conseil budgétaire, bureaux dans tout le pays ; remet déjà des « budget sheets » | helpline@mabs.ie (relevé sur un annuaire : mabs.ie refusait la vérification) | F | |
+| 1 | Nouvelle-Zélande | FinCap | Fédère plus de 200 services gratuits de budget et d'accompagnement financier | kiaora@fincap.org.nz | F | |
+| 2 | Australie | Financial Counselling Australia | Fédère les conseillers financiers des États ; a une boîte à outils pour eux | https://financialcounsellingaustralia.org.au/contact (adresse e-mail masquée sur la page) | F | |
+| 2 | Canada | Prosper Canada | « Learning Hub » pour les intervenants en autonomie financière | https://prospercanada.org/en/about-us/contact-us | F | |
+| 3 | États-Unis, Royaume-Uni | Jump$tart Clearinghouse (base de ressources gratuites), Citizens Advice, Good Things Foundation | Procédures et contacts pas encore vérifiés | — | F | |
+
+Ordre conseillé : attendre les retours des Udaf 95 et 73 (relance le
+10 novembre) pour ajuster le modèle D, puis une vague par semaine : têtes de
+réseau françaises et Belgique, Luxembourg ; puis Irlande, Nouvelle-Zélande ;
+puis les PCB, par 10 à 20.
+
 ## Les e-mails
 
 Remplacer les crochets. Un e-mail par site, jamais en copie groupée. Une
@@ -57,6 +137,8 @@ seule relance, 7 à 10 jours après, en deux lignes.
 
 Chaque e-mail commence par se présenter en une phrase : le destinataire ne
 connaît pas Budget Famille, il doit savoir qui écrit avant de lire pourquoi.
+Aux organismes (modèles C, D et F), dire aussi ce que deviennent les données
+des familles, avec les seuls mots de « Sécurité et confidentialité ».
 
 Envoyer depuis **libasse@budgetfamille.com** (Resend, réponses vers
 lovation.pro@gmail.com), en texte brut. Pas par le connecteur Gmail de Claude :
@@ -135,7 +217,8 @@ n'est pas Budget Famille.
 >   l'année ;
 > - la même grille en PDF à imprimer, pour ceux qui préfèrent le papier.
 >
-> Sans inscription ni adresse e-mail :
+> Sans inscription ni adresse e-mail, et aucune donnée n'est collectée : le
+> fichier reste chez chacun.
 > https://www.budgetfamille.com/tableau-budget-familial-gratuit
 >
 > Vous pouvez l'utiliser, l'imprimer et le distribuer librement. Si l'atelier
@@ -166,6 +249,14 @@ n'est pas Budget Famille.
 > à vivre fonctionne sans compte, et rien n'est envoyé :
 > https://www.budgetfamille.com/calcul-reste-a-vivre
 >
+> Côté confidentialité, un point qui compte pour les familles que vous
+> recevez : la grille et le fichier Excel se téléchargent sans compte ni
+> adresse e-mail, et aucune donnée n'est collectée. Si une famille utilise
+> ensuite l'application, ses données de budget sont chiffrées avant d'être
+> enregistrées, hébergées en Europe, jamais vendues, sans publicité ni
+> connexion bancaire obligatoire, et elle peut tout supprimer à tout moment :
+> https://www.budgetfamille.com/privacy
+>
 > Si vous avez une page de ressources pour les familles, un lien nous
 > aiderait beaucoup. Vos retours de terrain sur la grille sont aussi les
 > bienvenus.
@@ -193,6 +284,40 @@ n'est pas Budget Famille.
 >
 > Bonne journée,
 > [Prénom Nom], Budget Famille
+
+### F. Budget and debt advice services (English)
+
+Le modèle D en anglais, pour les pays anglophones. Il pointe vers le modèle
+anglais, sans devise. Avant les États-Unis et le Canada, vérifier que la
+grille A4 s'imprime bien sur du papier Letter.
+
+> **Subject:** A free printable budget sheet for the households you support
+>
+> Hello,
+>
+> My name is [First Last] and I build Budget Famille, a free budgeting app
+> made in France (budgetfamille.com). I'm writing because [the reason, for
+> example: your service helps households with their budget every day, and we
+> have a tool that may be useful in your appointments].
+>
+> It's a printable budget sheet (3 A4 pages: planned and actual monthly
+> budget, yearly expenses and how a couple splits them, a year tracker),
+> with an Excel version that does the maths. It works in any currency, needs
+> no sign-up, and you're free to print and share it:
+> https://www.budgetfamille.com/en/free-budget-template
+>
+> On privacy, which matters for the people you support: the files download
+> without an account or email address, and no data is collected. If someone
+> later uses the app, their budget data is encrypted before it's stored,
+> hosted in Europe, never sold, with no ads and no bank connection required,
+> and they can delete everything at any time:
+> https://www.budgetfamille.com/en/privacy
+>
+> If you have a resources page for clients or practitioners, a link would
+> help us a lot. Feedback from the field is just as welcome.
+>
+> Best regards,
+> [First Last], Budget Famille
 
 ## Les règles
 
