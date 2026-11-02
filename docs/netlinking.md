@@ -89,28 +89,28 @@ mention contraire.
 | Prio. | Organisme | Pourquoi eux | Contact | Modèle | Statut |
 |---|---|---|---|---|---|
 | 1 | Les 500 Points conseil budget | Les Udaf 95 et 73, en grand. Liste officielle (PDF, mai 2024) sur [solidarites.gouv.fr](https://solidarites.gouv.fr/point-conseil-budget-pcb) ; l'adresse de chaque PCB est sur le site de sa structure | 10 à 20 par semaine, un e-mail chacun | D | |
-| 1 | UNAF, tête de réseau des Udaf | Peut relayer auprès de toutes les Udaf, qui portent une bonne partie des PCB | formulaire https://www.unaf.fr/contact-unaf/ (sujet « Accompagnement budgétaire ») | D | |
-| 1 | Les Bons Clics (WeTechCare) | La plateforme des aidants numériques ; publie déjà « Gérer son budget au quotidien, et si le numérique nous aidait ? » | formulaire https://www.lesbonsclics.fr/fr/nous-contacter | C | |
-| 2 | Finances & Pédagogie | Ateliers budget dans toute la France, page « Ressources pédagogiques » ; l'INC cite déjà leur brochure | formulaire https://www.finances-pedagogie.fr/contact/ | D | |
+| 1 | UNAF, tête de réseau des Udaf | Peut relayer auprès de toutes les Udaf, qui portent une bonne partie des PCB | formulaire https://www.unaf.fr/contact-unaf/ (sujet « Accompagnement budgétaire ») | D | Formulaire à envoyer par Libasse (case de consentement à cocher soi-même) |
+| 1 | Les Bons Clics (WeTechCare) | La plateforme des aidants numériques ; publie déjà « Gérer son budget au quotidien, et si le numérique nous aidait ? » | contact@lesbonsclics.fr | C | Envoyé le 2 novembre ; relance vers le 10 |
+| 2 | Finances & Pédagogie | Ateliers budget dans toute la France, page « Ressources pédagogiques » ; l'INC cite déjà leur brochure | formulaire https://www.finances-pedagogie.fr/contact/ (reCAPTCHA) | D | Formulaire à envoyer par Libasse |
 | 2 | Crésus | Réseau d'associations d'accompagnement budgétaire | https://www.cresus.org (site indisponible le 2 novembre : contact à relever) | D | |
 | 2 | Médiathèques, espaces numériques | Comme Françoise Sagan : chercher « atelier budget » ou « tableur budget » dans les agendas des villes | au cas par cas | C | |
 
 ### Francophonie
 
-Belgique et Luxembourg comptent en euros : prêts. La Suisse et le Québec ne
-comptent pas en euros : leur proposer le modèle français tel quel (en €)
-serait maladroit, prévoir d'abord un modèle français sans devise, comme
-l'anglais.
+Belgique et Luxembourg comptent en euros. Pour la Suisse et le Québec, le
+modèle français affiche des € : les e-mails proposent une version en francs
+suisses ou en dollars canadiens sur demande (changer le format des montants
+du fichier Excel).
 
 | Prio. | Pays | Organisme | Pourquoi eux | Contact | Modèle | Statut |
 |---|---|---|---|---|---|---|
-| 1 | Belgique | Observatoire du Crédit et de l'Endettement (Wallonie) | Prévention du surendettement, formations et publications pour les travailleurs sociaux | info@observatoire-credit.be | D | |
-| 1 | Belgique | Centre d'Appui aux Services de Médiation de Dettes (Bruxelles) | Appui aux professionnels, « outils de prévention », boîte à outils du médiateur | info@mediationdedettes.be | D | |
-| 1 | Luxembourg | Ligue médico-sociale, service d'information et de conseil en surendettement | Service conventionné par l'État | endettement@ligue.lu (dépliant 2025 du ministère de la Famille) | D | |
-| 1 | Luxembourg | Inter-Actions (Esch-sur-Alzette) | Même mission, dans le sud du pays | endettement@inter-actions.lu (même dépliant) | D | |
-| 2 | Suisse | FRC Vaud, conseil en budget | Entretiens budget gratuits ; a son propre modèle PDF : proposer l'Excel qui calcule et la répartition du couple | budget.vaud@frc.ch (relevé sur vaudfamille.ch) | D | Attendre le modèle sans devise |
-| 2 | Suisse | Dettes Conseils Suisse | Faîtière des services de désendettement | administration@schulden.ch | D | Attendre le modèle sans devise |
-| 2 | Québec | Union des consommateurs (réseau d'ACEF) | Complète la ligne Québec ci-dessus | formulaire https://uniondesconsommateurs.ca/contact/ | D | Attendre le modèle sans devise |
+| 1 | Belgique | Observatoire du Crédit et de l'Endettement (Wallonie) | Prévention du surendettement, formations et publications pour les travailleurs sociaux | info@observatoire-credit.be | D | Envoyé le 2 novembre ; relance vers le 10 |
+| 1 | Belgique | Centre d'Appui aux Services de Médiation de Dettes (Bruxelles) | Appui aux professionnels, « outils de prévention », boîte à outils du médiateur | info@mediationdedettes.be | D | Envoyé le 2 novembre ; relance vers le 10 |
+| 1 | Luxembourg | Ligue médico-sociale, service d'information et de conseil en surendettement | Service conventionné par l'État | endettement@ligue.lu (dépliant 2025 du ministère de la Famille) | D | Envoyé le 2 novembre ; relance vers le 10 |
+| 1 | Luxembourg | Inter-Actions (Esch-sur-Alzette) | Même mission, dans le sud du pays | endettement@inter-actions.lu (même dépliant) | D | Envoyé le 2 novembre ; relance vers le 10 |
+| 2 | Suisse | FRC Vaud, conseil en budget | Entretiens budget gratuits ; a son propre modèle PDF : proposer l'Excel qui calcule et la répartition du couple | budget.vaud@frc.ch (relevé sur vaudfamille.ch) | D | Envoyé le 2 novembre ; relance vers le 10 |
+| 2 | Suisse | Dettes Conseils Suisse | Faîtière des services de désendettement | administration@schulden.ch | D | Envoyé le 2 novembre ; relance vers le 10 |
+| 2 | Québec | Union des consommateurs (réseau d'ACEF) | Complète la ligne Québec ci-dessus | info@uniondesconsommateurs.ca | D | Envoyé le 2 novembre ; relance vers le 10 |
 
 Afrique francophone : pas encore de contact vérifié (la Fondation marocaine
 pour l'éducation financière ne publie pas ses coordonnées en ligne).
@@ -119,16 +119,16 @@ pour l'éducation financière ne publie pas ses coordonnées en ligne).
 
 | Prio. | Pays | Organisme | Pourquoi eux | Contact | Modèle | Statut |
 |---|---|---|---|---|---|---|
-| 1 | Irlande | MABS (Money Advice and Budgeting Service) | Service public de conseil budgétaire, bureaux dans tout le pays ; remet déjà des « budget sheets » | helpline@mabs.ie (relevé sur un annuaire : mabs.ie refusait la vérification) | F | |
-| 1 | Nouvelle-Zélande | FinCap | Fédère plus de 200 services gratuits de budget et d'accompagnement financier | kiaora@fincap.org.nz | F | |
-| 2 | Australie | Financial Counselling Australia | Fédère les conseillers financiers des États ; a une boîte à outils pour eux | https://financialcounsellingaustralia.org.au/contact (adresse e-mail masquée sur la page) | F | |
-| 2 | Canada | Prosper Canada | « Learning Hub » pour les intervenants en autonomie financière | https://prospercanada.org/en/about-us/contact-us | F | |
+| 1 | Irlande | MABS (Money Advice and Budgeting Service) | Service public de conseil budgétaire, bureaux dans tout le pays ; remet déjà des « budget sheets » | helpline@mabs.ie (relevé sur un annuaire : mabs.ie refusait la vérification) | F | Envoyé le 2 novembre ; relance vers le 10 |
+| 1 | Nouvelle-Zélande | FinCap | Fédère plus de 200 services gratuits de budget et d'accompagnement financier | kiaora@fincap.org.nz | F | Envoyé le 2 novembre ; relance vers le 10 |
+| 2 | Australie | Financial Counselling Australia | Fédère les conseillers financiers des États ; a une boîte à outils pour eux | info@financialcounsellingaustralia.org.au | F | Envoyé le 2 novembre ; relance vers le 10 |
+| 2 | Canada | Prosper Canada | « Learning Hub » pour les intervenants en autonomie financière | info@prospercanada.org | F | Envoyé le 2 novembre ; relance vers le 10 |
 | 3 | États-Unis, Royaume-Uni | Jump$tart Clearinghouse (base de ressources gratuites), Citizens Advice, Good Things Foundation | Procédures et contacts pas encore vérifiés | — | F | |
 
-Ordre conseillé : attendre les retours des Udaf 95 et 73 (relance le
-10 novembre) pour ajuster le modèle D, puis une vague par semaine : têtes de
-réseau françaises et Belgique, Luxembourg ; puis Irlande, Nouvelle-Zélande ;
-puis les PCB, par 10 à 20.
+Le 2 novembre, tout ce qui avait une adresse e-mail est parti (12 e-mails).
+Reste : les formulaires de l'UNAF et de Finances & Pédagogie, Crésus (site
+indisponible), puis les PCB, par 10 à 20, en ajustant le modèle D avec les
+premiers retours.
 
 ## Les e-mails
 
