@@ -61,6 +61,7 @@ const Blog = lazy(() => import('./lib/pages/Blog'));
 const BlogArticle = lazy(() => import('./lib/pages/BlogArticle'));
 const BudgetTemplate = lazy(() => import('./lib/pages/BudgetTemplate'));
 const ResteAVivre = lazy(() => import('./lib/pages/ResteAVivre'));
+const BudgetCouple = lazy(() => import('./lib/pages/BudgetCouple'));
 const BudgetColocation = lazy(() => import('./lib/pages/BudgetColocation'));
 const BudgetMariage = lazy(() => import('./lib/pages/BudgetMariage'));
 const BudgetPersonnel = lazy(() => import('./lib/pages/BudgetPersonnel'));
@@ -129,6 +130,7 @@ export default function App() {
           <Route path="/features" element={<Features />} />
           <Route path="/tableau-budget-familial-gratuit" element={<BudgetTemplate />} />
           <Route path="/calcul-reste-a-vivre" element={<ResteAVivre />} />
+          <Route path="/budget-couple" element={<BudgetCouple />} />
           <Route path="/budget-colocation" element={<BudgetColocation />} />
           <Route path="/budget-mariage" element={<BudgetMariage />} />
           <Route path="/budget-personnel" element={<BudgetPersonnel />} />

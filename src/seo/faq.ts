@@ -1,6 +1,9 @@
 // src/seo/faq.ts
 // Home page FAQ — shown on the page and published as FAQPage structured data
 // by the prerender (scripts/prerender.mjs), so both always say the same thing.
+// The first questions are the ones people type about a family or couple
+// budget, each answered in its first sentences (what « Autres questions
+// posées » quotes); the questions about Budget Famille itself come after.
 
 export interface FaqItem {
   q: string;
@@ -8,6 +11,26 @@ export interface FaqItem {
 }
 
 export const HOME_FAQ: FaqItem[] = [
+  {
+    q: 'Comment faire un budget familial ?',
+    a: 'Notez les revenus nets du foyer, puis les charges fixes (logement, énergie, assurances, crédits), les dépenses annuelles divisées par 12 et les dépenses variables (courses, enfants, loisirs). Mettez l’épargne de côté en début de mois : ce qui reste est votre marge pour les imprévus. Budget Famille refait ce calcul tout seul chaque mois.',
+  },
+  {
+    q: 'Quel budget pour une famille de 4 personnes ?',
+    a: 'Il dépend surtout du logement et de la ville. Dans notre exemple chiffré, en ville moyenne, un couple avec deux enfants dépense 3 450 € par mois pour 4 350 € de revenus, dont 1 100 € de loyer, 800 € de courses et 280 € pour les enfants, et épargne 400 €.',
+  },
+  {
+    q: 'Comment gérer un budget de couple ?',
+    a: 'Additionnez les charges communes du mois et choisissez ensemble comment les partager : à 50/50, au prorata des revenus ou pour garder le même argent de poche. Chacun verse sa part sur le compte commun le jour de la paie et garde le reste. Notre calculateur de budget couple compare les trois méthodes ; dans l’application, la répartition se recalcule toute seule.',
+  },
+  {
+    q: 'Comment répartir son budget avec la règle 50/30/20 ?',
+    a: 'La règle 50/30/20 est un repère : 50 % des revenus nets pour les besoins (logement, courses, transport), 30 % pour les envies et 20 % pour l’épargne. À adapter : là où le logement coûte cher, les besoins dépassent souvent la moitié des revenus.',
+  },
+  {
+    q: 'Existe-t-il une application de budget familial gratuite ?',
+    a: 'Oui. Budget Famille est une application de budget gratuite, pour la famille comme pour un couple, un budget perso ou une coloc. Elle fonctionne dans le navigateur, sur ordinateur comme sur téléphone, sans rien installer, et peut s’ajouter à l’écran d’accueil comme une application.',
+  },
   {
     q: 'Budget Famille est-il vraiment gratuit ?',
     a: 'Oui. Les budgets, les membres, les charges, l’épargne et les projets, le Budget IA et le partage à plusieurs sont gratuits, sans carte bancaire. La synchronisation bancaire automatique arrivera bientôt avec l’offre Premium : en attendant, tout fonctionne sans connexion bancaire.',
@@ -21,16 +44,8 @@ export const HOME_FAQ: FaqItem[] = [
     a: 'Non. Budget Famille fonctionne sans connexion à votre banque : vous saisissez vos salaires et vos charges une fois, et chaque mois se remplit tout seul à partir de ces règles.',
   },
   {
-    q: 'Comment gérer un budget de couple avec un compte commun ?',
-    a: 'Chacun indique son salaire, l’assistant « Répartir le pot commun » calcule ce que chacun verse (50/50, au prorata des revenus ou même argent de poche), et l’application montre l’argent de poche qui reste à chacun.',
-  },
-  {
     q: 'Mes dépenses personnelles sont-elles visibles par mon conjoint ?',
     a: 'Vous choisissez. Une charge perso peut être publique ou privée : en privé, son nom est chiffré sur nos serveurs et visible par vous seul ; seul son montant compte dans le budget du foyer.',
-  },
-  {
-    q: 'Existe-t-il un logiciel de budget familial gratuit ?',
-    a: 'Oui. Budget Famille est un logiciel de budget gratuit, pour la famille comme pour un budget perso ou de coloc, qui fonctionne dans le navigateur, sur ordinateur comme sur téléphone, sans rien installer. Vous pouvez aussi l’installer comme une application sur l’écran d’accueil.',
   },
   {
     q: 'Est-ce mieux qu’un tableau Excel ?',
