@@ -22,7 +22,7 @@ export interface BudgetSummary {
 }
 
 let state: { userId: string; list: BudgetSummary[] } | null = null;
-let loadingFor: string | null = null;
+let inflight: { userId: string; promise: Promise<BudgetSummary[]> } | null = null;
 const listeners = new Set<() => void>();
 
 const subscribe = (listener: () => void) => {
@@ -38,18 +38,29 @@ export function publishBudgetList(userId: string, list: BudgetSummary[]) {
   listeners.forEach((l) => l());
 }
 
-function load(userId: string) {
-  if (loadingFor === userId) return;
-  loadingFor = userId;
-  budgetAPI
+/**
+ * Loads the list from the server and shares it. A call made while a request
+ * is already on its way joins it: the menus (mounted first) and the dashboard
+ * or overview opening at the same moment make a single GET /budgets.
+ */
+export function fetchBudgetList(userId: string): Promise<BudgetSummary[]> {
+  if (inflight?.userId === userId) return inflight.promise;
+  const promise = budgetAPI
     .list()
     .then((res) => {
-      if (loadingFor === userId) publishBudgetList(userId, Array.isArray(res.data) ? res.data : []);
+      const list: BudgetSummary[] = Array.isArray(res.data) ? res.data : [];
+      publishBudgetList(userId, list);
+      return list;
     })
-    .catch(() => undefined)
     .finally(() => {
-      if (loadingFor === userId) loadingFor = null;
+      if (inflight?.promise === promise) inflight = null;
     });
+  inflight = { userId, promise };
+  return promise;
+}
+
+function load(userId: string) {
+  fetchBudgetList(userId).catch(() => undefined);
 }
 
 /** The user's budgets, `null` until known (or when the list could not be loaded). */

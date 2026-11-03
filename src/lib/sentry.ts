@@ -8,6 +8,9 @@
 //   - VITE_SENTRY_DSN          : DSN du projet Sentry (vide = désactivé)
 //   - VITE_SENTRY_ENVIRONMENT  : "production" | "development" | "preview"
 //   - VITE_SENTRY_RELEASE      : tag de release (auto-set depuis VITE_APP_VERSION)
+//   - VITE_SENTRY_TRACES_RATE  : part des visites mesurées (vitesse réelle :
+//                                chargement, LCP/INP/CLS, requêtes API liées
+//                                aux traces du backend). 0.1 par défaut, 0 = off.
 //
 // Sécurité : le DSN frontend est PUBLIC (visible dans le bundle JS). C'est OK,
 // c'est conçu pour ça. Pour empêcher le spam d'events depuis des origines
@@ -19,14 +22,18 @@
 import * as Sentry from '@sentry/react';
 
 let initialized = false;
+let scheduled = false;
 
 /**
  * Init Sentry. Idempotent : safe à appeler plusieurs fois (ne ré-init pas).
  *
  * À appeler dans `main.tsx` AVANT le `ReactDOM.createRoot(...).render(...)`.
+ * The SDK itself (src/lib/sentryInit.ts) is fetched once the page has loaded
+ * and the browser is idle: it never delays the first screen. An error thrown
+ * before then is not reported.
  */
 export function initSentry(): void {
-  if (initialized) return;
+  if (scheduled) return;
 
   const dsn = import.meta.env.VITE_SENTRY_DSN;
   if (!dsn) {
@@ -37,6 +44,7 @@ export function initSentry(): void {
     }
     return;
   }
+  scheduled = true;
 
   const environment =
     import.meta.env.VITE_SENTRY_ENVIRONMENT ||
@@ -46,61 +54,29 @@ export function initSentry(): void {
     import.meta.env.VITE_SENTRY_RELEASE ||
     `budget-ui@${import.meta.env.VITE_APP_VERSION || 'unknown'}`;
 
-  Sentry.init({
-    dsn,
-    environment,
-    release,
+  const rate = Number(import.meta.env.VITE_SENTRY_TRACES_RATE ?? '0.1');
+  const tracesSampleRate = Number.isFinite(rate) ? Math.min(Math.max(rate, 0), 1) : 0;
+  let apiOrigin = 'http://localhost:8080';
+  try {
+    apiOrigin = new URL(import.meta.env.VITE_API_URL || apiOrigin).origin;
+  } catch {
+    /* keep the default */
+  }
 
-    // Sample 100% des erreurs en prod (5k/mois suffit largement vu notre volume)
-    sampleRate: 1.0,
-
-    // 0% des traces de performance (à activer plus tard si besoin)
-    tracesSampleRate: 0,
-
-    // Replay : capture les 30s avant un crash, mais coûteux en bandwidth.
-    // Désactivé par défaut, à activer manuellement si tu veux.
-    replaysSessionSampleRate: 0,
-    replaysOnErrorSampleRate: 0,
-
-    // Filtre les erreurs non-actionnables avant envoi
-    beforeSend(event, hint) {
-      const error = hint.originalException as Error | undefined;
-
-      // 1. Filtrer les ResizeObserver warnings (bruit Chrome connu)
-      if (error?.message?.includes('ResizeObserver loop')) {
-        return null;
-      }
-
-      // 2. Filtrer les erreurs réseau benignes (offline, navigation cancelled)
-      if (
-        error?.message?.includes('NetworkError') ||
-        error?.message?.includes('AbortError') ||
-        error?.message?.includes('Failed to fetch')
-      ) {
-        return null;
-      }
-
-      // 3. Filtrer les erreurs d'extensions browser
-      if (error?.stack?.includes('chrome-extension://') ||
-          error?.stack?.includes('moz-extension://')) {
-        return null;
-      }
-
-      return event;
-    },
-
-    // Ignore certains messages d'erreur connus
-    ignoreErrors: [
-      // Erreurs de scripts tiers qui n'impactent pas l'app
-      'Script error.',
-      // Erreurs liées aux extensions
-      /extension/i,
-      // Promise rejections sans contenu utile
-      'Non-Error promise rejection captured',
-    ],
-  });
-
-  initialized = true;
+  const start = () => {
+    import('./sentryInit')
+      .then(({ startSentry }) => {
+        startSentry({ dsn, environment, release, tracesSampleRate, apiOrigin });
+        initialized = true;
+      })
+      .catch(() => undefined);
+  };
+  const whenIdle = () => {
+    if ('requestIdleCallback' in window) requestIdleCallback(start, { timeout: 3000 });
+    else setTimeout(start, 1);
+  };
+  if (document.readyState === 'complete') whenIdle();
+  else window.addEventListener('load', whenIdle, { once: true });
 }
 
 /**
@@ -131,7 +107,9 @@ export function captureMessage(
  * et au logout (avec null) pour cleanup.
  */
 export function setSentryUser(userId: string | null): void {
-  if (!initialized) return;
+  // Not gated on `initialized`: the session is restored before the SDK loads
+  // (initSentry), and the scope keeps the user for when it starts.
+  if (!scheduled) return;
   if (userId === null) {
     Sentry.setUser(null);
   } else {

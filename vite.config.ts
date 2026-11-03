@@ -160,14 +160,13 @@ export default defineConfig(({ mode }) => ({
         app: path.resolve(__dirname, 'app.html'),
       },
       output: {
-        manualChunks: {
-          // Split heavy deps for better caching
-          'recharts': ['recharts'],
-          'radix': [
-            '@radix-ui/react-dialog',
-            '@radix-ui/react-popover',
-            '@radix-ui/react-dropdown-menu',
-          ],
+        // React alone in a long-lived chunk: it rarely changes, so returning
+        // visitors keep it cached across deploys. Everything else is left to
+        // Rollup, so each page only downloads the libraries it uses. (A list
+        // of packages here would also pull their shared dependencies, React
+        // included, into that chunk and onto every page.)
+        manualChunks(id) {
+          if (/[\\/]node_modules[\\/](react|react-dom|scheduler)[\\/]/.test(id)) return 'react';
         },
       },
     },

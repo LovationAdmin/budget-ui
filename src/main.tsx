@@ -14,7 +14,7 @@ import { registerSW } from 'virtual:pwa-register';
 
 import App from './App';
 import { ErrorFallback } from './components/ErrorFallback';
-import { SentryErrorBoundary } from './lib/sentry';
+import { SentryErrorBoundary, initSentry } from './lib/sentry';
 import { isReloadingForNewVersion, reloadOnStaleVersion } from './lib/staleVersion';
 import { listenForDownloads, rememberFirstTouch } from './lib/acquisition';
 import { AuthProvider } from './contexts/AuthContext';
@@ -22,6 +22,10 @@ import { NotificationProvider } from './contexts/NotificationContext';
 import { TutorialProvider } from './contexts/TutorialContext';
 import { LocaleProvider } from './i18n/runtime';
 import './index.css';
+
+// Errors and real-user speed (no-op without VITE_SENTRY_DSN). Before anything
+// else, so the boundary below and the page-load measure have a client.
+initSentry();
 
 // ============================================================================
 // PWA service worker

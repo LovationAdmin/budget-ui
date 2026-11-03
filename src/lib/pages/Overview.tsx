@@ -26,7 +26,7 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAuth } from '@/contexts/AuthContext';
 import { budgetAPI } from '@/services/api';
-import { publishBudgetList, type BudgetSummary } from '@/hooks/useBudgetList';
+import { fetchBudgetList, type BudgetSummary } from '@/hooks/useBudgetList';
 import { CategoryIcon, Pill, Segmented } from '@/components/budget/shared/primitives';
 import { cn } from '@/lib/utils';
 import { BudgetEngine } from '@/lib/budget/engine';
@@ -246,9 +246,9 @@ export default function Overview() {
   const load = useCallback(async () => {
     setListFailed(false);
     try {
-      const res = await budgetAPI.list();
-      const all: BudgetSummary[] = Array.isArray(res.data) ? res.data : [];
-      if (userId) publishBudgetList(userId, all);
+      if (!userId) return;
+      // Joins the menus' request when they asked first (one GET /budgets).
+      const all = await fetchBudgetList(userId);
       setList(all);
       if (!overviewUseful(all)) return;
       setBudgets(await Promise.all(all.map((b, i) => loadBudget(b, BUDGET_TONES[i % BUDGET_TONES.length], me, today))));
