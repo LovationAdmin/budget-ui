@@ -25,6 +25,7 @@ import { TEMPLATE_FAQ_EN } from './faq-template-en';
 import { RENT_SPLIT_FAQ_EN } from './faq-rent-split-en';
 import { WEDDING_FAQ_EN } from './faq-wedding-en';
 import { COLOC_FAQ } from './faq-colocation';
+import { COUPLE_FAQ } from './faq-couple';
 import { MARIAGE_FAQ } from './faq-mariage';
 import { PERSO_FAQ } from './faq-budget-personnel';
 import { HOME_FAQ_ZH } from './zh/faq-home';
@@ -103,6 +104,7 @@ function shellOf(path: string): { home: string; label: string; cta: string; link
       { href: '/tableau-budget-familial-gratuit', label: 'Tableau gratuit' },
       { href: '/calcul-reste-a-vivre', label: 'Reste à vivre' },
       { href: '/budget-personnel', label: 'Budget perso' },
+      { href: '/budget-couple', label: 'Couple' },
       { href: '/budget-colocation', label: 'Colocation' },
       { href: '/budget-mariage', label: 'Mariage' },
       { href: '/blog', label: 'Conseils' },
@@ -200,6 +202,7 @@ function BlogIndex({ locale = 'fr' }: { locale?: Locale }) {
 /** Free calculators: WebApplication + FAQPage + breadcrumb structured data. */
 const TOOLS: Record<string, { name: string; crumb: string; faq: FaqItem[] }> = {
   '/calcul-reste-a-vivre': { name: 'Simulateur de reste à vivre', crumb: 'Calcul du reste à vivre', faq: RAV_FAQ },
+  '/budget-couple': { name: 'Calculateur de budget couple', crumb: 'Budget couple', faq: COUPLE_FAQ },
   '/budget-colocation': { name: 'Calculateur de budget colocation', crumb: 'Budget colocation', faq: COLOC_FAQ },
   '/budget-mariage': { name: 'Calculateur de budget mariage', crumb: 'Budget mariage', faq: MARIAGE_FAQ },
   '/budget-personnel': { name: 'Calculateur de budget personnel 50/30/20', crumb: 'Budget personnel', faq: PERSO_FAQ },

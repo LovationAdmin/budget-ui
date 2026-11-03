@@ -15,6 +15,7 @@ const SUITES = [
   'src/lib/budget/__tests__/overview.test.ts',
   'src/lib/tools/__tests__/resteAVivre.test.ts',
   'src/lib/tools/__tests__/colocation.test.ts',
+  'src/lib/tools/__tests__/couple.test.ts',
   'src/lib/tools/__tests__/mariage.test.ts',
   'src/lib/tools/__tests__/budgetPerso.test.ts',
   'src/i18n/__tests__/i18n.test.ts',

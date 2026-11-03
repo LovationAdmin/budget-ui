@@ -409,6 +409,7 @@ export const blogArticles: BlogArticleContent[] = [
   author: "Équipe Budget Famille",
   authorBio: "Experts en gestion budgétaire et développeurs de Budget Famille",
   publishedAt: "2025-01-17",
+  updatedAt: "2026-11-03",
   readTime: "10 min",
   tags: ["Couple", "Communication", "Collaboration", "Budget", "Harmonie"],
   featured: true,
@@ -500,8 +501,8 @@ export const blogArticles: BlogArticleContent[] = [
         </ul>
         <p className="mt-4"><strong>Répartition proportionnelle :</strong></p>
         <ul className="space-y-2">
-          <li>Julie : 2500/6000 = 42% → elle contribue 1 260€ au compte commun</li>
-          <li>Marc : 3500/6000 = 58% → il contribue 1 740€ au compte commun</li>
+          <li>Julie : 2 500 / 6 000 ≈ 42 % → elle verse 1 250 € au compte commun</li>
+          <li>Marc : 3 500 / 6 000 ≈ 58 % → il verse 1 750 € au compte commun</li>
           <li>Chacun garde le reste pour ses dépenses personnelles</li>
         </ul>
       </div>
@@ -509,6 +510,11 @@ export const blogArticles: BlogArticleContent[] = [
       <p className="text-sm italic text-gray-600">
         ⚖️ Cette méthode garantit que les deux partenaires contribuent "au même effort" 
         sans que celui qui gagne moins se sente appauvri.
+      </p>
+
+      <p>
+        Faites le calcul avec vos propres salaires : notre <a href="/budget-couple">calculateur de budget couple</a>, gratuit
+        et sans inscription, montre ce que chacun verse et garde à 50/50, au prorata ou à argent de poche égal.
       </p>
 
       <h3>Règle 4 : La Règle du "Oui Partagé" pour les Grosses Dépenses</h3>
@@ -2721,8 +2727,9 @@ export const blogArticles: BlogArticleContent[] = [
           et le « même argent de poche » privilégie l'égalité de niveau de vie.
         </p>
         <p>
-          Pour comparer les trois sur vos propres salaires, l'onglet « Pot commun » de notre{' '}
-          <a href="/tableau-budget-familial-gratuit">tableau Excel de budget de couple</a>, gratuit, fait le calcul tout seul.
+          Pour comparer les trois sur vos propres salaires, notre <a href="/budget-couple">calculateur de budget couple</a> les
+          affiche côte à côte, sans inscription ; l'onglet « Pot commun » de notre{' '}
+          <a href="/tableau-budget-familial-gratuit">tableau Excel de budget de couple</a>, gratuit, fait le même calcul.
         </p>
 
         <h3>Calculez sur le mois réel, pas sur une moyenne</h3>

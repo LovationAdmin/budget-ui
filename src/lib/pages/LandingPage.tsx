@@ -58,7 +58,7 @@ const M = defineMessages({
     usesIntro: '« Famille » au sens large : Budget Famille sert à budgétiser et planifier tout ce qui compte, seul ou à plusieurs.',
     uses: [
       { title: 'Seul', text: 'Votre budget perso : salaire, charges, épargne, et ce qui reste vraiment chaque mois. Idéal pour un premier appart ou un budget étudiant.', to: '/budget-personnel', label: 'Calculer mon budget perso' },
-      { title: 'En couple', text: 'Chacun verse sa juste part au pot commun et garde son argent de poche. Les dépenses perso peuvent rester privées.', to: '/blog/compte-commun-couple-argent-de-poche', label: 'Le guide du compte commun' },
+      { title: 'En couple', text: 'Chacun verse sa juste part au pot commun et garde son argent de poche. Les dépenses perso peuvent rester privées.', to: '/budget-couple', label: 'Calculer la part de chacun' },
       { title: 'En famille', text: 'Cantine certains mois, taxe foncière une fois par an, rentrée : chaque mois se prépare tout seul.', to: '/calcul-reste-a-vivre', label: 'Calculer notre reste à vivre' },
       { title: 'En colocation ou entre amis', text: 'Loyer, énergie, internet : invitez vos colocs par e-mail, chacun voit ce qu’il doit verser, en temps réel.', to: '/budget-colocation', label: 'Calculer la part de chacun' },
       { title: 'Pour un projet', text: 'Voyage, mariage, travaux, voiture, apport : un objectif, une date, et le montant à mettre de côté chaque mois.', to: '/budget-mariage', label: 'Calculer un budget mariage' },

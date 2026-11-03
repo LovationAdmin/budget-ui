@@ -26,6 +26,7 @@ const M = defineMessages({
       '/tableau-budget-familial-gratuit': 'Tableau de budget gratuit',
       '/calcul-reste-a-vivre': 'Calcul du reste à vivre',
       '/budget-personnel': 'Budget personnel',
+      '/budget-couple': 'Budget couple',
       '/budget-colocation': 'Budget colocation',
       '/budget-mariage': 'Budget mariage',
       '/blog': 'Conseils budget',
@@ -50,6 +51,7 @@ const M = defineMessages({
       '/tableau-budget-familial-gratuit': 'Free budget template',
       '/calcul-reste-a-vivre': 'Leftover income calculator',
       '/budget-personnel': '50/30/20 budget calculator',
+      '/budget-couple': 'Couple budget calculator',
       '/budget-colocation': 'Rent split calculator',
       '/budget-mariage': 'Wedding budget calculator',
       '/blog': 'Budgeting tips',
@@ -74,6 +76,7 @@ const M = defineMessages({
       '/tableau-budget-familial-gratuit': '免费预算表格',
       '/calcul-reste-a-vivre': '每月结余计算器',
       '/budget-personnel': '50/30/20预算计算器',
+      '/budget-couple': '情侣预算计算器',
       '/budget-colocation': '合租房租分摊计算器',
       '/budget-mariage': '婚礼预算计算器',
       '/blog': '理财建议',
@@ -85,7 +88,7 @@ const M = defineMessages({
   },
 });
 
-const PRODUCT = ['/features', '/premium', '/tableau-budget-familial-gratuit', '/calcul-reste-a-vivre', '/budget-personnel', '/budget-colocation', '/budget-mariage', '/blog'] as const;
+const PRODUCT = ['/features', '/premium', '/tableau-budget-familial-gratuit', '/calcul-reste-a-vivre', '/budget-personnel', '/budget-couple', '/budget-colocation', '/budget-mariage', '/blog'] as const;
 const LEGAL = ['/terms', '/privacy'] as const;
 const linkClass = 'flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors';
 
