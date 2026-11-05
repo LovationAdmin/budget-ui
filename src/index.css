@@ -152,6 +152,13 @@
     @apply font-semibold tracking-tight;
     /* Plus Jakarta Sans has a narrow space: with tight tracking, words ran together. */
     word-spacing: 0.08em;
+    /* Lines of even length: no heading ends on a lone word. */
+    text-wrap: balance;
+  }
+
+  /* No paragraph ends on a single orphan word. */
+  p {
+    text-wrap: pretty;
   }
 
   /* No double-tap zoom delay on controls; states are drawn by the components. */

@@ -239,7 +239,7 @@ export const BudgetNavbar = memo(function BudgetNavbar({
                 <p className="font-display font-semibold text-foreground truncate max-w-[200px]">
                   {budgetTitle}
                 </p>
-                <p className="truncate max-w-[200px] text-xs text-muted-foreground">{t.subtitle}</p>
+                <p className="truncate max-w-[200px] text-xs text-gray-600">{t.subtitle}</p>
               </div>
             </button>
           </div>

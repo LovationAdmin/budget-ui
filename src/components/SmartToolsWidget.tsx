@@ -35,8 +35,8 @@ import { defineMessages, useT, wordsIn } from '@/i18n/runtime';
 
 const M = defineMessages({
   fr: {
-    title: "Simulateur d'Économies",
-    subtitle: 'Analysez vos factures en temps réel',
+    title: "Simulateur d'économies",
+    subtitle: "Comparé aux offres du marché par l'IA",
     country: 'Pays',
     which: 'Quelle dépense analyser ?',
     amount: (currency: string) => `Montant actuel (${currency}/mois)`,
@@ -59,7 +59,7 @@ const M = defineMessages({
   },
   en: {
     title: 'Savings simulator',
-    subtitle: 'Analyze your bills in real time',
+    subtitle: 'Compared with market offers by AI',
     country: 'Country',
     which: 'Which expense should we analyze?',
     amount: (currency: string) => `Current amount (${currency}/month)`,
@@ -88,8 +88,8 @@ export default function SmartToolsWidget() {
   const t = useT(M);
 
   return (
-    <Card className="shadow-2xl overflow-hidden border-0 w-full">
-      <CardHeader className="bg-gradient-to-r from-primary to-purple-600 text-white p-6 sm:p-8">
+    <Card className="w-full overflow-hidden border border-border/70 shadow-card">
+      <CardHeader className="bg-primary text-primary-foreground p-6 sm:p-8">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div className="flex items-center gap-4">
             <div className="h-12 w-12 bg-white/20 rounded-2xl flex items-center justify-center flex-shrink-0">
@@ -97,7 +97,7 @@ export default function SmartToolsWidget() {
             </div>
             <div>
               <CardTitle className="text-xl sm:text-2xl">{t.title}</CardTitle>
-              <CardDescription className="text-white/90">
+              <CardDescription className="text-primary-foreground">
                 {t.subtitle}
               </CardDescription>
             </div>
@@ -105,7 +105,7 @@ export default function SmartToolsWidget() {
 
           <div className="w-full sm:w-48">
             <Select value={sim.locationCode} onValueChange={sim.setLocationCode}>
-              <SelectTrigger className="bg-white/10 border-white/20 text-white hover:bg-white/20 h-10" aria-label={t.country}>
+              <SelectTrigger className="bg-transparent border-white/40 text-white hover:bg-black/10 h-10" aria-label={t.country}>
                 <div className="flex items-center gap-2">
                     <MapPin className="h-4 w-4" aria-hidden="true" />
                   <SelectValue />
@@ -146,11 +146,11 @@ export default function SmartToolsWidget() {
                     onClick={() => sim.setCategory(cat.id)}
                     className={`p-3 rounded-xl border-2 transition duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
                       isSelected
-                        ? 'border-primary bg-primary/5 shadow-md scale-[1.02]'
+                        ? 'border-primary bg-primary/5'
                         : 'border-gray-200 hover:border-primary/50 hover:bg-gray-50'
                     }`}
                   >
-                    <div className={`h-10 w-10 ${cat.color} rounded-lg flex items-center justify-center mb-2 mx-auto text-white`}>
+                    <div className={`h-10 w-10 rounded-lg flex items-center justify-center mb-2 mx-auto ${isSelected ? 'bg-primary text-primary-foreground' : 'bg-primary/10 text-primary'}`}>
                       <CategoryIcon className="h-5 w-5" aria-hidden="true" />
                     </div>
                     <div className="text-xs font-semibold text-gray-900">{wordsIn(cat.title, locale)}</div>
@@ -227,7 +227,7 @@ export default function SmartToolsWidget() {
             <Button
               type="submit"
               disabled={!sim.canAnalyze}
-              className="w-full h-12 text-lg font-semibold bg-gradient-to-r from-primary to-purple-600 hover:opacity-90 transition-opacity shadow-lg"
+              className="w-full h-12 text-lg font-semibold"
             >
               {sim.status === 'loading' ? <Loader2 className="mr-2 h-5 w-5 animate-spin" aria-hidden="true" /> : <Brain className="mr-2 h-5 w-5" aria-hidden="true" />}
               {sim.status === 'loading' ? t.analyzing : t.find}
