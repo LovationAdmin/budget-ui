@@ -79,6 +79,8 @@ const Overview = lazy(() => import('./lib/pages/Overview'));
 const AcceptInvitation = lazy(() => import('./lib/pages/AcceptInvitation'));
 const EnableBankingCallbackPage = lazy(() => import('./lib/pages/EnableBankingCallbackPage'));
 const NotFound = lazy(() => import('./lib/pages/NotFound'));
+// Dev-only stress-test harness for the Month tab (break-ui): absent from production builds.
+const MonthBreakUi = import.meta.env.DEV ? lazy(() => import('./dev/break-ui/MonthBreakUi')) : null;
 const MembersTab = lazy(() => import('./lib/pages/budget-tabs/MembersTab'));
 const ChargesTab = lazy(() => import('./lib/pages/budget-tabs/ChargesTab'));
 const ProjectsTab = lazy(() => import('./lib/pages/budget-tabs/ProjectsTab'));
@@ -236,6 +238,8 @@ export default function App() {
               </PrivateRoute>
             }
           />
+
+          {MonthBreakUi && <Route path="/dev/break-ui" element={<MonthBreakUi />} />}
 
           {/* ERRORS */}
           <Route path="/404" element={<NotFound />} />
