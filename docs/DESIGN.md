@@ -32,7 +32,8 @@ Le texte des KPI reste en encre neutre : la couleur sert d'indice (pastille), ja
 
 ### Mode sombre
 
-- **Portée** : les écrans connectés (`/dashboard`, `/overview`, `/budget`, `/profile`, `/admin`). Les pages publiques restent claires.
+- **Portée** : toutes les pages (`AppThemeProvider`). Par défaut, le thème suit le système ; le choix fait dans l'app suit le visiteur sur les pages publiques.
+- **Panneaux de marque** (bandeaux d'appel final, en-tête du simulateur) : `bg-brand text-brand-foreground`, le bleu du logo dans les deux thèmes. En sombre, `--primary` devient un bleu clair qui éblouirait sous du texte blanc.
 - **Choix** : menu du compte › Apparence (Automatique, Clair ou Sombre). Il est stocké dans `localStorage.theme` et appliqué avant le premier rendu par le script d'`index.html`. `theme-color` suit le thème.
 - **Tokens** : bloc `.dark` de `src/index.css`, avec les mêmes teintes que le thème clair (primaire bleue) sur un fond bleu-gris profond.
 - **Classes de palette** (`bg-indigo-50`, `text-gray-600`…) : elles s'adaptent seules, selon leur rôle (`tailwind.palette.ts`).

@@ -411,7 +411,7 @@ export default function LandingPage() {
         )}
 
         {/* Final CTA */}
-        <section className="bg-primary px-4 py-20 text-primary-foreground">
+        <section className="bg-brand px-4 py-20 text-brand-foreground">
           <div className="mx-auto max-w-3xl text-center">
             <PiggyBank className="mx-auto h-10 w-10 opacity-90" aria-hidden="true" />
             <h2 className="mt-4 font-display text-3xl font-bold sm:text-4xl">{t.finalTitle}</h2>

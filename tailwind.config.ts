@@ -59,6 +59,12 @@ export default {
           DEFAULT: "hsl(var(--primary))",
           foreground: "hsl(var(--primary-foreground))",
         },
+        // The logo's blue in both themes, for brand panels carrying white text
+        // (in dark mode --primary turns light blue and would glare under white).
+        brand: {
+          DEFAULT: "hsl(200 75% 38%)",
+          foreground: "hsl(0 0% 100%)",
+        },
         secondary: {
           DEFAULT: "hsl(var(--secondary))",
           foreground: "hsl(var(--secondary-foreground))",
