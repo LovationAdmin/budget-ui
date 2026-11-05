@@ -31,3 +31,16 @@ Thumbs.db
 
 # Knowledge graph, regenerated locally by `graphify update .`
 graphify-out/
+
+# Impeccable design skill (.claude/skills/impeccable): engine binary fetched
+# per platform, and its runtime state. Shared artifacts (config.json,
+# design.json, surfaces/*.md, critique/*.md) stay tracked.
+**/skills/impeccable/scripts/bin/
+**/.impeccable/config.local.json
+**/.impeccable/hook.cache.json
+**/.impeccable/hook.pending.json
+**/.impeccable/*.png
+**/.impeccable/review/
+**/.impeccable/questions/
+**/.impeccable/live/*
+!**/.impeccable/live/config.json

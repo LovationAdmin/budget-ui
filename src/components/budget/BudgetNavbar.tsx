@@ -261,7 +261,7 @@ export const BudgetNavbar = memo(function BudgetNavbar({
                   aria-label={dense && !isActive ? item.label : undefined}
                   title={dense && !isActive ? item.label : undefined}
                   className={cn(
-                    'flex items-center gap-2 whitespace-nowrap rounded-xl py-2 text-sm font-medium transition-all duration-200 min-h-[44px]',
+                    'flex items-center gap-2 whitespace-nowrap rounded-xl py-2 text-sm font-medium transition duration-200 min-h-[44px]',
                     dense ? (publicBar ? 'px-3' : 'px-3 2xl:px-4') : 'px-4',
                     dense && !isActive && 'min-w-[44px] justify-center',
                     isActive
@@ -280,7 +280,7 @@ export const BudgetNavbar = memo(function BudgetNavbar({
                 <DropdownMenuTrigger asChild>
                   <button
                     className={cn(
-                      'flex items-center gap-2 whitespace-nowrap rounded-xl px-3 py-2 text-sm font-medium transition-all duration-200 min-h-[44px] xl:px-4',
+                      'flex items-center gap-2 whitespace-nowrap rounded-xl px-3 py-2 text-sm font-medium transition duration-200 min-h-[44px] xl:px-4',
                       overflowItems.some((it) => it.id === currentSection)
                         ? 'bg-primary text-primary-foreground shadow-soft'
                         : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
@@ -465,7 +465,7 @@ export const BudgetNavbar = memo(function BudgetNavbar({
                       onClick={() => { handleSectionClick(item.id); handleMenuToggle(); }}
                       aria-current={isActive ? 'page' : undefined}
                       className={cn(
-                        'flex items-center gap-3 p-3 rounded-xl text-left transition-all duration-200 min-h-[48px]',
+                        'flex items-center gap-3 p-3 rounded-xl text-left transition duration-200 min-h-[48px]',
                         isActive
                           ? 'bg-primary text-primary-foreground shadow-soft'
                           : 'hover:bg-accent text-foreground'
@@ -482,20 +482,20 @@ export const BudgetNavbar = memo(function BudgetNavbar({
                       {showOverview && (
                         <button
                           onClick={() => { navigate('/overview'); handleMenuToggle(); }}
-                          className="flex items-center gap-3 p-3 rounded-xl text-left transition-all duration-200 w-full min-h-[48px] hover:bg-accent"
+                          className="flex items-center gap-3 p-3 rounded-xl text-left transition duration-200 w-full min-h-[48px] hover:bg-accent"
                         >
                           <UserCircle className="h-5 w-5" /><span className="font-medium">{t.overview}</span>
                         </button>
                       )}
                       <button
                         onClick={() => { navigate('/profile'); handleMenuToggle(); }}
-                        className="flex items-center gap-3 p-3 rounded-xl text-left transition-all duration-200 w-full min-h-[48px] hover:bg-accent"
+                        className="flex items-center gap-3 p-3 rounded-xl text-left transition duration-200 w-full min-h-[48px] hover:bg-accent"
                       >
                         <User className="h-5 w-5" /><span className="font-medium">{t.profile}</span>
                       </button>
                       <button
                         onClick={() => { handleLogout(); handleMenuToggle(); }}
-                        className="flex items-center gap-3 p-3 rounded-xl text-left transition-all duration-200 w-full min-h-[48px] text-destructive hover:bg-destructive/10"
+                        className="flex items-center gap-3 p-3 rounded-xl text-left transition duration-200 w-full min-h-[48px] text-destructive hover:bg-destructive/10"
                       >
                         <LogOut className="h-5 w-5" /><span className="font-medium">{t.logout}</span>
                       </button>
@@ -504,13 +504,13 @@ export const BudgetNavbar = memo(function BudgetNavbar({
                     <>
                       <button
                         onClick={() => { handleLogin(); handleMenuToggle(); }}
-                        className="flex items-center gap-3 p-3 rounded-xl text-left transition-all duration-200 w-full min-h-[48px] hover:bg-accent"
+                        className="flex items-center gap-3 p-3 rounded-xl text-left transition duration-200 w-full min-h-[48px] hover:bg-accent"
                       >
                         <LogIn className="h-5 w-5" /><span className="font-medium">{t.login}</span>
                       </button>
                       <button
                         onClick={() => { handleSignup(); handleMenuToggle(); }}
-                        className="flex items-center gap-3 p-3 rounded-xl text-left transition-all duration-200 w-full min-h-[48px] bg-primary text-primary-foreground hover:bg-primary/90"
+                        className="flex items-center gap-3 p-3 rounded-xl text-left transition duration-200 w-full min-h-[48px] bg-primary text-primary-foreground hover:bg-primary/90"
                       >
                         <UserPlus className="h-5 w-5" /><span className="font-medium">{t.signup}</span>
                       </button>

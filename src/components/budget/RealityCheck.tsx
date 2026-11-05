@@ -63,7 +63,7 @@ export function RealityCheck({
   return (
     <div className="space-y-4">
       <Card className={cn(
-          "border-l-4 shadow-sm transition-all duration-500",
+          "border-l-4 shadow-sm transition-colors duration-300",
           !isBankConnected ? "border-l-primary" : 
           isBalanced ? "border-l-success bg-success/5" : "border-l-destructive bg-destructive/5"
       )}>

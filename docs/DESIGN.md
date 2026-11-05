@@ -77,7 +77,13 @@ Les panneaux d'édition passent tous par `openSheet({ kind, … })` et `Responsi
 
 - **Cibles tactiles** : au moins 44 × 44 px (`min-h-[44px]`). Une règle globale impose `min-width: 44px` aux boutons sur écran tactile : ajouter `min-w-0` dans les grilles serrées.
 - **Focus** : anneau `focus-visible:ring-2 ring-ring` ; skip link « Aller au contenu » vers `<main id="contenu">`.
-- **Mouvement** : respect de `prefers-reduced-motion` (règle globale, scroll doux désactivé, `motion-reduce:animate-none`). Animer `transform` et `opacity`, jamais `transition-all`.
+- **Mouvement** : respect de `prefers-reduced-motion` (règle globale, scroll doux désactivé, `motion-reduce:animate-none`). Animer `transform` et `opacity`, jamais `transition-all` : `transition` (couleurs, ombre, transform) ou une liste précise (`transition-[width]`).
+  - **Courbes** : `ease-out` = `cubic-bezier(0.23, 1, 0.32, 1)` pour ce qui entre ou répond à un appui, `ease-in-out` pour ce qui se déplace, `ease-drawer` pour les panneaux. Jamais `ease-in`.
+  - **Durées** : 150 ms pour un appui, 200 à 300 ms pour une entrée. Les entrées (`animate-slide-up`, `fade-in`, `scale-in`) partent de 8 px ou de `scale(0.95)`, jamais de rien.
+- **Survol et appui** : `hover:` ne s'applique qu'à une vraie souris (`future.hoverOnlyWhenSupported`) ; sur téléphone, un tap ne laisse plus une carte soulevée. Le retour au toucher passe par `active:` : les boutons (`Button`, `.btn-primary`) se tassent à `scale(0.97)`. Une carte-lien se soulève de 2 px au plus (`hover:-translate-y-0.5`) ; une carte qui n'est pas cliquable ne bouge pas.
+- **Contrôles** : le libellé d'un bouton, d'un onglet ou d'un interrupteur n'est pas sélectionnable (pas de sélection ni de menu iOS à l'appui long). Le contenu (montants, liens) le reste.
+- **Champs** : 16 px sur écran tactile (`touch:text-base`), sinon iOS zoome la page au focus. Le zoom reste autorisé.
+- **Zones sûres** : `viewport-fit=cover` ; le `body` s'écarte des bords latéraux (encoche en paysage) et chaque barre fixe du bas se décale de `env(safe-area-inset-bottom)` (barre d'onglets, barres de résultat des calculateurs, `Drawer`, `ResponsiveSheet`).
 - **Éléments flottants** : l'indicateur de sauvegarde est centré au-dessus de la barre d'onglets, le coach se place au-dessus de lui. Les toasts apparaissent en bas à droite.
 - **Sauvegarde** : autosave à 1,5 s, indicateur discret ; chaque `commit` porte un message et peut être annulé.
 - **Chargement** : les onglets autres que Mois sont chargés à la demande et affichent un indicateur `role="status"` à l'intérieur du layout.
@@ -85,3 +91,18 @@ Les panneaux d'édition passent tous par `openSheet({ kind, … })` et `Responsi
 ## Graphiques
 
 Barres verticales avec un `max-w-[24px]` et des espaces de 2 px ; seul le segment du haut est arrondi. Chaque barre est un lien vers son mois, avec une infobulle au survol et au focus. Le tableau de valeurs reste disponible sous le graphique.
+
+## Skills de design (Claude Code)
+
+Installées dans `.claude/skills/` pour que chaque session les trouve (copies figées : les mettre à jour depuis leur dépôt).
+
+| Skill | Source | Quand s'en servir |
+|---|---|---|
+| `impeccable` | [pbakaus/impeccable](https://github.com/pbakaus/impeccable) (Apache 2.0) | `/impeccable critique …`, `audit`, `polish`, `harden`, `typeset`, `layout`… sur un écran précis. `/impeccable init` écrit `PRODUCT.md` (il pose quelques questions). Son détecteur télécharge un binaire vérifié dans `~/.impeccable/bin/` au premier lancement. |
+| `emil-design-eng`, `animate`, `review-animations`, `improve-animations`, `find-animation-opportunities`, `remove-animations`, `animation-performance` | [emilkowalski/skills](https://github.com/emilkowalski/skills) (MIT) | Décider s'il faut animer, avec quelle courbe et quelle durée ; revoir ou alléger le mouvement. |
+| `mobile-native` | idem | Corrections « ça fait site web sur mon téléphone » : survol collant, zoom des champs, zones sûres. |
+| `break-ui` | idem | Tester un écran avec des données extrêmes (noms longs, montants énormes, listes vides). |
+| `ask-sonner`, `pick-ui-library` | idem | Toasts Sonner ; choisir une bibliothèque plutôt que tout recoder. |
+| `design-taste-frontend` | [Leonxlnx/taste-skill](https://github.com/Leonxlnx/taste-skill) (MIT) | Déjà activé comme plugin (`.claude/settings.json`). Fait pour construire une page vitrine de zéro ; ici, n'en garder que les règles (texte simple, une seule mise en page, micro-animations discrètes). |
+
+Ordre conseillé sur un écran : `impeccable critique` → corrections → `review-animations` → `break-ui` → `impeccable polish`.

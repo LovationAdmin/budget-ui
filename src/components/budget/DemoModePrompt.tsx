@@ -173,7 +173,7 @@ export function DemoModePrompt({ onEnableDemoMode }: DemoModePromptProps) {
         <Button 
           onClick={onEnableDemoMode}
           size="lg"
-          className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white shadow-lg hover:shadow-xl transition-all"
+          className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white shadow-lg hover:shadow-xl transition"
         >
           <Eye className="h-5 w-5 mr-2" />
           {t.cta}

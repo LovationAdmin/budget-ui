@@ -953,7 +953,7 @@ export function TutorialModal() {
                 // min-h-0/min-w-0: the dots stay dots on touch screens (the global
                 // 44 px tap-target rule would make 9 wide buttons); Précédent /
                 // Suivant are the touch navigation.
-                className={`h-2 min-h-0 min-w-0 rounded-full transition-all ${
+                className={`h-2 min-h-0 min-w-0 rounded-full transition-[width,background-color] duration-200 ease-out ${
                   index === currentStep 
                     ? 'bg-primary w-6' 
                     : index < currentStep

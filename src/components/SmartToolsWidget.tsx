@@ -144,7 +144,7 @@ export default function SmartToolsWidget() {
                     type="button"
                     aria-pressed={isSelected}
                     onClick={() => sim.setCategory(cat.id)}
-                    className={`p-3 rounded-xl border-2 transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+                    className={`p-3 rounded-xl border-2 transition duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
                       isSelected
                         ? 'border-primary bg-primary/5 shadow-md scale-[1.02]'
                         : 'border-gray-200 hover:border-primary/50 hover:bg-gray-50'
