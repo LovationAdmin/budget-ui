@@ -89,7 +89,7 @@ export default function SmartToolsWidget() {
 
   return (
     <Card className="w-full overflow-hidden border border-border/70 shadow-card">
-      <CardHeader className="bg-primary text-primary-foreground p-6 sm:p-8">
+      <CardHeader className="bg-brand text-brand-foreground p-6 sm:p-8">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div className="flex items-center gap-4">
             <div className="h-12 w-12 bg-white/20 rounded-2xl flex items-center justify-center flex-shrink-0">
@@ -97,7 +97,7 @@ export default function SmartToolsWidget() {
             </div>
             <div>
               <CardTitle className="text-xl sm:text-2xl">{t.title}</CardTitle>
-              <CardDescription className="text-primary-foreground">
+              <CardDescription className="text-brand-foreground">
                 {t.subtitle}
               </CardDescription>
             </div>

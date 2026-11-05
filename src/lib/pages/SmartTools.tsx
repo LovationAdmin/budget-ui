@@ -129,7 +129,7 @@ export default function SmartTools() {
         {/* Main Tool */}
         <div className="max-w-4xl mx-auto mb-16">
           <Card className="shadow-2xl overflow-hidden border-0">
-            <CardHeader className="bg-primary text-primary-foreground p-6 sm:p-8">
+            <CardHeader className="bg-brand text-brand-foreground p-6 sm:p-8">
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <div className="flex items-center gap-4">
                   <div className="h-12 w-12 bg-white/20 rounded-2xl flex items-center justify-center flex-shrink-0">
@@ -137,7 +137,7 @@ export default function SmartTools() {
                   </div>
                   <div>
                     <CardTitle className="text-xl sm:text-2xl">{t.newAnalysis}</CardTitle>
-                    <CardDescription className="text-primary-foreground">
+                    <CardDescription className="text-brand-foreground">
                       {t.enterData}
                     </CardDescription>
                   </div>
