@@ -366,7 +366,7 @@ function NewMember({ ym, onClose }: { ym: YM; onClose: () => void }) {
       <form onSubmit={submit} className="flex flex-col gap-5">
         <div>
           <FieldLabel htmlFor="nm-name">{t.firstName}</FieldLabel>
-          <Input id="nm-name" value={name} onChange={(e) => { setName(e.target.value); setError(''); }} placeholder={t.namePlaceholder} className="h-12 rounded-xl text-base" autoComplete="off" />
+          <Input id="nm-name" maxLength={80} value={name} onChange={(e) => { setName(e.target.value); setError(''); }} placeholder={t.namePlaceholder} className="h-12 rounded-xl text-base" autoComplete="off" />
         </div>
         <MoneyFields
           idPrefix="nm"
@@ -536,7 +536,7 @@ function MemberSettings({ person, onDone }: { person: Person; onDone: () => void
     <div className="mt-2 flex flex-col gap-4">
       <div>
         <FieldLabel htmlFor="ms-name">{t.firstName}</FieldLabel>
-        <Input id="ms-name" value={name} onChange={(e) => { setName(e.target.value); setError(''); }} className="h-12 rounded-xl text-base" autoComplete="off" />
+        <Input id="ms-name" maxLength={80} value={name} onChange={(e) => { setName(e.target.value); setError(''); }} className="h-12 rounded-xl text-base" autoComplete="off" />
       </div>
       <div>
         <span className="mb-2 block text-sm font-semibold">{t.joining}</span>

@@ -162,7 +162,7 @@ export default function Blog() {
                 <button
                   key={category.name}
                   onClick={() => setSelectedCategory(category.name)}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-full font-medium transition-all ${
+                  className={`flex items-center gap-2 px-4 py-2 rounded-full font-medium transition ${
                     isActive 
                       ? 'bg-primary text-primary-foreground shadow-md' 
                       : 'bg-white text-gray-700 hover:bg-gray-50 shadow-sm'
@@ -187,7 +187,7 @@ export default function Blog() {
                 <Link
                   key={post.id}
                   to={articlePath(post)}
-                  className="block bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition-all hover:-translate-y-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  className="block bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition duration-200 ease-out hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 >
                   <div className="h-48 bg-gradient-to-br from-primary to-purple-600 flex items-center justify-center">
                     <div className="text-white text-6xl font-bold opacity-20" aria-hidden="true">
@@ -234,7 +234,7 @@ export default function Blog() {
               <Link
                 key={post.id}
                 to={articlePath(post)}
-                className="block bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition-all hover:-translate-y-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                className="block bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition duration-200 ease-out hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
                 <div className="flex items-start justify-between mb-4">
                   <span className="px-3 py-1 bg-primary/10 text-primary text-xs font-semibold rounded-full">

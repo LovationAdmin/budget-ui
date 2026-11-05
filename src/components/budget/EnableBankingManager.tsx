@@ -638,7 +638,7 @@ export function EnableBankingManager({ budgetId, onUpdate }: EnableBankingManage
                     key={bank.id}
                     onClick={() => handleConnect(bank.id)}
                     disabled={connecting && selectedBank === bank.id}
-                    className="w-full text-left p-4 rounded-lg border hover:bg-accent hover:border-primary transition-all disabled:opacity-50 disabled:cursor-not-allowed group"
+                    className="w-full text-left p-4 rounded-lg border hover:bg-accent hover:border-primary transition disabled:opacity-50 disabled:cursor-not-allowed group"
                   >
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
@@ -677,7 +677,7 @@ export function EnableBankingManager({ budgetId, onUpdate }: EnableBankingManage
                       {connecting && selectedBank === bank.id ? (
                         <Loader2 className="h-5 w-5 animate-spin text-primary" />
                       ) : (
-                        <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all" />
+                        <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition" />
                       )}
                     </div>
                   </button>

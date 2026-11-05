@@ -99,7 +99,7 @@ export function AvatarPicker({ currentAvatar, name, onSelect }: AvatarPickerProp
                             {PRESETS.map((preset, idx) => (
                                 <button
                                     key={idx}
-                                    className="h-16 w-16 rounded-full shadow-sm hover:ring-2 hover:ring-primary hover:scale-110 transition-all"
+                                    className="h-16 w-16 rounded-full shadow-sm hover:ring-2 hover:ring-primary hover:scale-110 transition"
                                     style={{ background: preset }}
                                     onClick={() => {
                                         setPreview(preset);

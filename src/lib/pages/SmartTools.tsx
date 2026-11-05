@@ -129,7 +129,7 @@ export default function SmartTools() {
         {/* Main Tool */}
         <div className="max-w-4xl mx-auto mb-16">
           <Card className="shadow-2xl overflow-hidden border-0">
-            <CardHeader className="bg-gradient-to-r from-primary to-purple-600 text-white p-6 sm:p-8">
+            <CardHeader className="bg-primary text-primary-foreground p-6 sm:p-8">
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <div className="flex items-center gap-4">
                   <div className="h-12 w-12 bg-white/20 rounded-2xl flex items-center justify-center flex-shrink-0">
@@ -137,7 +137,7 @@ export default function SmartTools() {
                   </div>
                   <div>
                     <CardTitle className="text-xl sm:text-2xl">{t.newAnalysis}</CardTitle>
-                    <CardDescription className="text-white/90">
+                    <CardDescription className="text-primary-foreground">
                       {t.enterData}
                     </CardDescription>
                   </div>
@@ -146,7 +146,7 @@ export default function SmartTools() {
                 {/* ✅ SÉLECTEUR DE PAYS */}
                 <div className="w-full sm:w-48">
                   <Select value={sim.locationCode} onValueChange={sim.setLocationCode}>
-                    <SelectTrigger className="bg-white/10 border-white/20 text-white hover:bg-white/20 h-10" aria-label={t.country}>
+                    <SelectTrigger className="bg-transparent border-white/40 text-white hover:bg-black/10 h-10" aria-label={t.country}>
                       <div className="flex items-center gap-2">
                          <MapPin className="h-4 w-4" aria-hidden="true" />
                          <SelectValue />
@@ -186,13 +186,13 @@ export default function SmartTools() {
                           type="button"
                           aria-pressed={isSelected}
                           onClick={() => sim.setCategory(cat.id)}
-                          className={`p-3 rounded-xl border-2 transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+                          className={`p-3 rounded-xl border-2 transition duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
                             isSelected
-                              ? 'border-primary bg-primary/5 shadow-md scale-[1.02]'
+                              ? 'border-primary bg-primary/5'
                               : 'border-gray-200 hover:border-primary/50 hover:bg-gray-50'
                           }`}
                         >
-                          <div className={`h-10 w-10 ${cat.color} rounded-lg flex items-center justify-center mb-2 mx-auto text-white`}>
+                          <div className={`h-10 w-10 rounded-lg flex items-center justify-center mb-2 mx-auto ${isSelected ? 'bg-primary text-primary-foreground' : 'bg-primary/10 text-primary'}`}>
                             <CategoryIcon className="h-5 w-5" aria-hidden="true" />
                           </div>
                           <div className="text-xs font-semibold text-gray-900">{wordsIn(cat.title, locale)}</div>
@@ -270,7 +270,7 @@ export default function SmartTools() {
                   <Button
                     type="submit"
                     disabled={!sim.canAnalyze}
-                    className="w-full h-12 text-lg font-semibold bg-gradient-to-r from-primary to-purple-600 hover:opacity-90 transition-opacity"
+                    className="w-full h-12 text-lg font-semibold"
                   >
                     {sim.status === 'loading' ? <Loader2 className="mr-2 h-5 w-5 animate-spin" aria-hidden="true" /> : <Brain className="mr-2 h-5 w-5" aria-hidden="true" />}
                     {sim.status === 'loading' ? t.analyzing : t.run}

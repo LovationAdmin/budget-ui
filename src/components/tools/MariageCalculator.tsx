@@ -506,7 +506,7 @@ export function MariageCalculator({ calc, t, format: f, beforeWedding }: {
 
       {/* The results card scrolls away while filling the form: this bar keeps the figure in sight. */}
       {hasTotal && !resultsVisible && (
-        <div className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-card/95 px-4 py-3 backdrop-blur">
+        <div className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-card/95 px-[max(1rem,env(safe-area-inset-left))] pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur">
           <div className="mx-auto flex max-w-md items-center justify-between gap-3">
             <div>
               <p className="text-xs text-muted-foreground">{t.sticky.label(exampleLeft)}</p>

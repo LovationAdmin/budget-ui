@@ -1092,7 +1092,7 @@ export function ChargeEditorSheet({ sheet, onClose }: SheetProps<'chargeEditor'>
       <form onSubmit={submit} className="flex flex-col gap-5">
         <div>
           <FieldLabel htmlFor="ch-label">{t.name}</FieldLabel>
-          <Input id="ch-label" autoComplete="off" value={label} onChange={(e) => { setLabel(e.target.value); setError(''); }} onBlur={detectCategory} placeholder={personal ? t.placeholderPersonal : t.placeholder} className="h-12 rounded-xl text-base" />
+          <Input id="ch-label" maxLength={80} autoComplete="off" value={label} onChange={(e) => { setLabel(e.target.value); setError(''); }} onBlur={detectCategory} placeholder={personal ? t.placeholderPersonal : t.placeholder} className="h-12 rounded-xl text-base" />
         </div>
 
         {members.length > 0 && (

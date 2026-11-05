@@ -231,7 +231,7 @@ export default function MemberManagementSection({
                 const identity = people.length > 0 ? identify(people, budget.members, user.id, user.name) : undefined;
                 const person = identity?.personId ? people.find((p) => p.id === identity.personId) : undefined;
                 return (
-                  <div key={member.id} className="flex items-center gap-3 p-3 rounded-xl border border-border/50 bg-card/50 hover:bg-card transition-all">
+                  <div key={member.id} className="flex items-center gap-3 p-3 rounded-xl border border-border/50 bg-card/50 hover:bg-card transition">
                     <MemberAvatar name={user.name} image={user.avatar} size="md" />
                     
                     <div className="flex-1 min-w-0">

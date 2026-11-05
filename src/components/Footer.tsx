@@ -19,7 +19,7 @@ const M = defineMessages({
     company: 'Entreprise',
     helpCenter: 'Centre d’aide',
     contact: 'Contact',
-    trust: ['Données chiffrées AES-256', 'RGPD Compliant', 'Made in Europe 🇪🇺'],
+    trust: ['Données chiffrées AES-256', 'Conforme au RGPD', 'Fait en Europe 🇪🇺'],
     links: {
       '/features': 'Fonctionnalités',
       '/premium': 'Premium (bientôt)',

@@ -28,10 +28,10 @@ export const LOCATION_CONFIGS = [
 ];
 
 export const MARKET_CATEGORIES = [
-  { id: 'ENERGY', title: { fr: 'Électricité & Gaz', en: 'Electricity & gas' }, icon: Zap, color: 'bg-yellow-500' },
-  { id: 'INTERNET', title: { fr: 'Internet & Box', en: 'Home internet' }, icon: Wifi, color: 'bg-blue-500' },
-  { id: 'MOBILE', title: { fr: 'Forfait Mobile', en: 'Mobile plan' }, icon: Smartphone, color: 'bg-purple-500' },
-  { id: 'INSURANCE_HOME', title: { fr: 'Assurance Habitation', en: 'Home insurance' }, icon: Home, color: 'bg-green-500' },
+  { id: 'ENERGY', title: { fr: 'Électricité et gaz', en: 'Electricity & gas' }, icon: Zap, color: 'bg-yellow-500' },
+  { id: 'INTERNET', title: { fr: 'Internet et box', en: 'Home internet' }, icon: Wifi, color: 'bg-blue-500' },
+  { id: 'MOBILE', title: { fr: 'Forfait mobile', en: 'Mobile plan' }, icon: Smartphone, color: 'bg-purple-500' },
+  { id: 'INSURANCE_HOME', title: { fr: 'Assurance habitation', en: 'Home insurance' }, icon: Home, color: 'bg-green-500' },
 ];
 
 export const MAX_DESCRIPTION_LENGTH = 50;

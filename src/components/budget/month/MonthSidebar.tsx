@@ -25,6 +25,7 @@ const M = defineMessages({
     reste: 'Reste du mois',
     deficit: (missing: string, coverage: string) => `Il manque ${missing} : les entrées ne couvrent que ${coverage} des besoins du mois.`,
     covered: (coverage: string) => `Les entrées couvrent ${coverage} des besoins du mois (charges + épargne).`,
+    blank: 'Ajoutez vos entrées et vos charges pour voir ce qui reste ce mois-ci.',
     reviewContributions: 'Revoir les contributions',
     changesTitle: (month: string) => `Ce qui change en ${month}`,
     comparedTo: (month: string) => `Par rapport à ${month}`,
@@ -50,6 +51,7 @@ const M = defineMessages({
     reste: 'Left for the month',
     deficit: (missing: string, coverage: string) => `You’re ${missing} short: the money coming in covers only ${coverage} of the month’s needs.`,
     covered: (coverage: string) => `The money coming in covers ${coverage} of the month’s needs (bills + savings).`,
+    blank: 'Add your income and bills to see what’s left this month.',
     reviewContributions: 'Review contributions',
     changesTitle: (month: string) => `What changes in ${month}`,
     comparedTo: (month: string) => `Compared with ${month}`,
@@ -67,6 +69,9 @@ const M = defineMessages({
   },
 });
 
+/** "−7 009,34 CHF" may wrap before "CHF" when the text is enlarged (the number itself never breaks). */
+const breakBeforeCurrency = (amount: string) => amount.replace(/\u00a0(?=\D+$)/, ' ');
+
 export function SummaryCard({ month }: { month: ResolvedMonth }) {
   const t = useT(M);
   const { fmt, budgetId, currencySymbol } = useBudget();
@@ -76,12 +81,14 @@ export function SummaryCard({ month }: { month: ResolvedMonth }) {
   const needs = totals.charges + totals.savings;
   const coverage = needs > 0 ? (totals.entrees / needs) * 100 : 100;
   const deficit = totals.reste < 0;
+  // Nothing in, nothing out yet: a coverage rate would read "100 %" for an empty month.
+  const blank = totals.entrees <= 0 && needs <= 0;
   return (
     <section aria-labelledby="resume-title" className="rounded-2xl border border-border/70 bg-card p-5 shadow-card">
       <h2 id="resume-title" className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
         {t.potTitle(monthNames()[monthIndex0(month.ym)])}
       </h2>
-      <p className={cn('mt-2 font-display text-4xl font-extrabold tracking-tight tabular-nums', deficit ? 'text-red-700' : 'text-emerald-700')}>{fmt(totals.reste)}</p>
+      <p className={cn('mt-2 font-display text-3xl font-extrabold tracking-tight tabular-nums sm:text-4xl', deficit ? 'text-red-700' : 'text-emerald-700')}>{breakBeforeCurrency(fmt(totals.reste))}</p>
       <p className="mt-1 text-sm text-foreground/75">
         {deficit ? t.missing : t.left}
       </p>
@@ -99,27 +106,29 @@ export function SummaryCard({ month }: { month: ResolvedMonth }) {
         {totals.charges + totals.savings + Math.max(0, totals.reste) <= 0 && <span className="block flex-1 bg-muted" />}
       </div>
       <dl className="mt-4 flex flex-col gap-2 text-sm tabular-nums">
-        <div className="flex items-center justify-between gap-3">
+        <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-0.5">
           <dt className="flex items-center gap-2"><span aria-hidden="true" className="h-2.5 w-2.5 rounded-sm bg-emerald-700" />{t.income}</dt>
-          <dd className="font-bold text-emerald-700">{fmt(totals.entrees)}</dd>
+          <dd className="ml-auto whitespace-nowrap font-bold text-emerald-700">{fmt(totals.entrees)}</dd>
         </div>
-        <div className="flex items-center justify-between gap-3">
+        <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-0.5">
           <dt className="flex items-center gap-2"><span aria-hidden="true" className="h-2.5 w-2.5 rounded-sm bg-orange-500" />{t.charges}</dt>
-          <dd className="font-semibold">{moneyOut(totals.charges, currencySymbol)}</dd>
+          <dd className="ml-auto whitespace-nowrap font-semibold">{moneyOut(totals.charges, currencySymbol)}</dd>
         </div>
-        <div className="flex items-center justify-between gap-3">
+        <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-0.5">
           <dt className="flex items-center gap-2"><span aria-hidden="true" className="h-2.5 w-2.5 rounded-sm bg-indigo-500" />{t.savings}</dt>
-          <dd className="font-semibold">{moneyOut(totals.savings, currencySymbol)}</dd>
+          <dd className="ml-auto whitespace-nowrap font-semibold">{moneyOut(totals.savings, currencySymbol)}</dd>
         </div>
-        <div className="flex items-center justify-between gap-3 border-t border-border/70 pt-2">
+        <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-0.5 border-t border-border/70 pt-2">
           <dt className="flex items-center gap-2 font-bold"><span aria-hidden="true" className="h-2.5 w-2.5 rounded-sm bg-emerald-500" />{t.reste}</dt>
-          <dd className={cn('font-extrabold', deficit ? 'text-red-700' : 'text-emerald-700')}>{fmt(totals.reste)}</dd>
+          <dd className={cn('ml-auto whitespace-nowrap font-extrabold', deficit ? 'text-red-700' : 'text-emerald-700')}>{fmt(totals.reste)}</dd>
         </div>
       </dl>
-      <div className={cn('mt-4 rounded-xl px-3 py-2.5 text-sm', deficit ? 'bg-red-50 text-red-900' : 'bg-emerald-50 text-emerald-900')}>
+      <div className={cn('mt-4 rounded-xl px-3 py-2.5 text-sm', deficit ? 'bg-red-50 text-red-900' : blank ? 'bg-muted text-foreground/80' : 'bg-emerald-50 text-emerald-900')}>
         {deficit
           ? t.deficit(fmt(-totals.reste), percent(coverage))
-          : t.covered(percent(coverage))}
+          : blank
+            ? t.blank
+            : t.covered(percent(coverage))}
         {deficit && (
           <Link className="mt-1 block font-semibold underline underline-offset-2" to={`/budget/${budgetId}/complete/members#repartition`}>
             {t.reviewContributions}
@@ -160,7 +169,7 @@ export function ChangesCard({ ym }: { ym: string }) {
                 <span aria-hidden="true" className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-muted text-foreground/70">
                   <ChangeIcon kind={c.kind} />
                 </span>
-                <span className="min-w-0 flex-1 text-sm">
+                <span className="min-w-0 flex-1 text-sm [overflow-wrap:anywhere]">
                   <strong className="font-semibold">{c.label}</strong>
                   <span className="text-muted-foreground"> · {text}</span>
                 </span>
