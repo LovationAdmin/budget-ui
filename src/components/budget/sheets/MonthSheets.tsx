@@ -147,7 +147,7 @@ export function OneOffSheet({ sheet, onClose }: SheetProps<'oneOff'>) {
       <form onSubmit={submit} className="flex flex-col gap-4">
         <div>
           <FieldLabel htmlFor="oo-label">{t.name}</FieldLabel>
-          <Input id="oo-label" autoComplete="off" value={label} onChange={(e) => { setLabel(e.target.value); setError(''); }} placeholder={t.namePlaceholder} className="h-12 rounded-xl text-base" />
+          <Input id="oo-label" maxLength={80} autoComplete="off" value={label} onChange={(e) => { setLabel(e.target.value); setError(''); }} placeholder={t.namePlaceholder} className="h-12 rounded-xl text-base" />
         </div>
         <div>
           <FieldLabel htmlFor="oo-amount">{t.amount}</FieldLabel>

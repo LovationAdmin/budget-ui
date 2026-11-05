@@ -48,6 +48,8 @@ Le texte des KPI reste en encre neutre : la couleur sert d'indice (pastille), ja
 - **Texte** : DM Sans, 400 à 700.
 - **Chargement** : une police variable par famille (`@fontsource-variable`, toutes les graisses dans un fichier), préchargée par chaque page (`scripts/prerender.mjs`) et affichée en `font-display: optional` (`postcss.config.js`). Une police en retard n'est pas substituée en cours de lecture : la page ne bouge pas (CLS).
 - **Montants** : toujours en `tabular-nums`. Les grands montants passent en `font-display text-3xl font-extrabold`.
+- **Séparateur de milliers** : espace insécable ordinaire (`format.ts`), car l'espace fine disparaît presque entre les chiffres tabulaires de Plus Jakarta Sans (« 20151 »).
+- **Textes longs** : un nom (membre, charge, épargne) passe à la ligne, jamais coupé ; un libellé sans espace (import bancaire) se coupe où il faut (`[overflow-wrap:anywhere]`) ; une initiale se prend avec `initialOf()` (un emoji reste entier). Les noms sont limités à 80 caractères.
 - **Hiérarchie** : un seul `h1` par page (le titre de l'onglet) ; le nom du budget dans la navbar est un `<p>`.
 - **Élision** : utiliser `deMonth()` (« d'octobre », « de mars »).
 
@@ -101,7 +103,7 @@ Installées dans `.claude/skills/` pour que chaque session les trouve (copies fi
 | `impeccable` | [pbakaus/impeccable](https://github.com/pbakaus/impeccable) (Apache 2.0) | `/impeccable critique …`, `audit`, `polish`, `harden`, `typeset`, `layout`… sur un écran précis. `/impeccable init` écrit `PRODUCT.md` (il pose quelques questions). Son détecteur télécharge un binaire vérifié dans `~/.impeccable/bin/` au premier lancement. |
 | `emil-design-eng`, `animate`, `review-animations`, `improve-animations`, `find-animation-opportunities`, `remove-animations`, `animation-performance` | [emilkowalski/skills](https://github.com/emilkowalski/skills) (MIT) | Décider s'il faut animer, avec quelle courbe et quelle durée ; revoir ou alléger le mouvement. |
 | `mobile-native` | idem | Corrections « ça fait site web sur mon téléphone » : survol collant, zoom des champs, zones sûres. |
-| `break-ui` | idem | Tester un écran avec des données extrêmes (noms longs, montants énormes, listes vides). |
+| `break-ui` | idem | Tester un écran avec des données extrêmes (noms longs, montants énormes, listes vides). Banc d'essai de l'onglet Mois : `npm run dev`, puis `/dev/break-ui?data=demo`, `worst`, `empty` ou `one` (`src/dev/break-ui/`, absent de la production). |
 | `ask-sonner`, `pick-ui-library` | idem | Toasts Sonner ; choisir une bibliothèque plutôt que tout recoder. |
 | `design-taste-frontend` | [Leonxlnx/taste-skill](https://github.com/Leonxlnx/taste-skill) (MIT) | Déjà activé comme plugin (`.claude/settings.json`). Fait pour construire une page vitrine de zéro ; ici, n'en garder que les règles (texte simple, une seule mise en page, micro-animations discrètes). |
 
