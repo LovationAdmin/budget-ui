@@ -167,6 +167,10 @@ Envoyer depuis **libasse@budgetfamille.com** (Resend, réponses vers
 lovation.pro@gmail.com), en texte brut. Pas par le connecteur Gmail de Claude :
 il remplace chaque lien par un lien google.com/url, et l'expéditeur affiché
 n'est pas Budget Famille.
+Le courrier reçu à libasse@budgetfamille.com est transféré vers
+lovation.pro@gmail.com par l'Email Routing de Cloudflare (depuis le
+6 novembre 2026 ; avant, il revenait en erreur) : une réponse envoyée à
+l'adresse d'expédition plutôt qu'à l'adresse de réponse arrive donc aussi.
 
 ### A. Comparatif d'applis sans budget à deux
 
