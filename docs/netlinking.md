@@ -59,12 +59,12 @@ difficulté. Vérifié dans le code le 2 novembre 2026 :
 
 | Prio. | Site | Pourquoi eux | Contact | Modèle | Statut |
 |---|---|---|---|---|---|
-| 1 | Médiathèque Françoise Sagan (Paris 10e), atelier « Double clic : gérer le budget familial grâce à un tableur », **samedi 7 novembre 2026** | L'atelier n'a pas de modèle attitré ; paris.fr est un domaine très fort | mediatheque.francoise-sagan@paris.fr · 01 53 24 69 70 · [page de l'atelier](https://www.paris.fr/evenements/double-clic-gerer-le-budget-familial-grace-a-un-tableur-90291) | C | Envoyé le 2 novembre ; relance vers le 10 |
+| 1 | Médiathèque Françoise Sagan (Paris 10e), atelier « Double clic : gérer le budget familial grâce à un tableur », **samedi 7 novembre 2026** | L'atelier n'a pas de modèle attitré ; paris.fr est un domaine très fort | mediatheque.francoise-sagan@paris.fr · 01 53 24 69 70 · [page de l'atelier](https://www.paris.fr/evenements/double-clic-gerer-le-budget-familial-grace-a-un-tableur-90291) | C | Envoyé le 2 novembre, relancé le 6 |
 | 1 | Copeps.fr, « Gérer vos finances personnelles avec un tableau Excel » | Promet des modèles Excel, LibreOffice, Google Sheets et PDF, mais **tous ses boutons de téléchargement pointent vers « # »** | https://copeps.fr/contact/ | B | |
 | 1 | Moneyvox, « Gestion de budget » (Sarah Bouget) | Comparatif Bankin', Linxo, Finary, Finzee : aucune appli de budget à deux | lien « Contact » en pied de page de https://www.moneyvox.fr | A | |
 | 1 | Finactuel, « Meilleures applications pour gérer son budget et son épargne en 2026 » | Bankin', Linxo, Pilote Budget, Finary, YNAB : aucune appli de budget à deux | formulaire https://finactuel.fr/contact/ | A | |
 | 1 | Empruntis, « Applications de suivi de budget » (Christophe Piroux, février 2023) | Article ancien, rangé sous le reste à vivre : notre calculateur et l'appli y ont leur place | https://www.empruntis.com/contact.php · presse : https://www.empruntis.com/espace-presse/ | A | |
-| 2 | Points conseil budget (Udaf) | Reçoivent des familles chaque jour ; une grille papier à leur remettre est utile | pcb@udaf95.fr (Val-d'Oise), pcb@udaf73.fr (Savoie) ; les autres Udaf départementales publient le leur | D | 95 et 73 envoyés le 2 novembre ; relance vers le 10 |
+| 2 | Points conseil budget (Udaf) | Reçoivent des familles chaque jour ; une grille papier à leur remettre est utile | pcb@udaf95.fr (Val-d'Oise), pcb@udaf73.fr (Savoie) ; les autres Udaf départementales publient le leur | D | 95 et 73 envoyés le 2 novembre, relancés le 6 |
 | 2 | INC (inc-conso.fr), « Organiser son budget » | Recommande déjà une brochure de Finances & Pédagogie : domaine public, très fort | https://www.inc-conso.fr/content/contact | D | |
 | 2 | MeilleureSCPI, « Tableau de budget familial : modèles à télécharger » (Jonathan Dhiver) | Propose ses propres modèles ; il manque une option « à deux, sans recopier chaque mois » | https://www.meilleurescpi.com/contact/ · 01 84 25 52 15 | E | |
 | 2 | Espace-famille.net, « Tableau Excel gratuit : gérer votre budget familial » | Blog familial, son propre modèle ; article invité sur le budget du couple | https://www.espace-famille.net/contact/ | E | |
@@ -90,7 +90,7 @@ mention contraire.
 |---|---|---|---|---|---|
 | 1 | Les 500 Points conseil budget | Les Udaf 95 et 73, en grand. Liste officielle (PDF, mai 2024) sur [solidarites.gouv.fr](https://solidarites.gouv.fr/point-conseil-budget-pcb) ; l'adresse de chaque PCB est sur le site de sa structure | 10 à 20 par semaine, un e-mail chacun | D | |
 | 1 | UNAF, tête de réseau des Udaf | Peut relayer auprès de toutes les Udaf, qui portent une bonne partie des PCB | formulaire https://www.unaf.fr/contact-unaf/ (sujet « Accompagnement budgétaire ») | D | Formulaire à envoyer par Libasse (case de consentement à cocher soi-même) |
-| 1 | Les Bons Clics (WeTechCare) | La plateforme des aidants numériques ; publie déjà « Gérer son budget au quotidien, et si le numérique nous aidait ? » | contact@lesbonsclics.fr | C | Envoyé le 2 novembre ; relance vers le 10 |
+| 1 | Les Bons Clics (WeTechCare) | La plateforme des aidants numériques ; publie déjà « Gérer son budget au quotidien, et si le numérique nous aidait ? » | contact@lesbonsclics.fr | C | Envoyé le 2 novembre, relancé le 6 |
 | 2 | Finances & Pédagogie | Ateliers budget dans toute la France, page « Ressources pédagogiques » ; l'INC cite déjà leur brochure | formulaire https://www.finances-pedagogie.fr/contact/ (reCAPTCHA) | D | Formulaire à envoyer par Libasse |
 | 2 | Crésus | Réseau d'associations d'accompagnement budgétaire | https://www.cresus.org (site indisponible le 2 novembre : contact à relever) | D | |
 | 2 | Médiathèques, espaces numériques | Comme Françoise Sagan : chercher « atelier budget » ou « tableur budget » dans les agendas des villes | au cas par cas | C | |
@@ -104,13 +104,13 @@ du fichier Excel).
 
 | Prio. | Pays | Organisme | Pourquoi eux | Contact | Modèle | Statut |
 |---|---|---|---|---|---|---|
-| 1 | Belgique | Observatoire du Crédit et de l'Endettement (Wallonie) | Prévention du surendettement, formations et publications pour les travailleurs sociaux | info@observatoire-credit.be | D | Envoyé le 2 novembre ; relance vers le 10 |
-| 1 | Belgique | Centre d'Appui aux Services de Médiation de Dettes (Bruxelles) | Appui aux professionnels, « outils de prévention », boîte à outils du médiateur | info@mediationdedettes.be | D | Envoyé le 2 novembre ; relance vers le 10 |
-| 1 | Luxembourg | Ligue médico-sociale, service d'information et de conseil en surendettement | Service conventionné par l'État | endettement@ligue.lu (dépliant 2025 du ministère de la Famille) | D | Envoyé le 2 novembre ; relance vers le 10 |
-| 1 | Luxembourg | Inter-Actions (Esch-sur-Alzette) | Même mission, dans le sud du pays | endettement@inter-actions.lu (même dépliant) | D | Envoyé le 2 novembre ; relance vers le 10 |
-| 2 | Suisse | FRC Vaud, conseil en budget | Entretiens budget gratuits ; a son propre modèle PDF : proposer l'Excel qui calcule et la répartition du couple | budget.vaud@frc.ch (relevé sur vaudfamille.ch) | D | Envoyé le 2 novembre ; relance vers le 10 |
-| 2 | Suisse | Dettes Conseils Suisse | Faîtière des services de désendettement | administration@schulden.ch | D | Envoyé le 2 novembre ; relance vers le 10 |
-| 2 | Québec | Union des consommateurs (réseau d'ACEF) | Complète la ligne Québec ci-dessus | info@uniondesconsommateurs.ca | D | Envoyé le 2 novembre ; relance vers le 10 |
+| 1 | Belgique | Observatoire du Crédit et de l'Endettement (Wallonie) | Prévention du surendettement, formations et publications pour les travailleurs sociaux | info@observatoire-credit.be | D | Envoyé le 2 novembre, relancé le 6 |
+| 1 | Belgique | Centre d'Appui aux Services de Médiation de Dettes (Bruxelles) | Appui aux professionnels, « outils de prévention », boîte à outils du médiateur | info@mediationdedettes.be | D | Envoyé le 2 novembre, relancé le 6 |
+| 1 | Luxembourg | Ligue médico-sociale, service d'information et de conseil en surendettement | Service conventionné par l'État | endettement@ligue.lu (dépliant 2025 du ministère de la Famille) | D | Envoyé le 2 novembre, relancé le 6 |
+| 1 | Luxembourg | Inter-Actions (Esch-sur-Alzette) | Même mission, dans le sud du pays | endettement@inter-actions.lu (même dépliant) | D | Envoyé le 2 novembre, relancé le 6 |
+| 2 | Suisse | FRC Vaud, conseil en budget | Entretiens budget gratuits ; a son propre modèle PDF : proposer l'Excel qui calcule et la répartition du couple | budget.vaud@frc.ch (relevé sur vaudfamille.ch) | D | Envoyé le 2 novembre, relancé le 6 |
+| 2 | Suisse | Dettes Conseils Suisse | Faîtière des services de désendettement | administration@schulden.ch | D | Envoyé le 2 novembre, relancé le 6 |
+| 2 | Québec | Union des consommateurs (réseau d'ACEF) | Complète la ligne Québec ci-dessus | info@uniondesconsommateurs.ca | D | Envoyé le 2 novembre, relancé le 6 |
 
 Afrique francophone : pas encore de contact vérifié (la Fondation marocaine
 pour l'éducation financière ne publie pas ses coordonnées en ligne).
@@ -119,10 +119,10 @@ pour l'éducation financière ne publie pas ses coordonnées en ligne).
 
 | Prio. | Pays | Organisme | Pourquoi eux | Contact | Modèle | Statut |
 |---|---|---|---|---|---|---|
-| 1 | Irlande | MABS (Money Advice and Budgeting Service) | Service public de conseil budgétaire, bureaux dans tout le pays ; remet déjà des « budget sheets » | helpline@mabs.ie (relevé sur un annuaire : mabs.ie refusait la vérification) | F | Envoyé le 2 novembre ; relance vers le 10 |
-| 1 | Nouvelle-Zélande | FinCap | Fédère plus de 200 services gratuits de budget et d'accompagnement financier | kiaora@fincap.org.nz | F | Envoyé le 2 novembre ; relance vers le 10 |
-| 2 | Australie | Financial Counselling Australia | Fédère les conseillers financiers des États ; a une boîte à outils pour eux | info@financialcounsellingaustralia.org.au | F | Envoyé le 2 novembre ; relance vers le 10 |
-| 2 | Canada | Prosper Canada | « Learning Hub » pour les intervenants en autonomie financière | info@prospercanada.org | F | Envoyé le 2 novembre ; relance vers le 10 |
+| 1 | Irlande | MABS (Money Advice and Budgeting Service) | Service public de conseil budgétaire, bureaux dans tout le pays ; remet déjà des « budget sheets » | helpline@mabs.ie (relevé sur un annuaire : mabs.ie refusait la vérification) | F | Envoyé le 2 novembre, relancé le 6 |
+| 1 | Nouvelle-Zélande | FinCap | Fédère plus de 200 services gratuits de budget et d'accompagnement financier | kiaora@fincap.org.nz | F | Envoyé le 2 novembre, relancé le 6 |
+| 2 | Australie | Financial Counselling Australia | Fédère les conseillers financiers des États ; a une boîte à outils pour eux | info@financialcounsellingaustralia.org.au | F | Envoyé le 2 novembre, relancé le 6 |
+| 2 | Canada | Prosper Canada | « Learning Hub » pour les intervenants en autonomie financière | info@prospercanada.org | F | Envoyé le 2 novembre, relancé le 6 |
 | 3 | États-Unis, Royaume-Uni | Jump$tart Clearinghouse (base de ressources gratuites), Citizens Advice, Good Things Foundation | Procédures et contacts pas encore vérifiés | — | F | |
 
 ### Associations étudiantes (modèle G)
@@ -135,15 +135,15 @@ la colocation.
 
 | Pays | Association | Contact | Langue | Statut |
 |---|---|---|---|---|
-| France | FAGE, fédération des associations étudiantes | contact@fage.org | FR | Envoyé le 2 novembre ; relance vers le 10 |
-| France | Animafac, réseau d'associations étudiantes | hello@animafac.net | FR | Envoyé le 2 novembre ; relance vers le 10 |
+| France | FAGE, fédération des associations étudiantes | contact@fage.org | FR | Envoyé le 2 novembre, relancé le 6 |
+| France | Animafac, réseau d'associations étudiantes | hello@animafac.net | FR | Envoyé le 2 novembre, relancé le 6 |
 | France | UNEF | formulaire https://unef.fr/nous-contacter/ | FR | À envoyer |
-| Belgique | FEF, Fédération des étudiants francophones | contact@fef.be | FR | Envoyé le 2 novembre ; relance vers le 10 |
-| Luxembourg | ACEL, cercles d'étudiants luxembourgeois | contact@acel.lu | FR | Envoyé le 2 novembre ; relance vers le 10 |
-| Suisse | UNES (VSS), Union des étudiant·e·s de Suisse | info@vss-unes.ch | FR | Envoyé le 2 novembre ; relance vers le 10 |
-| Québec | UEQ, Union étudiante du Québec | info@unionetudiante.ca | FR | Envoyé le 2 novembre ; relance vers le 10 |
-| Canada | CFS-FCÉÉ, Canadian Federation of Students | info@cfs-fcee.ca | EN | Envoyé le 2 novembre ; relance vers le 10 |
-| Europe | ESU, European Students' Union | secretariat@esu-online.org | EN | Envoyé le 2 novembre ; relance vers le 10 |
+| Belgique | FEF, Fédération des étudiants francophones | contact@fef.be | FR | Envoyé le 2 novembre, relancé le 6 |
+| Luxembourg | ACEL, cercles d'étudiants luxembourgeois | contact@acel.lu | FR | Envoyé le 2 novembre, relancé le 6 |
+| Suisse | UNES (VSS), Union des étudiant·e·s de Suisse | info@vss-unes.ch | FR | Envoyé le 2 novembre, relancé le 6 |
+| Québec | UEQ, Union étudiante du Québec | info@unionetudiante.ca | FR | Envoyé le 2 novembre, relancé le 6 |
+| Canada | CFS-FCÉÉ, Canadian Federation of Students | info@cfs-fcee.ca | EN | Envoyé le 2 novembre, relancé le 6 |
+| Europe | ESU, European Students' Union | secretariat@esu-online.org | EN | Envoyé le 2 novembre, relancé le 6 |
 | Europe | ESN, Erasmus Student Network | esn.org bloque la lecture automatique : contact à relever à la main | EN | |
 | Royaume-Uni, Irlande | NUS UK, AMLÉ (ex-USI) | sites sans adresse lisible (NUS bloque, AMLÉ n'a qu'un formulaire) | EN | |
 | Nouvelle-Zélande, Australie | NZUSA, NUS Australia | students.org.nz et nus.org.au hors du réseau autorisé de la session cloud | EN | |
