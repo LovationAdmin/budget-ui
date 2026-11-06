@@ -23,6 +23,8 @@ import { useSaveStatus } from '../../hooks/useSaveStatus';
 
 import { BudgetNavbar, NavItem } from '@/components/budget/BudgetNavbar';
 import { BudgetTabBar } from '@/components/budget/BudgetTabBar';
+import { MonthSkeleton, TabSkeleton } from '@/components/budget/BudgetSkeletons';
+import { useBudgetList } from '@/hooks/useBudgetList';
 import { SaveStatusIndicator } from '@/components/budget/SaveStatusIndicator';
 import { OnboardingCoach, useOnboardingProgress } from '@/components/onboarding/OnboardingCoach';
 import InviteModal from '../../components/InviteModal';
@@ -148,6 +150,9 @@ export default function BudgetCompleteLayout() {
   const t = useT(M);
   const navItems = useMemo<NavItem[]>(() => BUDGET_NAV_ITEMS.map((it) => ({ ...it, label: t.tabs[it.id] })), [t]);
   const mainTabs = useMemo(() => navItems.slice(0, 5), [navItems]);
+  // Already loaded by the menus (no extra request): the budget's name shows
+  // in the bar while its data loads.
+  const knownName = useBudgetList(user?.id)?.find((b) => b.id === id)?.name;
 
   const [today] = useState<YM>(() => currentYM());
   const [budget, setBudget] = useState<BudgetData | null>(null);
@@ -569,10 +574,16 @@ export default function BudgetCompleteLayout() {
   // ============================================================================
   // WS
   // ============================================================================
+  // Keyed on id and name, not the budget object: a reload (another member
+  // saved, members refreshed) sets a new object and must not drop and reopen
+  // the socket each time.
+  const budgetId = budget?.id;
+  const budgetName = budget?.name;
   useEffect(() => {
-    if (budget) connectToBudget(budget.id, budget.name);
+    if (!budgetId) return;
+    connectToBudget(budgetId, budgetName ?? '');
     return () => disconnectFromBudget();
-  }, [budget, connectToBudget, disconnectFromBudget]);
+  }, [budgetId, budgetName, connectToBudget, disconnectFromBudget]);
 
   // ============================================================================
   // NAVIGATION
@@ -687,9 +698,22 @@ export default function BudgetCompleteLayout() {
   // RENDER
   // ============================================================================
   if (loading) {
+    // The real bars, with placeholders shaped like the tab: the screen keeps
+    // its layout when the data lands, and the tabs already work.
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center" role="status" aria-label={t.loading}>
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary" />
+      <div className="min-h-screen bg-background">
+        <BudgetNavbar
+          budgetTitle={knownName}
+          userName={user?.name}
+          userAvatar={user?.avatar}
+          items={navItems}
+          onSectionChange={handleSectionChange}
+          currentSection={currentSection}
+        />
+        <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-5 sm:pt-8 pb-32 lg:pb-16">
+          {currentSection === 'month' ? <MonthSkeleton label={t.loading} /> : <TabSkeleton label={t.loading} />}
+        </main>
+        <BudgetTabBar items={mainTabs} currentSection={currentSection} onSectionChange={handleSectionChange} />
       </div>
     );
   }
@@ -806,10 +830,5 @@ export default function BudgetCompleteLayout() {
 // Placeholder while a lazily-loaded tab downloads; keeps the layout steady.
 function TabFallback() {
   const t = useT(M);
-  return (
-    <div role="status" aria-live="polite" className="flex min-h-[40vh] items-center justify-center">
-      <span aria-hidden="true" className="h-6 w-6 animate-spin rounded-full border-2 border-primary/30 border-t-primary motion-reduce:animate-none" />
-      <span className="sr-only">{t.loadingTab}</span>
-    </div>
-  );
+  return <TabSkeleton label={t.loadingTab} />;
 }

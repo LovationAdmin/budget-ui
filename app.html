@@ -53,9 +53,6 @@
   
   <meta name="google-site-verification" content="G_DnjA1zj2i8bZWC1erQDcEmLwCczBSZGfTkVTceztU" />
   
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
-  
   <style>
     html {
       font-size: 16px;
@@ -107,15 +104,26 @@
     window.dataLayer = window.dataLayer || [];
     function gtag(){dataLayer.push(arguments);}
     if (/(^|\.)budgetfamille\.com$/.test(location.hostname)) {
-      var ga = document.createElement('script');
-      ga.async = true;
-      ga.src = 'https://www.googletagmanager.com/gtag/js?id=G-85R8CTX8S3';
-      document.head.appendChild(ga);
       gtag('js', new Date());
       gtag('config', 'G-85R8CTX8S3', {
         'anonymize_ip': true,
         'cookie_flags': 'SameSite=None;Secure'
       });
+      // gtag.js is fetched once the page has loaded and the browser is idle,
+      // so it never competes with the app for the network or the main thread.
+      // The calls above wait in dataLayer until it runs.
+      var loadGA = function () {
+        var ga = document.createElement('script');
+        ga.async = true;
+        ga.src = 'https://www.googletagmanager.com/gtag/js?id=G-85R8CTX8S3';
+        document.head.appendChild(ga);
+      };
+      var whenIdle = function () {
+        if (window.requestIdleCallback) requestIdleCallback(loadGA, { timeout: 3000 });
+        else setTimeout(loadGA, 1);
+      };
+      if (document.readyState === 'complete') whenIdle();
+      else addEventListener('load', whenIdle, { once: true });
     }
   </script>
 </head>

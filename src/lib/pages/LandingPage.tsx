@@ -7,7 +7,7 @@
 // published by the prerender (src/seo/faq.ts, src/seo/faq-home-en.ts).
 // ============================================================================
 
-import type { ReactNode } from 'react';
+import { lazy, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import {
   ArrowRight, CheckCircle2, Heart, Home, KeyRound, Plane, PiggyBank, User,
@@ -15,11 +15,17 @@ import {
 import Navbar from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
 import { Button } from '@/components/ui/button';
-import SmartToolsWidget from '@/components/SmartToolsWidget';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Picture } from '@/components/Picture';
+import { LazyWhenVisible } from '@/components/LazyWhenVisible';
 import { localizedPath } from '@/i18n/locales';
 import { defineMessages, useLocale, useT } from '@/i18n/runtime';
 import { HOME_FAQ } from '@/seo/faq';
 import { HOME_FAQ_EN } from '@/seo/faq-home-en';
+
+// The simulator (and its select menus) sits far down the page: its code is
+// fetched when the section nears the screen, not with the page.
+const SmartToolsWidget = lazy(() => import('@/components/SmartToolsWidget'));
 
 type Icon = typeof User;
 
@@ -189,7 +195,7 @@ function FaqItem({ q, a }: { q: string; a: string }) {
 
 function Screenshot({ src, alt, className }: { src: string; alt: string; className?: string }) {
   return (
-    <img
+    <Picture
       src={src}
       alt={alt}
       width={390}
@@ -237,7 +243,7 @@ export default function LandingPage() {
               </ul>
             </div>
             <div className="relative mx-auto flex justify-center">
-              <img
+              <Picture
                 src={shotOf('month-light.jpg', locale)}
                 alt={t.heroAlt}
                 width={390}
@@ -245,7 +251,7 @@ export default function LandingPage() {
                 fetchPriority="high"
                 className="relative z-10 h-auto w-full max-w-[320px] rounded-[32px] border border-border/70 shadow-elevated"
               />
-              <img
+              <Picture
                 src={shotOf('month-dark.jpg', locale)}
                 alt=""
                 aria-hidden="true"
@@ -362,7 +368,9 @@ export default function LandingPage() {
               <h2 className="font-display text-3xl font-bold text-foreground">{t.savingsTitle}</h2>
               <p className="mt-3 text-lg text-muted-foreground">{t.savingsIntro}</p>
             </div>
-            <SmartToolsWidget />
+            <LazyWhenVisible fallback={<Skeleton className="h-[640px] w-full rounded-xl shadow-2xl" aria-hidden="true" />}>
+              <SmartToolsWidget />
+            </LazyWhenVisible>
           </div>
         </section>
 

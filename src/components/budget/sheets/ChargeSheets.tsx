@@ -4,7 +4,7 @@
 // detail sheet (amount history, exceptions, history kept in closed months),
 // deletion, and the create / edit form with frequencies.
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Info,
   Lightbulb,
@@ -1016,11 +1016,15 @@ export function ChargeEditorSheet({ sheet, onClose }: SheetProps<'chargeEditor'>
         ? t.impactLater(formatMonthLong(ctx), formatMonthLong(firstOcc))
         : t.impactNone;
 
+  // Asked once per label: leaving the field again without changing it sends nothing.
+  const detectedFor = useRef('');
   const detectCategory = async () => {
-    if (catTouched || label.trim().length < 3) return;
+    const asked = label.trim();
+    if (catTouched || asked.length < 3 || asked === detectedFor.current) return;
+    detectedFor.current = asked;
     setDetecting(true);
     try {
-      const res = await budgetAPI.categorize(label.trim());
+      const res = await budgetAPI.categorize(asked);
       const cat = res.data?.category;
       if (cat && cat !== 'OTHER') setCategory(cat);
     } catch {

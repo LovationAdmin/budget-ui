@@ -18,6 +18,7 @@ import { TEMPLATE_FAQ } from '@/seo/faq';
 import { TEMPLATE_FAQ_EN } from '@/seo/faq-template-en';
 import { defineMessages, useT } from '@/i18n/runtime';
 import { track } from '@/lib/analytics';
+import { Picture } from '@/components/Picture';
 
 const TAB_ICONS = [Wallet, Scale, CalendarRange];
 
@@ -257,7 +258,7 @@ export default function BudgetTemplate() {
                 <Link to="/signup">{t.appCta} <ArrowRight className="ml-2 h-4 w-4" aria-hidden="true" /></Link>
               </Button>
             </div>
-            <img src={t.appImage} alt={t.appImageAlt} width={390} height={640} loading="lazy" className="mx-auto h-auto w-full max-w-[240px] rounded-[26px] border border-white/10" />
+            <Picture src={t.appImage} alt={t.appImageAlt} width={390} height={640} loading="lazy" className="mx-auto h-auto w-full max-w-[240px] rounded-[26px] border border-white/10" />
           </div>
         </section>
 

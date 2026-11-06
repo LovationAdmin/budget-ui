@@ -42,7 +42,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { intlLocale } from '@/lib/budget/format';
 import { overviewUseful } from '@/lib/budget/overview';
-import { publishBudgetList } from '@/hooks/useBudgetList';
+import { fetchBudgetList } from '@/hooks/useBudgetList';
 import { defineMessages, useT } from '@/i18n/runtime';
 
 interface Budget {
@@ -347,11 +347,10 @@ export default function Dashboard() {
   // ============================================================================
   const loadBudgets = useCallback(async () => {
     try {
-      const response = await budgetAPI.list();
-      const list = Array.isArray(response.data) ? response.data : [];
-      setBudgets(list);
-      // The menus offer « Ma vue perso » from this list (no second request).
-      if (user?.id) publishBudgetList(user.id, list);
+      // Joins the menus' request when they asked first, and shares the result
+      // with them (« Ma vue perso »): one GET /budgets per load.
+      if (!user?.id) return;
+      setBudgets((await fetchBudgetList(user.id)) as Budget[]);
     } catch (error) {
       console.error('Error loading budgets:', error);
     } finally {
