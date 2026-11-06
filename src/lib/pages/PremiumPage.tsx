@@ -134,14 +134,14 @@ export default function PremiumPage() {
           </div>
         </section>
 
-        <section className="bg-primary px-4 py-16 text-primary-foreground">
+        <section className="bg-brand px-4 py-16 text-brand-foreground">
           <div className="mx-auto max-w-3xl text-center">
             <h2 className="font-display text-3xl font-bold">{t.finalTitle}</h2>
-            <p className="mt-3 text-lg opacity-90">{t.finalText}</p>
+            <p className="mt-3 text-lg">{t.finalText}</p>
             <Button asChild size="lg" variant="secondary" className="mt-8 h-14 bg-white px-10 text-lg text-primary hover:bg-gray-100">
               <Link to="/signup">{t.cta} <ArrowRight className="ml-2 h-5 w-5" aria-hidden="true" /></Link>
             </Button>
-            <p className="mt-8 text-sm opacity-90">{t.follow}</p>
+            <p className="mt-8 text-sm">{t.follow}</p>
             <SocialLinks className="mt-3 justify-center [&_a]:border-white/40 [&_a]:bg-transparent [&_a]:text-white [&_a:hover]:border-white [&_a:hover]:text-white" />
           </div>
         </section>

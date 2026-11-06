@@ -152,6 +152,13 @@
     @apply font-semibold tracking-tight;
     /* Plus Jakarta Sans has a narrow space: with tight tracking, words ran together. */
     word-spacing: 0.08em;
+    /* Lines of even length: no heading ends on a lone word. */
+    text-wrap: balance;
+  }
+
+  /* No paragraph ends on a single orphan word. */
+  p {
+    text-wrap: pretty;
   }
 
   /* No double-tap zoom delay on controls; states are drawn by the components. */
@@ -161,6 +168,23 @@
 
   html {
     -webkit-tap-highlight-color: transparent;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  /* viewport-fit=cover (index.html) lets the page run under the notch and the
+     home indicator: in-flow content keeps clear of the side insets here, and
+     fixed bars pad themselves with env(safe-area-inset-*). */
+  body {
+    padding-left: env(safe-area-inset-left, 0px);
+    padding-right: env(safe-area-inset-right, 0px);
+  }
+
+  /* Controls are not text: a long press on a button or tab must not select
+     its label or open the iOS callout. Content (links, amounts) stays selectable. */
+  button, [role='button'], [role='tab'], [role='switch'], summary {
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
   }
 
   @media (prefers-reduced-motion: reduce) {
@@ -198,24 +222,25 @@
   }
 
   .stat-card {
-    @apply glass-card p-5 transition-all duration-300 hover:scale-[1.02] hover:shadow-lg;
+    @apply glass-card p-5 transition-shadow duration-200 hover:shadow-lg;
   }
 
   .btn-primary {
-    @apply px-5 py-2.5 rounded-xl font-medium text-primary-foreground transition-all duration-200;
+    @apply px-5 py-2.5 rounded-xl font-medium text-primary-foreground transition-[transform,box-shadow] duration-150 ease-out active:scale-[0.97];
     background-image: var(--gradient-warm);
     box-shadow: var(--shadow-sm), 0 4px 16px -4px hsl(16 85% 60% / 0.35);
   }
 
-  .btn-primary:hover {
-    @apply scale-[1.02];
-    box-shadow: var(--shadow-md), 0 8px 24px -6px hsl(16 85% 60% / 0.4);
+  @media (hover: hover) and (pointer: fine) {
+    .btn-primary:hover {
+      box-shadow: var(--shadow-md), 0 8px 24px -6px hsl(16 85% 60% / 0.4);
+    }
   }
 
   .input-field {
     @apply w-full px-4 py-3 rounded-xl bg-muted/50 border border-border/50 
            focus:border-primary/50 focus:ring-2 focus:ring-primary/20 
-           transition-all duration-200 outline-none;
+           transition-[border-color,box-shadow] duration-150 outline-none touch:text-base;
   }
 
   .avatar-ring {
@@ -236,69 +261,6 @@
   }
 }
 
-@layer utilities {
-  .animate-float {
-    animation: float 6s ease-in-out infinite;
-  }
-
-  .animate-pulse-soft {
-    animation: pulse-soft 3s ease-in-out infinite;
-  }
-
-  .animate-slide-up {
-    animation: slide-up 0.5s ease-out;
-  }
-
-  .animate-fade-in {
-    animation: fade-in 0.4s ease-out;
-  }
-
-  .animate-scale-in {
-    animation: scale-in 0.3s ease-out;
-  }
-
-  .stagger-1 { animation-delay: 0.1s; }
-  .stagger-2 { animation-delay: 0.2s; }
-  .stagger-3 { animation-delay: 0.3s; }
-  .stagger-4 { animation-delay: 0.4s; }
-}
-
-@keyframes float {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-10px); }
-}
-
-@keyframes pulse-soft {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.7; }
-}
-
-@keyframes slide-up {
-  from { 
-    opacity: 0; 
-    transform: translateY(20px); 
-  }
-  to { 
-    opacity: 1; 
-    transform: translateY(0); 
-  }
-}
-
-@keyframes fade-in {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-@keyframes scale-in {
-  from { 
-    opacity: 0; 
-    transform: scale(0.95); 
-  }
-  to { 
-    opacity: 1; 
-    transform: scale(1); 
-  }
-}
 /* Dark theme: white surfaces become cards (white text, overlays and borders on
    coloured backgrounds keep their white). Tinted palette classes adapt on
    their own (tailwind.palette.ts). */

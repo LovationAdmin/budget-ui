@@ -341,7 +341,7 @@ export function TransactionMapper({
                                 <label
                                     key={group.description}
                                     className={cn(
-                                        "flex items-start gap-3 p-3 border rounded-lg cursor-pointer transition-all hover:bg-gray-50",
+                                        "flex items-start gap-3 p-3 border rounded-lg cursor-pointer transition hover:bg-gray-50",
                                         selectedDescriptions.has(group.description) && "bg-indigo-50 border-indigo-300"
                                     )}
                                 >

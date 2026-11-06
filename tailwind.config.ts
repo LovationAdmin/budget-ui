@@ -9,6 +9,9 @@ const bdPalette = paletteFor("bd");
 
 export default {
   darkMode: ["class"],
+  // hover: styles only on a real pointer (@media (hover: hover) and (pointer: fine)):
+  // on a phone the first tap no longer leaves a card lifted or a button tinted.
+  future: { hoverOnlyWhenSupported: true },
   content: ["./pages/**/*.{ts,tsx}", "./components/**/*.{ts,tsx}", "./app/**/*.{ts,tsx}", "./src/**/*.{ts,tsx}", "./index.html"],
   prefix: "",
   theme: {
@@ -55,6 +58,12 @@ export default {
         primary: {
           DEFAULT: "hsl(var(--primary))",
           foreground: "hsl(var(--primary-foreground))",
+        },
+        // The logo's blue in both themes, for brand panels carrying white text
+        // (in dark mode --primary turns light blue and would glare under white).
+        brand: {
+          DEFAULT: "hsl(200 75% 38%)",
+          foreground: "hsl(0 0% 100%)",
         },
         secondary: {
           DEFAULT: "hsl(var(--secondary))",
@@ -115,6 +124,14 @@ export default {
         "2xl": "calc(var(--radius) + 8px)",
         "3xl": "calc(var(--radius) + 16px)",
       },
+      // Stronger curves than the CSS defaults: motion starts at once and settles
+      // softly. ease-out for what enters or answers a press, ease-in-out for
+      // what moves on screen, drawer for sheets.
+      transitionTimingFunction: {
+        out: "cubic-bezier(0.23, 1, 0.32, 1)",
+        "in-out": "cubic-bezier(0.77, 0, 0.175, 1)",
+        drawer: "cubic-bezier(0.32, 0.72, 0, 1)",
+      },
       boxShadow: {
         'soft': 'var(--shadow-sm)',
         'card': 'var(--shadow-card)',
@@ -132,11 +149,11 @@ export default {
           to: { height: "0" },
         },
         "slide-up": {
-          from: { opacity: "0", transform: "translateY(20px)" },
+          from: { opacity: "0", transform: "translateY(8px)" },
           to: { opacity: "1", transform: "translateY(0)" },
         },
         "slide-down": {
-          from: { opacity: "0", transform: "translateY(-20px)" },
+          from: { opacity: "0", transform: "translateY(-8px)" },
           to: { opacity: "1", transform: "translateY(0)" },
         },
         "fade-in": {
@@ -163,15 +180,19 @@ export default {
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
-        "slide-up": "slide-up 0.5s ease-out",
-        "slide-down": "slide-down 0.5s ease-out",
-        "fade-in": "fade-in 0.4s ease-out",
-        "scale-in": "scale-in 0.3s ease-out",
+        "slide-up": "slide-up 0.3s cubic-bezier(0.23, 1, 0.32, 1) backwards",
+        "slide-down": "slide-down 0.3s cubic-bezier(0.23, 1, 0.32, 1) backwards",
+        "fade-in": "fade-in 0.25s cubic-bezier(0.23, 1, 0.32, 1) backwards",
+        "scale-in": "scale-in 0.2s cubic-bezier(0.23, 1, 0.32, 1) backwards",
         "float": "float 6s ease-in-out infinite",
         "pulse-soft": "pulse-soft 3s ease-in-out infinite",
         "shimmer": "shimmer 2s linear infinite",
       },
     },
   },
-  plugins: [require("tailwindcss-animate"), require("@tailwindcss/typography"), plugin(({ addBase }) => addBase(paletteVars()))],
+  plugins: [require("tailwindcss-animate"), require("@tailwindcss/typography"), plugin(({ addBase }) => addBase(paletteVars())),
+    // touch: = a coarse pointer (phone, tablet). Used for 16px form fields,
+    // below which iOS zooms the page on focus.
+    plugin(({ addVariant }) => addVariant("touch", "@media (pointer: coarse)")),
+  ],
 } satisfies Config;

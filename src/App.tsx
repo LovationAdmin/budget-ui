@@ -61,6 +61,7 @@ const Blog = lazy(() => import('./lib/pages/Blog'));
 const BlogArticle = lazy(() => import('./lib/pages/BlogArticle'));
 const BudgetTemplate = lazy(() => import('./lib/pages/BudgetTemplate'));
 const ResteAVivre = lazy(() => import('./lib/pages/ResteAVivre'));
+const BudgetCouple = lazy(() => import('./lib/pages/BudgetCouple'));
 const BudgetColocation = lazy(() => import('./lib/pages/BudgetColocation'));
 const BudgetMariage = lazy(() => import('./lib/pages/BudgetMariage'));
 const BudgetPersonnel = lazy(() => import('./lib/pages/BudgetPersonnel'));
@@ -78,6 +79,8 @@ const Overview = lazy(() => import('./lib/pages/Overview'));
 const AcceptInvitation = lazy(() => import('./lib/pages/AcceptInvitation'));
 const EnableBankingCallbackPage = lazy(() => import('./lib/pages/EnableBankingCallbackPage'));
 const NotFound = lazy(() => import('./lib/pages/NotFound'));
+// Dev-only stress-test harness for the Month tab (break-ui): absent from production builds.
+const MonthBreakUi = import.meta.env.DEV ? lazy(() => import('./dev/break-ui/MonthBreakUi')) : null;
 const MembersTab = lazy(() => import('./lib/pages/budget-tabs/MembersTab'));
 const ChargesTab = lazy(() => import('./lib/pages/budget-tabs/ChargesTab'));
 const ProjectsTab = lazy(() => import('./lib/pages/budget-tabs/ProjectsTab'));
@@ -129,6 +132,7 @@ export default function App() {
           <Route path="/features" element={<Features />} />
           <Route path="/tableau-budget-familial-gratuit" element={<BudgetTemplate />} />
           <Route path="/calcul-reste-a-vivre" element={<ResteAVivre />} />
+          <Route path="/budget-couple" element={<BudgetCouple />} />
           <Route path="/budget-colocation" element={<BudgetColocation />} />
           <Route path="/budget-mariage" element={<BudgetMariage />} />
           <Route path="/budget-personnel" element={<BudgetPersonnel />} />
@@ -234,6 +238,8 @@ export default function App() {
               </PrivateRoute>
             }
           />
+
+          {MonthBreakUi && <Route path="/dev/break-ui" element={<MonthBreakUi />} />}
 
           {/* ERRORS */}
           <Route path="/404" element={<NotFound />} />

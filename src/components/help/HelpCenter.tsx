@@ -118,7 +118,7 @@ export function HelpCenter({ open, onClose }: { open: boolean; onClose: () => vo
                         key={article.id}
                         onClick={() => setSelectedArticle(article)}
                         className={cn(
-                          "w-full text-left p-3 rounded-lg text-sm transition-all flex items-start gap-3 group",
+                          "w-full text-left p-3 rounded-lg text-sm transition flex items-start gap-3 group",
                           selectedArticle?.id === article.id 
                             ? "bg-primary/10 text-primary ring-1 ring-primary/20" 
                             : "hover:bg-gray-100 text-gray-700"

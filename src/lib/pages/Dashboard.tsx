@@ -187,7 +187,7 @@ const BudgetListSkeleton = memo(function BudgetListSkeleton() {
   return (
     <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
       {[1, 2, 3].map((i) => (
-        <div key={i} className="group rounded-2xl border border-border bg-card p-6 shadow-card transition-all">
+        <div key={i} className="group rounded-2xl border border-border bg-card p-6 shadow-card transition">
           <div className="flex items-start justify-between mb-4">
             <div className="flex-1">
               <Skeleton className="h-6 w-3/4 mb-2" />
@@ -241,7 +241,7 @@ const BudgetCard = memo(function BudgetCard({ budget, onOpen, onDelete, onEdit }
 
   return (
     <div 
-      className="group cursor-pointer rounded-2xl border border-border bg-card p-6 shadow-card transition-all hover:shadow-elevated hover:-translate-y-1"
+      className="group cursor-pointer rounded-2xl border border-border bg-card p-6 shadow-card transition duration-200 ease-out hover:shadow-elevated hover:-translate-y-0.5"
       onClick={handleOpen}
     >
       <div className="flex items-start justify-between mb-4">
@@ -277,7 +277,7 @@ const BudgetCard = memo(function BudgetCard({ budget, onOpen, onDelete, onEdit }
         
         <div className="flex items-center gap-1">
           <Button variant="ghost" size="sm" className="gap-1 px-2 min-h-[44px]">
-            <span className="hidden sm:inline">{t.open}</span>
+            <span className="sr-only sm:not-sr-only">{t.open}</span>
             <ArrowRight className="h-4 w-4" />
           </Button>
           

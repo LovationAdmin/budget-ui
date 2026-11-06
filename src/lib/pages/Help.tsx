@@ -217,7 +217,7 @@ export default function Help() {
             <button
               onClick={() => setSelectedCategory(null)}
               className={cn(
-                "px-6 py-3 rounded-xl font-medium transition-all",
+                "px-6 py-3 rounded-xl font-medium transition",
                 selectedCategory === null
                   ? "bg-primary text-primary-foreground shadow-lg"
                   : "bg-white text-gray-700 hover:bg-gray-50"
@@ -232,7 +232,7 @@ export default function Help() {
                   key={category.id}
                   onClick={() => setSelectedCategory(category.id)}
                   className={cn(
-                    "flex items-center gap-2 px-6 py-3 rounded-xl font-medium transition-all",
+                    "flex items-center gap-2 px-6 py-3 rounded-xl font-medium transition",
                     selectedCategory === category.id
                       ? "bg-primary text-primary-foreground shadow-lg"
                       : "bg-white text-gray-700 hover:bg-gray-50"

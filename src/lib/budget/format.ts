@@ -42,14 +42,20 @@ export function intlLocale(): string {
 }
 
 const formatters = new Map<string, Intl.NumberFormat>();
-function nf(decimals: number): Intl.NumberFormat {
+/**
+ * French groups thousands with a narrow no-break space (U+202F): between
+ * tabular digits of the display font it is under 3px and "20 151" reads
+ * "20151". An ordinary no-break space keeps the gap visible.
+ */
+function nf(decimals: number): { format: (n: number) => string } {
   const key = `${frenchNumbers()}${decimals}`;
   let f = formatters.get(key);
   if (!f) {
     f = new Intl.NumberFormat(frenchNumbers() ? 'fr-FR' : 'en-US', { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
     formatters.set(key, f);
   }
-  return f;
+  const intl = f;
+  return { format: (n: number) => intl.format(n).replace(/\u202f/g, NBSP) };
 }
 
 /** Rounds to cents to avoid floating noise (0.1 + 0.2). */

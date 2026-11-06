@@ -11,7 +11,7 @@ import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { ChevronRight, History, Pencil, Plus, Sparkles, UserPlus } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
+import { cn, initialOf } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 import { useBudget } from '@/contexts/BudgetContext';
 import MemberManagementSection from '@/components/budget/MemberManagementSection';
@@ -254,7 +254,7 @@ function MemberCard({ person, index, refYm }: { person: Person; index: number; r
     return (
       <article className="flex items-center gap-3 rounded-2xl border border-dashed border-border bg-muted/20 p-5">
         <span aria-hidden="true" className={cn('inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl font-display text-lg font-extrabold opacity-60', AVATAR_TONES[index % AVATAR_TONES.length])}>
-          {person.name.charAt(0).toUpperCase() || '?'}
+          {initialOf(person.name)}
         </span>
         <p className="flex-1 text-sm text-muted-foreground">
           {t.notInHousehold(<strong className="text-foreground">{person.name}</strong>, formatMonthLong(ref))}
@@ -272,7 +272,7 @@ function MemberCard({ person, index, refYm }: { person: Person; index: number; r
     <article className={cn('flex flex-col gap-4 rounded-2xl border border-border/70 bg-card p-5 shadow-soft', status === 'ended' && 'bg-muted/30')}>
       <div className="flex items-center gap-3">
         <span aria-hidden="true" className={cn('inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl font-display text-lg font-extrabold', AVATAR_TONES[index % AVATAR_TONES.length])}>
-          {person.name.charAt(0).toUpperCase() || '?'}
+          {initialOf(person.name)}
         </span>
         <div className="min-w-0 flex-1">
           <h2 className="truncate font-display text-lg font-extrabold">{person.name}</h2>

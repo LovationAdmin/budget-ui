@@ -46,7 +46,7 @@ export const PAGES: PageSEO[] = [
     description: 'Gérez le budget familial gratuitement, seul ou à plusieurs : charges, pot commun, épargne et projets datés. Famille, couple, coloc, sans connexion bancaire.',
     h1: 'L’application de budget gratuite pour la famille, le couple, la coloc et vos projets',
     intro: 'Seul ou à plusieurs, budgétez le mois et planifiez ce qui compte : charges, pot commun, épargne, voyage, mariage, travaux. Sans connexion bancaire obligatoire, sans publicité, en temps réel.',
-    links: [CTA, { href: '/tableau-budget-familial-gratuit', label: 'Tableau de budget familial gratuit (Excel et PDF)' }, { href: '/calcul-reste-a-vivre', label: 'Calcul du reste à vivre' }, { href: '/blog/etablir-budget-familial-5-etapes', label: 'Établir un budget familial' }, { href: '/blog/budget-famille-4-personnes-exemple', label: 'Exemple de budget pour une famille de 4' }, { href: '/budget-personnel', label: 'Calculer son budget perso' }, { href: '/budget-colocation', label: 'Budget colocation' }, { href: '/budget-mariage', label: 'Budget mariage' }, { href: '/blog/budget-etudiant-guide-complet-2025', label: 'Budget étudiant' }, { href: '/blog/combien-epargner-par-mois-objectif-date', label: 'Épargner pour un projet à une date' }, { href: '/features', label: 'Toutes les fonctionnalités' }, { href: '/blog', label: 'Conseils budget' }],
+    links: [CTA, { href: '/tableau-budget-familial-gratuit', label: 'Tableau de budget familial gratuit (Excel et PDF)' }, { href: '/budget-couple', label: 'Budget couple : la part de chacun' }, { href: '/calcul-reste-a-vivre', label: 'Calcul du reste à vivre' }, { href: '/blog/etablir-budget-familial-5-etapes', label: 'Établir un budget familial' }, { href: '/blog/budget-famille-4-personnes-exemple', label: 'Exemple de budget pour une famille de 4' }, { href: '/budget-personnel', label: 'Calculer son budget perso' }, { href: '/budget-colocation', label: 'Budget colocation' }, { href: '/budget-mariage', label: 'Budget mariage' }, { href: '/blog/budget-etudiant-guide-complet-2025', label: 'Budget étudiant' }, { href: '/blog/combien-epargner-par-mois-objectif-date', label: 'Épargner pour un projet à une date' }, { href: '/features', label: 'Toutes les fonctionnalités' }, { href: '/blog', label: 'Conseils budget' }],
     sections: [
       { h2: 'Pas seulement pour les familles', text: '« Famille » au sens large : seul pour votre budget perso, en couple avec un pot commun, en famille, en colocation ou entre amis, et pour un projet (voyage, mariage, travaux, voiture, apport) avec un objectif et une date. Créez autant de budgets que nécessaire, chacun avec ses membres et sa devise.' },
     ],
@@ -102,7 +102,7 @@ export const PAGES: PageSEO[] = [
     description: 'Faites votre budget mensuel en 2 minutes : salaire net, besoins, envies et épargne selon la règle 50/30/20, et ce qui reste à dépenser. Gratuit, sans inscription.',
     h1: 'Votre budget perso en 2 minutes',
     intro: 'Indiquez votre salaire net et vos dépenses essentielles : voyez ce que donne la règle 50/30/20 pour vous, ce qui reste une fois les besoins payés et combien vous pouvez épargner chaque mois. Sans jugement, et le résultat se met à jour pendant la saisie.',
-    links: [CTA, { href: '/calcul-reste-a-vivre', label: 'Calcul du reste à vivre' }, { href: '/budget-colocation', label: 'Budget colocation' }, { href: '/blog/budget-etudiant-guide-complet-2025', label: 'Budget étudiant' }, { href: '/blog/combien-epargner-par-mois-objectif-date', label: 'Combien épargner par mois' }],
+    links: [CTA, { href: '/calcul-reste-a-vivre', label: 'Calcul du reste à vivre' }, { href: '/budget-couple', label: 'Budget couple' }, { href: '/budget-colocation', label: 'Budget colocation' }, { href: '/blog/budget-etudiant-guide-complet-2025', label: 'Budget étudiant' }, { href: '/blog/combien-epargner-par-mois-objectif-date', label: 'Combien épargner par mois' }],
     sections: [
       { h2: 'Comment faire son budget personnel en 5 étapes', text: 'Revenus nets, charges fixes, dépenses annuelles ÷ 12, dépenses variables, puis épargner d’abord, juste après la paie.' },
       { h2: 'La règle 50/30/20 expliquée', text: '50 % pour les besoins, 30 % pour les envies, 20 % pour l’épargne : une règle popularisée par Elizabeth Warren et Amelia Warren Tyagi (All Your Worth, 2005). Un repère, pas une obligation, à adapter au coût du logement.' },
@@ -110,6 +110,27 @@ export const PAGES: PageSEO[] = [
       { h2: 'Combien épargner chaque mois ?', text: '20 % des revenus comme repère ; commencez petit, d’abord une épargne de précaution de plusieurs mois de dépenses, puis vos projets.' },
     ],
     priority: 0.8,
+    changefreq: 'monthly',
+  },
+  {
+    path: '/budget-couple',
+    // « budget couple » and the questions around it (« comment répartir les
+    // dépenses dans un couple », « calcul prorata salaire couple ») had no page
+    // of their own, only blog articles: this one answers them, with the
+    // calculator of the app's split.
+    title: 'Budget couple : calculer la part de chacun (50/50, prorata)',
+    description: 'Combien chacun verse au compte commun ? Calculez la part de chacun à 50/50, au prorata des salaires ou à argent de poche égal. Gratuit, sans inscription.',
+    h1: 'Budget couple : combien chacun verse au compte commun ?',
+    intro: 'Vos deux revenus, vos charges communes : voyez ce que chacun verse et l’argent de poche qui lui reste, à 50/50, au prorata des salaires ou pour garder le même reste. Gratuit, sans inscription, rien n’est envoyé.',
+    links: [CTA, { href: '/blog/compte-commun-couple-argent-de-poche', label: 'Compte commun : combien verser, combien garder' }, { href: '/blog/budget-couple-regles-gerer-argent', label: '7 règles pour gérer l’argent à deux' }, { href: '/calcul-reste-a-vivre', label: 'Calcul du reste à vivre' }, { href: '/tableau-budget-familial-gratuit', label: 'Tableau de budget gratuit' }],
+    sections: [
+      { h2: 'Comment faire un budget de couple ?', text: 'Un budget de couple sépare ce qui est commun de ce qui est à chacun. Additionnez les charges communes du mois, décidez ensemble comment les partager, puis chacun verse sa part sur un compte commun et garde le reste. En 5 étapes : vos revenus nets ; les charges communes (logement, énergie, courses, assurances, abonnements, enfants), les dépenses annuelles divisées par 12 ; l’épargne commune, mise de côté en début de mois ; la méthode de partage ; un virement automatique de chacun le jour de la paie.' },
+      { h2: 'Comment répartir les dépenses dans un couple ?', text: 'Trois méthodes : 50/50, chacun la moitié des charges communes ; au prorata des revenus, chacun la même part de son salaire (part = charges communes × son salaire ÷ somme des deux salaires) ; même argent de poche, celui qui gagne plus verse plus jusqu’à ce qu’il reste la même somme à chacun. Exemple fictif : 2 700 € et 1 800 € nets, 2 000 € de charges communes. À 50/50, chacun verse 1 000 € et garde 1 700 € ou 800 €. Au prorata, 1 200 € et 800 €, et chacun garde 1 500 € ou 1 000 €. Même argent de poche : 1 450 € et 550 €, et chacun garde 1 250 €.' },
+      { h2: '50/50 ou au prorata : quelle méthode choisir ?', text: 'Le 50/50 convient quand les revenus sont proches. Dès qu’ils s’éloignent, il pèse bien plus lourd sur celui qui gagne le moins. Le prorata demande à chacun le même effort : c’est la méthode la plus courante quand les salaires sont différents, et celle que la loi retient par défaut pour les couples mariés et pacsés. Le même argent de poche revient presque à tout mettre en commun.' },
+      { h2: 'Combien verser sur le compte commun ?', text: 'Le total des charges communes du mois, plus l’épargne commune et les dépenses annuelles ramenées au mois. Ajoutez une marge de 5 à 10 % pour les imprévus, puis partagez ce montant selon la méthode choisie.' },
+      { h2: 'Marié, pacsé ou en concubinage : ce que dit la loi', text: 'Mariés : sauf contrat de mariage contraire, les époux contribuent aux charges du mariage à proportion de leurs facultés respectives (Code civil, article 214). Pacsés : l’aide matérielle entre partenaires est proportionnelle à leurs facultés respectives, sauf accord contraire (article 515-4). Une dette contractée par l’un pour les besoins du ménage engage en principe l’autre solidairement, sauf dépense manifestement excessive (articles 220 et 515-4). En concubinage, aucune règle de partage n’est prévue.' },
+    ],
+    priority: 0.9,
     changefreq: 'monthly',
   },
   {

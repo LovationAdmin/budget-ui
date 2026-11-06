@@ -832,7 +832,7 @@ export function SavingEditorSheet({ sheet, onClose }: SheetProps<'savingEditor'>
       <form onSubmit={submit} className="flex flex-col gap-5">
         <div>
           <FieldLabel htmlFor="sv-label">{a.name}</FieldLabel>
-          <Input id="sv-label" autoComplete="off" value={label} onChange={(e) => { setLabel(e.target.value); setError(''); }} placeholder={a.namePlaceholder} className="h-12 rounded-xl text-base" />
+          <Input id="sv-label" maxLength={80} autoComplete="off" value={label} onChange={(e) => { setLabel(e.target.value); setError(''); }} placeholder={a.namePlaceholder} className="h-12 rounded-xl text-base" />
         </div>
 
         <div>

@@ -163,7 +163,7 @@ export function OnboardingCoach({
             <div className="mt-1 flex items-center gap-2">
               <div className="h-1.5 flex-1 rounded-full bg-muted overflow-hidden">
                 <div
-                  className="h-full bg-gradient-to-r from-primary to-[hsl(35_90%_65%)] transition-all duration-500"
+                  className="h-full bg-gradient-to-r from-primary to-[hsl(35_90%_65%)] transition-[width] duration-500 ease-out"
                   style={{ width: `${percentage}%` }}
                 />
               </div>
@@ -211,7 +211,7 @@ export function OnboardingCoach({
                 }}
                 disabled={!step.onAction}
                 className={cn(
-                  'group flex w-full items-start gap-3 rounded-xl px-3 py-2.5 text-left transition-all min-h-[48px]',
+                  'group flex w-full items-start gap-3 rounded-xl px-3 py-2.5 text-left transition min-h-[48px]',
                   step.completed
                     ? 'opacity-60 cursor-default'
                     : 'hover:bg-accent/60'

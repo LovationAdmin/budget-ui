@@ -6,7 +6,7 @@ import { ChevronRight, Coins, PiggyBank, Plus, RotateCcw, Sprout, X } from 'luci
 import { Button } from '@/components/ui/button';
 import { ToastAction } from '@/components/ui/toast';
 import { useToast } from '@/hooks/use-toast';
-import { cn } from '@/lib/utils';
+import { cn, initialOf } from '@/lib/utils';
 import { useBudget } from '@/contexts/BudgetContext';
 import type { ResolvedCharge, ResolvedMonth } from '@/lib/budget/engine';
 import { contributionRuleText, customMonthsText, windowOf } from '@/lib/budget/engine';
@@ -48,7 +48,7 @@ const M = defineMessages({
     everyMonth: 'Tous les mois',
     planned: (planned: string, sub: string) => `Prévu ${planned} · ${sub}`,
     chargesTitle: 'Charges du mois',
-    chargesSub: (n: number) => `${n} charge${n > 1 ? 's' : ''} · remplies automatiquement depuis vos règles`,
+    chargesSub: (n: number) => `${n} charge${n > 1 ? 's' : ''} · remplie${n > 1 ? 's' : ''} automatiquement depuis vos règles`,
     noCharges: 'Aucune charge ce mois-ci.',
     removedFrom: (month: string) => `Retirées ${deMonth(month)}`,
     exception: 'Exception : ce mois-ci seulement',
@@ -160,14 +160,14 @@ export function IncomeCard({ month }: { month: ResolvedMonth }) {
         return (
           <RowButton key={p.id} onClick={guard(() => openSheet({ kind: 'member', id: p.id, ym: month.ym }))}>
             <span aria-hidden="true" className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-teal-50 font-display text-base font-extrabold text-teal-800">
-              {p.name.charAt(0).toUpperCase() || '?'}
+              {initialOf(p.name)}
             </span>
             <span className="flex min-w-0 flex-1 flex-col gap-1.5">
               <span className="flex items-baseline justify-between gap-2">
-                <span className="truncate text-[15px] font-semibold">
+                <span className="min-w-0 text-[15px] font-semibold [overflow-wrap:anywhere]">
                   {p.name} <span className="text-sm font-normal text-muted-foreground">{t.pays}</span>
                 </span>
-                <span className="text-[15px] font-bold tabular-nums">{fmt(p.contribution)}</span>
+                <span className="shrink-0 whitespace-nowrap text-[15px] font-bold tabular-nums">{fmt(p.contribution)}</span>
               </span>
               <span aria-hidden="true" className="block h-1.5 overflow-hidden rounded-full bg-muted">
                 <span className="block h-full rounded-full bg-emerald-500" style={{ width: `${share}%` }} />
@@ -186,11 +186,13 @@ export function IncomeCard({ month }: { month: ResolvedMonth }) {
           <IconTile className="bg-emerald-50 text-emerald-700">
             <Coins />
           </IconTile>
+          {/* On phones the amount goes under the label: beside it, with the remove button, the label had ~90px left. */}
           <span className="flex min-w-0 flex-1 flex-col">
-            <span className="truncate text-[15px] font-semibold">{o.label}</span>
+            <span title={o.label} className="line-clamp-2 text-[15px] font-semibold [overflow-wrap:anywhere]">{o.label}</span>
+            <span className="whitespace-nowrap text-[15px] font-bold tabular-nums text-emerald-700 sm:hidden">+{fmt(o.amount)}</span>
             <span className="text-xs text-muted-foreground">{t.oneOffSub}</span>
           </span>
-          <span className="text-[15px] font-bold tabular-nums text-emerald-700">+{fmt(o.amount)}</span>
+          <span className="hidden shrink-0 whitespace-nowrap text-[15px] font-bold tabular-nums text-emerald-700 sm:inline">+{fmt(o.amount)}</span>
           {!month.closed && (
             <Button
               variant="ghost"
@@ -276,11 +278,11 @@ export function ChargesCard({ month, prevMonth }: { month: ResolvedMonth; prevMo
         const end = w.end;
         const badges = chargeBadges(c, prevById.get(c.id), month.ym, start, end, fmt);
         return (
-          <RowButton key={c.id} onClick={guard(() => (def ? openSheet({ kind: 'charge', id: c.id, ym: month.ym }) : undefined))}>
+          <RowButton key={c.id} className="items-start" onClick={guard(() => (def ? openSheet({ kind: 'charge', id: c.id, ym: month.ym }) : undefined))}>
             <CategoryIcon category={c.category} />
             <span className="flex min-w-0 flex-1 flex-col gap-0.5">
               <span className="flex flex-wrap items-center gap-1.5">
-                <span className="text-[15px] font-semibold">{c.label}</span>
+                <span className="min-w-0 text-[15px] font-semibold [overflow-wrap:anywhere]">{c.label}</span>
                 {badges.map((b) => (
                   <Badge key={b.text} tone={b.tone}>
                     {b.text}
@@ -289,8 +291,8 @@ export function ChargesCard({ month, prevMonth }: { month: ResolvedMonth; prevMo
               </span>
               <span className="truncate text-xs text-muted-foreground">{chargeSubtitle(c, def?.months, fmt)}</span>
             </span>
-            <span className="whitespace-nowrap text-[15px] font-bold tabular-nums">{fmt(c.amount)}</span>
-            <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground/70" aria-hidden="true" />
+            <span className="mt-2.5 whitespace-nowrap text-[15px] font-bold tabular-nums">{fmt(c.amount)}</span>
+            <ChevronRight className="mt-3 h-4 w-4 shrink-0 text-muted-foreground/70" aria-hidden="true" />
           </RowButton>
         );
       })}
@@ -301,7 +303,7 @@ export function ChargesCard({ month, prevMonth }: { month: ResolvedMonth; prevMo
             <div key={c.id} className="flex min-h-[56px] items-center gap-3 rounded-xl px-2.5">
               <CategoryIcon category={c.category} tone="muted" />
               <span className="flex min-w-0 flex-1 flex-col">
-                <span className="truncate text-[15px] font-semibold text-muted-foreground line-through">{c.label}</span>
+                <span title={c.label} className="line-clamp-2 text-[15px] font-semibold text-muted-foreground line-through [overflow-wrap:anywhere]">{c.label}</span>
                 <span className="text-xs text-muted-foreground">{t.exception}</span>
               </span>
               <span className="text-sm tabular-nums text-muted-foreground line-through">{fmt(c.planned)}</span>
@@ -345,13 +347,13 @@ export function SavingsCard({ month }: { month: ResolvedMonth }) {
       amountClassName="text-indigo-700"
     >
       {month.savings.map((s) => (
-        <RowButton key={s.id} onClick={guard(() => (s.deleted ? undefined : openSheet({ kind: 'saving', id: s.id, ym: month.ym })))}>
+        <RowButton key={s.id} className="items-start" onClick={guard(() => (s.deleted ? undefined : openSheet({ kind: 'saving', id: s.id, ym: month.ym })))}>
           <IconTile className="bg-indigo-50 text-indigo-700">
             <PiggyBank />
           </IconTile>
           <span className="flex min-w-0 flex-1 flex-col gap-0.5">
             <span className="flex flex-wrap items-center gap-1.5">
-              <span className="text-[15px] font-semibold">{s.label}</span>
+              <span className="min-w-0 text-[15px] font-semibold [overflow-wrap:anywhere]">{s.label}</span>
               {s.adjusted && <Badge tone="amber">{t.badgeAdjusted}</Badge>}
               {!s.recurring && <Badge tone="grey">{t.free}</Badge>}
             </span>
@@ -365,10 +367,10 @@ export function SavingsCard({ month }: { month: ResolvedMonth }) {
               </span>
             )}
           </span>
-          <span className={cn('whitespace-nowrap text-[15px] font-bold tabular-nums', s.skipped ? 'text-sm font-medium text-muted-foreground' : 'text-indigo-800')}>
+          <span className={cn('mt-2.5 whitespace-nowrap text-[15px] font-bold tabular-nums', s.skipped ? 'text-sm font-medium text-muted-foreground' : 'text-indigo-800')}>
             {s.skipped ? t.nothing : fmt(s.allocation)}
           </span>
-          <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground/70" aria-hidden="true" />
+          <ChevronRight className="mt-3 h-4 w-4 shrink-0 text-muted-foreground/70" aria-hidden="true" />
         </RowButton>
       ))}
       <div className="flex min-h-[60px] items-center gap-3 rounded-xl border border-emerald-100 bg-emerald-50/50 px-2.5 py-2">

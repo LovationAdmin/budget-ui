@@ -263,7 +263,7 @@ export function ColocationCalculator({ t, format: f, storageKey, example, areaUn
       </section>
 
       {hasData && !resultsVisible && (
-        <div className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-card/95 px-4 py-3 backdrop-blur">
+        <div className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-card/95 px-[max(1rem,env(safe-area-inset-left))] pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur">
           <div className="mx-auto flex max-w-md items-center justify-between gap-3">
             <div className="min-w-0">
               <p className="text-xs text-muted-foreground">{t.sticky.total(f.moneyExact(r.total))}</p>

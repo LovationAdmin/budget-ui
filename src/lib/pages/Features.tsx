@@ -345,7 +345,7 @@ export default function Features() {
               return (
                 <div 
                   key={index}
-                  className="bg-white rounded-2xl sm:rounded-3xl shadow-lg sm:shadow-xl p-6 sm:p-8 hover:shadow-2xl transition-all"
+                  className="bg-white rounded-2xl sm:rounded-3xl shadow-lg sm:shadow-xl p-6 sm:p-8"
                 >
                   <div className={`h-12 w-12 sm:h-16 sm:w-16 ${feature.color} rounded-xl sm:rounded-2xl flex items-center justify-center mb-4 sm:mb-6`}>
                     <Icon className="h-6 w-6 sm:h-8 sm:w-8 text-white" />
@@ -536,7 +536,7 @@ export default function Features() {
               return (
                 <div 
                   key={index}
-                  className="bg-white rounded-xl shadow-md p-4 sm:p-6 hover:shadow-lg transition-all hover:-translate-y-1"
+                  className="bg-white rounded-xl shadow-md p-4 sm:p-6"
                 >
                   <div className="flex items-start justify-between mb-3 sm:mb-4">
                     <div className="h-10 w-10 sm:h-12 sm:w-12 bg-primary/10 rounded-lg flex items-center justify-center">
