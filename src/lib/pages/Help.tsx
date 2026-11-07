@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Navbar from '@/components/Navbar';
-import { useAuth } from '@/contexts/AuthContext';
 import { 
   ArrowLeft, 
   ArrowRight,
@@ -149,7 +148,6 @@ const M = defineMessages({
 
 export default function Help() {
   const navigate = useNavigate();
-  const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
   const [expandedIndex, setExpandedIndex] = useState<number | null>(null);
 

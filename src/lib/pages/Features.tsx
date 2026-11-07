@@ -10,19 +10,16 @@
 
 import { useNavigate } from 'react-router-dom';
 import Navbar from '@/components/Navbar';
-import { useAuth } from '@/contexts/AuthContext';
 import { 
   ArrowLeft, 
   Users, 
   TrendingUp, 
   Target, 
-  Bell, 
   Lock, 
   Zap, 
   Globe,
   Smartphone,
   BarChart3,
-  Calendar,
   CreditCard,
   Sparkles,
   Shield,
@@ -31,9 +28,7 @@ import {
   Eye,
   CheckCircle2,
   Brain,
-  Wifi,
   Database,
-  Rocket,
   X,
   Star
 } from 'lucide-react';
@@ -280,7 +275,6 @@ const M = defineMessages({
 
 export default function Features() {
   const navigate = useNavigate();
-  const { user } = useAuth();
 
   const t = useT(M);
   const locale = useLocale();

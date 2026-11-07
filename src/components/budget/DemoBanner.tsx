@@ -1,6 +1,5 @@
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
-import { AlertTriangle, X, Sparkles } from "lucide-react";
+import { AlertTriangle, X } from "lucide-react";
 import { defineMessages, useT } from "@/i18n/runtime";
 
 const M = defineMessages({

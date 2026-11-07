@@ -65,6 +65,7 @@ export default function AcceptInvitation() {
 
     // 4. User is logged in, proceed to accept
     acceptInvitation(effectiveToken);
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- accepts once per sign-in or link, never again on a language change
   }, [user, searchParams, navigate]);
 
   const acceptInvitation = async (token: string) => {

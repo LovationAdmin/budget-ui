@@ -659,7 +659,7 @@ export default function AIBudgetProposal() {
   const totalSavings = useMemo(() => {
     if (!proposal) return 0;
     return proposal.savingsEnvelopes.reduce(
-      (sum, e) => sum + envContribution(e.name, e.monthlyContribution),
+      (sum, e) => sum + (envOverrides[e.name] ?? e.monthlyContribution),
       0,
     );
   }, [proposal, envOverrides]);

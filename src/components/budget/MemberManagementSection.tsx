@@ -1,9 +1,9 @@
-import { useState, useEffect, type ReactNode } from 'react';
+import { useState, useEffect, useRef, type ReactNode } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { MemberAvatar } from "./MemberAvatar";
 import { Badge } from "@/components/ui/badge";
-import { Users, UserPlus, UserMinus, Mail, Trash2, Loader2, RefreshCw } from "lucide-react";
+import { Users, UserPlus, UserMinus, Mail, Trash2, RefreshCw } from "lucide-react";
 import { budgetAPI } from '@/services/api';
 import { useToast } from '@/hooks/use-toast';
 import {
@@ -152,15 +152,20 @@ export default function MemberManagementSection({
     }
   };
 
+  // Refresh every minute, always for the budget on screen: the page is not
+  // remounted when switching budgets, so the poll calls the latest functions
+  // and restarts when the budget changes (never another budget's invitations).
+  const poll = useRef({ loadInvitations, onMemberChange });
+  poll.current = { loadInvitations, onMemberChange };
   useEffect(() => {
-    loadInvitations();
+    poll.current.loadInvitations();
     const interval = setInterval(() => {
-          loadInvitations();
-          onMemberChange(); 
-      }, 60000);
+      poll.current.loadInvitations();
+      poll.current.onMemberChange();
+    }, 60000);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [budget.id, budget.is_owner]);
 
   const handleManualRefresh = () => {
     setLoading(true);
@@ -274,7 +279,9 @@ export default function MemberManagementSection({
                     if (!isNaN(date.getTime()) && date.getFullYear() > 2000) {
                       dateDisplay = date.toLocaleDateString(intlLocale());
                     }
-                  } catch (e) {}
+                  } catch {
+                    // Unknown locale or date: keep the « unknown date » label.
+                  }
 
                   return (
                     <div key={invitation.id} className="flex items-center gap-3 p-3 rounded-xl border border-dashed border-border/50 bg-muted/30">

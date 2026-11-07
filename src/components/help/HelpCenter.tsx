@@ -10,7 +10,6 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Search, BookOpen, ChevronRight, HelpCircle, Mail } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from '@/components/ui/button';
-import type { Locale } from '@/i18n/locales';
 import { defineMessages, useLocale, useT, wordsIn, type Messages } from '@/i18n/runtime';
 import { HELP_ARTICLES_EN } from './articles.en';
 import { HELP_ARTICLES_FR } from './articles.fr';

@@ -127,6 +127,7 @@ export default function VerifyEmail() {
           setMessage(errorMsg);
         }
       });
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- the token is single-use: checked once per link
   }, [searchParams]);
 
   const handleResendEmail = async () => {

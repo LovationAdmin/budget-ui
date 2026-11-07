@@ -157,6 +157,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     };
 
     restoreSession();
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- restores the session once, on start
   }, []);
 
   /**

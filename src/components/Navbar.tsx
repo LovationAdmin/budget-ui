@@ -17,7 +17,6 @@ import {
   HelpCircle,
   Crown,
   Home,
-  User,
   PieChart,
   Users,
   Heart,

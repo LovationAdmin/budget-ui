@@ -74,6 +74,7 @@ export default function ResetPassword() {
     } else {
       setError(t.missingToken);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- reads the link's token once per URL
   }, [searchParams]);
 
   const handleSubmit = async (e: FormEvent) => {

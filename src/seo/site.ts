@@ -13,7 +13,7 @@ import { BUDGET_503020_PAGE_ZH } from './zh/budget-503020';
 import { RENT_SPLIT_PAGE_ZH } from './zh/rent-split';
 import { WEDDING_PAGE_ZH } from './zh/wedding';
 import { LEFTOVER_INCOME_PAGE_ZH } from './zh/leftover-income';
-import { SITE, SITE_NAME, DEFAULT_IMAGE, absolute, SOCIAL_PROFILES } from './identity';
+import { SITE, SITE_NAME, absolute, SOCIAL_PROFILES } from './identity';
 
 export { SITE, SITE_NAME, DEFAULT_IMAGE, absolute, SOCIAL_PROFILES, type SocialNetwork } from './identity';
 

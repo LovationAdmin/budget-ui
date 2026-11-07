@@ -10,7 +10,7 @@
 //   <Nav currentSection={active} />
 // ============================================================================
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState } from 'react';
 
 interface ScrollSpyOptions {
   /** Top offset in pixels (typically the height of a sticky navbar). Default: 80. */
@@ -30,27 +30,28 @@ export function useScrollSpy(
     fallbackToFirst ? ids[0] : undefined
   );
 
-  // Cache visibility ratios so we always pick the most-visible section
-  const visibilityRef = useRef<Map<string, number>>(new Map());
-
   useEffect(() => {
     if (typeof window === 'undefined' || ids.length === 0) return;
+
+    // Visibility ratios of the observed sections, so we always pick the
+    // most-visible one. Lives as long as this observer (cleared with it).
+    const visibility = new Map<string, number>();
 
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
           const id = (entry.target as HTMLElement).id;
           if (entry.isIntersecting) {
-            visibilityRef.current.set(id, entry.intersectionRatio);
+            visibility.set(id, entry.intersectionRatio);
           } else {
-            visibilityRef.current.delete(id);
+            visibility.delete(id);
           }
         });
 
         // Pick the section with the highest visibility ratio
         let topId: string | undefined;
         let topRatio = 0;
-        visibilityRef.current.forEach((ratio, id) => {
+        visibility.forEach((ratio, id) => {
           if (ratio > topRatio) {
             topRatio = ratio;
             topId = id;
@@ -76,7 +77,7 @@ export function useScrollSpy(
     return () => {
       elements.forEach((el) => observer.unobserve(el));
       observer.disconnect();
-      visibilityRef.current.clear();
+      visibility.clear();
     };
   }, [ids, offset, bottomMarginVh]);
 

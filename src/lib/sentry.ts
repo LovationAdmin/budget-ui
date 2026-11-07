@@ -40,7 +40,6 @@ export function initSentry(): void {
   if (!dsn) {
     // Pas de DSN → Sentry désactivé (pas d'init, pas d'erreurs console)
     if (import.meta.env.DEV) {
-      // eslint-disable-next-line no-console
       console.info('[Sentry] disabled (VITE_SENTRY_DSN not set)');
     }
     return;

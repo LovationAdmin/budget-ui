@@ -148,6 +148,7 @@ export function EnableBankingCallbackPage() {
       }, 3000);
     }
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- the bank code is single-use: handled once per callback URL
   }, [searchParams, navigate]);
 
   // ============================================================================

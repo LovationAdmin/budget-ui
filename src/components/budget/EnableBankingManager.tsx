@@ -12,7 +12,6 @@ import {
   RefreshCw, 
   Trash2, 
   Search,
-  TrendingUp,
   Clock,
   AlertCircle,
   X,
@@ -179,6 +178,7 @@ export function EnableBankingManager({ budgetId, onUpdate }: EnableBankingManage
   useEffect(() => {
     loadBanks();
     loadConnections();
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- loads once per budget; the loaders are recreated each render
   }, [budgetId]);
 
   // ============================================================================

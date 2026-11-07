@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Loader2, Search, Link as LinkIcon, Layers, Trash2, AlertCircle } from "lucide-react";
+import { Loader2, Search, Link as LinkIcon, Layers, AlertCircle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import api from '@/services/api';
 import { cn } from "@/lib/utils";
@@ -137,6 +137,7 @@ export function TransactionMapper({
         if (isOpen) {
             fetchTransactions();
         }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- fetches when the sheet opens or the source changes, not on every render
     }, [isOpen, source]);
 
     const fetchTransactions = async () => {

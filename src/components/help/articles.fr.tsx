@@ -2,9 +2,6 @@
 // Help center articles in French (same ids as articles.en.tsx).
 
 import { 
-  Search, 
-  BookOpen, 
-  ChevronRight, 
   HelpCircle, 
   ShieldCheck, 
   FlaskConical, 
@@ -15,13 +12,11 @@ import {
   Receipt,
   Users,
   PiggyBank,
-  TrendingDown,
   Lock,
   MessageCircle,
   Download,
   Upload,
   Settings,
-  Bell,
   CreditCard,
   Banknote,
   Calculator,
@@ -36,9 +31,7 @@ import {
   Eye,
   EyeOff,
   Phone,
-  Mail,
   ExternalLink,
-  Globe,
   Building2,
   Wallet,
   ArrowLeftRight,

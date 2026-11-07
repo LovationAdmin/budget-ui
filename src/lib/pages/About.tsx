@@ -2,8 +2,7 @@
 // About page, in French (/about) and English (/en/about).
 import { useNavigate } from 'react-router-dom';
 import Navbar from '@/components/Navbar';
-import { useAuth } from '@/contexts/AuthContext';
-import { ArrowLeft, Heart, Target, Users, Lightbulb, Shield, Globe, Mail } from 'lucide-react';
+import { ArrowLeft, Heart, Users, Lightbulb, Shield, Globe, Mail } from 'lucide-react';
 import { Footer } from '@/components/Footer';
 import { defineMessages, useT } from '@/i18n/runtime';
 import type { ReactNode } from 'react';
@@ -81,7 +80,6 @@ const M = defineMessages({
 
 export default function About() {
   const navigate = useNavigate();
-  const { user } = useAuth();
 
   const t = useT(M);
   const values = t.values.map((v, i) => ({ ...v, icon: VALUE_ICONS[i] }));
