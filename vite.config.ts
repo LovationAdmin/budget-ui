@@ -16,8 +16,13 @@ import react from '@vitejs/plugin-react-swc';
 import path from 'path';
 import { VitePWA } from 'vite-plugin-pwa';
 
+// The deployed commit (set by Vercel at build time) names the Sentry release
+// (src/lib/sentry.ts), so each error is tied to the deploy that shipped it.
+const commit = process.env.VERCEL_GIT_COMMIT_SHA?.slice(0, 7);
+
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
+  define: commit ? { 'import.meta.env.VITE_APP_VERSION': JSON.stringify(commit) } : {},
   server: {
     host: '::',
     port: 3000,

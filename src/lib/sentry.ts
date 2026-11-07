@@ -7,7 +7,8 @@
 // Variables d'environnement :
 //   - VITE_SENTRY_DSN          : DSN du projet Sentry (vide = désactivé)
 //   - VITE_SENTRY_ENVIRONMENT  : "production" | "development" | "preview"
-//   - VITE_SENTRY_RELEASE      : tag de release (auto-set depuis VITE_APP_VERSION)
+//   - VITE_SENTRY_RELEASE      : tag de release (défaut : budget-ui@<commit>,
+//                                le commit déployé, cf. vite.config.ts)
 //   - VITE_SENTRY_TRACES_RATE  : part des visites mesurées (vitesse réelle :
 //                                chargement, LCP/INP/CLS, requêtes API liées
 //                                aux traces du backend). 0.1 par défaut, 0 = off.

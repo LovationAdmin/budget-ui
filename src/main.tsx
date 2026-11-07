@@ -44,11 +44,23 @@ const updateSW = registerSW({
   onOfflineReady() {
     console.info('[PWA] Application prête à fonctionner hors ligne.');
   },
-  onRegistered(r) {
-    // Re-check for updates every hour while the app is open
-    if (r) {
-      setInterval(() => r.update(), 60 * 60 * 1000);
-    }
+  onRegisteredSW(_swUrl, r) {
+    if (!r) return;
+    // Look for a new version every hour while the app is open, and as soon as
+    // the visitor comes back to the tab. Skipped offline and in a background
+    // tab. A check that can't reach sw.js (network drop, PC waking from sleep)
+    // changes nothing — the running version keeps working — so it is dropped
+    // silently and retried next time instead of surfacing as an error.
+    let lastCheck = Date.now();
+    const checkForUpdate = () => {
+      if (document.visibilityState !== 'visible' || !navigator.onLine || r.installing) return;
+      lastCheck = Date.now();
+      r.update().catch(() => undefined);
+    };
+    setInterval(checkForUpdate, 60 * 60 * 1000);
+    document.addEventListener('visibilitychange', () => {
+      if (Date.now() - lastCheck > 10 * 60 * 1000) checkForUpdate();
+    });
   },
   onRegisterError(error) {
     console.error('[PWA] SW registration error:', error);
