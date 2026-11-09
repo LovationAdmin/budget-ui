@@ -2,10 +2,17 @@
 # Builds the English spreadsheet template (public/telechargements/budget-template.xlsx)
 # from the French one: same sheets, styles and formulas, English words, sheet
 # names updated in the formulas, and amounts without a currency symbol so the
-# file works in any currency. Run from the repository root:
+# file works in any currency, then formula results saved in the file for phone
+# previews (recalc.py, needs LibreOffice). Run from the repository root:
 #   python3 scripts/templates/make-template-en.py
 
+import os
+import sys
+
 import openpyxl
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from recalc import recalculate  # noqa: E402
 
 SRC = 'public/telechargements/tableau-budget-familial-budgetfamille.xlsx'
 OUT = 'public/telechargements/budget-template.xlsx'
@@ -39,6 +46,7 @@ TEXT = {
     },
     'Budget du mois': {
         'B2': 'Monthly budget',
+        'D2': 'Stop copying it every month → budgetfamille.com',
         'B3': 'Replace the yellow cells with your amounts. Totals work themselves out.',
         'B5': 'Income', 'C5': 'Monthly amount', 'D5': 'Note',
         'B6': 'Take-home pay: person 1', 'D6': 'Example: Alex',
@@ -121,4 +129,5 @@ wb.properties.title = 'Free family budget template'
 wb.properties.creator = 'Budget Famille'
 wb.properties.language = 'en'
 wb.save(OUT)
+recalculate(OUT)
 print(f'wrote {OUT}')

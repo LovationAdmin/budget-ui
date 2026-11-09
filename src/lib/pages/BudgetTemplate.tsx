@@ -5,7 +5,8 @@
 // the case for letting the app do it. Targets the "tableau budget familial
 // excel / pdf gratuit" family of searches; in English (/en/free-budget-template),
 // "free budget template excel / printable" with files of its own
-// (scripts/templates/make-template-en.*).
+// (scripts/templates: make-template-en.py, make-template-pdf.mjs). After a
+// download, a panel offers the same budget online (DownloadNextStep).
 // ============================================================================
 
 import type { ReactNode } from 'react';
@@ -19,6 +20,7 @@ import { TEMPLATE_FAQ_EN } from '@/seo/faq-template-en';
 import { defineMessages, useT } from '@/i18n/runtime';
 import { track } from '@/lib/analytics';
 import { Picture } from '@/components/Picture';
+import { useDownloadNextStep, type TemplateKind } from '@/components/DownloadNextStep';
 
 const TAB_ICONS = [Wallet, Scale, CalendarRange];
 
@@ -44,7 +46,7 @@ const M = defineMessages<{
     leadFile: 'En Excel, les calculs sont déjà faits ; en PDF, il s’imprime et se remplit au stylo.',
     xlsxLabel: 'Tableau Excel (.xlsx)',
     pdfLabel: 'PDF à imprimer',
-    sizes: 'Gratuit, sans inscription. Excel 17 Ko · PDF A4, 3 pages, 120 Ko.',
+    sizes: 'Gratuit, sans inscription. Excel 17 Ko · PDF A4, 3 pages, 49 Ko.',
     orApp: 'Ou laisser l’app calculer',
     insideTitle: 'Ce que contient le tableau',
     tab: (title) => `Onglet « ${title} »`,
@@ -102,7 +104,7 @@ const M = defineMessages<{
     leadFile: 'In Excel the math is already done; the PDF prints out and fills in with a pen. Any currency.',
     xlsxLabel: 'Excel template (.xlsx)',
     pdfLabel: 'Printable PDF',
-    sizes: 'Free, no sign-up. Excel 14 KB · A4 PDF, 3 pages, 55 KB.',
+    sizes: 'Free, no sign-up. Excel 17 KB · A4 PDF, 3 pages, 48 KB.',
     orApp: 'Or let the app do the math',
     insideTitle: 'What’s inside',
     tab: (title) => `“${title}” tab`,
@@ -156,6 +158,12 @@ const trackDownload = (fileName: string) => track('file_download', { file_name: 
 export default function BudgetTemplate() {
   const t = useT(M);
   const file = (url: string) => url.slice(url.lastIndexOf('/') + 1);
+  // The file downloads as usual; then a panel offers the same budget online.
+  const nextStep = useDownloadNextStep();
+  const downloaded = (kind: TemplateKind, fileName: string) => () => {
+    trackDownload(fileName);
+    nextStep.offer(kind);
+  };
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary-50 to-purple-50 flex flex-col">
       <Navbar />
@@ -173,12 +181,12 @@ export default function BudgetTemplate() {
             </p>
             <div className="mt-8 flex flex-col items-stretch justify-center gap-3 sm:flex-row sm:items-center">
               <Button asChild size="lg" className="h-14 px-8 text-lg">
-                <a href={t.xlsx} download onClick={() => trackDownload(t.xlsxEvent)}>
+                <a href={t.xlsx} download onClick={downloaded('xlsx', t.xlsxEvent)}>
                   <Download className="mr-2 h-5 w-5" aria-hidden="true" /> {t.xlsxLabel}
                 </a>
               </Button>
               <Button asChild size="lg" variant="outline" className="h-14 border-2 px-8 text-lg">
-                <a href={t.pdf} download onClick={() => trackDownload(file(t.pdf))}>
+                <a href={t.pdf} download onClick={downloaded('pdf', file(t.pdf))}>
                   <Printer className="mr-2 h-5 w-5" aria-hidden="true" /> {t.pdfLabel}
                 </a>
               </Button>
@@ -212,7 +220,7 @@ export default function BudgetTemplate() {
         <section className="px-4 pt-16 sm:px-6 lg:px-8" aria-labelledby="preview-title">
           <div className="mx-auto grid max-w-5xl items-center gap-10 md:grid-cols-[minmax(0,20rem)_1fr]">
             <figure className="mx-auto w-full max-w-[20rem]">
-              <a href={t.pdf} download onClick={() => trackDownload(file(t.pdf))} className="block rounded-xl border border-border bg-white shadow-elevated transition-transform hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+              <a href={t.pdf} download onClick={downloaded('pdf', file(t.pdf))} className="block rounded-xl border border-border bg-white shadow-elevated transition-transform hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
                 <img src={t.previewImage} alt={t.previewAlt} width={720} height={1018} loading="lazy" decoding="async" className="h-auto w-full rounded-xl" />
               </a>
               <figcaption className="mt-2 text-center text-sm text-muted-foreground">{t.previewCaption}</figcaption>
@@ -225,7 +233,7 @@ export default function BudgetTemplate() {
                 ))}
               </ul>
               <Button asChild size="lg" variant="outline" className="mt-8 h-12 border-2 px-6">
-                <a href={t.pdf} download onClick={() => trackDownload(file(t.pdf))}>
+                <a href={t.pdf} download onClick={downloaded('pdf', file(t.pdf))}>
                   <Printer className="mr-2 h-5 w-5" aria-hidden="true" /> {t.previewCta}
                 </a>
               </Button>
@@ -277,6 +285,7 @@ export default function BudgetTemplate() {
         </section>
       </main>
       <Footer />
+      {nextStep.panel}
     </div>
   );
 }
