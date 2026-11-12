@@ -265,7 +265,7 @@ test('Spanish amounts: each country writes and reads them its own way', () => {
 
 test('Spanish pages: each one in the site and the sitemap, paired with French and English', () => {
   const pages = new Map(PAGES.map((p) => [p.path, p]));
-  for (const path of [LOCALES.es.home, ...ES_TOOLS.map((t) => t.path)]) {
+  for (const path of [LOCALES.es.home, '/es/plantilla-presupuesto-familiar', ...ES_TOOLS.map((t) => t.path)]) {
     eq(localeOf(path), 'es', path);
     eq(!!pages.get(path) && !pages.get(path)?.noindex, true, path);
     const alts = alternatesOf(path);

@@ -15,6 +15,7 @@ import { RENT_SPLIT_PAGE_ZH } from './zh/rent-split';
 import { WEDDING_PAGE_ZH } from './zh/wedding';
 import { LEFTOVER_INCOME_PAGE_ZH } from './zh/leftover-income';
 import { HOME_PAGE_ES } from './es/home';
+import { TEMPLATE_PAGE_ES } from './es/template';
 import { BUDGET_503020_PAGE_ES } from './es/budget-503020';
 import { RENT_SPLIT_PAGE_ES } from './es/rent-split';
 import { WEDDING_PAGE_ES } from './es/wedding';
@@ -428,6 +429,7 @@ export const PAGES: PageSEO[] = [
   WEDDING_PAGE_ZH,
   LEFTOVER_INCOME_PAGE_ZH,
   HOME_PAGE_ES,
+  TEMPLATE_PAGE_ES,
   BUDGET_503020_PAGE_ES,
   RENT_SPLIT_PAGE_ES,
   WEDDING_PAGE_ES,

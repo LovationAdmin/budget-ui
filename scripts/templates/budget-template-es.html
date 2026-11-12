@@ -1,0 +1,232 @@
+<!doctype html>
+<!--
+  Spanish printable budget template (public/telechargements/plantilla-presupuesto-familiar-imprimible.pdf).
+  Rendered by scripts/templates/make-template-es.mjs with Chromium. Same layout as the
+  French and English PDFs: monthly budget, yearly expenses and joint pot, year tracker.
+-->
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Plantilla de presupuesto familiar para imprimir – Budget Famille</title>
+<style>
+  @font-face { font-family: 'DM Sans'; font-weight: 400; src: url('FONTS/dm-sans-latin-400-normal.woff2') format('woff2'); }
+  @font-face { font-family: 'DM Sans'; font-weight: 500; src: url('FONTS/dm-sans-latin-500-normal.woff2') format('woff2'); }
+  @font-face { font-family: 'DM Sans'; font-weight: 600; src: url('FONTS/dm-sans-latin-600-normal.woff2') format('woff2'); }
+  @font-face { font-family: 'DM Sans'; font-weight: 700; src: url('FONTS/dm-sans-latin-700-normal.woff2') format('woff2'); }
+  @font-face { font-family: 'Plus Jakarta Sans'; font-weight: 800; src: url('FONTS/plus-jakarta-sans-latin-800-normal.woff2') format('woff2'); }
+  @page { size: A4; margin: 0; }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: 'DM Sans', sans-serif; color: #13202B; font-size: 9.5pt; }
+  .page { width: 210mm; height: 297mm; padding: 14mm 14mm 10mm; position: relative; page-break-after: always; display: flex; flex-direction: column; }
+  .page:last-child { page-break-after: auto; }
+  header { display: flex; justify-content: space-between; align-items: flex-end; border-bottom: 2px solid #1879A9; padding-bottom: 3mm; }
+  h1 { font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 800; font-size: 20pt; margin: 0 0 1mm; letter-spacing: -0.02em; }
+  .lead { color: #1879A9; margin: 0; font-size: 9pt; max-width: 110mm; }
+  .fields { display: flex; gap: 8mm; font-weight: 700; font-size: 8.5pt; }
+  .fields span { display: inline-block; border-bottom: 1px solid #13202B; width: 30mm; margin-left: 2mm; }
+  h2 { color: #1879A9; font-size: 11pt; margin: 6mm 0 2mm; }
+  .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 6mm; }
+  table { width: 100%; border-collapse: collapse; }
+  th { text-align: left; font-size: 7pt; letter-spacing: 0.06em; text-transform: uppercase; color: #4b5563; font-weight: 600; padding: 1.6mm 1.5mm; border-bottom: 1.5px solid #13202B; }
+  th.n { text-align: right; width: 15mm; }
+  td { padding: 1.6mm 1.5mm; border-bottom: 1px solid #d7dee5; height: 7mm; }
+  tr.total td { font-weight: 700; background: #eef1f4; border-bottom: none; }
+  .note { font-size: 7.5pt; color: #4b5563; margin: 1.5mm 0 0; }
+  .box { border: 1px solid #1879A9; background: #e8f3fa; border-radius: 3mm; padding: 4mm; }
+  .formula { display: grid; grid-template-columns: 1fr auto 1fr auto 1fr auto 1fr auto 1fr; gap: 2mm; align-items: end; font-size: 7.5pt; color: #4b5563; }
+  .formula div { border-bottom: 1px solid #13202B; padding-bottom: 5mm; }
+  .formula b { font-size: 12pt; color: #13202B; }
+  .notes { border: 1px solid #d7dee5; border-radius: 3mm; margin-top: 6mm; flex: 1; display: flex; flex-direction: column; }
+  .notes p { margin: 0; padding: 2.5mm 3mm; font-size: 7pt; letter-spacing: 0.06em; font-weight: 600; color: #4b5563; }
+  .notes i { display: block; border-top: 1px solid #d7dee5; flex: 1; max-height: 9mm; }
+  .methods { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4mm; }
+  .method { border: 1px solid #d7dee5; border-radius: 3mm; padding: 3mm; font-size: 8pt; }
+  .method b { display: block; margin: 1mm 0; }
+  .check { display: inline-block; width: 3mm; height: 3mm; border: 1.2px solid #13202B; border-radius: 0.6mm; }
+  .cta { margin-top: 6mm; }
+  footer { margin-top: auto; padding-top: 3mm; display: flex; justify-content: space-between; font-size: 7pt; color: #4b5563; }
+  footer b { color: #1879A9; }
+  .spacer { flex: 1; }
+</style>
+</head>
+<body>
+
+<!-- Page 1: monthly budget -->
+<section class="page">
+  <header>
+    <div>
+      <h1>Presupuesto del mes</h1>
+      <p class="lead">Apunta lo previsto a principios de mes y lo real al final: la diferencia muestra dónde se va el dinero.</p>
+    </div>
+    <div class="fields"><label>Mes<span></span></label><label>Año<span></span></label></div>
+  </header>
+
+  <div class="cols">
+    <div>
+      <h2>Ingresos netos</h2>
+      <table>
+        <tr><th>Origen</th><th class="n">Previsto</th><th class="n">Real</th><th class="n">Dif.</th></tr>
+        <tr><td>Sueldo 1</td><td></td><td></td><td></td></tr>
+        <tr><td>Sueldo 2</td><td></td><td></td><td></td></tr>
+        <tr><td>Ayudas por hijos</td><td></td><td></td><td></td></tr>
+        <tr><td>Ayudas a la vivienda</td><td></td><td></td><td></td></tr>
+        <tr><td>Pagas extra, otros trabajos</td><td></td><td></td><td></td></tr>
+        <tr><td>Otros</td><td></td><td></td><td></td></tr>
+        <tr class="total"><td>Total de ingresos</td><td></td><td></td><td></td></tr>
+      </table>
+
+      <h2>Ahorro y provisiones</h2>
+      <table>
+        <tr><th>Concepto</th><th class="n">Previsto</th><th class="n">Real</th><th class="n">Dif.</th></tr>
+        <tr><td>Fondo de emergencia</td><td></td><td></td><td></td></tr>
+        <tr><td>Objetivo 1:</td><td></td><td></td><td></td></tr>
+        <tr><td>Objetivo 2:</td><td></td><td></td><td></td></tr>
+        <tr><td>Provisión de gastos anuales (pág. 2)</td><td></td><td></td><td></td></tr>
+        <tr class="total"><td>Total de ahorro</td><td></td><td></td><td></td></tr>
+      </table>
+    </div>
+    <div>
+      <h2>Gastos fijos</h2>
+      <table>
+        <tr><th>Concepto</th><th class="n">Previsto</th><th class="n">Real</th><th class="n">Dif.</th></tr>
+        <tr><td>Alquiler o hipoteca</td><td></td><td></td><td></td></tr>
+        <tr><td>Comunidad, impuestos locales</td><td></td><td></td><td></td></tr>
+        <tr><td>Luz, gas</td><td></td><td></td><td></td></tr>
+        <tr><td>Agua</td><td></td><td></td><td></td></tr>
+        <tr><td>Seguros (hogar, coche)</td><td></td><td></td><td></td></tr>
+        <tr><td>Seguro de salud</td><td></td><td></td><td></td></tr>
+        <tr><td>Teléfono, internet</td><td></td><td></td><td></td></tr>
+        <tr><td>Suscripciones (plataformas…)</td><td></td><td></td><td></td></tr>
+        <tr><td>Préstamos (coche, personal)</td><td></td><td></td><td></td></tr>
+        <tr><td>Guardería, comedor escolar</td><td></td><td></td><td></td></tr>
+        <tr class="total"><td>Total de gastos fijos</td><td></td><td></td><td></td></tr>
+      </table>
+    </div>
+  </div>
+
+  <h2>Gastos del día a día</h2>
+  <div class="cols">
+    <table>
+      <tr><th>Concepto</th><th class="n">Previsto</th><th class="n">Real</th><th class="n">Dif.</th></tr>
+      <tr><td>Compra de alimentación</td><td></td><td></td><td></td></tr>
+      <tr><td>Higiene, limpieza</td><td></td><td></td><td></td></tr>
+      <tr><td>Gasolina, transporte</td><td></td><td></td><td></td></tr>
+      <tr><td>Salud (a tu cargo)</td><td></td><td></td><td></td></tr>
+      <tr class="total"><td>Subtotal</td><td></td><td></td><td></td></tr>
+    </table>
+    <table>
+      <tr><th>Concepto</th><th class="n">Previsto</th><th class="n">Real</th><th class="n">Dif.</th></tr>
+      <tr><td>Ropa</td><td></td><td></td><td></td></tr>
+      <tr><td>Ocio, salidas</td><td></td><td></td><td></td></tr>
+      <tr><td>Hijos (actividades, paga)</td><td></td><td></td><td></td></tr>
+      <tr><td>Regalos, imprevistos</td><td></td><td></td><td></td></tr>
+      <tr class="total"><td>Subtotal</td><td></td><td></td><td></td></tr>
+    </table>
+  </div>
+
+  <h2>Resto del mes</h2>
+  <div class="box">
+    <div class="formula">
+      <div>Total de ingresos</div><b>−</b><div>Gastos fijos</div><b>−</b><div>Gastos del día a día</div><b>−</b><div>Ahorro</div><b>=</b><div>Resto del mes</div>
+    </div>
+    <p class="note">Positivo: guarda un margen para imprevistos y después ahorra más. Negativo: empieza por renegociar un gasto fijo (energía, seguros, suscripciones).</p>
+  </div>
+
+  <div class="notes"><p>NOTAS</p><i></i><i></i><i></i></div>
+
+  <footer><span><b>Budget Famille</b> · plantilla gratuita · versión Excel con cálculos automáticos: budgetfamille.com/es/plantilla-presupuesto-familiar</span><span>1/3</span></footer>
+</section>
+
+<!-- Page 2: yearly expenses and joint pot -->
+<section class="page">
+  <header>
+    <div>
+      <h1>Gastos anuales y fondo común</h1>
+      <p class="lead">Lo que no llega todos los meses, y lo que aporta cada persona a la cuenta común.</p>
+    </div>
+    <div class="fields"><label>Año<span></span></label></div>
+  </header>
+
+  <h2>Gastos anuales para repartir entre los meses</h2>
+  <table>
+    <tr><th>Gasto</th><th class="n" style="width:28mm">Importe / año</th><th class="n" style="width:22mm">Mes</th><th class="n" style="width:32mm">÷ 12 = al mes</th></tr>
+    <tr><td>Vuelta al cole</td><td></td><td></td><td></td></tr>
+    <tr><td>Fiestas y regalos</td><td></td><td></td><td></td></tr>
+    <tr><td>Cumpleaños</td><td></td><td></td><td></td></tr>
+    <tr><td>Vacaciones</td><td></td><td></td><td></td></tr>
+    <tr><td>Impuestos sobre la vivienda</td><td></td><td></td><td></td></tr>
+    <tr><td>Seguros de pago anual</td><td></td><td></td><td></td></tr>
+    <tr><td>Mantenimiento del coche, revisión</td><td></td><td></td><td></td></tr>
+    <tr><td>Otro:</td><td></td><td></td><td></td></tr>
+    <tr><td>Otro:</td><td></td><td></td><td></td></tr>
+    <tr class="total"><td>Total para apartar cada mes</td><td></td><td></td><td></td></tr>
+  </table>
+  <p class="note">Ejemplo: vuelta al cole 300 + fiestas 400 + cumpleaños 200 + vacaciones 1500 = 2400 al año, es decir, 200 al mes. Lleva este total a la página 1, «Provisión de gastos anuales».</p>
+
+  <h2>El fondo común de la pareja</h2>
+  <div class="methods">
+    <div class="method"><span class="check"></span><b>50/50</b>Cada persona paga la mitad de lo que necesita el hogar.</div>
+    <div class="method"><span class="check"></span><b>En proporción</b>Cada persona aporta el mismo % de su sueldo.</div>
+    <div class="method"><span class="check"></span><b>Mismo dinero de bolsillo</b>Cada persona se queda con la misma cantidad.</div>
+  </div>
+  <table style="margin-top:4mm">
+    <tr><th></th><th class="n" style="width:42mm">Persona 1:</th><th class="n" style="width:42mm">Persona 2:</th></tr>
+    <tr><td>Sueldo neto</td><td></td><td></td></tr>
+    <tr><td>Parte del total de sueldos (%)</td><td></td><td></td></tr>
+    <tr><td>Aportación al fondo común</td><td></td><td></td></tr>
+    <tr><td>Gastos personales (impuestos, préstamo personal…)</td><td></td><td></td></tr>
+    <tr class="total"><td>Dinero de bolsillo (sueldo − aportación − gastos personales)</td><td></td><td></td></tr>
+  </table>
+  <p class="note">Lo que necesita el hogar = gastos fijos + gastos del día a día + ahorro común (página 1). En proporción: aportación = necesario × sueldo ÷ total de sueldos.</p>
+
+  <div class="box cta">
+    <b>Las mismas cuentas, sin copiarlas cada mes.</b> La aplicación Budget Famille rellena cada mes a partir de tus reglas, calcula el fondo común con el método que elijas y se comparte en tiempo real. Gratis, en inglés y en francés: budgetfamille.com/es
+  </div>
+
+  <div class="spacer"></div>
+  <footer><span><b>Budget Famille</b> · plantilla gratuita · versión Excel con cálculos automáticos: budgetfamille.com/es/plantilla-presupuesto-familiar</span><span>2/3</span></footer>
+</section>
+
+<!-- Page 3: year tracker -->
+<section class="page">
+  <header>
+    <div>
+      <h1>Seguimiento del año</h1>
+      <p class="lead">Anota los totales de cada mes: la tendencia se ve de un vistazo.</p>
+    </div>
+    <div class="fields"><label>Año<span></span></label></div>
+  </header>
+
+  <table style="margin-top:5mm">
+    <tr><th>Mes</th><th class="n" style="width:24mm">Ingresos</th><th class="n" style="width:24mm">Gastos</th><th class="n" style="width:24mm">Ahorro</th><th class="n" style="width:24mm">Resto</th><th class="n" style="width:28mm">Acumulado</th></tr>
+    <tr><td>Enero</td><td></td><td></td><td></td><td></td><td></td></tr>
+    <tr><td>Febrero</td><td></td><td></td><td></td><td></td><td></td></tr>
+    <tr><td>Marzo</td><td></td><td></td><td></td><td></td><td></td></tr>
+    <tr><td>Abril</td><td></td><td></td><td></td><td></td><td></td></tr>
+    <tr><td>Mayo</td><td></td><td></td><td></td><td></td><td></td></tr>
+    <tr><td>Junio</td><td></td><td></td><td></td><td></td><td></td></tr>
+    <tr><td>Julio</td><td></td><td></td><td></td><td></td><td></td></tr>
+    <tr><td>Agosto</td><td></td><td></td><td></td><td></td><td></td></tr>
+    <tr><td>Septiembre</td><td></td><td></td><td></td><td></td><td></td></tr>
+    <tr><td>Octubre</td><td></td><td></td><td></td><td></td><td></td></tr>
+    <tr><td>Noviembre</td><td></td><td></td><td></td><td></td><td></td></tr>
+    <tr><td>Diciembre</td><td></td><td></td><td></td><td></td><td></td></tr>
+    <tr class="total"><td>Total del año</td><td></td><td></td><td></td><td></td><td></td></tr>
+  </table>
+
+  <h2>Objetivos del año</h2>
+  <table>
+    <tr><th>Objetivo</th><th class="n" style="width:24mm">Importe</th><th class="n" style="width:28mm">Para cuándo</th><th class="n" style="width:24mm">Al mes</th></tr>
+    <tr><td></td><td></td><td></td><td></td></tr>
+    <tr><td></td><td></td><td></td><td></td></tr>
+    <tr><td></td><td></td><td></td><td></td></tr>
+  </table>
+  <p class="note">Al mes = (importe − lo ya ahorrado) ÷ meses que faltan, contando el primero y el último.</p>
+
+  <div class="notes"><p>NOTAS</p><i></i><i></i><i></i><i></i><i></i></div>
+
+  <footer><span><b>Budget Famille</b> · plantilla gratuita · versión Excel con cálculos automáticos: budgetfamille.com/es/plantilla-presupuesto-familiar</span><span>3/3</span></footer>
+</section>
+
+</body>
+</html>

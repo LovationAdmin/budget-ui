@@ -130,6 +130,9 @@ dans tous ces pays ; Bing compte surtout aux États-Unis.
 
 1. **Demander l'indexation** dans Search Console (une dizaine par jour) :
    - `https://www.budgetfamille.com/es`
+   - `https://www.budgetfamille.com/es/plantilla-presupuesto-familiar` (en
+     premier : le modèle gratuit est la page qui amène le plus de visites en
+     français, sur Google comme sur Bing)
    - `https://www.budgetfamille.com/es/calculadora-presupuesto-50-30-20`
    - `https://www.budgetfamille.com/es/calculadora-dividir-alquiler`
    - `https://www.budgetfamille.com/es/calculadora-presupuesto-boda`

@@ -48,7 +48,7 @@ const ALL = Object.keys(LOCALES) as Locale[];
 export const TRANSLATIONS: ReadonlyArray<Partial<Record<Locale, string>>> = [
   { fr: '/', en: '/en', zh: '/zh', es: '/es' },
   { fr: '/features', en: '/en/features' },
-  { fr: '/tableau-budget-familial-gratuit', en: '/en/free-budget-template' },
+  { fr: '/tableau-budget-familial-gratuit', en: '/en/free-budget-template', es: '/es/plantilla-presupuesto-familiar' },
   { fr: '/calcul-reste-a-vivre', en: '/en/leftover-income-calculator', zh: '/zh/leftover-income-calculator', es: '/es/calculadora-dinero-disponible' },
   { fr: '/budget-personnel', en: '/en/50-30-20-budget-calculator', zh: '/zh/50-30-20-budget-calculator', es: '/es/calculadora-presupuesto-50-30-20' },
   { fr: '/budget-colocation', en: '/en/rent-split-calculator', zh: '/zh/rent-split-calculator', es: '/es/calculadora-dividir-alquiler' },

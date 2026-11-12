@@ -39,6 +39,7 @@ import { WEDDING_TOOL_ZH } from './zh/wedding';
 import { LEFTOVER_INCOME_FAQ_ZH } from './zh/faq-leftover-income';
 import { LEFTOVER_INCOME_TOOL_ZH } from './zh/leftover-income';
 import { HOME_FAQ_ES } from './es/faq-home';
+import { TEMPLATE_FAQ_ES } from './es/template';
 import { BUDGET_503020_FAQ_ES } from './es/faq-budget-503020';
 import { BUDGET_503020_TOOL_ES } from './es/budget-503020';
 import { RENT_SPLIT_FAQ_ES } from './es/faq-rent-split';
@@ -92,7 +93,7 @@ function shellOf(path: string): { home: string; label: string; cta: string; link
     return { home: LOCALES.zh.home, label: '主导航', cta: '免费注册', links: ZH_TOOLS.map((tool) => ({ href: tool.path, label: tool.label })) };
   }
   if (locale === 'es') {
-    return { home: LOCALES.es.home, label: 'Navegación principal', cta: 'Crear una cuenta gratis', links: ES_TOOLS.map((tool) => ({ href: tool.path, label: tool.label })) };
+    return { home: LOCALES.es.home, label: 'Navegación principal', cta: 'Crear una cuenta gratis', links: [{ href: '/es/plantilla-presupuesto-familiar', label: 'Plantilla gratuita' }, ...ES_TOOLS.map((tool) => ({ href: tool.path, label: tool.label }))] };
   }
   if (locale === 'en') {
     return {
@@ -272,6 +273,9 @@ export function buildPages(): BuiltPage[] {
         '@context': 'https://schema.org', '@type': 'WebSite', name: SITE_NAME, url: absolute('/es'), inLanguage: LOCALES.es.tag,
       });
       extra = <FaqBlock items={HOME_FAQ_ES} locale="es" />;
+    } else if (page.path === '/es/plantilla-presupuesto-familiar') {
+      jsonLd.push(faqLD(TEMPLATE_FAQ_ES), breadcrumbLD([{ name: 'Inicio', path: '/es' }, { name: 'Plantilla de presupuesto familiar', path: page.path }]));
+      extra = <FaqBlock items={TEMPLATE_FAQ_ES} locale="es" />;
     } else if (page.path === '/en/free-budget-template') {
       jsonLd.push(faqLD(TEMPLATE_FAQ_EN), breadcrumbLD([{ name: 'Home', path: '/en' }, { name: 'Free budget template', path: page.path }]));
       extra = <FaqBlock items={TEMPLATE_FAQ_EN} locale="en" />;

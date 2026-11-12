@@ -25,6 +25,7 @@ const tmp = mkdtempSync(join(tmpdir(), 'prerender-'));
 const DOWNLOADS_IN_SITEMAP = [
   { path: '/telechargements/tableau-budget-familial-a-imprimer.pdf', priority: 0.6 },
   { path: '/telechargements/budget-template-printable.pdf', priority: 0.5 },
+  { path: '/telechargements/plantilla-presupuesto-familiar-imprimible.pdf', priority: 0.5 },
 ];
 
 const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');

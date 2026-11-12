@@ -26,6 +26,11 @@ export function SpanishToolLinks({ current }: { current: string }) {
           </li>
         ))}
       </ul>
+      <p className="mt-4">
+        ¿Prefieres una hoja de cálculo? Descarga la{' '}
+        <Link to="/es/plantilla-presupuesto-familiar" className="font-medium text-primary hover:underline">plantilla de presupuesto familiar gratuita</Link>{' '}
+        (Excel y PDF para imprimir).
+      </p>
     </section>
   );
 }

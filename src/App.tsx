@@ -159,6 +159,7 @@ export default function App() {
           <Route path="/zh/wedding-budget-calculator" element={<WeddingBudgetCalculatorZh />} />
           <Route path="/zh/leftover-income-calculator" element={<LeftoverIncomeCalculatorZh />} />
           <Route path="/es" element={<HomeEs />} />
+          <Route path="/es/plantilla-presupuesto-familiar" element={<BudgetTemplate />} />
           <Route path="/es/calculadora-presupuesto-50-30-20" element={<BudgetCalculatorEs />} />
           <Route path="/es/calculadora-dividir-alquiler" element={<RentSplitCalculatorEs />} />
           <Route path="/es/calculadora-presupuesto-boda" element={<WeddingBudgetCalculatorEs />} />

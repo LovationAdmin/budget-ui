@@ -23,6 +23,7 @@ import {
   Users,
   Heart,
   Wallet,
+  FileSpreadsheet,
 } from 'lucide-react';
 
 const NAV_MESSAGES = defineMessages({
@@ -44,7 +45,10 @@ const PAGES_ONLY_ITEMS: Partial<Record<Locale, NavItem[]>> = {
     { id: '/zh/wedding-budget-calculator', label: '婚礼预算', icon: Heart },
     { id: '/zh/leftover-income-calculator', label: '每月结余', icon: Wallet },
   ],
-  es: [PieChart, Users, Heart, Wallet].map((icon, i) => ({ id: ES_TOOLS[i].path, label: ES_TOOLS[i].short, icon })),
+  es: [
+    { id: '/es/plantilla-presupuesto-familiar', label: 'Plantilla', icon: FileSpreadsheet },
+    ...[PieChart, Users, Heart, Wallet].map((icon, i) => ({ id: ES_TOOLS[i].path, label: ES_TOOLS[i].short, icon })),
+  ],
 };
 
 /** French path of each section; localizedPath gives the page in the screen's language when it exists. */

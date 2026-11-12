@@ -169,7 +169,7 @@ export default function LeftoverIncomeCalculatorEs() {
             <ul className="mt-4 list-disc space-y-2 pl-5">
               <li><strong>Compara tus facturas una a una</strong>: luz, internet, móvil y seguros. Suele haber una tarifa mejor.</li>
               <li><strong>Comprueba a qué ayudas tienes derecho</strong>: por hijos, por vivienda, deducciones fiscales. La referencia es la web oficial de tu gobierno.</li>
-              <li><strong>Reparte en doce meses los gastos anuales</strong>: seguros, impuestos, la vuelta al cole. Aparta una doceava parte cada mes.</li>
+              <li><strong>Reparte en doce meses los gastos anuales</strong>: seguros, impuestos, la vuelta al cole. Aparta una doceava parte cada mes: nuestra <Link to="/es/plantilla-presupuesto-familiar" className={link}>plantilla de presupuesto gratuita</Link> lo calcula por ti.</li>
               <li><strong>En pareja, un reparto justo</strong>: cuando los ingresos son muy distintos, repartir los gastos comunes en proporción a lo que gana cada persona suele ser más equilibrado.</li>
               <li><strong>Pide ayuda a tiempo</strong>: si las cuentas ya no salen, acude a un servicio de asesoramiento sobre deudas gratuito y sin ánimo de lucro de tu país.</li>
             </ul>

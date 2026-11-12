@@ -7,7 +7,7 @@
 // ============================================================================
 
 import { Link } from 'react-router-dom';
-import { ArrowRight, Calculator, Heart, PieChart, ShieldCheck, Users, Wallet, type LucideIcon } from 'lucide-react';
+import { ArrowRight, Calculator, FileSpreadsheet, Heart, PieChart, ShieldCheck, Users, Wallet, type LucideIcon } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
 import { FaqList, ToolArticle } from '@/components/tools/ToolKit';
@@ -76,6 +76,19 @@ export default function HomeEs() {
               );
             })}
           </ul>
+          <Link
+            to="/es/plantilla-presupuesto-familiar"
+            className="group mx-auto mt-4 flex max-w-4xl items-center gap-4 rounded-2xl border border-primary/30 bg-primary/5 p-5 transition hover:border-primary/60 hover:bg-primary/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          >
+            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground">
+              <FileSpreadsheet className="h-5 w-5" aria-hidden="true" />
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block font-display text-lg font-semibold text-foreground">Plantilla de presupuesto familiar gratuita</span>
+              <span className="mt-1 block text-sm text-muted-foreground">Excel con las cuentas ya hechas o PDF para imprimir: presupuesto del mes, fondo común de la pareja y seguimiento del año.</span>
+            </span>
+            <ArrowRight className="h-4 w-4 shrink-0 text-primary transition group-hover:translate-x-0.5" aria-hidden="true" />
+          </Link>
         </section>
 
         <ToolArticle>
