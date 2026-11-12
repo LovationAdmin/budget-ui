@@ -30,7 +30,7 @@ export function RouteSEO() {
       } else {
         applyHead({
           title: 'Budget Famille',
-          description: { fr: 'Votre budget familial.', en: 'Your budget, on your own or together.', zh: '你的家庭预算，一个人或和家人一起管理。' }[locale],
+          description: { fr: 'Votre budget familial.', en: 'Your budget, on your own or together.', zh: '你的家庭预算，一个人或和家人一起管理。', es: 'Tu presupuesto, a solas o en compañía.' }[locale],
           canonical: pathname,
           noindex: true,
           locale,

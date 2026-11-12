@@ -39,7 +39,7 @@ Phrase de présentation : « L'application de budget gratuite pour la famille, l
 
 - Rituel mensuel : le récapitulatif part le 27, quand les salaires tombent, et prépare le mois qui arrive.
 - Plusieurs membres modifient le même budget ; l'enregistrement est automatique et chaque changement peut être annulé.
-- Marché principal : la France ; des pages en anglais, en chinois et pour le Québec existent (`docs/i18n.md`, `docs/referencement-international.md`).
+- Marché principal : la France ; des pages en anglais, en chinois, en espagnol et pour le Québec existent (`docs/i18n.md`, `docs/referencement-international.md`).
 - Acquisition par le référencement : blog, outils gratuits et modèle imprimable.
 
 ## Capabilities and Constraints

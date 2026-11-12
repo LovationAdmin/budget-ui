@@ -19,6 +19,7 @@ const M = defineMessages({
   fr: { choose: 'Changer de langue' },
   en: { choose: 'Change language' },
   zh: { choose: '切换语言' },
+  es: { choose: 'Cambiar de idioma' },
 });
 
 export function LanguageToggle({ className }: { className?: string }) {

@@ -5,14 +5,16 @@
 // the euro and the currencies of French-speaking Africa, Switzerland and
 // Canada; English pages the dollar, the pound, the euro and the currencies of
 // English-speaking Africa and Asia; Chinese pages the yuan and the currencies
-// of Chinese-speaking Asia and the diaspora (src/i18n/format.ts).
+// of Chinese-speaking Asia and the diaspora; Spanish pages the euro, the
+// pesos of Mexico, Colombia, Argentina and Chile, the sol and the dollar
+// (src/i18n/format.ts).
 
 import { useEffect, useMemo, useState } from 'react';
 import { CURRENCIES_BY_LOCALE, currencyFromBrowser, currencyOf, formatOf, type CurrencyCode } from '@/i18n/format';
 import type { Locale } from '@/i18n/locales';
 
-const KEY: Record<Locale, string> = { en: 'bf:en:currency', fr: 'bf:fr:currency', zh: 'bf:zh:currency' };
-const LABEL: Record<Locale, string> = { en: 'Currency', fr: 'Devise', zh: '货币' };
+const KEY: Record<Locale, string> = { en: 'bf:en:currency', fr: 'bf:fr:currency', zh: 'bf:zh:currency', es: 'bf:es:currency' };
+const LABEL: Record<Locale, string> = { en: 'Currency', fr: 'Devise', zh: '货币', es: 'Moneda' };
 
 function initial(locale: Locale): CurrencyCode {
   try {
@@ -49,7 +51,7 @@ export function CurrencyPicker({ value, onChange, locale = 'en' }: { value: Curr
       >
         {CURRENCIES_BY_LOCALE[locale].map((code) => {
           const c = currencyOf(code);
-          return <option key={code} value={code}>{locale === 'fr' ? c.labelFr : locale === 'zh' ? c.labelZh ?? c.label : c.label}</option>;
+          return <option key={code} value={code}>{locale === 'fr' ? c.labelFr : locale === 'zh' ? c.labelZh ?? c.label : locale === 'es' ? c.labelEs ?? c.label : c.label}</option>;
         })}
       </select>
     </div>

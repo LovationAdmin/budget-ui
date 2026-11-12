@@ -6,7 +6,7 @@
 // search engines, social networks and AI crawlers see the page without
 // running JavaScript. React replaces the content as soon as the app loads.
 // The language (lang, og:locale, hreflang) follows from the path: pages under
-// /en/ are in English, under /zh/ in simplified Chinese, and
+// /en/ are in English, under /zh/ in simplified Chinese, under /es/ in Spanish, and
 // src/i18n/locales.ts pairs translated pages.
 // ============================================================================
 
@@ -18,6 +18,7 @@ import { LOCALES, alternatesOf, hreflangsOf, localeOf, type Locale } from '@/i18
 import { HOME_FAQ, RAV_FAQ, TEMPLATE_FAQ, type FaqItem } from './faq';
 import { EN_TOOLS } from '@/i18n/en/tools';
 import { ZH_TOOLS } from '@/i18n/zh/tools';
+import { ES_TOOLS } from '@/i18n/es/tools';
 import { BUDGET_503020_FAQ_EN } from './faq-503020-en';
 import { HOME_FAQ_EN } from './faq-home-en';
 import { LEFTOVER_INCOME_FAQ_EN } from './faq-leftover-income-en';
@@ -37,6 +38,15 @@ import { WEDDING_FAQ_ZH } from './zh/faq-wedding';
 import { WEDDING_TOOL_ZH } from './zh/wedding';
 import { LEFTOVER_INCOME_FAQ_ZH } from './zh/faq-leftover-income';
 import { LEFTOVER_INCOME_TOOL_ZH } from './zh/leftover-income';
+import { HOME_FAQ_ES } from './es/faq-home';
+import { BUDGET_503020_FAQ_ES } from './es/faq-budget-503020';
+import { BUDGET_503020_TOOL_ES } from './es/budget-503020';
+import { RENT_SPLIT_FAQ_ES } from './es/faq-rent-split';
+import { RENT_SPLIT_TOOL_ES } from './es/rent-split';
+import { WEDDING_FAQ_ES } from './es/faq-wedding';
+import { WEDDING_TOOL_ES } from './es/wedding';
+import { LEFTOVER_INCOME_FAQ_ES } from './es/faq-leftover-income';
+import { LEFTOVER_INCOME_TOOL_ES } from './es/leftover-income';
 import {
   ORGANIZATION_LD, PAGES, SITE_NAME, SOFTWARE_LD, SOFTWARE_LD_EN, absolute, breadcrumbLD, faqLD, type PageSEO,
 } from './site';
@@ -44,7 +54,7 @@ import {
 export interface BuiltPage {
   path: string;
   locale: Locale;
-  /** html lang: "fr", "en", "zh-Hans". */
+  /** html lang: "fr", "en", "zh-Hans", "es". */
   lang: string;
   /** Open Graph locale of the page, then of its other versions. */
   ogLocale: string;
@@ -80,6 +90,9 @@ function shellOf(path: string): { home: string; label: string; cta: string; link
   const locale = localeOf(path);
   if (locale === 'zh') {
     return { home: LOCALES.zh.home, label: '主导航', cta: '免费注册', links: ZH_TOOLS.map((tool) => ({ href: tool.path, label: tool.label })) };
+  }
+  if (locale === 'es') {
+    return { home: LOCALES.es.home, label: 'Navegación principal', cta: 'Crear una cuenta gratis', links: ES_TOOLS.map((tool) => ({ href: tool.path, label: tool.label })) };
   }
   if (locale === 'en') {
     return {
@@ -165,8 +178,8 @@ function StaticPage({ page, extra }: { page: PageSEO; extra?: React.ReactNode })
   );
 }
 
-const FAQ_TITLE: Record<Locale, string> = { fr: 'Questions fréquentes', en: 'Frequently asked questions', zh: '常见问题' };
-const HOME_WORD: Record<Locale, string> = { fr: 'Accueil', en: 'Home', zh: '首页' };
+const FAQ_TITLE: Record<Locale, string> = { fr: 'Questions fréquentes', en: 'Frequently asked questions', zh: '常见问题', es: 'Preguntas frecuentes' };
+const HOME_WORD: Record<Locale, string> = { fr: 'Accueil', en: 'Home', zh: '首页', es: 'Inicio' };
 
 function FaqBlock({ items, locale = 'fr' }: { items: Array<{ q: string; a: string }>; locale?: Locale }) {
   return (
@@ -214,6 +227,10 @@ const TOOLS: Record<string, { name: string; crumb: string; faq: FaqItem[] }> = {
   '/zh/rent-split-calculator': { ...RENT_SPLIT_TOOL_ZH, faq: RENT_SPLIT_FAQ_ZH },
   '/zh/wedding-budget-calculator': { ...WEDDING_TOOL_ZH, faq: WEDDING_FAQ_ZH },
   '/zh/leftover-income-calculator': { ...LEFTOVER_INCOME_TOOL_ZH, faq: LEFTOVER_INCOME_FAQ_ZH },
+  '/es/calculadora-presupuesto-50-30-20': { ...BUDGET_503020_TOOL_ES, faq: BUDGET_503020_FAQ_ES },
+  '/es/calculadora-dividir-alquiler': { ...RENT_SPLIT_TOOL_ES, faq: RENT_SPLIT_FAQ_ES },
+  '/es/calculadora-presupuesto-boda': { ...WEDDING_TOOL_ES, faq: WEDDING_FAQ_ES },
+  '/es/calculadora-dinero-disponible': { ...LEFTOVER_INCOME_TOOL_ES, faq: LEFTOVER_INCOME_FAQ_ES },
 };
 
 /** Language fields of a built page: its locale, Open Graph locales and hreflang versions. */
@@ -250,6 +267,11 @@ export function buildPages(): BuiltPage[] {
         '@context': 'https://schema.org', '@type': 'WebSite', name: SITE_NAME, url: absolute('/zh'), inLanguage: LOCALES.zh.tag,
       });
       extra = <FaqBlock items={HOME_FAQ_ZH} locale="zh" />;
+    } else if (page.path === '/es') {
+      jsonLd.push(faqLD(HOME_FAQ_ES), {
+        '@context': 'https://schema.org', '@type': 'WebSite', name: SITE_NAME, url: absolute('/es'), inLanguage: LOCALES.es.tag,
+      });
+      extra = <FaqBlock items={HOME_FAQ_ES} locale="es" />;
     } else if (page.path === '/en/free-budget-template') {
       jsonLd.push(faqLD(TEMPLATE_FAQ_EN), breadcrumbLD([{ name: 'Home', path: '/en' }, { name: 'Free budget template', path: page.path }]));
       extra = <FaqBlock items={TEMPLATE_FAQ_EN} locale="en" />;

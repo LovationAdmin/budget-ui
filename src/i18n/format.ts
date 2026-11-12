@@ -5,9 +5,11 @@
 // French: "1 180 €", "350 000 FCFA", "1 250,50" typed with a comma. English:
 // "$1,180", "₹60,000", "1,250.50" typed with the comma between thousands.
 // Chinese: "¥15,000", "HK$9,800", the symbol before the amount, as in English.
+// Spanish: each country's own way, "1.180 €" in Spain, "$1,180" in Mexico,
+// "$ 1.180" in Colombia and Argentina, "S/ 1,180" in Peru.
 // ============================================================================
 
-import { money, moneyBefore, moneyIntl, parseAmount, parseAmountEn } from '@/lib/budget/format';
+import { money, moneyBefore, moneyIntl, parseAmount, parseAmountCommaDecimal, parseAmountEn } from '@/lib/budget/format';
 import type { Locale } from './locales';
 
 export interface ToolFormat {
@@ -30,7 +32,8 @@ export interface ToolFormat {
 
 export type CurrencyCode =
   | 'USD' | 'GBP' | 'EUR' | 'CAD' | 'AUD' | 'INR' | 'NGN' | 'KES' | 'GHS' | 'ZAR' | 'SGD' | 'MYR' | 'PHP'
-  | 'XOF' | 'XAF' | 'MAD' | 'TND' | 'DZD' | 'CHF' | 'CNY' | 'HKD' | 'TWD';
+  | 'XOF' | 'XAF' | 'MAD' | 'TND' | 'DZD' | 'CHF' | 'CNY' | 'HKD' | 'TWD'
+  | 'MXN' | 'COP' | 'ARS' | 'CLP' | 'PEN';
 
 export interface Currency {
   code: CurrencyCode;
@@ -38,6 +41,10 @@ export interface Currency {
   label: string;
   labelFr: string;
   labelZh?: string;
+  /** Name in the currency menu of the Spanish pages. */
+  labelEs?: string;
+  /** Country whose way of writing amounts the Spanish pages follow for this currency ("es-MX"). */
+  localeEs?: string;
   /** Number format of the country on English pages (separators, symbol position). */
   locale: string;
   /** Symbol after amount fields on English pages ("$/month"). */
@@ -55,9 +62,9 @@ export interface Currency {
 }
 
 export const CURRENCIES: ReadonlyArray<Currency> = [
-  { code: 'USD', label: 'US dollar ($)', labelFr: 'Dollar américain ($)', locale: 'en-US', symbol: '$', symbolFr: '$ US', labelZh: '美元 (US$)', symbolZh: 'US$', area: 'sq ft', scale: 1 },
+  { code: 'USD', label: 'US dollar ($)', labelFr: 'Dollar américain ($)', labelEs: 'Dólar estadounidense ($)', localeEs: 'es-US', locale: 'en-US', symbol: '$', symbolFr: '$ US', labelZh: '美元 (US$)', symbolZh: 'US$', area: 'sq ft', scale: 1 },
   { code: 'GBP', label: 'Pound sterling (£)', labelFr: 'Livre sterling (£)', locale: 'en-GB', symbol: '£', symbolFr: '£', labelZh: '英镑 (£)', symbolZh: '£', area: 'sq ft', scale: 1 },
-  { code: 'EUR', label: 'Euro (€)', labelFr: 'Euro (€)', locale: 'en-IE', symbol: '€', symbolFr: '€', labelZh: '欧元 (€)', symbolZh: '€', area: 'm²', scale: 1 },
+  { code: 'EUR', label: 'Euro (€)', labelFr: 'Euro (€)', labelEs: 'Euro (€)', localeEs: 'es-ES', locale: 'en-IE', symbol: '€', symbolFr: '€', labelZh: '欧元 (€)', symbolZh: '€', area: 'm²', scale: 1 },
   { code: 'CAD', label: 'Canadian dollar ($)', labelFr: 'Dollar canadien ($)', locale: 'en-CA', symbol: '$', symbolFr: '$', labelZh: '加拿大元 (C$)', symbolZh: 'C$', area: 'sq ft', scale: 1 },
   { code: 'AUD', label: 'Australian dollar ($)', labelFr: 'Dollar australien ($)', locale: 'en-AU', symbol: '$', symbolFr: '$ AU', labelZh: '澳大利亚元 (A$)', symbolZh: 'A$', area: 'm²', scale: 1 },
   { code: 'INR', label: 'Indian rupee (₹)', labelFr: 'Roupie indienne (₹)', locale: 'en-IN', symbol: '₹', symbolFr: '₹', area: 'sq ft', scale: 15 },
@@ -77,6 +84,11 @@ export const CURRENCIES: ReadonlyArray<Currency> = [
   { code: 'CNY', label: 'Chinese yuan (¥)', labelFr: 'Yuan chinois (¥)', labelZh: '人民币 (¥)', locale: 'en-US', symbol: '¥', symbolFr: '¥', symbolZh: '¥', area: 'm²', scale: 3 },
   { code: 'HKD', label: 'Hong Kong dollar (HK$)', labelFr: 'Dollar de Hong Kong (HK$)', labelZh: '港币 (HK$)', locale: 'en-HK', symbol: 'HK$', symbolFr: 'HK$', symbolZh: 'HK$', area: 'sq ft', scale: 7 },
   { code: 'TWD', label: 'New Taiwan dollar (NT$)', labelFr: 'Nouveau dollar de Taïwan (NT$)', labelZh: '新台币 (NT$)', locale: 'en-US', symbol: 'NT$', symbolFr: 'NT$', symbolZh: 'NT$', area: 'm²', scale: 20 },
+  { code: 'MXN', label: 'Mexican peso ($)', labelFr: 'Peso mexicain ($)', labelEs: 'Peso mexicano ($)', localeEs: 'es-MX', locale: 'en-US', symbol: '$', symbolFr: '$ MX', area: 'm²', scale: 5 },
+  { code: 'COP', label: 'Colombian peso ($)', labelFr: 'Peso colombien ($)', labelEs: 'Peso colombiano ($)', localeEs: 'es-CO', locale: 'en-US', symbol: '$', symbolFr: '$ CO', area: 'm²', scale: 1000, whole: true },
+  { code: 'ARS', label: 'Argentine peso ($)', labelFr: 'Peso argentin ($)', labelEs: 'Peso argentino ($)', localeEs: 'es-AR', locale: 'en-US', symbol: '$', symbolFr: '$ AR', area: 'm²', scale: 400, whole: true },
+  { code: 'CLP', label: 'Chilean peso ($)', labelFr: 'Peso chilien ($)', labelEs: 'Peso chileno ($)', localeEs: 'es-CL', locale: 'en-US', symbol: '$', symbolFr: '$ CL', area: 'm²', scale: 300, whole: true },
+  { code: 'PEN', label: 'Peruvian sol (S/)', labelFr: 'Sol péruvien (S/)', labelEs: 'Sol peruano (S/)', localeEs: 'es-PE', locale: 'en-US', symbol: 'S/', symbolFr: 'S/', area: 'm²', scale: 1 },
 ];
 
 /** The currencies offered on the pages of each language, the default first. */
@@ -84,6 +96,7 @@ export const CURRENCIES_BY_LOCALE: Record<Locale, ReadonlyArray<CurrencyCode>> =
   en: ['USD', 'GBP', 'EUR', 'CAD', 'AUD', 'INR', 'NGN', 'KES', 'GHS', 'ZAR', 'SGD', 'MYR', 'PHP', 'XAF', 'XOF'],
   fr: ['EUR', 'XOF', 'XAF', 'MAD', 'TND', 'DZD', 'CHF', 'CAD'],
   zh: ['CNY', 'SGD', 'MYR', 'HKD', 'TWD', 'USD', 'CAD', 'AUD', 'GBP', 'EUR'],
+  es: ['EUR', 'MXN', 'COP', 'ARS', 'CLP', 'PEN', 'USD'],
 };
 
 export const currencyOf = (code: CurrencyCode): Currency => CURRENCIES.find((c) => c.code === code) ?? CURRENCIES[0];
@@ -101,6 +114,7 @@ function currencyOfRegion(region: string): CurrencyCode | undefined {
     SN: 'XOF', CI: 'XOF', ML: 'XOF', BF: 'XOF', NE: 'XOF', TG: 'XOF', BJ: 'XOF', GW: 'XOF',
     CM: 'XAF', GA: 'XAF', CG: 'XAF', CF: 'XAF', TD: 'XAF', GQ: 'XAF',
     MA: 'MAD', TN: 'TND', DZ: 'DZD', CH: 'CHF', LI: 'CHF', CN: 'CNY', HK: 'HKD', TW: 'TWD',
+    MX: 'MXN', CO: 'COP', AR: 'ARS', CL: 'CLP', PE: 'PEN', EC: 'USD', PA: 'USD', SV: 'USD', PR: 'USD',
   };
   return map[r];
 }
@@ -115,6 +129,8 @@ const ZONE_REGIONS: Record<string, string> = {
   'Africa/Casablanca': 'MA', 'Africa/El_Aaiun': 'MA', 'Africa/Tunis': 'TN', 'Africa/Algiers': 'DZ', 'Europe/Zurich': 'CH',
   'Asia/Shanghai': 'CN', 'Asia/Urumqi': 'CN', 'Asia/Chongqing': 'CN', 'Asia/Harbin': 'CN', 'Asia/Hong_Kong': 'HK',
   'Asia/Taipei': 'TW', 'Europe/London': 'GB', 'Indian/Reunion': 'RE', 'America/Martinique': 'MQ', 'America/Guadeloupe': 'GP', 'America/Cayenne': 'GF',
+  'America/Bogota': 'CO', 'America/Buenos_Aires': 'AR', 'America/Santiago': 'CL', 'America/Punta_Arenas': 'CL', 'America/Lima': 'PE',
+  'America/Guayaquil': 'EC', 'America/Panama': 'PA', 'America/El_Salvador': 'SV', 'America/Puerto_Rico': 'PR',
 };
 
 function regionOfTimeZone(): string | undefined {
@@ -124,6 +140,8 @@ function regionOfTimeZone(): string | undefined {
     if (zone.startsWith('Australia/')) return 'AU';
     if (/^America\/(Toronto|Montreal|Vancouver|Edmonton|Winnipeg|Halifax|St_Johns|Regina|Moncton|Whitehorse|Yellowknife|Iqaluit)$/.test(zone)) return 'CA';
     if (/^America\/(New_York|Chicago|Denver|Los_Angeles|Phoenix|Anchorage|Detroit|Indiana\/.+|Boise)$/.test(zone) || zone === 'Pacific/Honolulu') return 'US';
+    if (zone.startsWith('America/Argentina/')) return 'AR';
+    if (/^America\/(Mexico_City|Monterrey|Merida|Cancun|Chihuahua|Ciudad_Juarez|Ojinaga|Matamoros|Mazatlan|Bahia_Banderas|Hermosillo|Tijuana)$/.test(zone)) return 'MX';
     if (zone.startsWith('Europe/')) return undefined;
   } catch {
     // No Intl time zone: the browser's language decides.
@@ -204,6 +222,26 @@ export function formatZh(code: CurrencyCode): ToolFormat {
   };
 }
 
+/** Countries that write the decimal mark as a comma and group thousands with a point. */
+const COMMA_DECIMAL = ['es-ES', 'es-CO', 'es-AR', 'es-CL'];
+
+/**
+ * Spanish pages: amounts as the currency's country writes them ("1.180 €",
+ * "$1,180", "$ 1.180", "S/ 1,180"), and typed amounts read the same way.
+ */
+export function formatEs(code: CurrencyCode): ToolFormat {
+  const c = currencyOf(code);
+  const locale = c.localeEs ?? 'es-ES';
+  return {
+    money: (n) => moneyIntl(n, locale, c.code, true),
+    moneyExact: (n) => moneyIntl(n, locale, c.code, !!c.whole),
+    pct: (r) => `${Math.round(r * 100)}\u00a0%`,
+    parse: COMMA_DECIMAL.includes(locale) ? parseAmountCommaDecimal : parseAmountEn,
+    symbol: c.symbol,
+    example: exampleIn(c),
+  };
+}
+
 /** The format of a currency on the pages of a language. */
 export const formatOf = (code: CurrencyCode, locale: Locale): ToolFormat =>
-  locale === 'en' ? formatEn(code) : locale === 'zh' ? formatZh(code) : formatFr(code);
+  locale === 'en' ? formatEn(code) : locale === 'zh' ? formatZh(code) : locale === 'es' ? formatEs(code) : formatFr(code);

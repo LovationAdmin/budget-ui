@@ -74,6 +74,11 @@ const BudgetCalculatorZh = lazy(() => import('./lib/pages/zh/BudgetCalculator'))
 const RentSplitCalculatorZh = lazy(() => import('./lib/pages/zh/RentSplitCalculator'));
 const WeddingBudgetCalculatorZh = lazy(() => import('./lib/pages/zh/WeddingBudgetCalculator'));
 const LeftoverIncomeCalculatorZh = lazy(() => import('./lib/pages/zh/LeftoverIncomeCalculator'));
+const HomeEs = lazy(() => import('./lib/pages/es/Home'));
+const BudgetCalculatorEs = lazy(() => import('./lib/pages/es/BudgetCalculator'));
+const RentSplitCalculatorEs = lazy(() => import('./lib/pages/es/RentSplitCalculator'));
+const WeddingBudgetCalculatorEs = lazy(() => import('./lib/pages/es/WeddingBudgetCalculator'));
+const LeftoverIncomeCalculatorEs = lazy(() => import('./lib/pages/es/LeftoverIncomeCalculator'));
 const Profile = lazy(() => import('./lib/pages/Profile'));
 const Overview = lazy(() => import('./lib/pages/Overview'));
 const AcceptInvitation = lazy(() => import('./lib/pages/AcceptInvitation'));
@@ -153,6 +158,11 @@ export default function App() {
           <Route path="/zh/rent-split-calculator" element={<RentSplitCalculatorZh />} />
           <Route path="/zh/wedding-budget-calculator" element={<WeddingBudgetCalculatorZh />} />
           <Route path="/zh/leftover-income-calculator" element={<LeftoverIncomeCalculatorZh />} />
+          <Route path="/es" element={<HomeEs />} />
+          <Route path="/es/calculadora-presupuesto-50-30-20" element={<BudgetCalculatorEs />} />
+          <Route path="/es/calculadora-dividir-alquiler" element={<RentSplitCalculatorEs />} />
+          <Route path="/es/calculadora-presupuesto-boda" element={<WeddingBudgetCalculatorEs />} />
+          <Route path="/es/calculadora-dinero-disponible" element={<LeftoverIncomeCalculatorEs />} />
           <Route path="/about" element={<About />} />
           <Route path="/help" element={<Help />} />
           <Route path="/premium" element={<PremiumPage />} />
