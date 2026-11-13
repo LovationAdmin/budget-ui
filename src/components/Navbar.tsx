@@ -7,7 +7,8 @@ import { useState, useMemo } from 'react';
 import { BudgetNavbar, NavItem } from './budget/BudgetNavbar';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { APP_LOCALES, LOCALES, alternatesOf, localizedPath } from '@/i18n/locales';
+import { APP_LOCALES, LOCALES, alternatesOf, localizedPath, type Locale } from '@/i18n/locales';
+import { ES_TOOLS } from '@/i18n/es/tools';
 import { defineMessages, useLocale, useT } from '@/i18n/runtime';
 import {
   LayoutDashboard,
@@ -22,24 +23,33 @@ import {
   Users,
   Heart,
   Wallet,
+  FileSpreadsheet,
 } from 'lucide-react';
 
 const NAV_MESSAGES = defineMessages({
   fr: { home: 'Accueil', features: 'Fonctionnalités', smartTools: 'Outils IA', premium: 'Premium', blog: 'Blog', help: 'Aide', dashboard: 'Mes Budgets' },
   en: { home: 'Home', features: 'Features', smartTools: 'AI tools', premium: 'Premium', blog: 'Blog', help: 'Help', dashboard: 'My budgets' },
   zh: { home: '首页', features: '功能', smartTools: 'AI 工具', premium: '高级版', blog: '博客', help: '帮助', dashboard: '我的预算' },
+  es: { home: 'Inicio', features: 'Funciones', smartTools: 'Herramientas IA', premium: 'Premium', blog: 'Blog', help: 'Ayuda', dashboard: 'Mis presupuestos' },
 });
 
 /**
- * Languages with public pages only (Chinese): the bar lists the pages written
- * in it, the free calculators, rather than sections that would open in English.
+ * Languages with public pages only (Chinese, Spanish): the bar lists the pages
+ * written in it, the free calculators, rather than sections that would open in
+ * English.
  */
-const PAGES_ONLY_ITEMS: NavItem[] = [
-  { id: '/zh/50-30-20-budget-calculator', label: '50/30/20预算', icon: PieChart },
-  { id: '/zh/rent-split-calculator', label: '合租分摊', icon: Users },
-  { id: '/zh/wedding-budget-calculator', label: '婚礼预算', icon: Heart },
-  { id: '/zh/leftover-income-calculator', label: '每月结余', icon: Wallet },
-];
+const PAGES_ONLY_ITEMS: Partial<Record<Locale, NavItem[]>> = {
+  zh: [
+    { id: '/zh/50-30-20-budget-calculator', label: '50/30/20预算', icon: PieChart },
+    { id: '/zh/rent-split-calculator', label: '合租分摊', icon: Users },
+    { id: '/zh/wedding-budget-calculator', label: '婚礼预算', icon: Heart },
+    { id: '/zh/leftover-income-calculator', label: '每月结余', icon: Wallet },
+  ],
+  es: [
+    { id: '/es/plantilla-presupuesto-familiar', label: 'Plantilla', icon: FileSpreadsheet },
+    ...[PieChart, Users, Heart, Wallet].map((icon, i) => ({ id: ES_TOOLS[i].path, label: ES_TOOLS[i].short, icon })),
+  ],
+};
 
 /** French path of each section; localizedPath gives the page in the screen's language when it exists. */
 const ROUTE_MAP: Record<string, string> = {
@@ -79,7 +89,7 @@ export default function Navbar() {
   const pagesOnly = !APP_LOCALES.includes(locale);
   const activeItems = useMemo<NavItem[]>(
     () => pagesOnly
-      ? [{ id: 'home', label: t.home, icon: Home }, ...PAGES_ONLY_ITEMS]
+      ? [{ id: 'home', label: t.home, icon: Home }, ...(PAGES_ONLY_ITEMS[locale] ?? [])]
       : [
         user
           ? { id: 'dashboard', label: t.dashboard, icon: LayoutDashboard }
@@ -90,7 +100,7 @@ export default function Navbar() {
         { id: 'blog', label: t.blog, icon: Newspaper },
         { id: 'help', label: t.help, icon: HelpCircle },
       ],
-    [user, t, pagesOnly]
+    [user, t, pagesOnly, locale]
   );
 
   const handleSectionChange = (section: string) => {

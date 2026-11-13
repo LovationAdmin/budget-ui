@@ -33,11 +33,12 @@ const MINUS = '−';
 const numberLocale = (): Locale => screenLocale();
 const frenchNumbers = (): boolean => numberLocale() === 'fr';
 
-/** Locale for Intl dates and numbers: fr-FR, zh-CN, or the browser's English (en-GB, en-US…) on English screens. */
+/** Locale for Intl dates and numbers: fr-FR, zh-CN, or the browser's Spanish (es-MX…) or English (en-GB, en-US…) on those screens. */
 export function intlLocale(): string {
   if (numberLocale() === 'fr') return 'fr-FR';
   if (numberLocale() === 'zh') return 'zh-CN';
   const browser = typeof navigator !== 'undefined' ? navigator.language : '';
+  if (numberLocale() === 'es') return /^es(-|$)/i.test(browser) ? browser : 'es-ES';
   return /^en(-|$)/i.test(browser) ? browser : 'en-US';
 }
 
@@ -126,9 +127,11 @@ export function moneyIntl(n: number, locale: string, currency: string, whole = f
   const key = `${locale}|${currency}|${decimals}`;
   let f = intlFormatters.get(key);
   if (!f) {
+    // Thousands always grouped: Spanish would otherwise write "1180 €" up to 9999.
     f = new Intl.NumberFormat(locale, {
       style: 'currency', currency, currencyDisplay: 'narrowSymbol', minimumFractionDigits: decimals, maximumFractionDigits: decimals,
-    });
+      useGrouping: 'always',
+    } as unknown as Intl.NumberFormatOptions);
     intlFormatters.set(key, f);
   }
   return f.format(Math.abs(v) < 0.005 ? 0 : v).replace('-', MINUS);
@@ -141,6 +144,21 @@ export function moneyBefore(n: number, symbol: string, whole = false): string {
   const v = roundCents(n);
   const shown = Math.abs(v) < 0.005 ? 0 : v;
   return `${shown < 0 ? MINUS : ''}${symbol}${grouped[decimalsFor(v, whole) ? 1 : 0].format(Math.abs(shown))}`;
+}
+
+/**
+ * Parses input where the comma is the decimal mark and the point separates
+ * thousands (Spain, Argentina, Chile, Colombia): "1.250,50", "1.250", "1250,5";
+ * a lone point not followed by three digits is a decimal mark ("12.5"). NaN when invalid.
+ */
+export function parseAmountCommaDecimal(input: string | number): number {
+  if (typeof input === 'number') return input;
+  let cleaned = String(input).replace(/[\s€$£]/g, '');
+  if (/^[-+]?\d{1,3}(\.\d{3})+(,\d+)?$/.test(cleaned)) cleaned = cleaned.replace(/\./g, '');
+  cleaned = cleaned.replace(',', '.');
+  if (cleaned === '') return NaN;
+  const n = Number(cleaned);
+  return Number.isFinite(n) ? n : NaN;
 }
 
 /** Parses English input, where the comma separates thousands: "1,250.50". Returns NaN when invalid. */

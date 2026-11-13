@@ -5,7 +5,9 @@
 // the case for letting the app do it. Targets the "tableau budget familial
 // excel / pdf gratuit" family of searches; in English (/en/free-budget-template),
 // "free budget template excel / printable" with files of its own
-// (scripts/templates/make-template-en.*).
+// (scripts/templates/make-template-en.*); in Spanish
+// (/es/plantilla-presupuesto-familiar), "plantilla presupuesto familiar excel
+// gratis", with files of its own too (scripts/templates/make-template-es.*).
 // ============================================================================
 
 import type { ReactNode } from 'react';
@@ -16,6 +18,7 @@ import { Footer } from '@/components/Footer';
 import { Button } from '@/components/ui/button';
 import { TEMPLATE_FAQ } from '@/seo/faq';
 import { TEMPLATE_FAQ_EN } from '@/seo/faq-template-en';
+import { TEMPLATE_FAQ_ES, TEMPLATE_PDF_ES, TEMPLATE_XLSX_ES } from '@/seo/es/template';
 import { defineMessages, useT } from '@/i18n/runtime';
 import { track } from '@/lib/analytics';
 import { Picture } from '@/components/Picture';
@@ -148,6 +151,63 @@ const M = defineMessages<{
     appImage: '/images/app/en/month-light.jpg',
     faqTitle: 'Frequently asked questions',
     faq: TEMPLATE_FAQ_EN,
+  },
+  es: {
+    xlsx: TEMPLATE_XLSX_ES,
+    pdf: TEMPLATE_PDF_ES,
+    xlsxEvent: 'plantilla-presupuesto-familiar.xlsx',
+    badge: 'Excel · Google Sheets · PDF para imprimir',
+    h1: 'Plantilla de presupuesto familiar gratuita',
+    lead: 'Una plantilla sencilla para llevar el presupuesto mensual del hogar: ingresos, gastos, ahorro, y cómo reparte una pareja la cuenta común.',
+    leadFile: 'En Excel las cuentas ya están hechas; el PDF se imprime y se rellena a mano. En cualquier moneda.',
+    xlsxLabel: 'Plantilla Excel (.xlsx)',
+    pdfLabel: 'PDF para imprimir',
+    sizes: 'Gratis y sin registro. Excel 14 KB · PDF A4, 3 páginas, 40 KB.',
+    orApp: 'O deja que la aplicación haga las cuentas',
+    insideTitle: 'Qué incluye la plantilla',
+    tab: (title) => `Pestaña «${title}»`,
+    tabs: [
+      { title: 'Presupuesto del mes', text: 'Ingresos, 13 tipos de gastos (vivienda, energía, compra, hijos…), ahorro, y el resto del mes ya calculado.' },
+      { title: 'Fondo común', text: 'Para parejas: lo que aporta cada persona a partes iguales, en proporción a los sueldos o con el mismo dinero de bolsillo.' },
+      { title: 'Año', text: 'Los 12 meses uno al lado del otro, con los gastos que llegan una vez al año (impuestos, seguros…) y el acumulado.' },
+    ],
+    previewTitle: 'La hoja de presupuesto para imprimir',
+    previewImage: '/images/modele/plantilla-presupuesto-familiar.webp',
+    previewAlt: 'Página 1 de la plantilla de presupuesto familiar para imprimir: ingresos netos, gastos fijos, ahorro y gastos del día a día, con las columnas previsto, real y diferencia',
+    previewCaption: 'Página 1 del PDF, para rellenar a mano.',
+    previewPages: [
+      ['Página 1 · Presupuesto del mes', ': ingresos, gastos fijos, ahorro y gastos del día a día, con lo previsto, lo real y la diferencia.'],
+      ['Página 2 · Gastos anuales y fondo común', ': lo que no llega todos los meses, pasado a un mes, y lo que aporta cada persona a la cuenta común.'],
+      ['Página 3 · Seguimiento del año', ': los totales de cada mes, para ver la tendencia de un vistazo.'],
+    ],
+    previewCta: 'Descargar la hoja (PDF)',
+    stepsTitle: 'Cómo hacer un presupuesto familiar en 4 pasos',
+    steps: [
+      ['1. Apunta los ingresos netos', ': sueldos, ayudas, pagas extra. En pareja, un sueldo por línea.'],
+      ['2. Anota los gastos del mes', ': primero los fijos (alquiler, energía, seguros, suscripciones) y después los del día a día (compra, transporte, ocio).'],
+      ['3. Decide el ahorro', ' antes de gastar: fondo de emergencia, vacaciones, un objetivo. Una referencia habitual es entre el 10 y el 20\u00a0% de los ingresos.'],
+      ['4. Mira el resto del mes', ': si es positivo, puedes ahorrar más; si es negativo, hay que revisar un gasto o el reparto.'],
+    ],
+    further: (
+      <>
+        Para ir más lejos: {link('/es/calculadora-presupuesto-50-30-20', 'la calculadora de presupuesto 50/30/20')},{' '}
+        {link('/es/calculadora-dinero-disponible', 'calcula tu dinero disponible')},{' '}
+        {link('/es/calculadora-dividir-alquiler', 'divide el alquiler entre compañeros de piso')} y{' '}
+        {link('/es/calculadora-presupuesto-boda', 'prepara el presupuesto de tu boda')}.
+      </>
+    ),
+    appTitle: 'El mismo presupuesto, sin copiarlo cada mes',
+    appPoints: [
+      'Cada mes se rellena a partir de tus reglas (alquiler mensual, un impuesto anual, comedor algunos meses)',
+      'Compartido con tu pareja, en tiempo real, en el móvil',
+      'Fondo común, dinero de bolsillo y gastos personales privados',
+      'Gratis, sin conectar tu banco. Disponible en inglés y en francés',
+    ],
+    appCta: 'Probar Budget Famille gratis',
+    appImageAlt: 'El presupuesto del mes en la aplicación Budget Famille (en inglés)',
+    appImage: '/images/app/en/month-light.jpg',
+    faqTitle: 'Preguntas frecuentes',
+    faq: TEMPLATE_FAQ_ES,
   },
 });
 

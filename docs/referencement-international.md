@@ -5,8 +5,9 @@ de recherche pour apparaître en Asie et en Afrique.
 
 ## Ce que le site fait déjà
 
-- **Trois langues, une URL chacune** : français à la racine, anglais sous
-  `/en`, chinois simplifié sous `/zh` (accueil et quatre calculateurs).
+- **Quatre langues, une URL chacune** : français à la racine, anglais sous
+  `/en`, chinois simplifié sous `/zh` et espagnol sous `/es` (accueil et quatre
+  calculateurs pour ces deux dernières).
   Chaque page traduite déclare ses versions (hreflang) dans son HTML et dans
   le sitemap ; le lecteur d'une autre langue est dirigé vers l'anglais
   (`x-default`).
@@ -14,7 +15,8 @@ de recherche pour apparaître en Asie et en Afrique.
   horaire du visiteur : franc CFA, dirham, dinars en français ; roupie,
   naira, shilling, cedi, rand, dollar de Singapour, ringgit, peso en
   anglais ; yuan, dollar de Singapour, ringgit, dollar de Hong Kong, de
-  Taïwan en chinois.
+  Taïwan en chinois ; euro, pesos mexicain, colombien, argentin et chilien,
+  sol péruvien et dollar en espagnol.
 - **IndexNow** annonce les pages nouvelles ou modifiées à Bing (et Yandex,
   Seznam, Naver) après chaque déploiement : `npm run seo:indexnow`.
 - **Google Analytics** reçoit la langue de chaque écran (`ui_language` :
@@ -120,6 +122,33 @@ locuteur natif. Faire relire `/zh` et les quatre calculateurs (une heure de
 travail pour un relecteur) avant de les promouvoir, et signaler les
 corrections : elles sont dans `src/i18n/zh/`, `src/lib/pages/zh/` et
 `src/seo/zh/`.
+
+## 8. Espagnol : Espagne, Amérique latine, États-Unis
+
+Les pages `/es` visent environ 500 millions de locuteurs natifs. Google domine
+dans tous ces pays ; Bing compte surtout aux États-Unis.
+
+1. **Demander l'indexation** dans Search Console (une dizaine par jour) :
+   - `https://www.budgetfamille.com/es`
+   - `https://www.budgetfamille.com/es/plantilla-presupuesto-familiar` (en
+     premier : le modèle gratuit est la page qui amène le plus de visites en
+     français, sur Google comme sur Bing)
+   - `https://www.budgetfamille.com/es/calculadora-presupuesto-50-30-20`
+   - `https://www.budgetfamille.com/es/calculadora-dividir-alquiler`
+   - `https://www.budgetfamille.com/es/calculadora-presupuesto-boda`
+   - `https://www.budgetfamille.com/es/calculadora-dinero-disponible`
+2. **IndexNow** les annonce à Bing au déploiement (`npm run seo:indexnow`).
+3. **Suivi** après 2 à 4 semaines : Performances → Page contenant `/es/`, onglet
+   « Pays » (Espagne, Mexique, Colombie, Argentine, Chili, Pérou, États-Unis).
+   Google Analytics reçoit `ui_language = es`.
+4. **Faire connaître** : les calculateurs se partagent bien dans les groupes
+   de colocation et de logement étudiant (« compañeros de piso », « roomies »),
+   les forums de mariage (bodas.net, bodas.com.mx) et les communautés de
+   finances personnelles. Publications aux heures locales (Madrid, Mexico,
+   Bogota, Buenos Aires) avec Metricool.
+5. **Si le trafic vient** : traduire l'application en espagnol (aujourd'hui
+   un lecteur espagnol s'inscrit dans une application en anglais, ce qui
+   freine l'inscription), puis le modèle Excel et quelques articles de blog.
 
 ## Calendrier
 

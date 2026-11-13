@@ -1,7 +1,7 @@
 // src/i18n/__tests__/i18n.test.ts
 // Languages of the public site (run with `npm test`): translated pages point
-// to each other and exist in the sitemap, English and Chinese amounts read and
-// print their way, and the English example says what its page publishes.
+// to each other and exist in the sitemap, English, Chinese and Spanish amounts
+// read and print their way, and the English example says what its page publishes.
 
 import { APP_LOCALES, LOCALES, TRANSLATIONS, alternatesOf, appLocale, hreflangsOf, localeOf, localizedPath, type Locale } from '../locales';
 import { EXAMPLE_EN, EXAMPLE_EN_HIGH_RENT } from '../en/budgetPerso';
@@ -11,7 +11,8 @@ import { RAV_EXAMPLE_EN } from '../en/resteAVivre';
 import { RAV_EXAMPLE_FR } from '../fr/resteAVivre';
 import { EN_TOOLS } from '../en/tools';
 import { ZH_TOOLS } from '../zh/tools';
-import { FORMAT_FR, formatEn, formatFr, formatZh, CURRENCIES_BY_LOCALE, currencyOf } from '../format';
+import { ES_TOOLS } from '../es/tools';
+import { FORMAT_FR, formatEn, formatEs, formatFr, formatZh, CURRENCIES_BY_LOCALE, currencyOf } from '../format';
 import { scaleAmounts } from '@/lib/tools/scaleAmounts';
 import { moneyIntl, parseAmountEn } from '@/lib/budget/format';
 import { computeBudgetPerso } from '@/lib/tools/budgetPerso';
@@ -23,6 +24,10 @@ import { BUDGET_503020_PAGE_ZH } from '@/seo/zh/budget-503020';
 import { RENT_SPLIT_PAGE_ZH } from '@/seo/zh/rent-split';
 import { WEDDING_PAGE_ZH } from '@/seo/zh/wedding';
 import { LEFTOVER_INCOME_PAGE_ZH } from '@/seo/zh/leftover-income';
+import { BUDGET_503020_PAGE_ES } from '@/seo/es/budget-503020';
+import { RENT_SPLIT_PAGE_ES } from '@/seo/es/rent-split';
+import { WEDDING_PAGE_ES } from '@/seo/es/wedding';
+import { LEFTOVER_INCOME_PAGE_ES } from '@/seo/es/leftover-income';
 import { PAGES } from '@/seo/site';
 import { BLOG_PAIRS } from '@/data/blog-pairs';
 import { blogArticles } from '@/data/blog-articles';
@@ -241,4 +246,56 @@ test('Chinese examples: the yuan figures their prerendered summaries publish', (
   const rav = scaleAmounts(RAV_EXAMPLE_EN, f.example, ['household']);
   const left = computeResteAVivre(rav.household, rav.incomes, rav.charges);
   says(LEFTOVER_INCOME_PAGE_ZH, f.money(left.revenus), f.money(left.charges), f.money(left.reste), f.money(left.parPersonne));
+});
+
+test('Spanish amounts: each country writes and reads them its own way', () => {
+  const nb = (x: string) => x.replace(/[\u00a0\u202f]/g, ' ');
+  const eur = formatEs('EUR');
+  eq([eur.money(4000), eur.moneyExact(16.67), eur.money(-1200.4), eur.pct(0.55)].map(nb), ['4.000 €', '16,67 €', '−1.200 €', '55 %']);
+  eq([eur.parse('1.250,50'), eur.parse('1.250'), eur.parse('1250,5'), eur.parse('12.5')], [1250.5, 1250, 1250.5, 12.5]);
+  const mxn = formatEs('MXN');
+  eq([mxn.money(20000), mxn.moneyExact(16.67), mxn.parse('1,250.50')], ['$20,000', '$16.67', 1250.5]);
+  eq(nb(formatEs('COP').moneyExact(4000000.4)), '$ 4.000.000', 'no cents in Colombian pesos');
+  eq(formatEs('CLP').parse('1.200.000'), 1200000);
+  eq(nb(formatEs('PEN').money(4000)), 'S/ 4,000');
+  for (const c of CURRENCIES_BY_LOCALE.es) eq([!!currencyOf(c).labelEs, !!currencyOf(c).localeEs], [true, true], c);
+  eq(formatEs('MXN').example(4000), 20000);
+  eq(formatEs('COP').example(1300), 1300000);
+});
+
+test('Spanish pages: each one in the site and the sitemap, paired with French and English', () => {
+  const pages = new Map(PAGES.map((p) => [p.path, p]));
+  for (const path of [LOCALES.es.home, '/es/plantilla-presupuesto-familiar', ...ES_TOOLS.map((t) => t.path)]) {
+    eq(localeOf(path), 'es', path);
+    eq(!!pages.get(path) && !pages.get(path)?.noindex, true, path);
+    const alts = alternatesOf(path);
+    eq([!!alts?.fr, !!alts?.en], [true, true], path);
+    eq(hreflangsOf(path).some((h) => h.hreflang === 'es' && h.path === path), true, path);
+  }
+  eq(localeOf('/establir'), 'fr', 'a French path that starts like /es is not Spanish');
+});
+
+test('the app is in French and English: Spanish readers get English, links fall back to it', () => {
+  eq(APP_LOCALES.includes('es'), false);
+  eq(appLocale('es'), 'en');
+  eq(localizedPath('/budget-colocation', 'es'), '/es/calculadora-dividir-alquiler');
+  eq(localizedPath('/help', 'es'), '/en/help');
+  eq(localizedPath('/signup', 'es'), '/signup');
+});
+
+test('Spanish examples: the euro figures their prerendered summaries publish', () => {
+  const f = formatEs('EUR');
+  const says = (page: { sections?: Array<{ text: string }> }, ...figures: string[]) =>
+    figures.forEach((x) => eq(page.sections?.some((sec) => sec.text.includes(x)), true, x));
+  const r = computeBudgetPerso(EXAMPLE_EN.incomes, EXAMPLE_EN.needs);
+  says(BUDGET_503020_PAGE_ES, f.money(r.revenus), f.money(r.besoins), f.money(r.envies), f.money(r.epargne));
+  const coloc = colocExampleEn('m²');
+  const equal = computeColocation({ ...coloc, method: 'egal' }).shares[0].total;
+  const byRoom = computeColocation({ ...coloc, method: 'chambre' }).shares.map((x) => f.moneyExact(x.total));
+  const byIncome = computeColocation({ ...coloc, method: 'revenus' }).shares.map((x) => f.moneyExact(x.total));
+  says(RENT_SPLIT_PAGE_ES, f.moneyExact(coloc.rent), f.moneyExact(equal), ...byRoom, ...byIncome);
+  const wedding = exampleResult(WEDDING_EXAMPLE);
+  says(WEDDING_PAGE_ES, f.money(wedding.total), f.money(wedding.costPerGuest), f.money(wedding.fewerGuests.saving), f.money(wedding.monthly));
+  const left = computeResteAVivre(RAV_EXAMPLE_EN.household, RAV_EXAMPLE_EN.incomes, RAV_EXAMPLE_EN.charges);
+  says(LEFTOVER_INCOME_PAGE_ES, f.money(left.revenus), f.money(left.charges), f.money(left.reste), f.money(left.parPersonne), f.money(left.parUnite));
 });

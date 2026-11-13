@@ -10,11 +10,11 @@
 
 import { DEFAULT_LOCALE, type Locale } from './locales';
 
-/** French and English always; other languages (Chinese) where written, English otherwise. */
-export type Messages<T> = { fr: T; en: T; zh?: T };
+/** French and English always; other languages (Chinese, Spanish) where written, English otherwise. */
+export type Messages<T> = { fr: T; en: T; zh?: T; es?: T };
 
-/** The words of a component or module in each language; `en` (and `zh`, when given) must have the same keys as `fr`. */
-export const defineMessages = <T,>(messages: { fr: T; en: NoInfer<T>; zh?: NoInfer<T> }): Messages<T> => messages;
+/** The words of a component or module in each language; `en` (and `zh` or `es`, when given) must have the same keys as `fr`. */
+export const defineMessages = <T,>(messages: { fr: T; en: NoInfer<T>; zh?: NoInfer<T>; es?: NoInfer<T> }): Messages<T> => messages;
 
 /** The words in a language, English when they aren't written in it. */
 export const wordsIn = <T,>(messages: Messages<T>, locale: Locale): T => messages[locale] ?? messages.en;

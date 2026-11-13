@@ -4,7 +4,8 @@
 // browser by <RouteSEO /> (title/description/canonical on navigation) and at
 // build time by scripts/prerender.mjs, which writes one HTML file per page
 // with its own head, structured data and readable content. Pages under /en/
-// are in English, under /zh/ in simplified Chinese (src/seo/zh/);
+// are in English, under /zh/ in simplified Chinese (src/seo/zh/), under /es/
+// in Spanish (src/seo/es/);
 // src/i18n/locales.ts pairs each with its French version.
 // ============================================================================
 
@@ -13,6 +14,12 @@ import { BUDGET_503020_PAGE_ZH } from './zh/budget-503020';
 import { RENT_SPLIT_PAGE_ZH } from './zh/rent-split';
 import { WEDDING_PAGE_ZH } from './zh/wedding';
 import { LEFTOVER_INCOME_PAGE_ZH } from './zh/leftover-income';
+import { HOME_PAGE_ES } from './es/home';
+import { TEMPLATE_PAGE_ES } from './es/template';
+import { BUDGET_503020_PAGE_ES } from './es/budget-503020';
+import { RENT_SPLIT_PAGE_ES } from './es/rent-split';
+import { WEDDING_PAGE_ES } from './es/wedding';
+import { LEFTOVER_INCOME_PAGE_ES } from './es/leftover-income';
 import { SITE, SITE_NAME, DEFAULT_IMAGE, absolute, SOCIAL_PROFILES } from './identity';
 
 export { SITE, SITE_NAME, DEFAULT_IMAGE, absolute, SOCIAL_PROFILES, type SocialNetwork } from './identity';
@@ -421,6 +428,12 @@ export const PAGES: PageSEO[] = [
   RENT_SPLIT_PAGE_ZH,
   WEDDING_PAGE_ZH,
   LEFTOVER_INCOME_PAGE_ZH,
+  HOME_PAGE_ES,
+  TEMPLATE_PAGE_ES,
+  BUDGET_503020_PAGE_ES,
+  RENT_SPLIT_PAGE_ES,
+  WEDDING_PAGE_ES,
+  LEFTOVER_INCOME_PAGE_ES,
   // A form, like /login: kept out of the index and the sitemap so that Google
   // spends its visits on the pages that answer searches.
   { path: '/signup', title: 'Créer un compte gratuit – Budget Famille', description: 'Créez votre budget gratuit en 1 minute, seul ou à plusieurs : sans carte bancaire, sans connexion à votre banque.', noindex: true, h1: 'Créez votre budget gratuit' },

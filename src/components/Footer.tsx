@@ -1,8 +1,8 @@
 // src/components/Footer.tsx
 // Site footer, in the language of the screen. Links go to the page in that
-// language; in English or Chinese, only the pages that exist in that language
-// are listed (the legal pages are always there, in English for Chinese
-// readers).
+// language; in English, Chinese or Spanish, only the pages that exist in that
+// language are listed (the legal pages are always there, in English for
+// Chinese and Spanish readers).
 import { Link } from 'react-router-dom';
 import { ShieldCheck, Mail, HelpCircle, FileText, Sparkles, Info } from 'lucide-react';
 import { BudgetLogo } from '@/components/budget/BudgetLogo';
@@ -85,6 +85,31 @@ const M = defineMessages({
       '/privacy': '隐私政策',
     },
     legalNote: '（英文）',
+  },
+  es: {
+    tagline: 'Presupuesta y planifica lo que importa, a solas o en compañía: familia, pareja, piso compartido, proyectos.',
+    follow: 'Síguenos',
+    product: 'Calculadoras gratuitas',
+    support: 'Ayuda',
+    company: 'Empresa',
+    helpCenter: 'Centro de ayuda (en inglés)',
+    contact: 'Contacto',
+    trust: ['Datos cifrados con AES-256', 'Conforme al RGPD', 'Hecho en Europa 🇪🇺'],
+    links: {
+      '/features': 'Funciones',
+      '/premium': 'Premium (próximamente)',
+      '/tableau-budget-familial-gratuit': 'Plantilla de presupuesto gratuita',
+      '/calcul-reste-a-vivre': 'Calculadora de dinero disponible',
+      '/budget-personnel': 'Calculadora de presupuesto 50/30/20',
+      '/budget-couple': 'Calculadora de presupuesto en pareja',
+      '/budget-colocation': 'Calculadora para dividir el alquiler',
+      '/budget-mariage': 'Calculadora de presupuesto de boda',
+      '/blog': 'Consejos de presupuesto',
+      '/about': 'Quiénes somos',
+      '/terms': 'Condiciones de uso',
+      '/privacy': 'Privacidad',
+    },
+    legalNote: ' (en inglés)',
   },
 });
 
