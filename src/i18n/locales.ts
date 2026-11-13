@@ -59,7 +59,7 @@ export const TRANSLATIONS: ReadonlyArray<Partial<Record<Locale, string>>> = [
   { fr: '/about', en: '/en/about' },
   { fr: '/privacy', en: '/en/privacy' },
   { fr: '/terms', en: '/en/terms' },
-  { fr: '/blog', en: '/en/blog' },
+  { fr: '/blog', en: '/en/blog', es: '/es/blog' },
   ...BLOG_PAIRS.map((p) => ({ fr: `/blog/${p.fr}`, en: `/en/blog/${p.en}` })),
 ];
 

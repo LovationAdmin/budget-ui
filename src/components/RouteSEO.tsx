@@ -20,7 +20,7 @@ export function RouteSEO() {
     if (localeOf(pathname) !== 'fr') setPreference(localeOf(pathname));
   }, [pathname, setPreference]);
   useEffect(() => {
-    if (/^(\/en)?\/blog\/[^/]+/.test(pathname)) return;
+    if (/^(\/(en|es))?\/blog\/[^/]+/.test(pathname)) return;
     let current = true;
     import('@/seo/site').then(({ pageSEO }) => {
       if (!current) return;

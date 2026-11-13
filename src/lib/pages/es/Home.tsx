@@ -129,6 +129,14 @@ export default function HomeEs() {
             </div>
           </section>
 
+          <section>
+            <h2>Ejemplos de presupuesto por país</h2>
+            <ul className="mt-4 list-disc space-y-2 pl-5">
+              <li><Link to="/es/blog/presupuesto-familiar-mexico-cdmx" className="font-medium text-primary hover:underline">Presupuesto familiar en México</Link>: una familia de 4 en la CDMX, en pesos, con la quincena y el aguinaldo.</li>
+              <li><Link to="/es/blog/presupuesto-familiar-espana-madrid" className="font-medium text-primary hover:underline">Presupuesto familiar en España</Link>: una familia de 4 en Madrid, con el alquiler y las pagas extra.</li>
+            </ul>
+          </section>
+
           <FaqList id="faq-home-es" items={HOME_FAQ_ES} title="Preguntas frecuentes" />
         </ToolArticle>
       </main>

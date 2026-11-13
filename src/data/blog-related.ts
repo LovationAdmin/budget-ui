@@ -7,16 +7,19 @@
 import type { Locale } from '@/i18n/locales';
 import { blogArticles, type BlogArticleContent } from './blog-articles';
 import { blogArticlesEn } from './blog-articles-en';
+import { blogArticlesEs } from './blog-articles-es';
 
 /** The articles of a language. */
-export const articlesOf = (locale: Locale): BlogArticleContent[] => (locale === 'en' ? blogArticlesEn : blogArticles);
+export const articlesOf = (locale: Locale): BlogArticleContent[] => (locale === 'en' ? blogArticlesEn : locale === 'es' ? blogArticlesEs : blogArticles);
 
 /** The language of an article. */
-export const articleLocale = (article: BlogArticleContent): Locale => (blogArticlesEn.includes(article) ? 'en' : 'fr');
+export const articleLocale = (article: BlogArticleContent): Locale => (blogArticlesEn.includes(article) ? 'en' : blogArticlesEs.includes(article) ? 'es' : 'fr');
 
-/** URL of an article: /blog/… in French, /en/blog/… in English. */
-export const articlePath = (article: BlogArticleContent): string =>
-  `${articleLocale(article) === 'en' ? '/en' : ''}/blog/${article.slug}`;
+/** URL of an article: /blog/… in French, /en/blog/… in English, /es/blog/… in Spanish. */
+export const articlePath = (article: BlogArticleContent): string => {
+  const locale = articleLocale(article);
+  return `${locale === 'fr' ? '' : `/${locale}`}/blog/${article.slug}`;
+};
 
 /** Articles newest first (last significant update, else publication). */
 export const articlesByDate = (locale: Locale = 'fr'): BlogArticleContent[] =>

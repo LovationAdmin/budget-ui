@@ -45,6 +45,21 @@ const M = defineMessages({
     ctaText: 'Free, no credit card. On your own or together: family, couple, roommates.',
     cta: 'Create my free budget',
   },
+  es: {
+    notFoundTitle: 'Artículo no encontrado',
+    notFoundText: 'Este artículo no existe.',
+    notFound: 'Artículo no encontrado',
+    sorry: 'Lo sentimos, este artículo no existe o se ha eliminado.',
+    back: 'Volver al blog',
+    updated: 'Actualizado el ',
+    tags: 'Etiquetas',
+    related: 'Sigue leyendo',
+    template: 'Plantilla de presupuesto familiar gratuita',
+    templateText: 'Excel con las cuentas ya hechas, o PDF para imprimir. Sin registro.',
+    ctaTitle: 'Tu presupuesto y tus objetivos, calculados cada mes',
+    ctaText: 'Gratis, sin tarjeta. A solas o en compañía. La aplicación está en inglés y en francés.',
+    cta: 'Crear mi presupuesto gratis',
+  },
 });
 
 export default function BlogArticle() {

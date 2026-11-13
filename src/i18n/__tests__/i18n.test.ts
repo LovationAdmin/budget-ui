@@ -32,6 +32,7 @@ import { PAGES } from '@/seo/site';
 import { BLOG_PAIRS } from '@/data/blog-pairs';
 import { blogArticles } from '@/data/blog-articles';
 import { blogArticlesEn } from '@/data/blog-articles-en';
+import { blogArticlesEs } from '@/data/blog-articles-es';
 
 type Fn = () => void;
 const tests: Array<{ name: string; fn: Fn }> = [];
@@ -71,6 +72,7 @@ test('every translated page: in its language, indexable, in the sitemap (pages a
     ...PAGES.filter((p) => !p.noindex && !p.canonical).map((p) => p.path),
     ...blogArticles.map((a) => `/blog/${a.slug}`),
     ...blogArticlesEn.map((a) => `/en/blog/${a.slug}`),
+    ...blogArticlesEs.map((a) => `/es/blog/${a.slug}`),
   ]);
   for (const t of TRANSLATIONS) {
     for (const [l, path] of Object.entries(t) as Array<[Locale, string]>) {

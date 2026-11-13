@@ -175,6 +175,8 @@ export default function App() {
           <Route path="/blog/:slug" element={<BlogArticle />} />
           <Route path="/en/blog" element={<Blog />} />
           <Route path="/en/blog/:slug" element={<BlogArticle />} />
+          <Route path="/es/blog" element={<Blog />} />
+          <Route path="/es/blog/:slug" element={<BlogArticle />} />
 
           {/* AUTHENTICATED — top level */}
           <Route

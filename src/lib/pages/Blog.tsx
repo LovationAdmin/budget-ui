@@ -42,6 +42,7 @@ const CATEGORY_ICONS: Record<string, typeof TrendingUp> = {
   Method: Target,
   Couples: Users,
   Savings: TrendingUp,
+  Internacional: Globe2,
 };
 
 const M = defineMessages({
@@ -78,6 +79,23 @@ const M = defineMessages({
     nextText: 'A free template to download, or the app that does the math for you every month.',
     template: 'Free family budget template',
     signup: 'Create my free budget',
+  },
+  es: {
+    all: 'Todos',
+    back: 'Volver',
+    badge: 'Consejos y guías',
+    title: 'El blog de Budget Famille',
+    intro: 'Guías prácticas para llevar tu presupuesto, a solas o en compañía: familia, pareja, ahorro para un objetivo, ejemplos por país.',
+    search: 'Buscar un artículo...',
+    featured: 'Artículos destacados',
+    read: 'Leer →',
+    allArticles: 'Todos los artículos',
+    none: 'No se encontró ningún artículo',
+    by: (author: string) => `Por ${author}`,
+    nextTitle: 'De la lectura a tu presupuesto',
+    nextText: 'Una plantilla gratuita para descargar, o la aplicación que hace las cuentas cada mes.',
+    template: 'Plantilla de presupuesto gratuita',
+    signup: 'Crear mi presupuesto gratis',
   },
 });
 
