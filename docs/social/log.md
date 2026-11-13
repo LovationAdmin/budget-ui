@@ -5,6 +5,7 @@ Une ligne par semaine, la plus récente en haut, ajoutée par la PR de la semain
 
 | Semaine | Marché | Article (slug) [+ anglais] | Requête visée | Post B → lien | PR |
 |---|---|---|---|---|---|
+| 13/11 (hors routine) | Belgique, Suisse | `budget-familial-belgique-bruxelles`, `budget-familial-suisse-romande` | « budget familial » (Search Console : Belgique 215 impressions, Suisse 47) | — (articles seuls ; kit croissance Pinterest et groupes) | croissance |
 | 30/10 (hors routine) | Québec | `budget-familial-quebec-montreal` | « budget familial », « budget famille », « budget familial efficace » (Search Console, Canada, positions 18 à 35) | — (article seul, sans posts) | admin + international |
 | 13/10 → 05/11 | France | Série de 8 posts (`serie-octobre-2026`), sans nouvel article | — (sans OpenRush) | `/calcul-reste-a-vivre`, `/outils-ia`, 4 articles | série d'automne |
 

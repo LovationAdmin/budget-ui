@@ -3193,5 +3193,330 @@ export const blogArticles: BlogArticleContent[] = [
         <p>Notez vos revenus, allocations comprises, puis vos dépenses fixes, une provision pour les dépenses annuelles et l'épargne. Ce qui reste est votre marge : si elle couvre les imprévus, le budget tient.</p>
       </div>
     )
+  },
+  {
+    id: '14',
+    title: "Budget familial en Belgique : l'exemple d'une famille de 4 à Bruxelles",
+    slug: "budget-familial-belgique-bruxelles",
+    excerpt: "Le budget d'une famille de 4 à Bruxelles : loyer, énergie, courses, allocations familiales 2026, chèques-repas à 10 €, pécule de vacances et prime de fin d'année.",
+    category: "International",
+    author: "Équipe Budget Famille",
+    authorBio: "Experts en gestion budgétaire et développeurs de Budget Famille",
+    publishedAt: "2026-11-13",
+    readTime: "6 min",
+    tags: ["Belgique", "Bruxelles", "Wallonie", "Budget", "Famille", "Exemple"],
+    featured: true,
+    related: ["budget-famille-4-personnes-exemple", "compte-commun-couple-argent-de-poche", "etablir-budget-familial-5-etapes"],
+    content: (
+      <div className="prose prose-lg max-w-none">
+        <p className="lead">
+          En Belgique, le budget d'une famille se joue sur trois postes : le <strong>loyer</strong>, l'<strong>énergie</strong> et
+          les <strong>courses</strong>. Et sur une particularité : une partie des revenus n'arrive pas tous les mois (pécule de vacances,
+          prime de fin d'année, chèques-repas). Dans notre exemple bruxellois, une famille de 4 dépense environ 4 100 € par mois,
+          épargne non comprise. Voici le détail poste par poste, les montants de 2026 et la méthode pour adapter le vôtre.
+        </p>
+
+        <h2>📋 Exemple de budget mensuel d'une famille de 4 à Bruxelles</h2>
+        <p>
+          <strong>Le foyer de l'exemple</strong> : un couple locataire d'un appartement 3 chambres à Bruxelles, avec deux enfants de 4 et
+          9 ans, une voiture et un abonnement de transport en commun. Salaires nets : 2 600 € et 2 200 € par mois. Les allocations familiales,
+          les chèques-repas, le pécule de vacances et la prime de fin d'année ne sont pas comptés ici : ils s'ajoutent à la marge (voir plus bas).
+          Ces chiffres sont une illustration, pas une moyenne belge.
+        </p>
+        <div className="overflow-x-auto">
+          <table>
+            <thead>
+              <tr><th>Poste</th><th>Par mois</th><th>Part des revenus</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><strong>Salaires nets du foyer</strong></td><td><strong>4 800 €</strong></td><td>100 %</td></tr>
+              <tr><td>Loyer d'un appartement 3 chambres</td><td>1 450 €</td><td>30 %</td></tr>
+              <tr><td>Énergie (gaz et électricité, acomptes)</td><td>220 €</td><td>5 %</td></tr>
+              <tr><td>Eau</td><td>40 €</td><td>1 %</td></tr>
+              <tr><td>Courses (alimentation, hygiène, entretien)</td><td>850 €</td><td>18 %</td></tr>
+              <tr><td>Transport (une voiture, un abonnement)</td><td>420 €</td><td>9 %</td></tr>
+              <tr><td>Assurances (incendie, auto, hospitalisation)</td><td>170 €</td><td>4 %</td></tr>
+              <tr><td>GSM et internet</td><td>90 €</td><td>2 %</td></tr>
+              <tr><td>Enfants (garderie, repas à l'école, activités)</td><td>220 €</td><td>5 %</td></tr>
+              <tr><td>Santé (ce qui reste à votre charge)</td><td>80 €</td><td>2 %</td></tr>
+              <tr><td>Vêtements</td><td>120 €</td><td>3 %</td></tr>
+              <tr><td>Loisirs et sorties</td><td>200 €</td><td>4 %</td></tr>
+              <tr><td>Provision dépenses annuelles</td><td>250 €</td><td>5 %</td></tr>
+              <tr><td>Épargne</td><td>400 €</td><td>8 %</td></tr>
+              <tr><td><strong>Reste (marge pour les imprévus)</strong></td><td><strong>290 €</strong></td><td>6 %</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>
+          Total des dépenses : 4 110 €, épargne : 400 €. La <strong>marge de 290 €</strong> est mince : ce sont les allocations familiales
+          et les revenus « hors mois » qui donnent de l'air à ce budget.
+        </p>
+
+        <h2>🏠 Le loyer : Bruxelles n'est pas la Wallonie</h2>
+        <p>
+          Selon le baromètre des loyers de Federia (nouveaux baux, premier semestre 2026), le loyer moyen atteint <strong>1 401 € à Bruxelles</strong>,
+          tous logements confondus, avec un loyer médian de 1 250 €, contre <strong>910 € en moyenne en Wallonie</strong>. Un appartement
+          familial de 3 chambres se situe au-dessus de ces moyennes.
+        </p>
+        <p>Ce que cela change pour votre budget :</p>
+        <ul>
+          <li><strong>Regardez le loyer charges comprises</strong> : les charges communes (ascenseur, entretien, parfois chauffage) s'ajoutent au loyer et font l'objet d'un décompte annuel. Une régularisation peut tomber une fois par an : prévoyez-la dans la provision.</li>
+          <li><strong>L'indexation du loyer</strong> : le propriétaire peut indexer le loyer une fois par an, à la date anniversaire du bail, s'il le demande par écrit. Notez le mois dans votre budget.</li>
+          <li><strong>La garantie locative</strong> : deux ou trois mois de loyer selon la région et la formule. À épargner avant de déménager.</li>
+        </ul>
+
+        <h2>⚡ L'énergie : des acomptes, puis une régularisation</h2>
+        <p>
+          Vous payez chaque mois un <strong>acompte</strong>, et le fournisseur fait les comptes une fois par an. Si l'acompte est trop bas,
+          la facture de régularisation peut atteindre plusieurs centaines d'euros.
+        </p>
+        <ul>
+          <li>Après chaque décompte annuel, <strong>ajustez l'acompte</strong> à votre consommation réelle : mieux vaut un acompte juste qu'une mauvaise surprise.</li>
+          <li>Comparez les contrats une fois par an : c'est l'une des charges fixes les plus faciles à faire baisser.</li>
+          <li>Selon vos revenus ou votre statut, vous avez peut-être droit au <strong>tarif social</strong> : renseignez-vous auprès de votre CPAS ou de votre fournisseur.</li>
+        </ul>
+
+        <h2>💶 Les allocations familiales en 2026</h2>
+        <p>
+          Les allocations sont régionales : le montant dépend de la région où vit l'enfant et, pour les plus grands, de sa date de naissance.
+        </p>
+        <ul>
+          <li>
+            <strong>En Wallonie</strong>, chaque enfant né à partir de 2020 reçoit un montant de base de <strong>196,57 € par mois</strong> jusqu'à 17 ans,
+            puis de 209,25 € de 18 à 24 ans (montants indexés en mars 2026, d'après la caisse Parentia).
+          </li>
+          <li>
+            <strong>À Bruxelles</strong>, le montant de base est du même ordre et augmente avec l'âge de l'enfant ; il est versé par votre caisse,
+            sous le contrôle d'Iriscare.
+          </li>
+          <li>
+            Des <strong>suppléments</strong> existent selon les revenus du ménage, pour les familles monoparentales ou nombreuses, et un
+            <strong> supplément annuel</strong> est versé en août pour la rentrée, sans démarche.
+          </li>
+        </ul>
+        <p>
+          Pour connaître votre montant exact, utilisez le simulateur de votre caisse d'allocations familiales, puis ajoutez-le à la ligne des revenus.
+          Dans notre exemple, deux allocations de base représentent près de 400 € par mois : de quoi doubler la marge.
+        </p>
+
+        <h2>🗓️ Les revenus qui n'arrivent pas tous les mois</h2>
+        <p>C'est la grande particularité belge. Trois revenus échappent au budget mensuel si on n'y prend pas garde :</p>
+        <ul>
+          <li><strong>Le pécule de vacances</strong>, versé en général en mai ou en juin : idéal pour financer les vacances et la rentrée, plutôt que de disparaître dans le compte courant.</li>
+          <li><strong>La prime de fin d'année</strong> (le « 13e mois »), en décembre dans la plupart des secteurs : elle peut couvrir les fêtes, l'assurance auto annuelle ou regarnir l'épargne de précaution.</li>
+          <li>
+            <strong>Les chèques-repas</strong> : depuis le 1er janvier 2026, leur valeur peut atteindre <strong>10 € par jour travaillé</strong>
+            (8,91 € au plus à charge de l'employeur, 1,09 € au moins à la vôtre). Le passage à 10 € n'est pas automatique : il dépend de votre
+            employeur ou de votre secteur. Comptez-les comme une réduction du poste « courses ».
+          </li>
+        </ul>
+        <p>
+          La bonne méthode : construisez le budget du mois <strong>sans</strong> ces revenus, et décidez à l'avance à quoi servira chacun.
+          Pensez aussi à l'<strong>indexation automatique des salaires</strong> : selon votre commission paritaire, votre salaire suit l'inflation
+          à date fixe ou quand l'indice est dépassé. Quand il augmente, relevez d'abord l'épargne.
+        </p>
+
+        <h2>👶 La garde et l'école</h2>
+        <ul>
+          <li><strong>Crèche</strong> : dans un milieu d'accueil subventionné par l'ONE, la participation financière est calculée d'après les revenus du ménage. Hors subvention, le tarif est libre et bien plus élevé.</li>
+          <li><strong>Frais de garde</strong> : ils donnent droit à une réduction d'impôt pour les enfants de moins de 14 ans. Demandez l'attestation fiscale chaque année.</li>
+          <li><strong>École</strong> : garderie du matin et du soir, repas chauds, sorties et classes de dépaysement. Additionnez-les sur l'année, puis divisez par 12.</li>
+        </ul>
+
+        <h2>📅 Les dépenses qui ne tombent pas tous les mois</h2>
+        <p>
+          Dans l'exemple, 250 € par mois sont mis de côté pour : les <strong>fêtes</strong> de fin d'année et la Saint-Nicolas (600 €),
+          la <strong>rentrée</strong> (350 €), les <strong>vacances</strong> (1 300 €), l'<strong>assurance et la taxe de circulation</strong> de la voiture,
+          le contrôle technique et l'entretien (450 €), et les <strong>régularisations</strong> d'énergie et de charges (300 €),
+          soit 3 000 € par an ÷ 12. Propriétaire ? Ajoutez le <strong>précompte immobilier</strong>, qui arrive une fois par an.
+        </p>
+
+        <h2>✏️ Faire le vôtre en 15 minutes</h2>
+        <ol>
+          <li>Recopiez le tableau avec <strong>vos</strong> montants, à partir de vos trois derniers extraits de compte.</li>
+          <li>Ajoutez vos <strong>allocations familiales</strong> aux revenus, et la <strong>provision</strong> pour vos dépenses annuelles.</li>
+          <li>Fixez l'<strong>épargne</strong>, puis regardez le reste. La méthode pas à pas est dans <a href="/blog/etablir-budget-familial-5-etapes">établir un budget familial en 5 étapes</a>, et le partage entre conjoints dans <a href="/blog/compte-commun-couple-argent-de-poche">notre guide du compte commun</a>.</li>
+        </ol>
+        <p>
+          Pour aller vite, téléchargez notre <a href="/tableau-budget-familial-gratuit">tableau de budget familial gratuit</a> (Excel et PDF à imprimer),
+          ou calculez en une minute ce qu'il reste à votre foyer après les charges fixes avec le <a href="/calcul-reste-a-vivre">calculateur de reste à vivre</a>.
+          L'application Budget Famille remplit chaque mois à partir de vos règles, se partage entre conjoints en temps réel, et permet d'ouvrir
+          un budget à part pour un projet (déménagement, vacances, naissance).
+        </p>
+
+        <div className="bg-gradient-to-r from-primary to-purple-600 text-white rounded-xl p-8 text-center my-8">
+          <h3 className="text-2xl font-bold mb-4">Le budget de votre famille, chaque mois, à deux</h3>
+          <p className="text-lg mb-6 opacity-90">Gratuit, sans connexion bancaire obligatoire, partagé en temps réel.</p>
+          <a
+            href="/signup"
+            className="inline-block bg-white text-primary font-semibold px-8 py-3 rounded-lg hover:bg-gray-100 transition-colors"
+          >
+            Créer notre budget familial →
+          </a>
+        </div>
+
+        <h2>❓ Questions fréquentes</h2>
+        <h3>Quel budget pour une famille de 4 en Belgique ?</h3>
+        <p>Il dépend surtout du loyer, donc de la région. Dans notre exemple à Bruxelles, les dépenses atteignent 4 110 € par mois, plus 400 € d'épargne, pour 4 800 € de salaires nets, allocations familiales non comprises.</p>
+        <h3>Combien d'allocations familiales par enfant en 2026 ?</h3>
+        <p>En Wallonie, un enfant né à partir de 2020 reçoit 196,57 € par mois jusqu'à 17 ans (montant indexé en mars 2026). À Bruxelles, le montant de base est du même ordre et augmente avec l'âge. Des suppléments existent selon les revenus et la situation de la famille.</p>
+        <h3>Que faire du pécule de vacances et de la prime de fin d'année ?</h3>
+        <p>Ne les comptez pas dans le budget du mois. Décidez à l'avance de leur usage : vacances et rentrée pour le pécule, fêtes, dépenses annuelles et épargne pour la prime de fin d'année.</p>
+      </div>
+    )
+  },
+  {
+    id: '15',
+    title: "Budget familial en Suisse romande : l'exemple d'une famille de 4",
+    slug: "budget-familial-suisse-romande",
+    excerpt: "Le budget d'une famille de 4 en Suisse romande, en francs : loyer, primes maladie 2026 et 2027, impôts, garde, allocations familiales et 13e salaire.",
+    category: "International",
+    author: "Équipe Budget Famille",
+    authorBio: "Experts en gestion budgétaire et développeurs de Budget Famille",
+    publishedAt: "2026-11-13",
+    readTime: "6 min",
+    tags: ["Suisse", "Lausanne", "Genève", "Budget", "Famille", "Exemple"],
+    featured: true,
+    related: ["budget-famille-4-personnes-exemple", "compte-commun-couple-argent-de-poche", "combien-epargner-par-mois-objectif-date"],
+    content: (
+      <div className="prose prose-lg max-w-none">
+        <p className="lead">
+          En Suisse, un salaire net n'est pas encore un revenu disponible : il reste à payer les <strong>primes d'assurance-maladie</strong> et,
+          pour la plupart des résidents, les <strong>impôts</strong>. Avec le <strong>loyer</strong>, ces trois postes prennent près de la moitié du budget
+          de notre famille vaudoise de 4 personnes. Voici le détail poste par poste, les montants officiels de 2026 et la méthode pour adapter le vôtre.
+        </p>
+
+        <h2>📋 Exemple de budget mensuel d'une famille de 4 à Lausanne</h2>
+        <p>
+          <strong>Le foyer de l'exemple</strong> : un couple locataire d'un 4,5 pièces à Lausanne, avec deux enfants de 3 et 8 ans, une voiture et
+          un abonnement de transports publics. Salaires nets (après AVS, chômage et 2e pilier, avant impôts) : 6 200 et 4 300 francs par mois.
+          Les allocations familiales et le 13e salaire ne sont pas comptés ici : ils s'ajoutent à la marge (voir plus bas).
+          Ces chiffres sont une illustration, pas une moyenne suisse.
+        </p>
+        <div className="overflow-x-auto">
+          <table>
+            <thead>
+              <tr><th>Poste</th><th>Par mois</th><th>Part des revenus</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><strong>Salaires nets du foyer</strong></td><td><strong>10 500 CHF</strong></td><td>100 %</td></tr>
+              <tr><td>Loyer d'un 4,5 pièces, charges comprises</td><td>2 400 CHF</td><td>23 %</td></tr>
+              <tr><td>Primes d'assurance-maladie (2 adultes, 2 enfants)</td><td>1 180 CHF</td><td>11 %</td></tr>
+              <tr><td>Impôts (acomptes mensuels)</td><td>1 300 CHF</td><td>12 %</td></tr>
+              <tr><td>Courses (alimentation, hygiène, entretien)</td><td>1 200 CHF</td><td>11 %</td></tr>
+              <tr><td>Transport (une voiture, un abonnement)</td><td>700 CHF</td><td>7 %</td></tr>
+              <tr><td>Assurances (RC, ménage, auto)</td><td>180 CHF</td><td>2 %</td></tr>
+              <tr><td>Téléphones, internet, redevance radio-TV</td><td>180 CHF</td><td>2 %</td></tr>
+              <tr><td>Garde (crèche à temps partiel, accueil parascolaire)</td><td>900 CHF</td><td>9 %</td></tr>
+              <tr><td>Santé (franchise, quote-part, dentiste)</td><td>250 CHF</td><td>2 %</td></tr>
+              <tr><td>Vêtements</td><td>200 CHF</td><td>2 %</td></tr>
+              <tr><td>Loisirs et sorties</td><td>400 CHF</td><td>4 %</td></tr>
+              <tr><td>Provision dépenses annuelles</td><td>400 CHF</td><td>4 %</td></tr>
+              <tr><td>Épargne (dont 3e pilier)</td><td>600 CHF</td><td>6 %</td></tr>
+              <tr><td><strong>Reste (marge pour les imprévus)</strong></td><td><strong>610 CHF</strong></td><td>6 %</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>
+          Total des dépenses : 9 290 francs, épargne : 600 francs. La <strong>marge de 610 francs</strong> absorbe une facture de dentiste,
+          une réparation de la voiture ou un acompte d'impôt revu à la hausse.
+        </p>
+
+        <h2>🏥 Les primes maladie : le poste qui monte chaque année</h2>
+        <p>
+          L'assurance de base est obligatoire et se paie par personne, enfants compris. Pour 2026, l'Office fédéral de la santé publique (OFSP)
+          annonce une prime mensuelle moyenne de <strong>465,30 francs pour un adulte</strong>, 326,30 francs pour un jeune adulte et
+          <strong> 122,50 francs pour un enfant</strong>, en hausse de 4,4 % en moyenne. Pour deux adultes et deux enfants, cela fait
+          environ 1 175 francs par mois. Et pour 2027, l'OFSP annonce une nouvelle hausse moyenne de 5,0 %.
+        </p>
+        <p>Les primes varient beaucoup selon le canton, la caisse et le modèle. Pour alléger ce poste :</p>
+        <ul>
+          <li><strong>Comparez chaque automne</strong> : les nouvelles primes sont communiquées en octobre, et vous pouvez changer de caisse pour l'assurance de base jusqu'à fin novembre, pour le 1er janvier.</li>
+          <li><strong>Choisissez la franchise avec votre épargne en tête</strong> : une franchise haute baisse la prime, mais il faut pouvoir payer ce montant, plus la quote-part de 10 %, l'année où quelqu'un tombe malade. Mettez la différence de prime de côté.</li>
+          <li><strong>Demandez le subside</strong> : chaque canton réduit les primes des ménages à revenus modestes. Les conditions et la démarche dépendent du canton ; dans certains, il faut en faire la demande.</li>
+        </ul>
+
+        <h2>🧾 Les impôts : à payer soi-même, donc à budgéter</h2>
+        <p>
+          Si vous êtes suisse ou titulaire d'un permis C, l'impôt n'est pas retenu sur le salaire : vous le payez vous-même, par <strong>acomptes</strong>,
+          puis un décompte final arrive après la déclaration. (Avec un permis B, l'impôt est en général prélevé à la source.)
+        </p>
+        <ul>
+          <li>Traitez les acomptes comme un loyer : un <strong>ordre permanent mensuel</strong>, le jour du salaire.</li>
+          <li>Si vos revenus augmentent, <strong>demandez l'adaptation des acomptes</strong> à l'administration fiscale : sinon le rattrapage arrive d'un coup, un ou deux ans plus tard.</li>
+          <li>Les versements au <strong>3e pilier</strong>, dans la limite du plafond annuel, se déduisent du revenu imposable : c'est de l'épargne qui réduit aussi l'impôt.</li>
+        </ul>
+
+        <h2>🏠 Le loyer : le bail en cours et le bail neuf</h2>
+        <p>
+          D'après le relevé structurel de l'Office fédéral de la statistique (OFS), le loyer moyen d'un logement de 3 à 4 pièces était en 2022 de
+          <strong> 1 535 francs dans le canton de Vaud</strong> et de <strong>1 530 francs dans celui de Genève</strong>. C'est la moyenne de tous les baux,
+          y compris les anciens : un logement qui se libère aujourd'hui dans l'arc lémanique est proposé nettement plus cher, d'où les 2 400 francs de notre exemple.
+        </p>
+        <ul>
+          <li><strong>Charges</strong> : vérifiez si elles sont comprises ou payées par acomptes, avec un décompte annuel de chauffage et d'eau chaude.</li>
+          <li><strong>Garantie de loyer</strong> : jusqu'à trois mois de loyer, à bloquer à la signature. Une épargne à constituer avant de déménager.</li>
+          <li><strong>Taux de référence</strong> : quand le taux hypothécaire de référence baisse, vous pouvez demander une baisse de loyer ; quand il monte, le bailleur peut l'augmenter.</li>
+        </ul>
+
+        <h2>💵 Les allocations familiales en 2026</h2>
+        <p>
+          La loi fédérale fixe un minimum de <strong>215 francs par mois</strong> pour l'allocation pour enfant (jusqu'à 16 ans) et de
+          <strong> 268 francs</strong> pour l'allocation de formation (Office fédéral des assurances sociales). Les cantons peuvent verser davantage,
+          et les cantons romands le font : à Genève, par exemple, 311 francs par enfant et 415 francs en formation. Le montant dépend du canton
+          où vous travaillez, pas de celui où vous habitez. Ajoutez-le à la ligne des revenus : dans notre exemple, deux allocations représentent
+          plus de 600 francs par mois.
+        </p>
+
+        <h2>👶 La garde : le poste qui change tout</h2>
+        <p>
+          En crèche ou en accueil de jour, le tarif dépend le plus souvent du <strong>revenu du ménage</strong> et de la commune ou du réseau d'accueil.
+          Pour un enfant à plein temps, la facture peut dépasser le loyer. Avant de décider du taux d'activité de chacun, faites le calcul complet :
+          salaire supplémentaire, moins la garde, moins l'impôt en plus. Les frais de garde se déduisent en partie du revenu imposable.
+        </p>
+
+        <h2>📅 Les dépenses qui ne tombent pas tous les mois</h2>
+        <p>
+          Dans l'exemple, 400 francs par mois sont mis de côté pour : les <strong>vacances</strong> (2 400 CHF), les <strong>fêtes</strong> de fin d'année (700 CHF),
+          le <strong>service, les pneus d'hiver et l'impôt sur les véhicules</strong> (900 CHF), la <strong>redevance radio-TV</strong> (335 CHF par an et par ménage),
+          et les <strong>camps, abonnements et cotisations</strong> des enfants (465 CHF), soit 4 800 francs par an ÷ 12.
+        </p>
+        <p>
+          Le <strong>13e salaire</strong>, versé en décembre dans beaucoup d'entreprises, n'est pas compté dans le budget du mois : décidez à l'avance
+          de son usage. Les usages les plus fréquents : le solde d'impôts, le 3e pilier avant le 31 décembre, et les fêtes.
+        </p>
+
+        <h2>✏️ Faire le vôtre en 15 minutes</h2>
+        <ol>
+          <li>Recopiez le tableau avec <strong>vos</strong> montants, à partir de vos trois derniers relevés.</li>
+          <li>Ajoutez vos <strong>allocations familiales</strong> aux revenus, vos <strong>acomptes d'impôts</strong> aux charges, et la <strong>provision</strong> pour vos dépenses annuelles.</li>
+          <li>Fixez l'<strong>épargne</strong>, puis regardez le reste. La méthode pas à pas est dans <a href="/blog/etablir-budget-familial-5-etapes">établir un budget familial en 5 étapes</a>, et le partage entre conjoints dans <a href="/blog/compte-commun-couple-argent-de-poche">notre guide du compte commun</a>.</li>
+        </ol>
+        <p>
+          Notre <a href="/calcul-reste-a-vivre">calculateur de reste à vivre</a> fonctionne en francs suisses, comme le
+          <a href="/tableau-budget-familial-gratuit"> tableau de budget gratuit</a> (Excel et PDF à imprimer) et l'application Budget Famille : elle remplit
+          chaque mois à partir de vos règles, se partage entre conjoints en temps réel, et permet d'ouvrir un budget à part pour un projet.
+        </p>
+
+        <div className="bg-gradient-to-r from-primary to-purple-600 text-white rounded-xl p-8 text-center my-8">
+          <h3 className="text-2xl font-bold mb-4">Le budget de votre famille, en francs, chaque mois</h3>
+          <p className="text-lg mb-6 opacity-90">Gratuit, sans connexion bancaire obligatoire, partagé en temps réel.</p>
+          <a
+            href="/signup"
+            className="inline-block bg-white text-primary font-semibold px-8 py-3 rounded-lg hover:bg-gray-100 transition-colors"
+          >
+            Créer notre budget familial →
+          </a>
+        </div>
+
+        <h2>❓ Questions fréquentes</h2>
+        <h3>Quel budget pour une famille de 4 en Suisse romande ?</h3>
+        <p>Il dépend surtout du loyer, des primes maladie, des impôts et de la garde. Dans notre exemple à Lausanne, les dépenses atteignent 9 290 francs par mois, plus 600 francs d'épargne, pour 10 500 francs de salaires nets, allocations familiales et 13e salaire non compris.</p>
+        <h3>Combien coûtent les primes maladie d'une famille en 2026 ?</h3>
+        <p>Avec les primes moyennes annoncées par l'OFSP (465,30 francs par adulte, 122,50 francs par enfant), deux adultes et deux enfants paient environ 1 175 francs par mois. Le montant réel dépend du canton, de la caisse, du modèle et de la franchise.</p>
+        <h3>Faut-il compter le 13e salaire dans le budget ?</h3>
+        <p>Non. Construisez le budget du mois sur douze salaires, et réservez le 13e aux dépenses annuelles : solde d'impôts, 3e pilier, fêtes ou vacances.</p>
+      </div>
+    )
   }
 ];

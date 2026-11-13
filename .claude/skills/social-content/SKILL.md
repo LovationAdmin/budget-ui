@@ -10,7 +10,8 @@ depuis les comptes LinkedIn, Instagram, Facebook et X de lovation.pro, avec un
 article utile (qui reste sur le blog et travaille aussi le référencement) et des
 posts adaptés à chaque réseau.
 
-Une semaine type = **1 article + 2 posts par réseau**. Une semaine sur deux,
+Une semaine type = **1 article + 2 posts par réseau**, sauf si `docs/social/config.md`
+dit « posts par semaine : 1 » : dans ce cas, seulement le post A, et pas de post B. Une semaine sur deux,
 l'article vise un pays francophone hors de France, et chaque sujet universel
 part aussi en anglais (voir « Marchés ») :
 
