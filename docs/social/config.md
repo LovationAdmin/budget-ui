@@ -8,7 +8,17 @@ chaque routine. Pour changer son comportement, modifier ce fichier (PR).
     visuels, posts) ; rien n'est publié tant que l'équipe ne l'a pas fusionnée.
   - `autonome` : la routine fusionne elle-même la PR après ses vérifications,
     puis programme les posts.
+- **posts par semaine** : 1 (le post A « article » du mardi ; pas de post B)
+  - Pourquoi : du 10 octobre au 5 novembre 2026, chaque post a touché 0 à 3
+    personnes sur Facebook et 0 à 6 sur Instagram, sans aucun clic (Metricool).
+    Les comptes n'ont presque pas d'abonnés : deux posts par semaine n'y
+    changent rien. Le temps gagné va à Pinterest, aux groupes et aux prises de
+    contact (`docs/social/croissance.md`). Repasser à 2 quand un réseau dépasse
+    200 abonnés.
 - **réseaux** : linkedin, instagram, facebook, twitter (X)
+- **pinterest** : à la main, depuis le kit croissance, tant que le compte n'est
+  pas connecté à Metricool. Une fois connecté, ajouter `pinterest` à la ligne
+  `metricool` : une épingle par article ou par outil, image verticale 1000 × 1500.
 - **metricool** : facebook, instagram
   - Réseaux programmés automatiquement dans Metricool. Les autres réseaux sont
     publiés à la main par l'équipe depuis le **kit à copier** de la semaine

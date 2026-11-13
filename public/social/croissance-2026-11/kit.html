@@ -1,0 +1,240 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Kit croissance · Pinterest, groupes et prises de contact</title>
+<style>
+  :root { --bg:#f6f7f9; --surface:#fff; --ink:#0f1720; --muted:#5b6675; --line:#e2e6ec; --primary:hsl(200 75% 38%); --on-primary:#fff; --ok:#15803d; --ok-bg:#e7f6ec; --todo:#9a5b00; --todo-bg:#fff4e0; --warn:#b91c1c; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#0e141b; --surface:#16202a; --ink:#e8edf2; --muted:#9aa7b4; --line:#26323e; --primary:hsl(200 75% 55%); --on-primary:#0b1218; --ok:#5dd28a; --ok-bg:#143021; --todo:#f0b45a; --todo-bg:#33260f; --warn:#f87171; } }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--ink); font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; }
+  main { max-width:680px; margin:0 auto; padding:16px 16px 96px; }
+  .top { padding:8px 0 0; }
+  .eyebrow { margin:0; color:var(--muted); font-size:14px; }
+  h1 { margin:2px 0 6px; font-size:22px; line-height:1.25; }
+  .progress { position:sticky; top:0; z-index:2; display:flex; align-items:center; gap:10px; margin:0 -16px; padding:10px 16px; background:var(--bg); border-bottom:1px solid var(--line); font-size:14px; color:var(--muted); }
+  .bar { flex:1; height:6px; border-radius:3px; background:var(--line); overflow:hidden; }
+  .bar i { display:block; height:100%; width:0; background:var(--ok); transition:width .2s; }
+  .how { margin:14px 0 0; padding:12px 14px; border-radius:10px; background:var(--surface); border:1px solid var(--line); font-size:14px; color:var(--muted); }
+  .how ol { margin:4px 0 0; padding-left:20px; }
+  .post { margin-top:28px; }
+  h2 { font-size:18px; margin:0 0 10px; display:flex; align-items:center; gap:8px; }
+  .tag { display:inline-grid; place-items:center; min-width:28px; height:28px; border-radius:8px; background:var(--primary); color:var(--on-primary); font-size:14px; }
+  figure { margin:0 0 12px; }
+  figure img { display:block; width:100%; max-width:320px; height:auto; border-radius:12px; border:1px solid var(--line); }
+  figcaption { margin-top:8px; display:flex; flex-wrap:wrap; gap:8px; }
+  .card { background:var(--surface); border:1px solid var(--line); border-radius:12px; padding:14px; margin-top:10px; }
+  .card header, .card summary { display:flex; flex-wrap:wrap; align-items:center; gap:6px 10px; }
+  .card summary { cursor:pointer; list-style:none; }
+  .card summary::-webkit-details-marker { display:none; }
+  .card.auto summary .when::after { content:" ▾"; }
+  .card.auto[open] summary .when::after { content:" ▴"; }
+  .net { font-weight:700; }
+  .badge { font-size:12px; font-weight:600; padding:2px 8px; border-radius:999px; }
+  .badge.ok { color:var(--ok); background:var(--ok-bg); }
+  .badge.todo { color:var(--todo); background:var(--todo-bg); }
+  .card.is-done .badge.todo { color:var(--ok); background:var(--ok-bg); }
+  .when { color:var(--muted); font-size:14px; }
+  .text { white-space:pre-wrap; overflow-wrap:anywhere; margin:12px 0 4px; padding:12px; border-radius:8px; background:var(--bg); font-size:15px; }
+  .count { margin:0 0 10px; font-size:13px; color:var(--muted); }
+  .count.over { color:var(--warn); font-weight:600; }
+  .actions { display:flex; flex-wrap:wrap; gap:8px; }
+  .btn { display:inline-flex; align-items:center; justify-content:center; min-height:44px; padding:0 16px; border-radius:10px; border:1px solid var(--line); background:var(--surface); color:var(--ink); font-family:inherit; font-size:15px; font-weight:600; line-height:1.2; text-decoration:none; cursor:pointer; }
+  .btn.primary { background:var(--primary); border-color:var(--primary); color:var(--on-primary); }
+  .btn.ghost { border-color:transparent; color:var(--primary); padding:0 8px; }
+  .btn:focus-visible, summary:focus-visible, input:focus-visible { outline:3px solid var(--primary); outline-offset:2px; }
+  .btn[hidden] { display:none; }
+  .done { display:flex; align-items:center; gap:10px; margin-top:12px; min-height:44px; font-weight:600; cursor:pointer; }
+  .done input { width:22px; height:22px; accent-color:var(--ok); }
+  .card.is-done { border-color:var(--ok); }
+  .card.is-done .text { opacity:.6; }
+  .toast { position:fixed; left:50%; bottom:20px; transform:translate(-50%,20px); opacity:0; padding:10px 16px; border-radius:10px; background:var(--ink); color:var(--bg); font-weight:600; transition:all .2s; pointer-events:none; max-width:calc(100% - 32px); text-align:center; }
+  .toast.show { opacity:1; transform:translate(-50%,0); }
+</style>
+</head>
+<body>
+<main>
+  <div class="top">
+    <p class="eyebrow">Kit croissance · novembre 2026</p>
+    <h1>Pinterest, groupes et prises de contact</h1>
+  </div>
+  <div class="progress"><span id="count">0 fait</span><span class="bar"><i id="bar"></i></span></div>
+  <div class="how">
+    Les pages Facebook et Instagram n'ont presque pas d'abonnés : chaque post y touche 0 à 6 personnes. Ce kit va chercher les gens là où ils sont déjà.
+    <ol>
+      <li><strong>Pinterest</strong> : créez un compte professionnel « Budget Famille », puis une épingle par image ci-dessous (titre, description et lien à copier).</li>
+      <li><strong>Groupes</strong> : publiez depuis votre profil personnel, un groupe à la fois, après avoir lu ses règles sur les liens.</li>
+      <li><strong>Prises de contact</strong> : ouvrez le formulaire, collez l'objet et le message.</li>
+    </ol>
+  </div>
+
+<section class="post"><h2><span class="tag">1</span> Pinterest : 5 épingles</h2>
+<figure><img src="/social/croissance-2026-11/pin-tableau-budget-familial.jpg" alt="Tableau de budget familial gratuit à imprimer (Excel et PDF)" width="1000" height="1500" loading="lazy"><figcaption><a class="btn" href="/social/croissance-2026-11/pin-tableau-budget-familial.jpg" download>Télécharger l'image</a></figcaption></figure>
+<div class="card" data-id="c1"><header><span class="net">Tableau de budget familial gratuit à imprimer (Excel et PDF)</span><span class="badge todo">FR</span><span class="when">Tableau : Budget familial · Organisation</span></header><p class="count">Titre</p><div class="text" id="t1-0">Tableau de budget familial gratuit à imprimer (Excel et PDF)</div><div class="actions"><button class="btn primary" data-copy="t1-0">Copier</button></div><p class="count">Description</p><div class="text" id="t1-1">Tableau de budget familial gratuit : un fichier Excel qui calcule tout seul (il s&#x27;ouvre aussi dans Google Sheets) et une grille PDF de 3 pages à imprimer. Budget du mois prévu et réel, dépenses annuelles, compte commun du couple, suivi de l&#x27;année. Sans inscription. #budgetfamilial #tableaubudget #budgetmensuel #organisation #aimprimer</div><div class="actions"><button class="btn primary" data-copy="t1-1">Copier</button></div><p class="count">Lien de destination</p><div class="text" id="t1-2">https://www.budgetfamille.com/tableau-budget-familial-gratuit?utm_source=pinterest&amp;utm_medium=social&amp;utm_campaign=tableau</div><div class="actions"><button class="btn primary" data-copy="t1-2">Copier</button></div><div class="actions" style="margin-top:8px"><a class="btn ghost" href="https://www.pinterest.com/pin-creation-tool/" target="_blank" rel="noopener">Ouvrir Pinterest</a></div><label class="done"><input type="checkbox"> Fait</label></div>
+<figure><img src="/social/croissance-2026-11/pin-free-budget-template.jpg" alt="Free printable family budget template (Excel and PDF)" width="1000" height="1500" loading="lazy"><figcaption><a class="btn" href="/social/croissance-2026-11/pin-free-budget-template.jpg" download>Télécharger l'image</a></figcaption></figure>
+<div class="card" data-id="c2"><header><span class="net">Free printable family budget template (Excel and PDF)</span><span class="badge todo">EN</span><span class="when">Tableau : Budgeting · Printables</span></header><p class="count">Titre</p><div class="text" id="t2-0">Free printable family budget template (Excel and PDF)</div><div class="actions"><button class="btn primary" data-copy="t2-0">Copier</button></div><p class="count">Description</p><div class="text" id="t2-1">Free family budget template: an Excel file with the math already done (works in Google Sheets) and a 3-page printable PDF. Monthly budget with plan and actual, yearly expenses, a couple&#x27;s joint pot, year tracker. Any currency, no sign-up. #budgettemplate #budgetprintable #familybudget #budgetplanner #moneytips</div><div class="actions"><button class="btn primary" data-copy="t2-1">Copier</button></div><p class="count">Lien de destination</p><div class="text" id="t2-2">https://www.budgetfamille.com/en/free-budget-template?utm_source=pinterest&amp;utm_medium=social&amp;utm_campaign=template</div><div class="actions"><button class="btn primary" data-copy="t2-2">Copier</button></div><div class="actions" style="margin-top:8px"><a class="btn ghost" href="https://www.pinterest.com/pin-creation-tool/" target="_blank" rel="noopener">Ouvrir Pinterest</a></div><label class="done"><input type="checkbox"> Fait</label></div>
+<figure><img src="/social/croissance-2026-11/pin-plantilla-presupuesto-familiar.jpg" alt="Plantilla de presupuesto familiar gratis para imprimir (Excel y PDF)" width="1000" height="1500" loading="lazy"><figcaption><a class="btn" href="/social/croissance-2026-11/pin-plantilla-presupuesto-familiar.jpg" download>Télécharger l'image</a></figcaption></figure>
+<div class="card" data-id="c3"><header><span class="net">Plantilla de presupuesto familiar gratis para imprimir (Excel y PDF)</span><span class="badge todo">ES</span><span class="when">Tableau : Finanzas personales · Imprimibles</span></header><p class="count">Titre</p><div class="text" id="t3-0">Plantilla de presupuesto familiar gratis para imprimir (Excel y PDF)</div><div class="actions"><button class="btn primary" data-copy="t3-0">Copier</button></div><p class="count">Description</p><div class="text" id="t3-1">Plantilla de presupuesto familiar gratuita: un Excel con las cuentas ya hechas (también en Google Sheets) y un PDF de 3 páginas para imprimir. Presupuesto del mes, gastos anuales, fondo común de la pareja y seguimiento del año. En cualquier moneda, sin registro. #presupuestofamiliar #plantillapresupuesto #finanzaspersonales #ahorro #imprimibles</div><div class="actions"><button class="btn primary" data-copy="t3-1">Copier</button></div><p class="count">Lien de destination</p><div class="text" id="t3-2">https://www.budgetfamille.com/es/plantilla-presupuesto-familiar?utm_source=pinterest&amp;utm_medium=social&amp;utm_campaign=plantilla</div><div class="actions"><button class="btn primary" data-copy="t3-2">Copier</button></div><div class="actions" style="margin-top:8px"><a class="btn ghost" href="https://www.pinterest.com/pin-creation-tool/" target="_blank" rel="noopener">Ouvrir Pinterest</a></div><label class="done"><input type="checkbox"> Fait</label></div>
+<figure><img src="/social/croissance-2026-11/pin-50-30-20-calculator.jpg" alt="50/30/20 budget calculator: split your paycheck" width="1000" height="1500" loading="lazy"><figcaption><a class="btn" href="/social/croissance-2026-11/pin-50-30-20-calculator.jpg" download>Télécharger l'image</a></figcaption></figure>
+<div class="card" data-id="c4"><header><span class="net">50/30/20 budget calculator: split your paycheck</span><span class="badge todo">EN</span><span class="when">Tableau : Budgeting · Saving money</span></header><p class="count">Titre</p><div class="text" id="t4-0">50/30/20 budget calculator: split your paycheck</div><div class="actions"><button class="btn primary" data-copy="t4-0">Copier</button></div><p class="count">Description</p><div class="text" id="t4-1">Free 50/30/20 budget calculator: enter your take-home pay and essential expenses and see how to split it between needs, wants and savings. It adapts when rent is high. No sign-up, your numbers stay on your device. #503020rule #budgetcalculator #budgeting #savingmoney #personalfinance</div><div class="actions"><button class="btn primary" data-copy="t4-1">Copier</button></div><p class="count">Lien de destination</p><div class="text" id="t4-2">https://www.budgetfamille.com/en/50-30-20-budget-calculator?utm_source=pinterest&amp;utm_medium=social&amp;utm_campaign=503020</div><div class="actions"><button class="btn primary" data-copy="t4-2">Copier</button></div><div class="actions" style="margin-top:8px"><a class="btn ghost" href="https://www.pinterest.com/pin-creation-tool/" target="_blank" rel="noopener">Ouvrir Pinterest</a></div><label class="done"><input type="checkbox"> Fait</label></div>
+<figure><img src="/social/croissance-2026-11/pin-regla-50-30-20.jpg" alt="Calculadora de la regla 50/30/20: cómo repartir tu sueldo" width="1000" height="1500" loading="lazy"><figcaption><a class="btn" href="/social/croissance-2026-11/pin-regla-50-30-20.jpg" download>Télécharger l'image</a></figcaption></figure>
+<div class="card" data-id="c5"><header><span class="net">Calculadora de la regla 50/30/20: cómo repartir tu sueldo</span><span class="badge todo">ES</span><span class="when">Tableau : Finanzas personales · Ahorro</span></header><p class="count">Titre</p><div class="text" id="t5-0">Calculadora de la regla 50/30/20: cómo repartir tu sueldo</div><div class="actions"><button class="btn primary" data-copy="t5-0">Copier</button></div><p class="count">Description</p><div class="text" id="t5-1">Calculadora gratuita de la regla 50/30/20: indica tu sueldo neto y tus gastos esenciales y mira cómo repartirlo entre necesidades, deseos y ahorro. En euros, pesos, soles o dólares. Sin registro: tus datos se quedan en tu dispositivo. #regla503020 #presupuesto #finanzaspersonales #ahorro #comoahorrar</div><div class="actions"><button class="btn primary" data-copy="t5-1">Copier</button></div><p class="count">Lien de destination</p><div class="text" id="t5-2">https://www.budgetfamille.com/es/calculadora-presupuesto-50-30-20?utm_source=pinterest&amp;utm_medium=social&amp;utm_campaign=503020</div><div class="actions"><button class="btn primary" data-copy="t5-2">Copier</button></div><div class="actions" style="margin-top:8px"><a class="btn ghost" href="https://www.pinterest.com/pin-creation-tool/" target="_blank" rel="noopener">Ouvrir Pinterest</a></div><label class="done"><input type="checkbox"> Fait</label></div>
+</section><section class="post"><h2><span class="tag">2</span> Groupes et forums : 6 messages</h2>
+<div class="card" data-id="c6"><header><span class="net">Groupes « budget », « économies », « parents »</span><span class="badge todo">FR</span><span class="when"></span></header><p class="count">Message</p><div class="text" id="t6-0">Bonjour à tous,
+
+Pour celles et ceux qui cherchent un tableau pour faire leur budget, j&#x27;en partage un gratuit : un fichier Excel qui calcule tout seul (il s&#x27;ouvre aussi dans Google Sheets) et une grille PDF de 3 pages à imprimer et remplir au stylo.
+
+Il y a le budget du mois (prévu et réel), les dépenses qui ne tombent qu&#x27;une fois par an, et la répartition du compte commun pour les couples.
+
+Pas d&#x27;inscription, pas d&#x27;adresse e-mail à donner :
+https://www.budgetfamille.com/tableau-budget-familial-gratuit?utm_source=facebook&amp;utm_medium=social&amp;utm_campaign=groupe-tableau
+
+Si vous l&#x27;essayez, dites-moi ce qui manque, je l&#x27;améliore au fur et à mesure.</div><div class="actions"><button class="btn primary" data-copy="t6-0">Copier</button></div><label class="done"><input type="checkbox"> Fait</label></div>
+<div class="card" data-id="c7"><header><span class="net">Groupes de colocation et de logement étudiant</span><span class="badge todo">FR</span><span class="when"></span></header><p class="count">Message</p><div class="text" id="t7-0">Bonjour,
+
+Pour ceux qui emménagent en coloc et se demandent comment partager le loyer quand les chambres n&#x27;ont pas la même taille : ce calculateur gratuit donne la part de chacun, à parts égales, selon la surface des chambres ou selon les revenus, avec les charges (énergie, internet, courses communes).
+
+Sans compte, et rien n&#x27;est envoyé : les chiffres restent sur votre téléphone.
+https://www.budgetfamille.com/budget-colocation?utm_source=facebook&amp;utm_medium=social&amp;utm_campaign=groupe-coloc</div><div class="actions"><button class="btn primary" data-copy="t7-0">Copier</button></div><label class="done"><input type="checkbox"> Fait</label></div>
+<div class="card" data-id="c8"><header><span class="net">Groupes et forums de préparation de mariage</span><span class="badge todo">FR</span><span class="when"></span></header><p class="count">Message</p><div class="text" id="t8-0">Bonjour à toutes et à tous,
+
+On nous demande souvent comment chiffrer un mariage sans se fier aux « moyennes » qu&#x27;on lit partout. Ce calculateur gratuit part de vos devis : prix par invité pour le traiteur et les boissons, frais fixes (lieu, photo, tenues), et il donne le total, le coût par invité, ce que change une liste plus courte de 20 invités, et combien mettre de côté chaque mois jusqu&#x27;à la date.
+
+Sans inscription :
+https://www.budgetfamille.com/budget-mariage?utm_source=facebook&amp;utm_medium=social&amp;utm_campaign=groupe-mariage</div><div class="actions"><button class="btn primary" data-copy="t8-0">Copier</button></div><label class="done"><input type="checkbox"> Fait</label></div>
+<div class="card" data-id="c9"><header><span class="net">Grupos de compañeros de piso, roomies y vivienda para estudiantes</span><span class="badge todo">ES</span><span class="when"></span></header><p class="count">Message</p><div class="text" id="t9-0">Hola a todos:
+
+Para quienes comparten piso y no saben cómo dividir el alquiler cuando las habitaciones no son iguales: esta calculadora gratuita da la parte de cada persona, a partes iguales, por tamaño de habitación o según los ingresos, con la luz, internet y los gastos comunes.
+
+Funciona en euros, pesos, soles o dólares. Sin registro, y los datos se quedan en tu móvil.
+https://www.budgetfamille.com/es/calculadora-dividir-alquiler?utm_source=facebook&amp;utm_medium=social&amp;utm_campaign=grupo-piso</div><div class="actions"><button class="btn primary" data-copy="t9-0">Copier</button></div><label class="done"><input type="checkbox"> Fait</label></div>
+<div class="card" data-id="c10"><header><span class="net">Grupos de finanzas personales y ahorro</span><span class="badge todo">ES</span><span class="when"></span></header><p class="count">Message</p><div class="text" id="t10-0">Hola:
+
+Comparto una plantilla de presupuesto familiar gratuita por si le sirve a alguien: un Excel con las cuentas ya hechas (también se abre en Google Sheets) y un PDF de 3 páginas para imprimir. Tiene el presupuesto del mes, los gastos que llegan una vez al año y el reparto de la cuenta común en pareja.
+
+Sin registro y sin dar el correo:
+https://www.budgetfamille.com/es/plantilla-presupuesto-familiar?utm_source=facebook&amp;utm_medium=social&amp;utm_campaign=grupo-plantilla
+
+Si la pruebas, cuéntame qué le falta.</div><div class="actions"><button class="btn primary" data-copy="t10-0">Copier</button></div><label class="done"><input type="checkbox"> Fait</label></div>
+<div class="card" data-id="c11"><header><span class="net">Budgeting and personal finance groups, r/budget (read each group’s rules on links first)</span><span class="badge todo">EN</span><span class="when"></span></header><p class="count">Message</p><div class="text" id="t11-0">Hi all,
+
+Sharing a free family budget template in case it helps someone: an Excel file with the math already done (opens in Google Sheets too) and a 3-page printable PDF. It covers the monthly budget with plan vs actual, the bills that come once a year, and how a couple can split a joint account.
+
+No sign-up, no email, any currency:
+https://www.budgetfamille.com/en/free-budget-template?utm_source=community&amp;utm_medium=social&amp;utm_campaign=group-template
+
+Feedback welcome, I keep improving it.</div><div class="actions"><button class="btn primary" data-copy="t11-0">Copier</button></div><label class="done"><input type="checkbox"> Fait</label></div>
+</section><section class="post"><h2><span class="tag">3</span> Prises de contact : 5 formulaires</h2>
+<div class="card" data-id="c12"><header><span class="net">Copeps</span><span class="badge todo">FR</span><span class="when"></span></header><p class="count">Objet</p><div class="text" id="t12-0">Les boutons de téléchargement de votre article sur le budget</div><div class="actions"><button class="btn primary" data-copy="t12-0">Copier</button></div><p class="count">Message</p><div class="text" id="t12-1">Bonjour,
+
+Votre article « Gérer vos finances personnelles avec un tableau Excel » propose des modèles en Excel, LibreOffice, Google Sheets et PDF, mais les boutons de téléchargement ne mènent nulle part (ils pointent vers « # »).
+
+Si vous cherchez un modèle à mettre à la place, le nôtre est gratuit, sans inscription ni adresse e-mail à donner :
+https://www.budgetfamille.com/tableau-budget-familial-gratuit
+- un fichier Excel qui calcule tout seul, qui s&#x27;ouvre aussi dans Google Sheets et LibreOffice ;
+- la même grille en PDF A4 à imprimer.
+
+Vos boutons peuvent pointer vers cette page, ou directement vers les fichiers.
+
+Bonne journée,
+Libasse, Budget Famille</div><div class="actions"><button class="btn primary" data-copy="t12-1">Copier</button></div><div class="actions" style="margin-top:8px"><a class="btn ghost" href="https://copeps.fr/contact/" target="_blank" rel="noopener">Ouvrir le formulaire</a></div><label class="done"><input type="checkbox"> Fait</label></div>
+<div class="card" data-id="c13"><header><span class="net">Finactuel</span><span class="badge todo">FR</span><span class="when"></span></header><p class="count">Objet</p><div class="text" id="t13-0">Une appli de budget à deux pour votre comparatif ?</div><div class="actions"><button class="btn primary" data-copy="t13-0">Copier</button></div><p class="count">Message</p><div class="text" id="t13-1">Bonjour,
+
+J&#x27;ai lu votre article « Meilleures applications pour gérer son budget et son épargne en 2026 ». Il compare clairement les applis qui suivent les comptes d&#x27;une personne ; il manque pourtant un cas que beaucoup de vos lecteurs vivent : le budget à plusieurs. Aucune des applis citées ne répartit les charges d&#x27;un couple ou d&#x27;une famille.
+
+C&#x27;est ce que fait Budget Famille, une application française gratuite, sans connexion bancaire obligatoire :
+- un pot commun et la part de chacun (50/50, au prorata des salaires ou même argent de poche) ;
+- l&#x27;argent de poche de chacun, et des charges perso qui restent privées ;
+- partagée en temps réel entre conjoints, colocataires ou toute la famille.
+
+Si cela vous semble utile, elle aurait sa place dans une rubrique « couple ou famille » : https://www.budgetfamille.com
+
+Je peux vous la montrer en dix minutes ou répondre à vos questions.
+
+Bonne journée,
+Libasse, Budget Famille</div><div class="actions"><button class="btn primary" data-copy="t13-1">Copier</button></div><div class="actions" style="margin-top:8px"><a class="btn ghost" href="https://finactuel.fr/contact/" target="_blank" rel="noopener">Ouvrir le formulaire</a></div><label class="done"><input type="checkbox"> Fait</label></div>
+<div class="card" data-id="c14"><header><span class="net">Empruntis</span><span class="badge todo">FR</span><span class="when"></span></header><p class="count">Objet</p><div class="text" id="t14-0">Une appli de budget à deux pour votre comparatif ?</div><div class="actions"><button class="btn primary" data-copy="t14-0">Copier</button></div><p class="count">Message</p><div class="text" id="t14-1">Bonjour,
+
+J&#x27;ai lu votre article « Applications de suivi de budget ». Il compare clairement les applis qui suivent les comptes d&#x27;une personne ; il manque pourtant un cas que beaucoup de vos lecteurs vivent : le budget à plusieurs. Aucune des applis citées ne répartit les charges d&#x27;un couple ou d&#x27;une famille.
+
+C&#x27;est ce que fait Budget Famille, une application française gratuite, sans connexion bancaire obligatoire :
+- un pot commun et la part de chacun (50/50, au prorata des salaires ou même argent de poche) ;
+- l&#x27;argent de poche de chacun, et des charges perso qui restent privées ;
+- partagée en temps réel entre conjoints, colocataires ou toute la famille.
+
+Si cela vous semble utile, elle aurait sa place dans une rubrique « couple ou famille » : https://www.budgetfamille.com
+
+Je peux vous la montrer en dix minutes ou répondre à vos questions.
+
+Bonne journée,
+Libasse, Budget Famille</div><div class="actions"><button class="btn primary" data-copy="t14-1">Copier</button></div><div class="actions" style="margin-top:8px"><a class="btn ghost" href="https://www.empruntis.com/contact.php" target="_blank" rel="noopener">Ouvrir le formulaire</a></div><label class="done"><input type="checkbox"> Fait</label></div>
+<div class="card" data-id="c15"><header><span class="net">Moneyvox (lien « Contact » en pied de page)</span><span class="badge todo">FR</span><span class="when"></span></header><p class="count">Objet</p><div class="text" id="t15-0">Une appli de budget à deux pour votre comparatif ?</div><div class="actions"><button class="btn primary" data-copy="t15-0">Copier</button></div><p class="count">Message</p><div class="text" id="t15-1">Bonjour,
+
+J&#x27;ai lu votre article « Gestion de budget ». Il compare clairement les applis qui suivent les comptes d&#x27;une personne ; il manque pourtant un cas que beaucoup de vos lecteurs vivent : le budget à plusieurs. Aucune des applis citées ne répartit les charges d&#x27;un couple ou d&#x27;une famille.
+
+C&#x27;est ce que fait Budget Famille, une application française gratuite, sans connexion bancaire obligatoire :
+- un pot commun et la part de chacun (50/50, au prorata des salaires ou même argent de poche) ;
+- l&#x27;argent de poche de chacun, et des charges perso qui restent privées ;
+- partagée en temps réel entre conjoints, colocataires ou toute la famille.
+
+Si cela vous semble utile, elle aurait sa place dans une rubrique « couple ou famille » : https://www.budgetfamille.com
+
+Je peux vous la montrer en dix minutes ou répondre à vos questions.
+
+Bonne journée,
+Libasse, Budget Famille</div><div class="actions"><button class="btn primary" data-copy="t15-1">Copier</button></div><div class="actions" style="margin-top:8px"><a class="btn ghost" href="https://www.moneyvox.fr" target="_blank" rel="noopener">Ouvrir le formulaire</a></div><label class="done"><input type="checkbox"> Fait</label></div>
+<div class="card" data-id="c16"><header><span class="net">INC, « Organiser son budget »</span><span class="badge todo">FR</span><span class="when"></span></header><p class="count">Objet</p><div class="text" id="t16-0">Une grille de budget gratuite pour vos lecteurs</div><div class="actions"><button class="btn primary" data-copy="t16-0">Copier</button></div><p class="count">Message</p><div class="text" id="t16-1">Bonjour,
+
+Si cela peut être utile aux lecteurs de votre dossier « Organiser son budget », nous proposons gratuitement une grille de budget familial à imprimer : PDF A4 de 3 pages (budget du mois prévu et réel, dépenses annuelles et répartition dans le couple, suivi de l&#x27;année), et sa version Excel qui calcule toute seule. Sans inscription, à imprimer et distribuer librement :
+https://www.budgetfamille.com/tableau-budget-familial-gratuit
+
+Notre calculateur de reste à vivre fonctionne lui aussi sans compte, et rien n&#x27;est envoyé :
+https://www.budgetfamille.com/calcul-reste-a-vivre
+
+Un lien depuis votre page de ressources nous aiderait beaucoup. Vos remarques sur la grille sont les bienvenues.
+
+Bonne journée,
+Libasse, Budget Famille</div><div class="actions"><button class="btn primary" data-copy="t16-1">Copier</button></div><div class="actions" style="margin-top:8px"><a class="btn ghost" href="https://www.inc-conso.fr/content/contact" target="_blank" rel="noopener">Ouvrir le formulaire</a></div><label class="done"><input type="checkbox"> Fait</label></div>
+</section>
+</main>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<script>
+(function () {
+  var KEY = 'bf:kit:croissance-2026-11';
+  var done = {};
+  try { done = JSON.parse(localStorage.getItem(KEY) || '{}'); } catch (e) {}
+  var cards = [].slice.call(document.querySelectorAll('.card'));
+  var toast = document.getElementById('toast');
+  function say(msg) { toast.textContent = msg; toast.classList.add('show'); setTimeout(function () { toast.classList.remove('show'); }, 1600); }
+  function refresh() {
+    var n = cards.filter(function (c) { return done[c.dataset.id]; }).length;
+    document.getElementById('count').textContent = n + ' fait' + (n > 1 ? 's' : '') + ' sur ' + cards.length;
+    document.getElementById('bar').style.width = (100 * n / cards.length) + '%';
+  }
+  cards.forEach(function (c) {
+    var box = c.querySelector('input[type=checkbox]');
+    box.checked = !!done[c.dataset.id];
+    c.classList.toggle('is-done', box.checked);
+    box.addEventListener('change', function () {
+      done[c.dataset.id] = box.checked;
+      c.classList.toggle('is-done', box.checked);
+      try { localStorage.setItem(KEY, JSON.stringify(done)); } catch (e) {}
+      refresh();
+    });
+  });
+  document.addEventListener('click', function (ev) {
+    var b = ev.target.closest('[data-copy]');
+    if (!b) return;
+    var text = document.getElementById(b.dataset.copy).textContent;
+    (navigator.clipboard ? navigator.clipboard.writeText(text) : Promise.reject()).then(function () { say('Copié'); }, function () {
+      var r = document.createRange(); r.selectNodeContents(document.getElementById(b.dataset.copy));
+      var s = getSelection(); s.removeAllRanges(); s.addRange(r); say('Sélectionné : copiez avec votre clavier');
+    });
+  });
+  refresh();
+})();
+</script>
+</body>
+</html>

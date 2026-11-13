@@ -34,12 +34,12 @@ Contacts et constats vérifiés le 1er novembre 2026.
 
 | Prio. | Site | Pourquoi eux | Contact | Modèle | Statut |
 |---|---|---|---|---|---|
-| 1 | Médiathèque Françoise Sagan (Paris 10e), atelier « Double clic : gérer le budget familial grâce à un tableur », **samedi 7 novembre 2026** | L'atelier n'a pas de modèle attitré ; paris.fr est un domaine très fort | mediatheque.francoise-sagan@paris.fr · 01 53 24 69 70 · [page de l'atelier](https://www.paris.fr/evenements/double-clic-gerer-le-budget-familial-grace-a-un-tableur-90291) | C | À envoyer **lundi** |
+| 1 | Médiathèque Françoise Sagan (Paris 10e), atelier « Double clic : gérer le budget familial grâce à un tableur », **samedi 7 novembre 2026** | L'atelier n'a pas de modèle attitré ; paris.fr est un domaine très fort | mediatheque.francoise-sagan@paris.fr · 01 53 24 69 70 · [page de l'atelier](https://www.paris.fr/evenements/double-clic-gerer-le-budget-familial-grace-a-un-tableur-90291) | C | Atelier passé, non envoyé |
 | 1 | Copeps.fr, « Gérer vos finances personnelles avec un tableau Excel » | Promet des modèles Excel, LibreOffice, Google Sheets et PDF, mais **tous ses boutons de téléchargement pointent vers « # »** | https://copeps.fr/contact/ | B | |
 | 1 | Moneyvox, « Gestion de budget » (Sarah Bouget) | Comparatif Bankin', Linxo, Finary, Finzee : aucune appli de budget à deux | lien « Contact » en pied de page de https://www.moneyvox.fr | A | |
 | 1 | Finactuel, « Meilleures applications pour gérer son budget et son épargne en 2026 » | Bankin', Linxo, Pilote Budget, Finary, YNAB : aucune appli de budget à deux | formulaire https://finactuel.fr/contact/ | A | |
 | 1 | Empruntis, « Applications de suivi de budget » (Christophe Piroux, février 2023) | Article ancien, rangé sous le reste à vivre : notre calculateur et l'appli y ont leur place | https://www.empruntis.com/contact.php · presse : https://www.empruntis.com/espace-presse/ | A | |
-| 2 | Points conseil budget (Udaf) | Reçoivent des familles chaque jour ; une grille papier à leur remettre est utile | pcb@udaf95.fr (Val-d'Oise), pcb@udaf73.fr (Savoie) ; les autres Udaf départementales publient le leur | D | |
+| 2 | Points conseil budget (Udaf) | Reçoivent des familles chaque jour ; une grille papier à leur remettre est utile | pcb@udaf95.fr (Val-d'Oise), pcb@udaf73.fr (Savoie) ; les autres Udaf départementales publient le leur | D |Envoyé le 13/11/2026 aux deux adresses |
 | 2 | INC (inc-conso.fr), « Organiser son budget » | Recommande déjà une brochure de Finances & Pédagogie : domaine public, très fort | https://www.inc-conso.fr/content/contact | D | |
 | 2 | MeilleureSCPI, « Tableau de budget familial : modèles à télécharger » (Jonathan Dhiver) | Propose ses propres modèles ; il manque une option « à deux, sans recopier chaque mois » | https://www.meilleurescpi.com/contact/ · 01 84 25 52 15 | E | |
 | 2 | Espace-famille.net, « Tableau Excel gratuit : gérer votre budget familial » | Blog familial, son propre modèle ; article invité sur le budget du couple | https://www.espace-famille.net/contact/ | E | |
@@ -47,8 +47,9 @@ Contacts et constats vérifiés le 1er novembre 2026.
 | 3 | AlternativeTo | Ajouter Budget Famille comme alternative à Bankin', Tricount, YNAB (compte gratuit) | https://alternativeto.net | — | |
 | 3 | Québec : Option consommateurs, ACEF de l'Est, ACEF de Lanaudière | Ont leurs propres grilles ; proposer l'article « Budget familial au Québec » comme lecture complémentaire | [grille Option consommateurs](https://option-consommateurs.org/ressources/grille-budgetaire/) · [ACEF de l'Est](https://acefest.ca/ressources/travaillez-votre-budget/) · [ACEF Lanaudière](https://aceflanaudiere.ca/documentation-outils/grilles-budgets-et-chiffriers/) | D | |
 
-Ordre conseillé : la médiathèque lundi (l'atelier est samedi), puis Copeps
-(le plus facile : on répare leur page), puis les comparatifs.
+Ordre conseillé : Copeps (le plus facile : on répare leur page), puis les
+comparatifs. Les messages pour les sites à formulaire sont prêts à copier dans
+le kit croissance : https://www.budgetfamille.com/social/croissance-2026-11/kit.html
 
 ## Les e-mails
 
