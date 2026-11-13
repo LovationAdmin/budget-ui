@@ -13,6 +13,7 @@
 import { renderToStaticMarkup } from 'react-dom/server';
 import { blogArticles } from '@/data/blog-articles';
 import { blogArticlesEn } from '@/data/blog-articles-en';
+import { blogArticlesEs } from '@/data/blog-articles-es';
 import { articlePath, articlesByDate, relatedArticles } from '@/data/blog-related';
 import { LOCALES, alternatesOf, hreflangsOf, localeOf, type Locale } from '@/i18n/locales';
 import { HOME_FAQ, RAV_FAQ, TEMPLATE_FAQ, type FaqItem } from './faq';
@@ -93,7 +94,7 @@ function shellOf(path: string): { home: string; label: string; cta: string; link
     return { home: LOCALES.zh.home, label: '主导航', cta: '免费注册', links: ZH_TOOLS.map((tool) => ({ href: tool.path, label: tool.label })) };
   }
   if (locale === 'es') {
-    return { home: LOCALES.es.home, label: 'Navegación principal', cta: 'Crear una cuenta gratis', links: [{ href: '/es/plantilla-presupuesto-familiar', label: 'Plantilla gratuita' }, ...ES_TOOLS.map((tool) => ({ href: tool.path, label: tool.label }))] };
+    return { home: LOCALES.es.home, label: 'Navegación principal', cta: 'Crear una cuenta gratis', links: [{ href: '/es/plantilla-presupuesto-familiar', label: 'Plantilla gratuita' }, ...ES_TOOLS.map((tool) => ({ href: tool.path, label: tool.label })), { href: '/es/blog', label: 'Blog' }] };
   }
   if (locale === 'en') {
     return {
@@ -306,6 +307,8 @@ export function buildPages(): BuiltPage[] {
       extra = <BlogIndex />;
     } else if (page.path === '/en/blog') {
       extra = <BlogIndex locale="en" />;
+    } else if (page.path === '/es/blog') {
+      extra = <BlogIndex locale="es" />;
     }
     out.push({
       path: page.path,
@@ -323,11 +326,12 @@ export function buildPages(): BuiltPage[] {
   const ARTICLE_WORDS = {
     fr: { home: 'Accueil', homePath: '/', blogPath: '/blog', updated: 'mis à jour le ', related: 'À lire aussi', template: 'Tableau de budget familial gratuit (Excel et PDF)', templatePath: '/tableau-budget-familial-gratuit', cta: 'Créer mon budget familial gratuit', dateLocale: 'fr-FR' },
     en: { home: 'Home', homePath: '/en', blogPath: '/en/blog', updated: 'updated ', related: 'Keep reading', template: 'Free family budget template (Excel and PDF)', templatePath: '/en/free-budget-template', cta: 'Create my free family budget', dateLocale: 'en-US' },
+    es: { home: 'Inicio', homePath: '/es', blogPath: '/es/blog', updated: 'actualizado el ', related: 'Sigue leyendo', template: 'Plantilla de presupuesto familiar gratuita (Excel y PDF)', templatePath: '/es/plantilla-presupuesto-familiar', cta: 'Crear mi presupuesto familiar gratis', dateLocale: 'es-ES' },
   } as const;
-  for (const a of [...blogArticles, ...blogArticlesEn]) {
+  for (const a of [...blogArticles, ...blogArticlesEn, ...blogArticlesEs]) {
     const path = articlePath(a);
     const locale = localeOf(path);
-    const w = ARTICLE_WORDS[locale === 'fr' ? 'fr' : 'en'];
+    const w = ARTICLE_WORDS[locale === 'fr' || locale === 'es' ? locale : 'en'];
     out.push({
       path,
       ...languageOf(path),

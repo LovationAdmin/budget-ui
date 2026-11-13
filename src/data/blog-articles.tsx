@@ -3518,5 +3518,408 @@ export const blogArticles: BlogArticleContent[] = [
         <p>Non. Construisez le budget du mois sur douze salaires, et réservez le 13e aux dépenses annuelles : solde d'impôts, 3e pilier, fêtes ou vacances.</p>
       </div>
     )
+  },
+  {
+    id: '16',
+    title: "Budget familial en Tunisie : l'exemple d'une famille de 4 à Tunis",
+    slug: "budget-familial-tunisie-tunis",
+    excerpt: "Le budget d'une famille de 4 à Tunis, en dinars : loyer, alimentation, STEG, scolarité, SMIG 2026, inflation, Ramadan et Aïd, avec un exemple chiffré.",
+    category: "International",
+    author: "Équipe Budget Famille",
+    authorBio: "Experts en gestion budgétaire et développeurs de Budget Famille",
+    publishedAt: "2026-11-13",
+    readTime: "6 min",
+    tags: ["Tunisie", "Tunis", "Maghreb", "Budget", "Famille", "Exemple"],
+    featured: true,
+    related: ["budget-familial-maroc-casablanca-rabat", "budget-famille-4-personnes-exemple", "etablir-budget-familial-5-etapes"],
+    content: (
+      <div className="prose prose-lg max-w-none">
+        <p className="lead">
+          En Tunisie, deux postes font l'essentiel du budget d'une famille : l'<strong>alimentation</strong> et le <strong>loyer</strong>.
+          Et l'alimentation est celui qui augmente le plus vite. Dans notre exemple tunisois, une famille de 4 dépense environ 3 040 dinars par mois,
+          épargne non comprise. Voici le détail poste par poste, les chiffres officiels de 2026 et la méthode pour adapter le vôtre.
+        </p>
+
+        <h2>📋 Exemple de budget mensuel d'une famille de 4 à Tunis</h2>
+        <p>
+          <strong>Le foyer de l'exemple</strong> : un couple locataire d'un S+2 dans le Grand Tunis, avec deux enfants de 4 et 9 ans.
+          Salaires nets : 1 900 et 1 300 dinars par mois. Ces chiffres sont une illustration, pas une moyenne tunisienne : remplacez chaque ligne par la vôtre.
+        </p>
+        <div className="overflow-x-auto">
+          <table>
+            <thead>
+              <tr><th>Poste</th><th>Par mois</th><th>Part des revenus</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><strong>Salaires nets du foyer</strong></td><td><strong>3 200 DT</strong></td><td>100 %</td></tr>
+              <tr><td>Loyer d'un S+2</td><td>900 DT</td><td>28 %</td></tr>
+              <tr><td>Électricité et gaz (STEG)</td><td>120 DT</td><td>4 %</td></tr>
+              <tr><td>Eau (SONEDE)</td><td>30 DT</td><td>1 %</td></tr>
+              <tr><td>Alimentation</td><td>950 DT</td><td>30 %</td></tr>
+              <tr><td>Transport</td><td>250 DT</td><td>8 %</td></tr>
+              <tr><td>Téléphones et internet</td><td>90 DT</td><td>3 %</td></tr>
+              <tr><td>Enfants (garderie, fournitures, cours particuliers)</td><td>250 DT</td><td>8 %</td></tr>
+              <tr><td>Santé (ce qui reste à votre charge)</td><td>100 DT</td><td>3 %</td></tr>
+              <tr><td>Vêtements</td><td>100 DT</td><td>3 %</td></tr>
+              <tr><td>Loisirs et sorties</td><td>100 DT</td><td>3 %</td></tr>
+              <tr><td>Provision dépenses annuelles</td><td>150 DT</td><td>5 %</td></tr>
+              <tr><td>Épargne</td><td>100 DT</td><td>3 %</td></tr>
+              <tr><td><strong>Reste (marge pour les imprévus)</strong></td><td><strong>60 DT</strong></td><td>2 %</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>
+          Total des dépenses : 3 040 dinars, épargne : 100 dinars. La <strong>marge de 60 dinars</strong> est mince : c'est la provision
+          pour les dépenses annuelles qui évite de s'endetter au moment de l'Aïd ou de la rentrée.
+        </p>
+
+        <h2>💵 Les repères officiels de 2026</h2>
+        <ul>
+          <li>
+            <strong>Le SMIG</strong> : depuis le 1er janvier 2026, le salaire minimum des secteurs non agricoles est de <strong>554,736 dinars par mois</strong> pour
+            le régime de 48 heures et de 470,251 dinars pour le régime de 40 heures. Le même décret prévoit 582,400 dinars en 2027 pour le régime de 48 heures.
+          </li>
+          <li>
+            <strong>L'inflation</strong> : selon l'Institut national de la statistique (INS), les prix ont augmenté de <strong>5,6 % sur un an en octobre 2026</strong>,
+            et ceux de l'alimentation de <strong>8,5 %</strong>. Un budget fait l'an dernier est donc à refaire, surtout la ligne des courses.
+          </li>
+        </ul>
+
+        <h2>🛒 L'alimentation : le poste à surveiller de près</h2>
+        <p>
+          Avec une hausse de 8,5 % en un an, 950 dinars de courses d'aujourd'hui en valaient environ 875 il y a douze mois. Pour garder ce poste sous contrôle :
+        </p>
+        <ul>
+          <li>fixez un <strong>montant par semaine</strong> plutôt que par mois, et comptez le mois réel : <em>montant par semaine × 52 ÷ 12</em>. 220 dinars par semaine font environ 950 dinars par mois, et non 880 ;</li>
+          <li>achetez les fruits, les légumes et le poisson au <strong>marché</strong>, en fin de matinée quand les prix baissent, et gardez la grande surface pour les produits secs ;</li>
+          <li>faites vos provisions avant le <strong>Ramadan</strong>, quand la demande fait monter les prix ;</li>
+          <li>notez vos achats pendant un mois : c'est souvent là qu'on découvre où part l'argent.</li>
+        </ul>
+
+        <h2>🏠 Le loyer et les factures</h2>
+        <ul>
+          <li><strong>Loyer</strong> : le contrat prévoit en général une augmentation annuelle. Notez le mois où elle s'applique, et refaites le budget avec le nouveau montant.</li>
+          <li><strong>STEG</strong> : la facture d'électricité et de gaz arrive tous les deux mois. Divisez-la par 2 pour le budget mensuel, et mettez cette moitié de côté le mois où rien n'est à payer. L'été, la climatisation peut la faire doubler.</li>
+          <li><strong>SONEDE</strong> : la facture d'eau est trimestrielle. Même méthode : un tiers par mois.</li>
+        </ul>
+
+        <h2>🎒 Les enfants : la rentrée et les cours particuliers</h2>
+        <p>
+          Dans beaucoup de familles, les <strong>cours particuliers</strong> pèsent plus que les fournitures. Comptez-les comme une charge mensuelle
+          pendant l'année scolaire, pas comme un extra. La rentrée, elle, se prépare dès le printemps : fournitures, tabliers, cartables et inscriptions
+          tombent en septembre, juste après les dépenses de l'été.
+        </p>
+
+        <h2>📅 Les dépenses qui ne tombent pas tous les mois</h2>
+        <p>
+          Dans l'exemple, 150 dinars par mois sont mis de côté pour : l'<strong>Aïd el-Kébir</strong> (900 dinars), la <strong>rentrée</strong> (400 dinars),
+          le <strong>Ramadan et l'Aïd el-Fitr</strong> (300 dinars) et les <strong>sorties et mariages de l'été</strong> (200 dinars), soit 1 800 dinars par an ÷ 12.
+          Ces dates sont connues à l'avance : ce sont des dépenses prévisibles, pas des imprévus.
+        </p>
+
+        <h2>✏️ Faire le vôtre en 15 minutes</h2>
+        <ol>
+          <li>Recopiez le tableau avec <strong>vos</strong> montants, à partir de vos dépenses des trois derniers mois.</li>
+          <li>Ajoutez la <strong>provision</strong> pour vos dépenses annuelles.</li>
+          <li>Fixez l'<strong>épargne</strong>, même petite, puis regardez le reste. La méthode pas à pas est dans <a href="/blog/etablir-budget-familial-5-etapes">établir un budget familial en 5 étapes</a>, et le partage entre conjoints dans <a href="/blog/compte-commun-couple-argent-de-poche">notre guide du compte commun</a>.</li>
+        </ol>
+        <p>
+          Notre <a href="/calcul-reste-a-vivre">calculateur de reste à vivre</a> fonctionne en dinars tunisiens, sans compte, et notre
+          <a href="/tableau-budget-familial-gratuit"> tableau de budget gratuit</a> existe en Excel et en PDF à imprimer. L'application Budget Famille
+          remplit chaque mois à partir de vos règles, se partage entre conjoints en temps réel, et permet d'ouvrir un budget à part pour un projet.
+        </p>
+
+        <div className="bg-gradient-to-r from-primary to-purple-600 text-white rounded-xl p-8 text-center my-8">
+          <h3 className="text-2xl font-bold mb-4">Le budget de votre famille, en dinars, chaque mois</h3>
+          <p className="text-lg mb-6 opacity-90">Gratuit, sans connexion bancaire obligatoire, partagé en temps réel.</p>
+          <a
+            href="/signup"
+            className="inline-block bg-white text-primary font-semibold px-8 py-3 rounded-lg hover:bg-gray-100 transition-colors"
+          >
+            Créer notre budget familial →
+          </a>
+        </div>
+
+        <h2>❓ Questions fréquentes</h2>
+        <h3>Quel budget pour une famille de 4 en Tunisie ?</h3>
+        <p>Il dépend surtout du loyer et de l'alimentation. Dans notre exemple à Tunis, les dépenses atteignent 3 040 dinars par mois, plus 100 dinars d'épargne, pour 3 200 dinars de salaires nets. C'est une illustration, pas une moyenne.</p>
+        <h3>Quel est le SMIG en Tunisie en 2026 ?</h3>
+        <p>554,736 dinars par mois pour le régime de 48 heures et 470,251 dinars pour le régime de 40 heures, depuis le 1er janvier 2026, dans les secteurs non agricoles.</p>
+        <h3>Comment tenir son budget avec l'inflation ?</h3>
+        <p>Refaites le budget chaque année avec vos vrais montants, surveillez d'abord l'alimentation (8,5 % de hausse sur un an en octobre 2026 selon l'INS), et mettez de côté chaque mois pour l'Aïd, le Ramadan et la rentrée.</p>
+      </div>
+    )
+  },
+  {
+    id: '17',
+    title: "Budget familial en Algérie : l'exemple d'une famille de 4 à Alger",
+    slug: "budget-familial-algerie-alger",
+    excerpt: "Le budget d'une famille de 4 à Alger, en dinars : loyer payé d'avance, alimentation, Sonelgaz, scolarité, SNMG à 24 000 DA en 2026, Ramadan et Aïd.",
+    category: "International",
+    author: "Équipe Budget Famille",
+    authorBio: "Experts en gestion budgétaire et développeurs de Budget Famille",
+    publishedAt: "2026-11-13",
+    readTime: "6 min",
+    tags: ["Algérie", "Alger", "Maghreb", "Budget", "Famille", "Exemple"],
+    featured: true,
+    related: ["budget-familial-maroc-casablanca-rabat", "budget-famille-4-personnes-exemple", "etablir-budget-familial-5-etapes"],
+    content: (
+      <div className="prose prose-lg max-w-none">
+        <p className="lead">
+          En Algérie, le budget d'une famille locataire tient à deux lignes : le <strong>loyer</strong>, souvent payé d'avance pour plusieurs mois,
+          et l'<strong>alimentation</strong>. Dans notre exemple algérois, une famille de 4 dépense environ 112 000 dinars par mois, épargne non comprise.
+          Voici le détail poste par poste, les repères de 2026 et la méthode pour adapter le vôtre.
+        </p>
+
+        <h2>📋 Exemple de budget mensuel d'une famille de 4 à Alger</h2>
+        <p>
+          <strong>Le foyer de l'exemple</strong> : un couple locataire d'un F3 à Alger, avec deux enfants de 4 et 9 ans.
+          Salaires nets : 70 000 et 45 000 dinars par mois. Ces chiffres sont une illustration, pas une moyenne algérienne : remplacez chaque ligne par la vôtre.
+          Si vous êtes propriétaire ou logé par la famille, la ligne du loyer disparaît et tout le budget change.
+        </p>
+        <div className="overflow-x-auto">
+          <table>
+            <thead>
+              <tr><th>Poste</th><th>Par mois</th><th>Part des revenus</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><strong>Salaires nets du foyer</strong></td><td><strong>115 000 DA</strong></td><td>100 %</td></tr>
+              <tr><td>Loyer d'un F3</td><td>40 000 DA</td><td>35 %</td></tr>
+              <tr><td>Électricité et gaz (Sonelgaz)</td><td>3 000 DA</td><td>3 %</td></tr>
+              <tr><td>Eau</td><td>1 000 DA</td><td>1 %</td></tr>
+              <tr><td>Alimentation</td><td>38 000 DA</td><td>33 %</td></tr>
+              <tr><td>Transport</td><td>8 000 DA</td><td>7 %</td></tr>
+              <tr><td>Téléphones et internet</td><td>3 500 DA</td><td>3 %</td></tr>
+              <tr><td>Enfants (crèche, fournitures, cours de soutien)</td><td>6 000 DA</td><td>5 %</td></tr>
+              <tr><td>Santé (ce qui reste à votre charge)</td><td>3 000 DA</td><td>3 %</td></tr>
+              <tr><td>Vêtements</td><td>3 000 DA</td><td>3 %</td></tr>
+              <tr><td>Loisirs et sorties</td><td>2 500 DA</td><td>2 %</td></tr>
+              <tr><td>Provision dépenses annuelles</td><td>4 000 DA</td><td>3 %</td></tr>
+              <tr><td>Épargne</td><td>2 000 DA</td><td>2 %</td></tr>
+              <tr><td><strong>Reste (marge pour les imprévus)</strong></td><td><strong>1 000 DA</strong></td><td>1 %</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>
+          Total des dépenses : 112 000 dinars, épargne : 2 000 dinars. La <strong>marge de 1 000 dinars</strong> est très mince :
+          dans ce budget, tout se joue sur le loyer et sur la provision pour les fêtes et la rentrée.
+        </p>
+
+        <h2>💵 Les repères officiels de 2026</h2>
+        <ul>
+          <li><strong>Le SNMG</strong> : le salaire national minimum garanti est passé de 20 000 à <strong>24 000 dinars par mois</strong> en janvier 2026.</li>
+          <li><strong>L'allocation chômage</strong> : elle est passée de 15 000 à <strong>18 000 dinars par mois</strong> à la même date.</li>
+          <li>
+            <strong>L'allocation spéciale de scolarité</strong> : <strong>5 000 dinars par élève</strong> scolarisé, pour les familles à faibles revenus.
+            Le formulaire est validé par l'établissement de l'élève, et le versement se fait sur le compte courant.
+          </li>
+        </ul>
+
+        <h2>🏠 Le loyer : une dépense mensuelle payée en une fois</h2>
+        <p>
+          Beaucoup de propriétaires demandent le loyer <strong>d'avance, pour six mois ou un an</strong>. C'est la plus grosse dépense de l'année,
+          et elle tombe d'un seul coup. La seule façon de l'absorber :
+        </p>
+        <ul>
+          <li>mettez de côté <strong>chaque mois un douzième</strong> du loyer annuel, sur un compte à part, dès le lendemain du paiement ;</li>
+          <li>ne touchez pas à cette somme pour les fêtes ou les imprévus : elle a déjà un usage ;</li>
+          <li>au renouvellement, négociez le montant <strong>avant</strong> l'échéance, quand vous avez encore le temps de comparer.</li>
+        </ul>
+
+        <h2>🛒 L'alimentation, premier poste avec le loyer</h2>
+        <ul>
+          <li>Fixez un <strong>montant par semaine</strong> et comptez le mois réel : <em>montant par semaine × 52 ÷ 12</em>. 8 800 dinars par semaine font environ 38 000 dinars par mois, et non 35 200.</li>
+          <li>Les produits de base à prix soutenu (pain, lait en sachet, semoule, huile, sucre) allègent le panier : construisez vos menus autour d'eux, et gardez la viande et les fruits pour un budget fixé à l'avance.</li>
+          <li>Achetez les légumes de saison au marché, et faites vos provisions avant le <strong>Ramadan</strong>, quand les prix montent.</li>
+        </ul>
+
+        <h2>⚡ Sonelgaz, eau, internet : lisser les factures</h2>
+        <p>
+          La facture d'électricité et de gaz de Sonelgaz est <strong>trimestrielle</strong>, comme souvent celle de l'eau. Divisez-les par 3 pour le budget
+          mensuel, et mettez ce tiers de côté les deux mois où rien n'est à payer. L'été, la climatisation alourdit nettement la facture : prévoyez-le.
+        </p>
+
+        <h2>📅 Les dépenses qui ne tombent pas tous les mois</h2>
+        <p>
+          Dans l'exemple, 4 000 dinars par mois sont mis de côté pour : l'<strong>Aïd el-Adha</strong> (22 000 dinars), le <strong>Ramadan et l'Aïd el-Fitr</strong>
+          (10 000 dinars), la <strong>rentrée</strong> (8 000 dinars) et les <strong>vacances et mariages de l'été</strong> (8 000 dinars), soit 48 000 dinars par an ÷ 12.
+          Si le mouton de l'Aïd dépasse ce que vous avez mis de côté, mieux vaut un sacrifice partagé en famille qu'un crédit.
+        </p>
+
+        <h2>✏️ Faire le vôtre en 15 minutes</h2>
+        <ol>
+          <li>Recopiez le tableau avec <strong>vos</strong> montants, à partir de vos dépenses des trois derniers mois.</li>
+          <li>Ajoutez la <strong>provision</strong> pour vos dépenses annuelles, et le douzième du loyer s'il se paie d'avance.</li>
+          <li>Fixez l'<strong>épargne</strong>, même petite, puis regardez le reste. La méthode pas à pas est dans <a href="/blog/etablir-budget-familial-5-etapes">établir un budget familial en 5 étapes</a>, et le partage entre conjoints dans <a href="/blog/compte-commun-couple-argent-de-poche">notre guide du compte commun</a>.</li>
+        </ol>
+        <p>
+          Notre <a href="/calcul-reste-a-vivre">calculateur de reste à vivre</a> fonctionne en dinars algériens, sans compte, et notre
+          <a href="/tableau-budget-familial-gratuit"> tableau de budget gratuit</a> existe en Excel et en PDF à imprimer. L'application Budget Famille
+          remplit chaque mois à partir de vos règles, se partage entre conjoints en temps réel, et permet d'ouvrir un budget à part pour un projet.
+        </p>
+
+        <div className="bg-gradient-to-r from-primary to-purple-600 text-white rounded-xl p-8 text-center my-8">
+          <h3 className="text-2xl font-bold mb-4">Le budget de votre famille, en dinars, chaque mois</h3>
+          <p className="text-lg mb-6 opacity-90">Gratuit, sans connexion bancaire obligatoire, partagé en temps réel.</p>
+          <a
+            href="/signup"
+            className="inline-block bg-white text-primary font-semibold px-8 py-3 rounded-lg hover:bg-gray-100 transition-colors"
+          >
+            Créer notre budget familial →
+          </a>
+        </div>
+
+        <h2>❓ Questions fréquentes</h2>
+        <h3>Quel budget pour une famille de 4 en Algérie ?</h3>
+        <p>Il dépend d'abord du logement : locataire, propriétaire ou logé par la famille. Dans notre exemple de locataires à Alger, les dépenses atteignent 112 000 dinars par mois, plus 2 000 dinars d'épargne, pour 115 000 dinars de salaires nets. C'est une illustration, pas une moyenne.</p>
+        <h3>Quel est le SNMG en Algérie en 2026 ?</h3>
+        <p>24 000 dinars par mois depuis janvier 2026, contre 20 000 dinars auparavant. L'allocation chômage est passée à 18 000 dinars.</p>
+        <h3>Comment payer un loyer demandé un an d'avance ?</h3>
+        <p>En le traitant comme une charge mensuelle : mettez de côté un douzième du loyer annuel chaque mois, sur un compte à part, dès le lendemain du paiement.</p>
+      </div>
+    )
+  },
+  {
+    id: '18',
+    title: "Budget familial au Cameroun : l'exemple d'une famille de 4 à Douala",
+    slug: "budget-familial-cameroun-douala",
+    excerpt: "Le budget d'une famille de 4 à Douala, en FCFA : loyer payé d'avance, marché, Eneo, pension scolaire, solidarité familiale et tontine, avec un exemple chiffré.",
+    category: "International",
+    author: "Équipe Budget Famille",
+    authorBio: "Experts en gestion budgétaire et développeurs de Budget Famille",
+    publishedAt: "2026-11-13",
+    readTime: "6 min",
+    tags: ["Cameroun", "Douala", "Afrique", "FCFA", "Budget", "Famille"],
+    featured: true,
+    related: ["budget-familial-abidjan-cote-ivoire", "gerer-budget-familial-senegal-dakar", "etablir-budget-familial-5-etapes"],
+    content: (
+      <div className="prose prose-lg max-w-none">
+        <p className="lead">
+          Au Cameroun, un budget familial doit absorber trois choses qu'un budget « classique » oublie : le <strong>loyer payé d'avance</strong>,
+          la <strong>pension scolaire</strong> de la rentrée et la <strong>solidarité familiale</strong>. Dans notre exemple à Douala, une famille de 4 dépense
+          environ 391 000 FCFA par mois, tontine non comprise. Voici le détail poste par poste et la méthode pour adapter le vôtre.
+        </p>
+
+        <h2>📋 Exemple de budget mensuel d'une famille de 4 à Douala</h2>
+        <p>
+          <strong>Le foyer de l'exemple</strong> : un couple locataire d'un appartement de 2 chambres à Douala, avec deux enfants de 5 et 10 ans scolarisés.
+          Revenus nets : 280 000 et 150 000 FCFA par mois. Ces chiffres sont une illustration, pas une moyenne camerounaise : remplacez chaque ligne par la vôtre.
+        </p>
+        <div className="overflow-x-auto">
+          <table>
+            <thead>
+              <tr><th>Poste</th><th>Par mois</th><th>Part des revenus</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><strong>Revenus nets du foyer</strong></td><td><strong>430 000 FCFA</strong></td><td>100 %</td></tr>
+              <tr><td>Loyer (2 chambres, salon)</td><td>90 000 FCFA</td><td>21 %</td></tr>
+              <tr><td>Électricité (Eneo)</td><td>15 000 FCFA</td><td>3 %</td></tr>
+              <tr><td>Eau</td><td>6 000 FCFA</td><td>1 %</td></tr>
+              <tr><td>Alimentation (marché)</td><td>120 000 FCFA</td><td>28 %</td></tr>
+              <tr><td>Transport (taxi, moto)</td><td>40 000 FCFA</td><td>9 %</td></tr>
+              <tr><td>Téléphones et internet</td><td>15 000 FCFA</td><td>3 %</td></tr>
+              <tr><td>Scolarité (pension, APEE, fournitures)</td><td>45 000 FCFA</td><td>10 %</td></tr>
+              <tr><td>Santé</td><td>15 000 FCFA</td><td>3 %</td></tr>
+              <tr><td>Vêtements</td><td>10 000 FCFA</td><td>2 %</td></tr>
+              <tr><td>Solidarité familiale</td><td>20 000 FCFA</td><td>5 %</td></tr>
+              <tr><td>Provision dépenses annuelles</td><td>15 000 FCFA</td><td>3 %</td></tr>
+              <tr><td>Tontine (épargne)</td><td>30 000 FCFA</td><td>7 %</td></tr>
+              <tr><td><strong>Reste (marge pour les imprévus)</strong></td><td><strong>9 000 FCFA</strong></td><td>2 %</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>
+          Total des dépenses : 391 000 FCFA, tontine : 30 000 FCFA. La <strong>marge de 9 000 FCFA</strong> est mince : c'est la provision et la tontine
+          qui protègent ce budget d'un imprévu.
+        </p>
+
+        <h2>📈 Les prix en 2026</h2>
+        <p>
+          Selon l'Institut national de la statistique (INS), l'inflation moyenne sur douze mois était de <strong>2,6 % en juillet 2026</strong>, après 3,4 % sur l'année 2025.
+          Mais l'alimentation augmente plus vite : <strong>+5,6 % sur un an</strong> en mai 2026, soit plus du double. C'est la ligne « marché » qu'il faut revoir en premier.
+        </p>
+
+        <h2>🏠 Le loyer : plusieurs mois d'un coup</h2>
+        <p>
+          Beaucoup de bailleurs demandent une <strong>avance de plusieurs mois</strong>, parfois une année, en plus de la caution. Pour ne pas emprunter à chaque renouvellement :
+        </p>
+        <ul>
+          <li>mettez de côté le <strong>loyer du mois, chaque mois</strong>, même quand rien n'est à payer : l'avance suivante est déjà financée ;</li>
+          <li>gardez cet argent à part (un compte, un compte Mobile Money dédié) pour qu'il ne serve pas à autre chose ;</li>
+          <li>demandez un <strong>reçu</strong> pour chaque paiement, et un contrat écrit qui dit le montant et la durée couverte.</li>
+        </ul>
+
+        <h2>🛒 Le marché : fixer un montant par semaine</h2>
+        <ul>
+          <li>Donnez-vous une <strong>ration par semaine</strong> et comptez le mois réel : <em>montant par semaine × 52 ÷ 12</em>. 27 700 FCFA par semaine font environ 120 000 FCFA par mois, et non 110 800.</li>
+          <li>Achetez en <strong>gros</strong> ce qui se conserve (riz, huile, savon) en début de mois, à plusieurs familles si possible, et le frais au marché chaque semaine.</li>
+          <li>Notez vos dépenses pendant un mois : les petits achats quotidiens (beignets, crédit téléphone, taxi) pèsent souvent plus qu'on ne croit.</li>
+        </ul>
+
+        <h2>⚡ Eneo, eau, téléphone</h2>
+        <p>
+          Avec un <strong>compteur prépayé</strong>, l'électricité se budgète facilement : décidez d'un montant de recharge par semaine et tenez-vous-y.
+          Avec un compteur classique, gardez vos factures et faites la moyenne de l'année. Pour le téléphone et internet, un forfait mensuel coûte presque
+          toujours moins cher que des recharges au jour le jour.
+        </p>
+
+        <h2>🎒 La pension scolaire : la grosse dépense de septembre</h2>
+        <p>
+          Inscription, première tranche de pension, frais d'APEE, tenues, fournitures et manuels tombent en quelques semaines. Dans l'exemple,
+          45 000 FCFA par mois représentent 540 000 FCFA sur l'année pour deux enfants. Deux façons de lisser :
+        </p>
+        <ul>
+          <li>mettez de côté chaque mois, de janvier à août, ce qu'il faudra en septembre ;</li>
+          <li>ou programmez votre <strong>tour de tontine</strong> pour le recevoir en août.</li>
+        </ul>
+
+        <h2>🤝 Solidarité familiale et tontine : les mettre dans le budget</h2>
+        <p>
+          Aider un parent, cotiser pour un deuil ou un mariage, soutenir un cadet : ces dépenses reviennent tous les mois. Les compter comme des « imprévus »
+          fait exploser le budget. Donnez-leur une <strong>ligne fixe</strong> (20 000 FCFA dans l'exemple) : quand elle est épuisée, on sait dire « le mois prochain ».
+        </p>
+        <p>
+          La <strong>tontine</strong> (njangi) est une vraie épargne, à condition de choisir un groupe sérieux et de savoir à l'avance à quoi servira votre tour :
+          pension scolaire, avance de loyer, projet. Complétez-la par une petite épargne disponible à tout moment, pour la santé.
+        </p>
+
+        <h2>📅 Les dépenses qui ne tombent pas tous les mois</h2>
+        <p>
+          Dans l'exemple, 15 000 FCFA par mois sont mis de côté pour : les <strong>deuils et cérémonies</strong> (70 000 FCFA), les <strong>fêtes de fin d'année</strong>
+          (60 000 FCFA) et les <strong>soins imprévus</strong> (50 000 FCFA), soit 180 000 FCFA par an ÷ 12.
+        </p>
+
+        <h2>✏️ Faire le vôtre en 15 minutes</h2>
+        <ol>
+          <li>Recopiez le tableau avec <strong>vos</strong> montants, à partir de vos dépenses des trois derniers mois.</li>
+          <li>Ajoutez la <strong>provision</strong> pour vos dépenses annuelles, et le loyer du mois s'il se paie d'avance.</li>
+          <li>Fixez l'<strong>épargne</strong>, même petite, puis regardez le reste. La méthode pas à pas est dans <a href="/blog/etablir-budget-familial-5-etapes">établir un budget familial en 5 étapes</a>, et le partage entre conjoints dans <a href="/blog/compte-commun-couple-argent-de-poche">notre guide du compte commun</a>.</li>
+        </ol>
+        <p>
+          Notre <a href="/calcul-reste-a-vivre">calculateur de reste à vivre</a> fonctionne en francs CFA, sans compte, et notre
+          <a href="/tableau-budget-familial-gratuit"> tableau de budget gratuit</a> existe en Excel et en PDF à imprimer. L'application Budget Famille
+          remplit chaque mois à partir de vos règles, se partage entre conjoints en temps réel, et permet d'ouvrir un budget à part pour un projet.
+        </p>
+
+        <div className="bg-gradient-to-r from-primary to-purple-600 text-white rounded-xl p-8 text-center my-8">
+          <h3 className="text-2xl font-bold mb-4">Le budget de votre famille, en FCFA, chaque mois</h3>
+          <p className="text-lg mb-6 opacity-90">Gratuit, sans connexion bancaire obligatoire, partagé en temps réel.</p>
+          <a
+            href="/signup"
+            className="inline-block bg-white text-primary font-semibold px-8 py-3 rounded-lg hover:bg-gray-100 transition-colors"
+          >
+            Créer notre budget familial →
+          </a>
+        </div>
+
+        <h2>❓ Questions fréquentes</h2>
+        <h3>Quel budget pour une famille de 4 au Cameroun ?</h3>
+        <p>Il dépend surtout du loyer, du marché et de la scolarité. Dans notre exemple à Douala, les dépenses atteignent 391 000 FCFA par mois, plus 30 000 FCFA de tontine, pour 430 000 FCFA de revenus nets. C'est une illustration, pas une moyenne.</p>
+        <h3>Comment payer la pension scolaire sans s'endetter ?</h3>
+        <p>En la lissant sur l'année : mettez de côté chaque mois, ou programmez votre tour de tontine pour le mois d'août.</p>
+        <h3>Faut-il compter l'aide à la famille dans le budget ?</h3>
+        <p>Oui. C'est une dépense régulière : donnez-lui une ligne fixe chaque mois, plutôt que de la prendre sur le loyer ou la ration.</p>
+      </div>
+    )
   }
 ];

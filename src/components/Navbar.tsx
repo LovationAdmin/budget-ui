@@ -48,6 +48,7 @@ const PAGES_ONLY_ITEMS: Partial<Record<Locale, NavItem[]>> = {
   es: [
     { id: '/es/plantilla-presupuesto-familiar', label: 'Plantilla', icon: FileSpreadsheet },
     ...[PieChart, Users, Heart, Wallet].map((icon, i) => ({ id: ES_TOOLS[i].path, label: ES_TOOLS[i].short, icon })),
+    { id: '/es/blog', label: 'Blog', icon: Newspaper },
   ],
 };
 
